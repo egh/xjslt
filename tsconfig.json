@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "baseUrl": ".",
+    "lib": ["es6", "es2017", "esnext.asynciterable"],
+    "target": "es2017",
+    "module": "commonjs",
+    "declaration": true,
+    "strict": false,
+    "moduleResolution": "node",
+    "sourceMap": true
+  },
+  "include": ["./src/**/*"],
+  "exclude": ["./**/*.d.ts"]
+}
