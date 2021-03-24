@@ -1,5 +1,5 @@
 import { mocked } from "ts-jest/utils";
-import { foo } from "../src/xslt";
+import { foo, compile } from "../src/xslt";
 import * as slimdom from "slimdom";
 import { evaluateXPathToString } from "fontoxpath";
 import { generate } from 'astring';
@@ -30,7 +30,6 @@ test("slimdon", () => {
   expect(evaluateXPathToString("/root/text()", document)).toEqual("text");
 });
 
-
 test("acorn", () => {
   const parsed = Parser.extend(jsx()).parse("my(<foo/>, 'code');", {ecmaVersion: 2020});
   expect(parsed.type).toEqual("Program");
@@ -56,4 +55,8 @@ test("saxes", () => {
   expect(openCallback.mock.calls[0][0].name).toBe("xml");
   expect(openCallback.mock.calls[1][0].name).toBe("who");
   expect(openCallback.mock.calls[1][0].attributes.name).toBe("world");
+});
+
+test("compile", () => {
+  expect(generate(compile())).toEqual("import {evaluateXPathToString} from \"fontoxpath\";\n");
 });
