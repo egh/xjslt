@@ -12,6 +12,7 @@ program.arguments("<xslt> <xml...>").description("Transform XML", {
 })
   .action((xslt, xmls) => {
     const transform = buildStylesheet(xslt);
+    const serializer = new slimdom.XMLSerializer();
     for (let xml of xmls) {
       const outfile = xml + "_out";
       if (existsSync(outfile)) {
@@ -20,7 +21,7 @@ program.arguments("<xslt> <xml...>").description("Transform XML", {
         const xmlDom = sync(readFileSync(xml).toString());
         const transformed = transform(sync(readFileSync(xml).toString()));
         writeFileSync(outfile,
-                      slimdom.serializeToWellFormedString(transformed));
+                      serializer.serializeToString(transformed));
       }
     }
   });
