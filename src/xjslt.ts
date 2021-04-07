@@ -1,4 +1,10 @@
+import { generate } from "astring";
+import { sync } from "slimdom-sax-parser";
 import { evaluateXPathToString, evaluateXPathToNodes } from "fontoxpath";
+import { readFileSync, writeFileSync, symlinkSync, rmdirSync } from "fs";
+import * as path from "path";
+import * as tempy from "tempy";
+import { compileNode } from "./compile";
 
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
 
@@ -237,8 +243,37 @@ function stripSpaceStylesheet(doc: any) {
   return stripSpace(doc, ["xsl:text"], nsResolver);
 }
 
+/**
+ * Build a stylesheet. Returns a function that will take an input DOM
+ * document and return an output DOM document.
+ */
+function buildStylesheet(xsltPath: string) {
+  let slimdom_path = require.resolve("slimdom").split(path.sep);
+  let root_dir = path.join(
+    "/",
+    ...slimdom_path.slice(0, slimdom_path.indexOf("node_modules"))
+  );
+  var tempdir = tempy.directory({ prefix: "xjslt" });
+  symlinkSync(
+    path.join(root_dir, "node_modules"),
+    path.join(tempdir, "node_modules")
+  );
+  symlinkSync(
+    path.join(root_dir, "package.json"),
+    path.join(tempdir, "package.json")
+  );
+  symlinkSync(path.join(root_dir, "dist"), path.join(tempdir, "dist"));
+  var tempfile = path.join(tempdir, "transform.js");
+  const xsltDoc = stripSpaceStylesheet(sync(readFileSync(xsltPath).toString()));
+  writeFileSync(tempfile, generate(compileNode(xsltDoc)));
+  let transform = require(tempfile);
+  rmdirSync(tempdir, { recursive: true });
+  return transform.transform;
+}
+
 export {
   applyTemplatesInternal,
+  buildStylesheet,
   literalTextInternal,
   literalXmlInternal,
   makeTemplateAttributes,

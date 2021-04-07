@@ -88,7 +88,7 @@ export function makeImportsNode(): Array<Statement> {
   return [
     makeRequire("slimdom"),
     makeRequire("fontoxpath"),
-    makeRequire("xjslt", "./src/xjslt"),
+    makeRequire("xjslt", "./dist/xjslt"),
   ];
 }
 

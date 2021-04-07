@@ -1,13 +1,13 @@
-import { mocked } from "ts-jest/utils";
 import {
+  NodeType,
   applyTemplatesInternal,
-  valueOfInternal,
+  buildStylesheet,
   literalTextInternal,
   literalXmlInternal,
   makeTemplateAttributes,
-  NodeType,
   processNode,
   stripSpaceStylesheet,
+  valueOfInternal,
 } from "../src/xjslt";
 import { compileNode } from "../src/compile";
 import * as slimdom from "slimdom";
@@ -17,9 +17,7 @@ import { sync } from "slimdom-sax-parser";
 import { Parser } from "acorn";
 import * as jsx from "acorn-jsx";
 import * as saxes from "saxes";
-import { readFileSync, writeFileSync, symlinkSync } from "fs";
-import * as path from "path";
-import * as tempy from "tempy";
+import { readFileSync } from "fs";
 
 test("slimdon", () => {
   const document = new slimdom.Document();
@@ -106,68 +104,6 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
   });
 }
 
-/* Goal: generate a function that looks like this.*/
-function transform2(document: slimdom.Document, output: (str: string) => void) {
-  const templates = [
-    {
-      attributes: { match: "/" },
-      apply: function (context) {
-        literalXmlInternal(
-          context,
-          { name: "doc", attributes: {} },
-          (context) => {
-            applyTemplatesInternal(context, { select: "./*" });
-          }
-        );
-      },
-    },
-    {
-      attributes: { match: "Article" },
-      apply: function (context) {
-        literalXmlInternal(
-          context,
-          { name: "heading", attributes: { type: "top" } },
-          (context) => {
-            valueOfInternal(context, { select: "Title" });
-          }
-        );
-        literalXmlInternal(
-          context,
-          { name: "list", attributes: {} },
-          (context) => {
-            applyTemplatesInternal(context, { select: "Authors/Author" });
-          }
-        );
-      },
-    },
-    {
-      attributes: { match: "Author" },
-      apply: function (context) {
-        literalXmlInternal(
-          context,
-          { name: "item", attributes: {} },
-          (context) => {
-            valueOfInternal(context, { select: "." });
-          }
-        );
-      },
-    },
-  ];
-
-  const doc = new slimdom.Document();
-  let context = {
-    outputDocument: doc,
-    outputNode: doc,
-    currentNode: document,
-    currentNodeList: [],
-    mode: null,
-    templates: templates,
-  };
-  processNode(context);
-  const xmlserializer = new slimdom.XMLSerializer();
-  output(xmlserializer.serializeToString(doc));
-}
-
 const document = sync(readFileSync("./test/simple.xml"));
 
 test("compiled", () => {
@@ -176,14 +112,6 @@ test("compiled", () => {
     str += s;
   });
   expect(str).toEqual(readFileSync("./test/simple.out", "utf8"));
-});
-
-test("compiled2", () => {
-  let str = "";
-  transform2(document, (s: string) => {
-    str += s;
-  });
-  expect(str).toEqual(readFileSync("./test/simple2.out", "utf8"));
 });
 
 const xsltDoc = sync(readFileSync("./test/simple.xslt"));
@@ -271,19 +199,15 @@ test("compileTemplateNode", () => {
 
 test("compileStylesheetNode", () => {
   expect(generate(compileNode(xslt2Doc), GENERATE_OPTS)).toEqual(
-    'let slimdom = require(\"slimdom\");let fontoxpath = require(\"fontoxpath\");let xjslt = require(\"./src/xjslt\");function transform(document, output) {let templates = [];templates.push({attributes: {match: "/"},apply: context => {xjslt.literalXmlInternal(context, {name: "doc",attributes: {}}, context => {xjslt.applyTemplatesInternal(context, {select: null});});}});templates.push({attributes: {match: "Article"},apply: context => {xjslt.literalXmlInternal(context, {name: "heading",attributes: {type: "top"}}, context => {xjslt.valueOfInternal(context, {select: "Title"});});xjslt.literalXmlInternal(context, {name: "list",attributes: {}}, context => {xjslt.applyTemplatesInternal(context, {select: "Authors/Author"});});}});templates.push({attributes: {match: "Author"},apply: context => {xjslt.literalXmlInternal(context, {name: "item",attributes: {}}, context => {xjslt.valueOfInternal(context, {select: "."});});}});const doc = new slimdom.Document();let context = {outputDocument: doc,outputNode: doc,currentNode: document,currentNodeList: [],mode: null,templates: templates};xjslt.processNode(context);return context.outputDocument;}module.exports.transform = transform;'
+    'let slimdom = require("slimdom");let fontoxpath = require("fontoxpath");let xjslt = require("./dist/xjslt");function transform(document, output) {let templates = [];templates.push({attributes: {match: "/"},apply: context => {xjslt.literalXmlInternal(context, {name: "doc",attributes: {}}, context => {xjslt.applyTemplatesInternal(context, {select: null});});}});templates.push({attributes: {match: "Article"},apply: context => {xjslt.literalXmlInternal(context, {name: "heading",attributes: {type: "top"}}, context => {xjslt.valueOfInternal(context, {select: "Title"});});xjslt.literalXmlInternal(context, {name: "list",attributes: {}}, context => {xjslt.applyTemplatesInternal(context, {select: "Authors/Author"});});}});templates.push({attributes: {match: "Author"},apply: context => {xjslt.literalXmlInternal(context, {name: "item",attributes: {}}, context => {xjslt.valueOfInternal(context, {select: "."});});}});const doc = new slimdom.Document();let context = {outputDocument: doc,outputNode: doc,currentNode: document,currentNodeList: [],mode: null,templates: templates};xjslt.processNode(context);return context.outputDocument;}module.exports.transform = transform;'
   );
 });
 
 test("compileStylesheetNode", () => {
-  let slimdom_path = require.resolve("slimdom").split(path.sep);
-  let node_modules = slimdom_path.slice(0, slimdom_path.indexOf("node_modules") + 1);
-  var tempdir = tempy.directory();
-  symlinkSync(path.join("/", ...node_modules), path.join(tempdir, "node_modules"));
-  symlinkSync(path.resolve("./src"), path.join(tempdir, "src"));
-  symlinkSync(path.resolve("./package.json"), path.join(tempdir, "package.json"));
-  var tempfile = path.join(tempdir, 'transform.js');
-  writeFileSync(tempfile, generate(compileNode(xslt2Doc)));
-  var transform = require(tempfile);
-  expect(slimdom.serializeToWellFormedString(transform.transform(sync(readFileSync("./test/simple.xml"))))).toEqual(readFileSync("./test/simple2.out", "utf-8"));
+  const transform = buildStylesheet("./test/simple2.xslt");
+  expect(
+    slimdom.serializeToWellFormedString(
+      transform(sync(readFileSync("./test/simple.xml", "utf-8")))
+    )
+  ).toEqual(readFileSync("./test/simple2.out", "utf-8"));
 });
