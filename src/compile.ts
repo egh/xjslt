@@ -17,6 +17,18 @@ function compileApplyTemplatesNode(node: any) {
   );
 }
 
+function compileForEachNode(node: any) {
+  return estree.makeCallWithContext(
+    estree.makeMember("xjslt", "forEachInternal"),
+    [
+      estree.makeObject({
+        select: estree.makeLiteral(node.getAttribute("select")),
+      }),
+      estree.makeArrowFunction(compileNodeArray(node.childNodes)),
+    ]
+  );
+}
+
 function compileLiteralXmlNode(node: any) {
   let attributes = [];
   for (let n in node.attributes) {
@@ -45,6 +57,8 @@ export function compileNode(node: any) {
         return compileValueOfNode(node);
       } else if (node.localName === "apply-templates") {
         return compileApplyTemplatesNode(node);
+      } else if (node.localName === "for-each") {
+        return compileForEachNode(node);
       } else if (node.localName === "template") {
         return compileTemplateNode(node);
       } else if (node.localName === "stylesheet") {

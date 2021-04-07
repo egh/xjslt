@@ -23,11 +23,6 @@ export const enum NodeType {
   NOTATION_NODE = 12, // historical
 }
 
-interface CompiledTemplate {
-  attributes: TemplateAttributes;
-  apply: (context: ProcessingContext) => void;
-}
-
 interface ApplyTemplateAttributes {
   select?: string;
   mode?: string;
@@ -36,6 +31,15 @@ interface ApplyTemplateAttributes {
 interface AttributeOutputData {
   name: string;
   value: string;
+}
+
+interface CompiledTemplate {
+  attributes: TemplateAttributes;
+  apply: (context: ProcessingContext) => void;
+}
+
+interface ForEachAttributes {
+  select: string;
 }
 
 interface NodeOutputData {
@@ -170,6 +174,17 @@ function literalXmlInternal(
   func({ ...context, outputNode: newNode });
 }
 
+function forEachInternal(
+  context: ProcessingContext,
+  attributes: ForEachAttributes,
+  func: (context: ProcessingContext) => void
+) {
+  const nodeList = evaluateXPathToNodes(attributes.select, context.currentNode)
+  for (let node of nodeList) {
+    func({ ...context, currentNode: node, currentNodeList: nodeList });
+  }
+}
+
 function findAttrValue(attrs: Array<any>, name: string) {
   const attr = attrs.find((attr) => attr.name === name);
   if (attr) {
@@ -274,6 +289,7 @@ function buildStylesheet(xsltPath: string) {
 export {
   applyTemplatesInternal,
   buildStylesheet,
+  forEachInternal,
   literalTextInternal,
   literalXmlInternal,
   makeTemplateAttributes,

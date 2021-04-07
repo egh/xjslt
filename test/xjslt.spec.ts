@@ -158,6 +158,15 @@ test("compileApplyTemplatesNode", () => {
   );
 });
 
+test("compileForEachNode", () => {
+  const xml = "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"><xsl:template match=\"/\"><doc><xsl:for-each select=\"./*\">foo</xsl:for-each></doc></xsl:template></xsl:stylesheet>";
+  const dom = sync(xml);
+  const nodes = evaluateXPathToNodes("//xsl:for-each", dom);
+  expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
+    'xjslt.forEachInternal(context, {select: "./*"}, context => {xjslt.literalTextInternal(context, \"foo\");});'
+  );
+});
+
 test("compileLiteralXmlNode", () => {
   const nodes = evaluateXPathToNodes("//heading", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
