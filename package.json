@@ -1,8 +1,8 @@
 {
-  "name": "js-xslt",
+  "name": "xjslt",
   "version": "0.0.1",
   "description": "xslt 2 in javascript",
-  "main": "dist/js-xslt.js",
+  "type": "module",
   "directories": {
     "test": "test"
   },
@@ -11,15 +11,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:egh/js-xslt.git"
+    "url": "git@github.com:egh/xjslt.git"
   },
   "author": "Erik Hetzner",
   "license": "MIT",
-  "homepage": "https://github.com/egh/js-xslt",
+  "homepage": "https://github.com/egh/xjslt",
   "devDependencies": {
     "@types/jest": "^26.0.21",
     "jest": "^26.6.3",
+    "tempy": "^1.0.1",
     "ts-jest": "^26.5.4",
+    "ts-node": "^9.1.1",
     "typescript": "^4.2.3"
   },
   "dependencies": {
