@@ -121,8 +121,31 @@ function getTemplate(
   return undefined;
 }
 
+const BUILT_IN_TEMPLATES = [
+  {
+    attributes: {match: "*|/"},
+    apply: (context: ProcessingContext) => {
+      applyTemplatesInternal(context, { select: null });
+    }
+  },
+  {
+    attributes: {match: "text()|@*"},
+    apply: (context: ProcessingContext) => {
+      valueOfInternal(context, { select: "." });
+    }
+  },
+  {
+    attributes: {match: "processing-instruction()|comment()"},
+    apply: (_context: ProcessingContext) => {}
+  },
+];
+
+function getTemplateBuiltin(node: any): CompiledTemplate {
+  return getTemplate(node, BUILT_IN_TEMPLATES);
+}
+
 function processNode(context: ProcessingContext) {
-  const template = getTemplate(context.currentNode, context.templates);
+  const template = getTemplate(context.currentNode, context.templates) || getTemplateBuiltin(context.currentNode);
   if (template) {
     template.apply(context);
   }
