@@ -1,6 +1,6 @@
 import { generate } from "astring";
 import { sync } from "slimdom-sax-parser";
-import { evaluateXPathToString, evaluateXPathToNodes } from "fontoxpath";
+import { evaluateXPathToString, evaluateXPathToNodes, evaluateXPathToBoolean } from "fontoxpath";
 import { readFileSync, writeFileSync, symlinkSync, rmdirSync } from "fs";
 import * as path from "path";
 import * as tempy from "tempy";
@@ -36,6 +36,10 @@ interface AttributeOutputData {
 interface CompiledTemplate {
   attributes: TemplateAttributes;
   apply: (context: ProcessingContext) => void;
+}
+
+interface IfAttributes {
+  test: string;
 }
 
 interface ForEachAttributes {
@@ -174,6 +178,16 @@ function literalXmlInternal(
   func({ ...context, outputNode: newNode });
 }
 
+function ifInternal(
+  context: ProcessingContext,
+  attributes: IfAttributes,
+  func: (context: ProcessingContext) => void
+) {
+  if (evaluateXPathToBoolean(attributes.test, context.currentNode)) {
+    func(context);
+  }
+}
+
 function forEachInternal(
   context: ProcessingContext,
   attributes: ForEachAttributes,
@@ -290,6 +304,7 @@ export {
   applyTemplatesInternal,
   buildStylesheet,
   forEachInternal,
+  ifInternal,
   literalTextInternal,
   literalXmlInternal,
   makeTemplateAttributes,

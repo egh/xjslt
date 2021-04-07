@@ -167,6 +167,16 @@ test("compileForEachNode", () => {
   );
 });
 
+test("compileIfNode", () => {
+  const xml = "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"><xsl:template match=\"/\"><doc><xsl:if test=\"[@att='bar']\">foo</xsl:if></doc></xsl:template></xsl:stylesheet>";
+  const dom = sync(xml);
+  const nodes = evaluateXPathToNodes("//xsl:if", dom);
+  expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
+    'xjslt.ifInternal(context, {test: "[@att=\'bar\']"}, context => {xjslt.literalTextInternal(context, \"foo\");});'
+  );
+
+});
+
 test("compileLiteralXmlNode", () => {
   const nodes = evaluateXPathToNodes("//heading", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(

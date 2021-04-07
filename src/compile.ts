@@ -17,6 +17,18 @@ function compileApplyTemplatesNode(node: any) {
   );
 }
 
+function compileIfNode(node: any) {
+  return estree.makeCallWithContext(
+    estree.makeMember("xjslt", "ifInternal"),
+    [
+      estree.makeObject({
+        test: estree.makeLiteral(node.getAttribute("test")),
+      }),
+      estree.makeArrowFunction(compileNodeArray(node.childNodes)),
+    ]
+  );
+}
+
 function compileForEachNode(node: any) {
   return estree.makeCallWithContext(
     estree.makeMember("xjslt", "forEachInternal"),
@@ -57,6 +69,8 @@ export function compileNode(node: any) {
         return compileValueOfNode(node);
       } else if (node.localName === "apply-templates") {
         return compileApplyTemplatesNode(node);
+      } else if (node.localName === "if") {
+        return compileIfNode(node);
       } else if (node.localName === "for-each") {
         return compileForEachNode(node);
       } else if (node.localName === "template") {
@@ -64,6 +78,8 @@ export function compileNode(node: any) {
       } else if (node.localName === "stylesheet") {
         return compileStylesheetNode(node);
       } else if (node.localName === "output") {
+        return undefined;
+      } else if (node.localName === "strip-space") {
         return undefined;
       } else {
         throw new Error("Found unexpected XSL element: " + node.tagName);
