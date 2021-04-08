@@ -17,16 +17,41 @@ function compileApplyTemplatesNode(node: any) {
   );
 }
 
-function compileIfNode(node: any) {
+function compileChooseNode(node: any) {
+  let alternatives = [];
+  for (let childNode of node.childNodes) {
+    if (childNode.localName === "when") {
+      alternatives.push(
+        estree.makeObject({
+          test: estree.makeLiteral(childNode.getAttribute("test")),
+          apply: estree.makeArrowFunction(
+            compileNodeArray(childNode.childNodes)
+          ),
+        })
+      );
+    } else if (childNode.localName === "otherwise") {
+      alternatives.push(
+        estree.makeObject({
+          apply: estree.makeArrowFunction(
+            compileNodeArray(childNode.childNodes)
+          ),
+        })
+      );
+    }
+  }
   return estree.makeCallWithContext(
-    estree.makeMember("xjslt", "ifInternal"),
-    [
-      estree.makeObject({
-        test: estree.makeLiteral(node.getAttribute("test")),
-      }),
-      estree.makeArrowFunction(compileNodeArray(node.childNodes)),
-    ]
+    estree.makeMember("xjslt", "chooseInternal"),
+    [{ type: "ArrayExpression", elements: alternatives }]
   );
+}
+
+function compileIfNode(node: any) {
+  return estree.makeCallWithContext(estree.makeMember("xjslt", "ifInternal"), [
+    estree.makeObject({
+      test: estree.makeLiteral(node.getAttribute("test")),
+    }),
+    estree.makeArrowFunction(compileNodeArray(node.childNodes)),
+  ]);
 }
 
 function compileForEachNode(node: any) {
@@ -69,6 +94,8 @@ export function compileNode(node: any) {
         return compileValueOfNode(node);
       } else if (node.localName === "apply-templates") {
         return compileApplyTemplatesNode(node);
+      } else if (node.localName === "choose") {
+        return compileChooseNode(node);
       } else if (node.localName === "if") {
         return compileIfNode(node);
       } else if (node.localName === "for-each") {

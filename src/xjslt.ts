@@ -33,6 +33,11 @@ interface AttributeOutputData {
   value: string;
 }
 
+interface ChooseAlternative {
+  test?: string;
+  apply: (context: ProcessingContext) => void;
+}
+
 interface CompiledTemplate {
   attributes: TemplateAttributes;
   apply: (context: ProcessingContext) => void;
@@ -211,6 +216,19 @@ function ifInternal(
   }
 }
 
+function chooseInternal(
+  context: ProcessingContext,
+  alternatives: Array<ChooseAlternative>
+) {
+  for (let alternative of alternatives) {
+    if (!alternative.test) {
+      return alternative.apply(context);
+    } else if (evaluateXPathToBoolean(alternative.test, context.currentNode)) {
+      return alternative.apply(context);
+    }
+  }
+}
+
 function forEachInternal(
   context: ProcessingContext,
   attributes: ForEachAttributes,
@@ -326,6 +344,7 @@ function buildStylesheet(xsltPath: string) {
 export {
   applyTemplatesInternal,
   buildStylesheet,
+  chooseInternal,
   forEachInternal,
   ifInternal,
   literalTextInternal,

@@ -167,6 +167,15 @@ test("compileForEachNode", () => {
   );
 });
 
+test("compileChooseNode", () => {
+  const xml = "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"><xsl:template match=\"/\"><xsl:choose><xsl:when test=\"[@att='bar']\">foo</xsl:when><xsl:otherwise>bar</xsl:otherwise></xsl:choose></xsl:template></xsl:stylesheet>";
+  const dom = sync(xml);
+  const nodes = evaluateXPathToNodes("//xsl:choose", dom);
+  expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
+    "xjslt.chooseInternal(context, [{test: \"[@att='bar']\",apply: context => {xjslt.literalTextInternal(context, \"foo\");}}, {apply: context => {xjslt.literalTextInternal(context, \"bar\");}}]);"
+  );
+});
+
 test("compileIfNode", () => {
   const xml = "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"><xsl:template match=\"/\"><doc><xsl:if test=\"[@att='bar']\">foo</xsl:if></doc></xsl:template></xsl:stylesheet>";
   const dom = sync(xml);
