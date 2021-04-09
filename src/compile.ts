@@ -66,7 +66,7 @@ function compileForEachNode(node: any) {
   );
 }
 
-function compileLiteralXmlNode(node: any) {
+function compileLiteralElementNode(node: any) {
   let attributes = [];
   for (let n in node.attributes) {
     attributes[node.attributes[n].localName] = estree.makeLiteral(
@@ -74,7 +74,7 @@ function compileLiteralXmlNode(node: any) {
     );
   }
   return estree.makeCallWithContext(
-    estree.makeMember("xjslt", "literalXmlInternal"),
+    estree.makeMember("xjslt", "literalElementInternal"),
     [
       estree.makeObject({
         name: estree.makeLiteral(node.localName),
@@ -112,7 +112,7 @@ export function compileNode(node: any) {
         throw new Error("Found unexpected XSL element: " + node.tagName);
       }
     } else {
-      return compileLiteralXmlNode(node);
+      return compileLiteralElementNode(node);
     }
   } else if (node.nodeType === NodeType.DOCUMENT_NODE) {
     return compileNode(node.documentElement);

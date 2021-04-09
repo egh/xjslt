@@ -3,7 +3,7 @@ import {
   applyTemplatesInternal,
   buildStylesheet,
   literalTextInternal,
-  literalXmlInternal,
+  literalElementInternal,
   makeTemplateAttributes,
   processNode,
   stripSpaceStylesheet,
@@ -186,10 +186,10 @@ test("compileIfNode", () => {
 
 });
 
-test("compileLiteralXmlNode", () => {
+test("compileLiteralElementNode", () => {
   const nodes = evaluateXPathToNodes("//heading", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.literalXmlInternal(context, {name: "heading",attributes: {type: "top"}}, context => {xjslt.valueOfInternal(context, {select: "Title"});});'
+    'xjslt.literalElementInternal(context, {name: "heading",attributes: {type: "top"}}, context => {xjslt.valueOfInternal(context, {select: "Title"});});'
   );
 });
 
@@ -221,13 +221,13 @@ test("stripSpaceStylesheet with preserved", () => {
 test("compileTemplateNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:template", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'templates.push({attributes: {match: "/"},apply: context => {xjslt.literalXmlInternal(context, {name: "doc",attributes: {}}, context => {xjslt.applyTemplatesInternal(context, {select: null});});}});'
+    'templates.push({attributes: {match: "/"},apply: context => {xjslt.literalElementInternal(context, {name: "doc",attributes: {}}, context => {xjslt.applyTemplatesInternal(context, {select: null});});}});'
   );
 });
 
 test("compileStylesheetNode", () => {
   expect(generate(compileNode(xslt2Doc), GENERATE_OPTS)).toEqual(
-    'let slimdom = require("slimdom");let fontoxpath = require("fontoxpath");let xjslt = require("./dist/xjslt");function transform(document, output) {let templates = [];templates.push({attributes: {match: "/"},apply: context => {xjslt.literalXmlInternal(context, {name: "doc",attributes: {}}, context => {xjslt.applyTemplatesInternal(context, {select: null});});}});templates.push({attributes: {match: "Article"},apply: context => {xjslt.literalXmlInternal(context, {name: "heading",attributes: {type: "top"}}, context => {xjslt.valueOfInternal(context, {select: "Title"});});xjslt.literalXmlInternal(context, {name: "list",attributes: {}}, context => {xjslt.applyTemplatesInternal(context, {select: "Authors/Author"});});}});templates.push({attributes: {match: "Author"},apply: context => {xjslt.literalXmlInternal(context, {name: "item",attributes: {}}, context => {xjslt.valueOfInternal(context, {select: "."});});}});const doc = new slimdom.Document();let context = {outputDocument: doc,outputNode: doc,currentNode: document,currentNodeList: [],mode: null,templates: templates};xjslt.processNode(context);return context.outputDocument;}module.exports.transform = transform;'
+    'let slimdom = require("slimdom");let fontoxpath = require("fontoxpath");let xjslt = require("./dist/xjslt");function transform(document, output) {let templates = [];templates.push({attributes: {match: "/"},apply: context => {xjslt.literalElementInternal(context, {name: "doc",attributes: {}}, context => {xjslt.applyTemplatesInternal(context, {select: null});});}});templates.push({attributes: {match: "Article"},apply: context => {xjslt.literalElementInternal(context, {name: "heading",attributes: {type: "top"}}, context => {xjslt.valueOfInternal(context, {select: "Title"});});xjslt.literalElementInternal(context, {name: "list",attributes: {}}, context => {xjslt.applyTemplatesInternal(context, {select: "Authors/Author"});});}});templates.push({attributes: {match: "Author"},apply: context => {xjslt.literalElementInternal(context, {name: "item",attributes: {}}, context => {xjslt.valueOfInternal(context, {select: "."});});}});const doc = new slimdom.Document();let context = {outputDocument: doc,outputNode: doc,currentNode: document,currentNodeList: [],mode: null,templates: templates};xjslt.processNode(context);return context.outputDocument;}module.exports.transform = transform;'
   );
 });
 

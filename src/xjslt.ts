@@ -188,7 +188,7 @@ function literalTextInternal(context: ProcessingContext, text: string) {
   context.outputNode.appendChild(context.outputDocument.createTextNode(text));
 }
 
-function literalXmlInternal(
+function literalElementInternal(
   context: ProcessingContext,
   node: NodeOutputData,
   func: (context: ProcessingContext) => void
@@ -348,7 +348,7 @@ export {
   forEachInternal,
   ifInternal,
   literalTextInternal,
-  literalXmlInternal,
+  literalElementInternal,
   makeTemplateAttributes,
   processNode,
   stripSpace,
