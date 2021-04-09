@@ -17,6 +17,19 @@ function compileApplyTemplatesNode(node: any) {
   );
 }
 
+function compileAttributeNode(node: any) {
+  return estree.makeCallWithContext(
+    estree.makeMember("xjslt", "attributeInternal"),
+    [
+      estree.makeObject({
+        name: estree.makeLiteral(node.getAttribute("name")),
+        namespace: estree.makeLiteral(node.getAttribute("namespace")),
+      }),
+      estree.makeArrowFunction(compileNodeArray(node.childNodes)),
+    ]
+  );
+}
+
 function compileChooseNode(node: any) {
   let alternatives = [];
   for (let childNode of node.childNodes) {
@@ -107,6 +120,8 @@ export function compileNode(node: any) {
         return compileValueOfNode(node);
       } else if (node.localName === "apply-templates") {
         return compileApplyTemplatesNode(node);
+      } else if (node.localName === "attribute") {
+        return compileAttributeNode(node);
       } else if (node.localName === "choose") {
         return compileChooseNode(node);
       } else if (node.localName === "element") {

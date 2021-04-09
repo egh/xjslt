@@ -8,6 +8,7 @@ import {
 import { readFileSync, writeFileSync, symlinkSync, rmdirSync } from "fs";
 import * as path from "path";
 import * as tempy from "tempy";
+import * as slimdom from "slimdom";
 import { compileNode } from "./compile";
 
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
@@ -211,6 +212,16 @@ function literalElementInternal(
   func({ ...context, outputNode: newNode });
 }
 
+function attributeInternal(
+  context: ProcessingContext,
+  attributes: { name: string; ns?: string },
+  func: (context: ProcessingContext) => void
+) {
+  const name = evaluteAttributeValueTemplate(context, attributes.name);
+  const value = extractText(evaluateTemplate(context, func));
+  context.outputNode.setAttribute(name, value);
+}
+
 function elementInternal(
   context: ProcessingContext,
   node: NodeOutputData,
@@ -354,6 +365,47 @@ function evaluteAttributeValueTemplate(
 }
 
 /**
+ * Evaluate a standalone "template" and return the output document.
+ * Use for <xsl:attribute> and <xsl:variable>
+ */
+function evaluateTemplate(
+  origContext: ProcessingContext,
+  func: (context: ProcessingContext) => void
+) {
+  const doc = new slimdom.Document();
+  doc.appendChild(doc.createElement("root"));
+  let context = {
+    outputDocument: doc,
+    outputNode: doc.documentElement,
+    currentNode: origContext.currentNode,
+    currentNodeList: [],
+    mode: null,
+    templates: origContext.templates,
+  };
+  func(context);
+  return context.outputDocument;
+}
+
+/**
+ * Extract text content of a document.
+ */
+function extractText(document: any) {
+  let str = "";
+  function walkTree(node: any): void {
+    if (node.nodeType == NodeType.TEXT_NODE) {
+      str += node.data;
+    }
+    if (node.childNodes) {
+      for (let child of node.childNodes) {
+        walkTree(child);
+      }
+    }
+  }
+  walkTree(document);
+  return str;
+}
+
+/**
  * Build a stylesheet. Returns a function that will take an input DOM
  * document and return an output DOM document.
  */
@@ -383,6 +435,7 @@ function buildStylesheet(xsltPath: string) {
 
 export {
   applyTemplatesInternal,
+  attributeInternal,
   buildStylesheet,
   chooseInternal,
   elementInternal,

@@ -278,3 +278,14 @@ test("elementNode", () => {
     "Hi!"
   );
 });
+
+test("attributeNode", () => {
+  const transform = makeSimpleTransform(
+    "//Author",
+    "<test><xsl:attribute name='test-{local-name()}'><xsl:value-of select='text()'/></xsl:attribute></test>"
+  );
+  const results = transform(document);
+  expect(evaluateXPathToString("/root/test[1]/@test-Author", results)).toEqual(
+    "Mr. Foo"
+  );
+});
