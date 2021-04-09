@@ -64,7 +64,6 @@ interface ProcessingContext {
   currentNodeList: Array<any>;
   mode?: string;
   templates: Array<CompiledTemplate>;
-  serializer: (doc: any) => string;
 }
 
 interface TemplateAttributes {
@@ -313,6 +312,25 @@ function stripSpaceStylesheet(doc: any) {
   return stripSpace(doc, ["xsl:text"], nsResolver);
 }
 
+function evaluteAttributeValueTemplate(
+  context: ProcessingContext,
+  avt: string
+): string {
+  return Array.from(avt.matchAll(/({[^}]+}|[^{}]+)/g))
+    .map((match) => {
+      const piece = match[0];
+      if (piece[0] === "{") {
+        return evaluateXPathToString(
+          piece.substring(1, piece.length - 1),
+          context.currentNode
+        );
+      } else {
+        return piece;
+      }
+    })
+    .join("");
+}
+
 /**
  * Build a stylesheet. Returns a function that will take an input DOM
  * document and return an output DOM document.
@@ -345,6 +363,7 @@ export {
   applyTemplatesInternal,
   buildStylesheet,
   chooseInternal,
+  evaluteAttributeValueTemplate,
   forEachInternal,
   ifInternal,
   literalTextInternal,

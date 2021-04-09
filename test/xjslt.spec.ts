@@ -2,6 +2,7 @@ import {
   NodeType,
   applyTemplatesInternal,
   buildStylesheet,
+  evaluteAttributeValueTemplate,
   literalTextInternal,
   literalElementInternal,
   makeTemplateAttributes,
@@ -238,4 +239,18 @@ test("compileStylesheetNode", () => {
       transform(sync(readFileSync("./test/simple.xml", "utf-8")))
     )
   ).toEqual(readFileSync("./test/simple2.out", "utf-8"));
+});
+
+test("evaluteAttributeValueTemplate", () => {
+  const nodes = evaluateXPathToNodes("//Author", document);
+  const context = {
+    outputDocument: null,
+    outputNode: null,
+    currentNode: nodes[0],
+    currentNodeList: nodes,
+    templates: [],
+  };
+  expect(
+    evaluteAttributeValueTemplate(context, "{local-name()}-{text()}-foo")
+  ).toEqual("Author-Mr. Foo-foo");
 });
