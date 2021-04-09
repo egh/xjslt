@@ -17,8 +17,29 @@ import { generate } from "astring";
 import { sync } from "slimdom-sax-parser";
 import { Parser } from "acorn";
 import * as jsx from "acorn-jsx";
+import * as tempy from "tempy";
 import * as saxes from "saxes";
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync, unlinkSync } from "fs";
+
+function makeSimpleTransform(match: string, template: string) {
+  const tempfile = tempy.file();
+  writeFileSync(
+    tempfile,
+    `<xsl:stylesheet
+version="1.0"
+xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+<xsl:template match="/">
+<root><xsl:apply-templates/></root>
+</xsl:template>
+<xsl:template match="${match}">
+${template}
+</xsl:template>
+</xsl:stylesheet>`
+  );
+  const transform = buildStylesheet(tempfile);
+  unlinkSync(tempfile);
+  return transform;
+}
 
 test("slimdon", () => {
   const document = new slimdom.Document();
@@ -247,4 +268,15 @@ test("evaluteAttributeValueTemplate", () => {
   expect(
     evaluteAttributeValueTemplate(context, "{local-name()}-{text()}-foo")
   ).toEqual("Author-Mr. Foo-foo");
+});
+
+test("elementNode", () => {
+  const transform = makeSimpleTransform(
+    "//Author",
+    "<xsl:element name='test-{local-name()}'>Hi!</xsl:element>"
+  );
+  const results = transform(document);
+  expect(evaluateXPathToString("/root/test-Author[1]/text()", results)).toEqual(
+    "Hi!"
+  );
 });

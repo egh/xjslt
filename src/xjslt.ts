@@ -211,6 +211,22 @@ function literalElementInternal(
   func({ ...context, outputNode: newNode });
 }
 
+function elementInternal(
+  context: ProcessingContext,
+  node: NodeOutputData,
+  func: (context: ProcessingContext) => void
+) {
+  let newNode: any;
+  const name = evaluteAttributeValueTemplate(context, node.name);
+  if (node.ns) {
+    newNode = context.outputDocument.createElementNS(node.ns, name);
+  } else {
+    newNode = context.outputDocument.createElement(name);
+  }
+  context.outputNode.appendChild(newNode);
+  func({ ...context, outputNode: newNode });
+}
+
 function ifInternal(
   context: ProcessingContext,
   attributes: IfAttributes,
@@ -369,6 +385,7 @@ export {
   applyTemplatesInternal,
   buildStylesheet,
   chooseInternal,
+  elementInternal,
   evaluteAttributeValueTemplate,
   forEachInternal,
   ifInternal,

@@ -45,6 +45,19 @@ function compileChooseNode(node: any) {
   );
 }
 
+function compileElementNode(node: any) {
+  return estree.makeCallWithContext(
+    estree.makeMember("xjslt", "elementInternal"),
+    [
+      estree.makeObject({
+        name: estree.makeLiteral(node.getAttribute("name")),
+        namespace: estree.makeLiteral(node.getAttribute("namespace")),
+      }),
+      estree.makeArrowFunction(compileNodeArray(node.childNodes)),
+    ]
+  );
+}
+
 function compileIfNode(node: any) {
   return estree.makeCallWithContext(estree.makeMember("xjslt", "ifInternal"), [
     estree.makeObject({
@@ -96,6 +109,8 @@ export function compileNode(node: any) {
         return compileApplyTemplatesNode(node);
       } else if (node.localName === "choose") {
         return compileChooseNode(node);
+      } else if (node.localName === "element") {
+        return compileElementNode(node);
       } else if (node.localName === "if") {
         return compileIfNode(node);
       } else if (node.localName === "for-each") {
