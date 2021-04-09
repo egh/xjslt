@@ -38,13 +38,6 @@ test("slimdon", () => {
   expect(evaluateXPathToString("/root/text()", document)).toEqual("text");
 });
 
-test("acorn", () => {
-  const parsed = Parser.extend(jsx()).parse("my(<foo/>, 'code');", {
-    ecmaVersion: 2020,
-  });
-  expect(parsed.type).toEqual("Program");
-  expect(parsed.body[0].type).toEqual("ExpressionStatement");
-});
 
 test("astring", () => {
   const parsed = Parser.parse("my('code');", { ecmaVersion: 2020 });
@@ -105,7 +98,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
   });
 }
 
-const document = sync(readFileSync("./test/simple.xml"));
+const document = sync(readFileSync("./test/simple.xml").toString());
 
 test("compiled", () => {
   let str = "";
@@ -115,10 +108,10 @@ test("compiled", () => {
   expect(str).toEqual(readFileSync("./test/simple.out", "utf8"));
 });
 
-const xsltDoc = sync(readFileSync("./test/simple.xslt"));
+const xsltDoc = sync(readFileSync("./test/simple.xslt").toString());
 
 const xslt2Doc = stripSpaceStylesheet(
-  sync(readFileSync("./test/simple2.xslt"))
+  sync(readFileSync("./test/simple2.xslt").toString())
 );
 
 function walkTree(node: any, func: (node: any) => void): void {
