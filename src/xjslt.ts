@@ -1,6 +1,10 @@
 import { generate } from "astring";
 import { sync } from "slimdom-sax-parser";
-import { evaluateXPathToString, evaluateXPathToNodes, evaluateXPathToBoolean } from "fontoxpath";
+import {
+  evaluateXPathToString,
+  evaluateXPathToNodes,
+  evaluateXPathToBoolean,
+} from "fontoxpath";
 import { readFileSync, writeFileSync, symlinkSync, rmdirSync } from "fs";
 import * as path from "path";
 import * as tempy from "tempy";
@@ -127,20 +131,20 @@ function getTemplate(
 
 const BUILT_IN_TEMPLATES = [
   {
-    attributes: {match: "*|/"},
+    attributes: { match: "*|/" },
     apply: (context: ProcessingContext) => {
       applyTemplatesInternal(context, { select: null });
-    }
+    },
   },
   {
-    attributes: {match: "text()|@*"},
+    attributes: { match: "text()|@*" },
     apply: (context: ProcessingContext) => {
       valueOfInternal(context, { select: "." });
-    }
+    },
   },
   {
-    attributes: {match: "processing-instruction()|comment()"},
-    apply: (_context: ProcessingContext) => {}
+    attributes: { match: "processing-instruction()|comment()" },
+    apply: (_context: ProcessingContext) => {},
   },
 ];
 
@@ -149,7 +153,9 @@ function getTemplateBuiltin(node: any): CompiledTemplate {
 }
 
 function processNode(context: ProcessingContext) {
-  const template = getTemplate(context.currentNode, context.templates) || getTemplateBuiltin(context.currentNode);
+  const template =
+    getTemplate(context.currentNode, context.templates) ||
+    getTemplateBuiltin(context.currentNode);
   if (template) {
     template.apply(context);
   }
@@ -233,7 +239,7 @@ function forEachInternal(
   attributes: ForEachAttributes,
   func: (context: ProcessingContext) => void
 ) {
-  const nodeList = evaluateXPathToNodes(attributes.select, context.currentNode)
+  const nodeList = evaluateXPathToNodes(attributes.select, context.currentNode);
   for (let node of nodeList) {
     func({ ...context, currentNode: node, currentNodeList: nodeList });
   }

@@ -38,7 +38,6 @@ test("slimdon", () => {
   expect(evaluateXPathToString("/root/text()", document)).toEqual("text");
 });
 
-
 test("astring", () => {
   const parsed = Parser.parse("my('code');", { ecmaVersion: 2020 });
   expect(generate(parsed)).toEqual("my('code');\n");
@@ -153,31 +152,33 @@ test("compileApplyTemplatesNode", () => {
 });
 
 test("compileForEachNode", () => {
-  const xml = "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"><xsl:template match=\"/\"><doc><xsl:for-each select=\"./*\">foo</xsl:for-each></doc></xsl:template></xsl:stylesheet>";
+  const xml =
+    '<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match="/"><doc><xsl:for-each select="./*">foo</xsl:for-each></doc></xsl:template></xsl:stylesheet>';
   const dom = sync(xml);
   const nodes = evaluateXPathToNodes("//xsl:for-each", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.forEachInternal(context, {select: "./*"}, context => {xjslt.literalTextInternal(context, \"foo\");});'
+    'xjslt.forEachInternal(context, {select: "./*"}, context => {xjslt.literalTextInternal(context, "foo");});'
   );
 });
 
 test("compileChooseNode", () => {
-  const xml = "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"><xsl:template match=\"/\"><xsl:choose><xsl:when test=\"[@att='bar']\">foo</xsl:when><xsl:otherwise>bar</xsl:otherwise></xsl:choose></xsl:template></xsl:stylesheet>";
+  const xml =
+    '<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match="/"><xsl:choose><xsl:when test="[@att=\'bar\']">foo</xsl:when><xsl:otherwise>bar</xsl:otherwise></xsl:choose></xsl:template></xsl:stylesheet>';
   const dom = sync(xml);
   const nodes = evaluateXPathToNodes("//xsl:choose", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    "xjslt.chooseInternal(context, [{test: \"[@att='bar']\",apply: context => {xjslt.literalTextInternal(context, \"foo\");}}, {apply: context => {xjslt.literalTextInternal(context, \"bar\");}}]);"
+    'xjslt.chooseInternal(context, [{test: "[@att=\'bar\']",apply: context => {xjslt.literalTextInternal(context, "foo");}}, {apply: context => {xjslt.literalTextInternal(context, "bar");}}]);'
   );
 });
 
 test("compileIfNode", () => {
-  const xml = "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"><xsl:template match=\"/\"><doc><xsl:if test=\"[@att='bar']\">foo</xsl:if></doc></xsl:template></xsl:stylesheet>";
+  const xml =
+    '<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match="/"><doc><xsl:if test="[@att=\'bar\']">foo</xsl:if></doc></xsl:template></xsl:stylesheet>';
   const dom = sync(xml);
   const nodes = evaluateXPathToNodes("//xsl:if", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.ifInternal(context, {test: "[@att=\'bar\']"}, context => {xjslt.literalTextInternal(context, \"foo\");});'
+    'xjslt.ifInternal(context, {test: "[@att=\'bar\']"}, context => {xjslt.literalTextInternal(context, "foo");});'
   );
-
 });
 
 test("compileLiteralElementNode", () => {

@@ -1,10 +1,10 @@
 import * as estree from "./estree-util";
 import { XSLT1_NSURI, NodeType } from "./xjslt";
 
-/** 
+/**
  * Functions to walk a DOM tree of an XSLT stylesheet and generate an
  * ESTree that can be used to process an input document.
-*/
+ */
 
 function compileApplyTemplatesNode(node: any) {
   return estree.makeCallWithContext(
