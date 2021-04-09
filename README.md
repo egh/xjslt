@@ -16,9 +16,8 @@ Tested with [node 14.16.1](https://nodejs.org/)
 - `template` - named templates, priority, mode, and params are not yet support
 - `apply-templates`/`for-each` - recursive evaluation
 - `if`/`choose/when/otherwise` - conditional evaluation
-- `element`/`attribute` - dynamic elements and attributes
-- `value-of` - outputting literal text
-- literal xml output
+- `element`/`attribute`/`value-of` - dynamic elements, attributes, and text
+- literal text and xml element output
 
 # TODO (not yet implemented)
 - [ ] `include`
