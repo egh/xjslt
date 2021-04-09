@@ -4,7 +4,6 @@ import {
   buildStylesheet,
   evaluteAttributeValueTemplate,
   literalTextInternal,
-  literalElementInternal,
   makeTemplateAttributes,
   processNode,
   stripSpaceStylesheet,
@@ -16,7 +15,6 @@ import { evaluateXPathToString, evaluateXPathToNodes } from "fontoxpath";
 import { generate } from "astring";
 import { sync } from "slimdom-sax-parser";
 import { Parser } from "acorn";
-import * as jsx from "acorn-jsx";
 import * as tempy from "tempy";
 import * as saxes from "saxes";
 import { readFileSync, writeFileSync, unlinkSync } from "fs";
