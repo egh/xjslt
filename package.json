@@ -7,7 +7,8 @@
   },
   "scripts": {
     "build": "npx tsc",
-    "test": "jest --coverage --verbose --watch"
+    "test": "jest --coverage --verbose --watch",
+    "check": "jest && prettier -c src/ test/"
   },
   "bin": {
     "xjslt": "./dist/cli.js"
