@@ -205,8 +205,9 @@ function literalElementInternal(
   } else {
     newNode = context.outputDocument.createElement(node.name);
   }
-  for (let attr in node.attributes) {
-    newNode.setAttribute(attr, node.attributes[attr]);
+  for (let attr of node.attributes) {
+    const value = evaluteAttributeValueTemplate(context, attr.value);
+    newNode.setAttribute(attr.name, value);
   }
   context.outputNode.appendChild(newNode);
   func({ ...context, outputNode: newNode });

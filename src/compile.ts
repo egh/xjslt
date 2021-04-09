@@ -95,8 +95,11 @@ function compileForEachNode(node: any) {
 function compileLiteralElementNode(node: any) {
   let attributes = [];
   for (let n in node.attributes) {
-    attributes[node.attributes[n].localName] = estree.makeLiteral(
-      node.attributes[n].value
+    attributes.push(
+      estree.makeObject({
+        name: estree.makeLiteral(node.attributes[n].localName),
+        value: estree.makeLiteral(node.attributes[n].value),
+      })
     );
   }
   return estree.makeCallWithContext(
@@ -104,7 +107,10 @@ function compileLiteralElementNode(node: any) {
     [
       estree.makeObject({
         name: estree.makeLiteral(node.localName),
-        attributes: estree.makeObject(attributes),
+        attributes: {
+          type: "ArrayExpression",
+          elements: attributes,
+        },
       }),
       estree.makeArrowFunction(compileNodeArray(node.childNodes)),
     ]
