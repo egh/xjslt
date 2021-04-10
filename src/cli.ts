@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* -*-mode: typescript-*- */
 /*
  * Copyright (C) 2021 Erik Hetzner
  *
