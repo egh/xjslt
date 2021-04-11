@@ -239,7 +239,9 @@ function attributeInternal(
   func: (context: ProcessingContext) => void
 ) {
   const name = evaluteAttributeValueTemplate(context, attributes.name);
-  const value = extractText(evaluateTemplate(context, func));
+  const value = extractText(
+    evaluateSequenceConstructorInTemporaryTree(context, func)
+  );
   context.outputNode.setAttribute(name, value);
 }
 
@@ -386,10 +388,11 @@ function evaluteAttributeValueTemplate(
 }
 
 /**
- * Evaluate a standalone "template" and return the output document.
- * Use for <xsl:attribute> and <xsl:variable>
+ * Evaluate a sequence constructor in a temporary tree and return the
+ * output document. Use for <xsl:attribute> and <xsl:variable>
+ * https://www.w3.org/TR/xslt20/#temporary-trees
  */
-function evaluateTemplate(
+function evaluateSequenceConstructorInTemporaryTree(
   origContext: ProcessingContext,
   func: (context: ProcessingContext) => void
 ) {
