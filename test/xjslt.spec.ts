@@ -23,9 +23,12 @@ import {
   applyTemplatesInternal,
   buildStylesheet,
   evaluteAttributeValueTemplate,
+  extendScope,
   literalTextInternal,
   makeTemplateAttributes,
+  mergeVariableScopes,
   processNode,
+  setVariable,
   stripSpaceStylesheet,
   valueOfInternal,
 } from "../src/xjslt";
@@ -40,6 +43,13 @@ import * as saxes from "saxes";
 import { readFileSync, writeFileSync, unlinkSync } from "fs";
 
 function makeSimpleTransform(match: string, template: string) {
+  return makeTransform(`
+<xsl:template match="${match}">
+${template}
+</xsl:template>`);
+}
+
+function makeTransform(body: string) {
   const tempfile = tempy.file();
   writeFileSync(
     tempfile,
@@ -49,9 +59,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <xsl:template match="/">
 <root><xsl:apply-templates/></root>
 </xsl:template>
-<xsl:template match="${match}">
-${template}
-</xsl:template>
+${body}
 </xsl:stylesheet>`
   );
   const transform = buildStylesheet(tempfile);
@@ -127,6 +135,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     currentNodeList: [],
     mode: null,
     templates: templates,
+    variableScopes: [{}],
   };
   processNode(context);
   walkTree(doc, (node) => {
@@ -261,7 +270,7 @@ test("compileTemplateNode", () => {
 
 test("compileStylesheetNode", () => {
   expect(generate(compileNode(xslt2Doc), GENERATE_OPTS)).toEqual(
-    'let slimdom = require("slimdom");let fontoxpath = require("fontoxpath");let xjslt = require("./dist/xjslt");function transform(document, output) {let templates = [];templates.push({attributes: {match: "/"},apply: context => {xjslt.literalElementInternal(context, {name: "doc",attributes: []}, context => {xjslt.applyTemplatesInternal(context, {select: null});});}});templates.push({attributes: {match: "Article"},apply: context => {xjslt.literalElementInternal(context, {name: "heading",attributes: [{name: "type",value: "top"}]}, context => {xjslt.valueOfInternal(context, {select: "Title"});});xjslt.literalElementInternal(context, {name: "list",attributes: []}, context => {xjslt.applyTemplatesInternal(context, {select: "Authors/Author"});});}});templates.push({attributes: {match: "Author"},apply: context => {xjslt.literalElementInternal(context, {name: "item",attributes: []}, context => {xjslt.valueOfInternal(context, {select: "."});});}});const doc = new slimdom.Document();let context = {outputDocument: doc,outputNode: doc,currentNode: document,currentNodeList: [],mode: null,templates: templates};xjslt.processNode(context);return context.outputDocument;}module.exports.transform = transform;'
+    'let slimdom = require("slimdom");let fontoxpath = require("fontoxpath");let xjslt = require("./dist/xjslt");function transform(document, output) {let templates = [];templates.push({attributes: {match: "/"},apply: context => {xjslt.literalElementInternal(context, {name: "doc",attributes: []}, context => {xjslt.applyTemplatesInternal(context, {select: null});});}});templates.push({attributes: {match: "Article"},apply: context => {xjslt.literalElementInternal(context, {name: "heading",attributes: [{name: "type",value: "top"}]}, context => {xjslt.valueOfInternal(context, {select: "Title"});});xjslt.literalElementInternal(context, {name: "list",attributes: []}, context => {xjslt.applyTemplatesInternal(context, {select: "Authors/Author"});});}});templates.push({attributes: {match: "Author"},apply: context => {xjslt.literalElementInternal(context, {name: "item",attributes: []}, context => {xjslt.valueOfInternal(context, {select: "."});});}});const doc = new slimdom.Document();let context = {outputDocument: doc,outputNode: doc,currentNode: document,currentNodeList: [],mode: null,templates: templates,variableScopes: []};xjslt.processNode(context);return context.outputDocument;}module.exports.transform = transform;'
   );
 });
 
@@ -282,6 +291,7 @@ test("evaluteAttributeValueTemplate", () => {
     currentNode: nodes[0],
     currentNodeList: nodes,
     templates: [],
+    variableScopes: [{}],
   };
   expect(
     evaluteAttributeValueTemplate(context, "{local-name()}-{text()}-foo")
@@ -319,4 +329,31 @@ test("literalElementAttributeEvaluation", () => {
   expect(
     evaluateXPathToString("/root/test[@name='test-Author'][1]", results)
   ).toEqual("Mr. Foo");
+});
+
+test("variableShadowing", () => {
+  const transform = makeSimpleTransform(
+    "//Author",
+    "<test><xsl:variable name='test' select='text()'/><xsl:value-of select='$test'/></test>"
+  );
+  const results = transform(document);
+  expect(evaluateXPathToString("/root/test[1]/text()", results)).toEqual(
+    "Mr. Foo"
+  );
+});
+
+test("variable scopes", () => {
+  let scopes = [{}];
+  setVariable(scopes, "a", 1);
+  setVariable(scopes, "b", 2);
+  let newScopes = extendScope(scopes);
+  setVariable(newScopes, "b", 3);
+  let merged = mergeVariableScopes(newScopes);
+  expect(merged["a"]).toEqual(1);
+  expect(merged["b"]).toEqual(3);
+  expect(scopes[0]).toEqual({ a: 1, b: 2 });
+  expect(newScopes[1]).toEqual({ b: 3 });
+  expect(mergeVariableScopes(null)).toEqual({});
+  expect(mergeVariableScopes([])).toEqual({});
+  expect(mergeVariableScopes([{}])).toEqual({});
 });

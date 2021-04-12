@@ -158,6 +158,8 @@ export function compileNode(node: any) {
         return compileForEachNode(node);
       } else if (node.localName === "template") {
         return compileTemplateNode(node);
+      } else if (node.localName === "variable") {
+        return compileVariableNode(node);
       } else if (node.localName === "stylesheet") {
         return compileStylesheetNode(node);
       } else if (node.localName === "output") {
@@ -250,6 +252,10 @@ function compileStylesheetNode(node: any) {
                     },
                     mode: estree.makeLiteral(null),
                     templates: estree.makeIdentifier("templates"),
+                    variableScopes: {
+                      type: "ArrayExpression",
+                      elements: [],
+                    },
                   }),
                 },
               ],
@@ -311,6 +317,19 @@ function compileValueOfNode(node: any) {
       estree.makeObject({
         select: estree.makeLiteral(node.getAttribute("select")),
       }),
+    ]
+  );
+}
+
+function compileVariableNode(node: any) {
+  return estree.makeCallWithContext(
+    estree.makeMember("xjslt", "variableInternal"),
+    [
+      estree.makeObject({
+        name: estree.makeLiteral(node.getAttribute("name")),
+        select: estree.makeLiteral(node.getAttribute("select")),
+      }),
+      estree.makeArrowFunction(compileNodeArray(node.childNodes)),
     ]
   );
 }

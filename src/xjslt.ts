@@ -21,9 +21,11 @@
 import { generate } from "astring";
 import { sync } from "slimdom-sax-parser";
 import {
+  evaluateXPath,
   evaluateXPathToString,
   evaluateXPathToNodes,
   evaluateXPathToBoolean,
+  EvaluateXPath,
 } from "fontoxpath";
 import { readFileSync, writeFileSync, symlinkSync, rmdirSync } from "fs";
 import * as path from "path";
@@ -51,6 +53,11 @@ export const enum NodeType {
 interface ApplyTemplateAttributes {
   select?: string;
   mode?: string;
+}
+
+interface VariableAttributes {
+  select?: string;
+  name: string;
 }
 
 interface AttributeOutputData {
@@ -82,13 +89,18 @@ interface NodeOutputData {
   attributes: Array<AttributeOutputData>;
 }
 
+interface VariableScope {
+  [key: string]: any;
+}
+
 interface ProcessingContext {
-  outputDocument: any;
+  outputDocument: slimdom.Document;
   outputNode: any;
   currentNode: any;
   currentNodeList: Array<any>;
   mode?: string;
   templates: Array<CompiledTemplate>;
+  variableScopes: Array<VariableScope>;
 }
 
 interface TemplateAttributes {
@@ -107,6 +119,7 @@ interface ValueOfAttributes {
 function nameTest(
   name: string,
   node: any,
+  variableScopes: Array<VariableScope>,
   nsResolver?: (prefix: string) => string
 ) {
   let checkContext = node;
@@ -120,7 +133,7 @@ function nameTest(
       name,
       checkContext,
       null,
-      null,
+      mergeVariableScopes(variableScopes),
       options
     );
     /* It counts as a match if the node we were testing against is in the resulting node set. */
@@ -140,10 +153,11 @@ function nameTest(
  */
 function getTemplate(
   node: any,
-  templates: Array<CompiledTemplate>
+  templates: Array<CompiledTemplate>,
+  variableScopes: Array<VariableScope>
 ): CompiledTemplate {
   for (let template of templates) {
-    if (nameTest(template.attributes.match, node)) {
+    if (nameTest(template.attributes.match, node, variableScopes)) {
       return template;
     }
   }
@@ -170,13 +184,16 @@ const BUILT_IN_TEMPLATES = [
 ];
 
 function getTemplateBuiltin(node: any): CompiledTemplate {
-  return getTemplate(node, BUILT_IN_TEMPLATES);
+  return getTemplate(node, BUILT_IN_TEMPLATES, null);
 }
 
 function processNode(context: ProcessingContext) {
   const template =
-    getTemplate(context.currentNode, context.templates) ||
-    getTemplateBuiltin(context.currentNode);
+    getTemplate(
+      context.currentNode,
+      context.templates,
+      context.variableScopes
+    ) || getTemplateBuiltin(context.currentNode);
   if (template) {
     template.apply(context);
   }
@@ -193,10 +210,20 @@ function applyTemplatesInternal(
   } else {
     select = "node()";
   }
-  const nodes = evaluateXPathToNodes(select, context.currentNode);
+  const nodes = evaluateXPathToNodes(
+    select,
+    context.currentNode,
+    null,
+    mergeVariableScopes(context.variableScopes)
+  );
   for (let node of nodes) {
     /* for each node */
-    processNode({ ...context, currentNode: node, currentNodeList: nodes });
+    processNode({
+      ...context,
+      currentNode: node,
+      currentNodeList: nodes,
+      variableScopes: extendScope(context.variableScopes),
+    });
   }
 }
 
@@ -205,9 +232,49 @@ function valueOfInternal(
   attributes: ValueOfAttributes
 ) {
   const newNode = context.outputDocument.createTextNode(
-    evaluateXPathToString(attributes.select, context.currentNode)
+    evaluateXPathToString(
+      attributes.select,
+      context.currentNode,
+      null,
+      mergeVariableScopes(context.variableScopes)
+    )
   );
   context.outputNode.appendChild(newNode);
+}
+
+function variableInternal(
+  context: ProcessingContext,
+  attributes: VariableAttributes,
+  func: (context: ProcessingContext) => void
+) {
+  setVariable(
+    context.variableScopes,
+    attributes.name,
+    evaluateSelectOrSequenceConstructor(context, attributes.select, func)
+  );
+}
+
+function extendScope(variableScopes: Array<VariableScope>) {
+  return variableScopes.concat([{}]);
+}
+
+function setVariable(
+  variableScopes: Array<VariableScope>,
+  name: string,
+  value: any
+) {
+  variableScopes[variableScopes.length - 1][name] = value;
+}
+
+function mergeVariableScopes(variableScopes: Array<VariableScope>) {
+  if (variableScopes) {
+    let retval = {};
+    for (let variableScope of variableScopes) {
+      Object.assign(retval, variableScope);
+    }
+    return retval;
+  }
+  return {};
 }
 
 function literalTextInternal(context: ProcessingContext, text: string) {
@@ -230,7 +297,11 @@ function literalElementInternal(
     newNode.setAttribute(attr.name, value);
   }
   context.outputNode.appendChild(newNode);
-  func({ ...context, outputNode: newNode });
+  func({
+    ...context,
+    outputNode: newNode,
+    variableScopes: extendScope(context.variableScopes),
+  });
 }
 
 function attributeInternal(
@@ -258,7 +329,11 @@ function elementInternal(
     newNode = context.outputDocument.createElement(name);
   }
   context.outputNode.appendChild(newNode);
-  func({ ...context, outputNode: newNode });
+  func({
+    ...context,
+    outputNode: newNode,
+    variableScopes: extendScope(context.variableScopes),
+  });
 }
 
 function ifInternal(
@@ -266,7 +341,14 @@ function ifInternal(
   attributes: IfAttributes,
   func: (context: ProcessingContext) => void
 ) {
-  if (evaluateXPathToBoolean(attributes.test, context.currentNode)) {
+  if (
+    evaluateXPathToBoolean(
+      attributes.test,
+      context.currentNode,
+      null,
+      mergeVariableScopes(context.variableScopes)
+    )
+  ) {
     func(context);
   }
 }
@@ -278,7 +360,14 @@ function chooseInternal(
   for (let alternative of alternatives) {
     if (!alternative.test) {
       return alternative.apply(context);
-    } else if (evaluateXPathToBoolean(alternative.test, context.currentNode)) {
+    } else if (
+      evaluateXPathToBoolean(
+        alternative.test,
+        context.currentNode,
+        null,
+        mergeVariableScopes(context.variableScopes)
+      )
+    ) {
       return alternative.apply(context);
     }
   }
@@ -289,9 +378,19 @@ function forEachInternal(
   attributes: ForEachAttributes,
   func: (context: ProcessingContext) => void
 ) {
-  const nodeList = evaluateXPathToNodes(attributes.select, context.currentNode);
+  const nodeList = evaluateXPathToNodes(
+    attributes.select,
+    context.currentNode,
+    null,
+    mergeVariableScopes(context.variableScopes)
+  );
   for (let node of nodeList) {
-    func({ ...context, currentNode: node, currentNodeList: nodeList });
+    func({
+      ...context,
+      currentNode: node,
+      currentNodeList: nodeList,
+      variableScopes: extendScope(context.variableScopes),
+    });
   }
 }
 
@@ -320,7 +419,7 @@ function preserveSpace(
   nsResolver: (prefix: string) => string
 ) {
   for (let name of preserve) {
-    if (nameTest(name, node, nsResolver)) {
+    if (nameTest(name, node, null, nsResolver)) {
       return true;
     }
   }
@@ -378,13 +477,32 @@ function evaluteAttributeValueTemplate(
       if (piece[0] === "{") {
         return evaluateXPathToString(
           piece.substring(1, piece.length - 1),
-          context.currentNode
+          context.currentNode,
+          null,
+          mergeVariableScopes(context.variableScopes)
         );
       } else {
         return piece;
       }
     })
     .join("");
+}
+
+function evaluateSelectOrSequenceConstructor(
+  context: ProcessingContext,
+  select: string,
+  func: (context: ProcessingContext) => void
+): EvaluateXPath | slimdom.Document {
+  if (select) {
+    return evaluateXPath(
+      select,
+      context.currentNode,
+      null,
+      mergeVariableScopes(context.variableScopes)
+    );
+  } else {
+    return evaluateSequenceConstructorInTemporaryTree(context, func);
+  }
 }
 
 /**
@@ -405,6 +523,7 @@ function evaluateSequenceConstructorInTemporaryTree(
     currentNodeList: [],
     mode: null,
     templates: origContext.templates,
+    variableScopes: extendScope(origContext.variableScopes),
   };
   func(context);
   return context.outputDocument;
@@ -464,13 +583,17 @@ export {
   chooseInternal,
   elementInternal,
   evaluteAttributeValueTemplate,
+  extendScope,
   forEachInternal,
   ifInternal,
   literalTextInternal,
   literalElementInternal,
   makeTemplateAttributes,
+  mergeVariableScopes,
   processNode,
+  setVariable,
   stripSpace,
   stripSpaceStylesheet,
   valueOfInternal,
+  variableInternal,
 };
