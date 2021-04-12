@@ -208,7 +208,7 @@ function applyTemplatesInternal(
   if (attributes.select) {
     select = attributes.select;
   } else {
-    select = "node()";
+    select = "child::node()";
   }
   const nodes = evaluateXPathToNodes(
     select,
