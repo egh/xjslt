@@ -50,6 +50,8 @@ export const enum NodeType {
   NOTATION_NODE = 12, // historical
 }
 
+type SequenceConstructor = (context: ProcessingContext) => void;
+
 interface ApplyTemplateAttributes {
   select?: string;
   mode?: string;
@@ -67,12 +69,12 @@ interface AttributeOutputData {
 
 interface ChooseAlternative {
   test?: string;
-  apply: (context: ProcessingContext) => void;
+  apply: SequenceConstructor;
 }
 
 interface CompiledTemplate {
   attributes: TemplateAttributes;
-  apply: (context: ProcessingContext) => void;
+  apply: SequenceConstructor;
 }
 
 interface IfAttributes {
@@ -245,7 +247,7 @@ function valueOfInternal(
 function variableInternal(
   context: ProcessingContext,
   attributes: VariableAttributes,
-  func: (context: ProcessingContext) => void
+  func: SequenceConstructor
 ) {
   setVariable(
     context.variableScopes,
@@ -284,7 +286,7 @@ function literalTextInternal(context: ProcessingContext, text: string) {
 function literalElementInternal(
   context: ProcessingContext,
   node: NodeOutputData,
-  func: (context: ProcessingContext) => void
+  func: SequenceConstructor
 ) {
   let newNode: any;
   if (node.ns) {
@@ -307,7 +309,7 @@ function literalElementInternal(
 function attributeInternal(
   context: ProcessingContext,
   attributes: { name: string; ns?: string },
-  func: (context: ProcessingContext) => void
+  func: SequenceConstructor
 ) {
   const name = evaluteAttributeValueTemplate(context, attributes.name);
   const value = extractText(
@@ -319,7 +321,7 @@ function attributeInternal(
 function elementInternal(
   context: ProcessingContext,
   node: NodeOutputData,
-  func: (context: ProcessingContext) => void
+  func: SequenceConstructor
 ) {
   let newNode: any;
   const name = evaluteAttributeValueTemplate(context, node.name);
@@ -339,7 +341,7 @@ function elementInternal(
 function ifInternal(
   context: ProcessingContext,
   attributes: IfAttributes,
-  func: (context: ProcessingContext) => void
+  func: SequenceConstructor
 ) {
   if (
     evaluateXPathToBoolean(
@@ -376,7 +378,7 @@ function chooseInternal(
 function forEachInternal(
   context: ProcessingContext,
   attributes: ForEachAttributes,
-  func: (context: ProcessingContext) => void
+  func: SequenceConstructor
 ) {
   const nodeList = evaluateXPathToNodes(
     attributes.select,
@@ -491,7 +493,7 @@ function evaluteAttributeValueTemplate(
 function evaluateSelectOrSequenceConstructor(
   context: ProcessingContext,
   select: string,
-  func: (context: ProcessingContext) => void
+  func: SequenceConstructor
 ): EvaluateXPath | slimdom.Document {
   if (select) {
     return evaluateXPath(
@@ -512,7 +514,7 @@ function evaluateSelectOrSequenceConstructor(
  */
 function evaluateSequenceConstructorInTemporaryTree(
   origContext: ProcessingContext,
-  func: (context: ProcessingContext) => void
+  func: SequenceConstructor
 ) {
   const doc = new slimdom.Document();
   doc.appendChild(doc.createElement("root"));
