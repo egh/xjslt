@@ -20,6 +20,7 @@ Tested with [node 14.16.1](https://nodejs.org/)
 - `apply-templates`/`for-each` - recursive evaluation
 - `element`/`attribute`/`value-of` - dynamic elements, attributes, and text
 - literal text and xml element output
+- `variable`
 
 # TODO (not yet implemented)
 - [ ] `include`
@@ -27,7 +28,6 @@ Tested with [node 14.16.1](https://nodejs.org/)
 - [ ] `output`
 - [ ] `key`
 - [ ] `sort`
-- [ ] variables
 - [ ] `attribute-set`
 - [ ] template priority
 - [ ] template mode
