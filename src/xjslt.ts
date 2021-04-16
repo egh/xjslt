@@ -189,7 +189,7 @@ function getTemplateBuiltin(node: any): CompiledTemplate {
   return getTemplate(node, BUILT_IN_TEMPLATES, null);
 }
 
-function processNode(context: ProcessingContext) {
+export function processNode(context: ProcessingContext) {
   const template =
     getTemplate(
       context.currentNode,
@@ -201,7 +201,7 @@ function processNode(context: ProcessingContext) {
   }
 }
 
-function applyTemplatesInternal(
+export function applyTemplatesInternal(
   context: ProcessingContext,
   attributes: ApplyTemplateAttributes
 ) {
@@ -229,7 +229,7 @@ function applyTemplatesInternal(
   }
 }
 
-function valueOfInternal(
+export function valueOfInternal(
   context: ProcessingContext,
   attributes: ValueOfAttributes
 ) {
@@ -244,7 +244,7 @@ function valueOfInternal(
   context.outputNode.appendChild(newNode);
 }
 
-function variableInternal(
+export function variableInternal(
   context: ProcessingContext,
   attributes: VariableAttributes,
   func: SequenceConstructor
@@ -256,11 +256,11 @@ function variableInternal(
   );
 }
 
-function extendScope(variableScopes: Array<VariableScope>) {
+export function extendScope(variableScopes: Array<VariableScope>) {
   return variableScopes.concat([{}]);
 }
 
-function setVariable(
+export function setVariable(
   variableScopes: Array<VariableScope>,
   name: string,
   value: any
@@ -268,7 +268,7 @@ function setVariable(
   variableScopes[variableScopes.length - 1][name] = value;
 }
 
-function mergeVariableScopes(variableScopes: Array<VariableScope>) {
+export function mergeVariableScopes(variableScopes: Array<VariableScope>) {
   if (variableScopes) {
     let retval = {};
     for (let variableScope of variableScopes) {
@@ -279,11 +279,11 @@ function mergeVariableScopes(variableScopes: Array<VariableScope>) {
   return {};
 }
 
-function literalTextInternal(context: ProcessingContext, text: string) {
+export function literalTextInternal(context: ProcessingContext, text: string) {
   context.outputNode.appendChild(context.outputDocument.createTextNode(text));
 }
 
-function literalElementInternal(
+export function literalElementInternal(
   context: ProcessingContext,
   node: NodeOutputData,
   func: SequenceConstructor
@@ -306,7 +306,7 @@ function literalElementInternal(
   });
 }
 
-function attributeInternal(
+export function attributeInternal(
   context: ProcessingContext,
   attributes: { name: string; ns?: string },
   func: SequenceConstructor
@@ -318,7 +318,7 @@ function attributeInternal(
   context.outputNode.setAttribute(name, value);
 }
 
-function elementInternal(
+export function elementInternal(
   context: ProcessingContext,
   node: NodeOutputData,
   func: SequenceConstructor
@@ -338,7 +338,7 @@ function elementInternal(
   });
 }
 
-function ifInternal(
+export function ifInternal(
   context: ProcessingContext,
   attributes: IfAttributes,
   func: SequenceConstructor
@@ -355,7 +355,7 @@ function ifInternal(
   }
 }
 
-function chooseInternal(
+export function chooseInternal(
   context: ProcessingContext,
   alternatives: Array<ChooseAlternative>
 ) {
@@ -375,7 +375,7 @@ function chooseInternal(
   }
 }
 
-function forEachInternal(
+export function forEachInternal(
   context: ProcessingContext,
   attributes: ForEachAttributes,
   func: SequenceConstructor
@@ -405,7 +405,7 @@ function findAttrValue(attrs: Array<any>, name: string) {
   }
 }
 
-function makeTemplateAttributes(node: any): TemplateAttributes {
+export function makeTemplateAttributes(node: any): TemplateAttributes {
   const attrs = node.attributes;
   return {
     match: findAttrValue(attrs, "match"),
@@ -429,7 +429,7 @@ function preserveSpace(
 }
 
 /* https://www.w3.org/TR/xslt11/#strip */
-function stripSpace(
+export function stripSpace(
   doc: any,
   preserve: Array<string>,
   nsResolver: (prefix: string) => string
@@ -460,7 +460,7 @@ function stripSpace(
 }
 
 /* Strip space for an XSLT stylesheet. */
-function stripSpaceStylesheet(doc: any) {
+export function stripSpaceStylesheet(doc: any) {
   const nsResolver = (prefix: string): string => {
     if (prefix === "xsl") {
       return XSLT1_NSURI;
@@ -469,7 +469,7 @@ function stripSpaceStylesheet(doc: any) {
   return stripSpace(doc, ["xsl:text"], nsResolver);
 }
 
-function evaluteAttributeValueTemplate(
+export function evaluteAttributeValueTemplate(
   context: ProcessingContext,
   avt: string
 ): string {
@@ -554,7 +554,7 @@ function extractText(document: any) {
  * Build a stylesheet. Returns a function that will take an input DOM
  * document and return an output DOM document.
  */
-function buildStylesheet(xsltPath: string) {
+export function buildStylesheet(xsltPath: string) {
   let slimdom_path = require.resolve("slimdom").split(path.sep);
   let root_dir = path.join(
     "/",
@@ -577,25 +577,3 @@ function buildStylesheet(xsltPath: string) {
   rmdirSync(tempdir, { recursive: true });
   return transform.transform;
 }
-
-export {
-  applyTemplatesInternal,
-  attributeInternal,
-  buildStylesheet,
-  chooseInternal,
-  elementInternal,
-  evaluteAttributeValueTemplate,
-  extendScope,
-  forEachInternal,
-  ifInternal,
-  literalTextInternal,
-  literalElementInternal,
-  makeTemplateAttributes,
-  mergeVariableScopes,
-  processNode,
-  setVariable,
-  stripSpace,
-  stripSpaceStylesheet,
-  valueOfInternal,
-  variableInternal,
-};
