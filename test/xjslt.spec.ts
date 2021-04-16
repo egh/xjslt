@@ -22,7 +22,7 @@ import {
   NodeType,
   applyTemplatesInternal,
   buildStylesheet,
-  evaluteAttributeValueTemplate,
+  evaluateAttributeValueTemplate,
   extendScope,
   literalTextInternal,
   makeTemplateAttributes,
@@ -283,7 +283,7 @@ test("compileStylesheetNode", () => {
   ).toEqual(readFileSync("./test/simple2.out", "utf-8"));
 });
 
-test("evaluteAttributeValueTemplate", () => {
+test("evaluateAttributeValueTemplate", () => {
   const nodes = evaluateXPathToNodes("//Author", document);
   const context = {
     outputDocument: null,
@@ -294,7 +294,7 @@ test("evaluteAttributeValueTemplate", () => {
     variableScopes: [{}],
   };
   expect(
-    evaluteAttributeValueTemplate(context, "{local-name()}-{text()}-foo")
+    evaluateAttributeValueTemplate(context, "{local-name()}-{text()}-foo")
   ).toEqual("Author-Mr. Foo-foo");
 });
 

@@ -295,7 +295,7 @@ export function literalElementInternal(
     newNode = context.outputDocument.createElement(node.name);
   }
   for (let attr of node.attributes) {
-    const value = evaluteAttributeValueTemplate(context, attr.value);
+    const value = evaluateAttributeValueTemplate(context, attr.value);
     newNode.setAttribute(attr.name, value);
   }
   context.outputNode.appendChild(newNode);
@@ -311,7 +311,7 @@ export function attributeInternal(
   attributes: { name: string; ns?: string },
   func: SequenceConstructor
 ) {
-  const name = evaluteAttributeValueTemplate(context, attributes.name);
+  const name = evaluateAttributeValueTemplate(context, attributes.name);
   const value = extractText(
     evaluateSequenceConstructorInTemporaryTree(context, func)
   );
@@ -324,7 +324,7 @@ export function elementInternal(
   func: SequenceConstructor
 ) {
   let newNode: any;
-  const name = evaluteAttributeValueTemplate(context, node.name);
+  const name = evaluateAttributeValueTemplate(context, node.name);
   if (node.ns) {
     newNode = context.outputDocument.createElementNS(node.ns, name);
   } else {
@@ -469,7 +469,7 @@ export function stripSpaceStylesheet(doc: any) {
   return stripSpace(doc, ["xsl:text"], nsResolver);
 }
 
-export function evaluteAttributeValueTemplate(
+export function evaluateAttributeValueTemplate(
   context: ProcessingContext,
   avt: string
 ): string {
