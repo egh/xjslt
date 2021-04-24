@@ -405,16 +405,6 @@ function findAttrValue(attrs: Array<any>, name: string) {
   }
 }
 
-export function makeTemplateAttributes(node: any): TemplateAttributes {
-  const attrs = node.attributes;
-  return {
-    match: findAttrValue(attrs, "match"),
-    priority: findAttrValue(attrs, "priority"),
-    name: findAttrValue(attrs, "name"),
-    mode: findAttrValue(attrs, "mode"),
-  };
-}
-
 function preserveSpace(
   node: any,
   preserve: Array<string>,

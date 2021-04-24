@@ -25,7 +25,6 @@ import {
   evaluateAttributeValueTemplate,
   extendScope,
   literalTextInternal,
-  makeTemplateAttributes,
   mergeVariableScopes,
   processNode,
   setVariable,
@@ -169,12 +168,6 @@ function walkTree(node: any, func: (node: any) => void): void {
     }
   }
 }
-
-test("makeTemplateAttributes", () => {
-  const templates = evaluateXPathToNodes("//xsl:template", xsltDoc);
-  expect(makeTemplateAttributes(templates[0]).match).toEqual("/");
-  expect(makeTemplateAttributes(templates[1]).match).toEqual("Author");
-});
 
 const GENERATE_OPTS = { indent: "", lineEnd: "" };
 
