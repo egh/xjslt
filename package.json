@@ -23,17 +23,17 @@
   "devDependencies": {
     "@types/jest": "*",
     "jest": "^27.0.4",
-    "ts-jest": "^27.0.2",
+    "ts-jest": "^27.0.3",
     "ts-node": "^10.0.0",
     "typescript": "^4.3.2"
   },
   "dependencies": {
     "@types/estree": "0.0.48",
-    "acorn": "^8.3.0",
+    "acorn": "^8.4.0",
     "acorn-jsx": "*",
     "astring": "*",
     "commander": "*",
-    "fontoxpath": "*",
+    "fontoxpath": "^3.18.1",
     "slimdom": "*",
     "slimdom-sax-parser": "*",
     "tempy": "*"
