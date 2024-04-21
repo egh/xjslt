@@ -29,7 +29,8 @@ import {
 } from "fontoxpath";
 import { readFileSync, writeFileSync, symlinkSync, rmdirSync } from "fs";
 import * as path from "path";
-import * as tempy from "tempy";
+import { tmpdir } from "os";
+import { mkdtemp } from "fs/promises";
 import * as slimdom from "slimdom";
 import { compileNode } from "./compile";
 
@@ -550,7 +551,7 @@ export function buildStylesheet(xsltPath: string) {
     "/",
     ...slimdom_path.slice(0, slimdom_path.indexOf("node_modules"))
   );
-  var tempdir = tempy.directory({ prefix: "xjslt" });
+  var tempdir = await mkdtemp(path.join(tmpdir(), "xjslt-"));
   symlinkSync(
     path.join(root_dir, "node_modules"),
     path.join(tempdir, "node_modules")

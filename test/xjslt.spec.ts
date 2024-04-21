@@ -33,13 +33,14 @@ import {
 } from "../src/xjslt";
 import { compileNode } from "../src/compile";
 import * as slimdom from "slimdom";
+import * as path from "path";
 import { evaluateXPathToString, evaluateXPathToNodes } from "fontoxpath";
 import { generate } from "astring";
 import { sync } from "slimdom-sax-parser";
 import { Parser } from "acorn";
-import * as tempy from "tempy";
+import { tmpdir } from "os";
 import * as saxes from "saxes";
-import { readFileSync, writeFileSync, unlinkSync } from "fs";
+import { readFileSync, mkdtempSync, writeFileSync, unlinkSync } from "fs";
 
 function makeSimpleTransform(match: string, template: string) {
   return makeTransform(`
@@ -49,7 +50,8 @@ ${template}
 }
 
 function makeTransform(body: string) {
-  const tempfile = tempy.file();
+  const tempdir = mkdtempSync(path.join(tmpdir(), "xjslt-"));
+  const tempfile = path.join(tmpDir(), "temp.xsl");
   writeFileSync(
     tempfile,
     `<xsl:stylesheet
