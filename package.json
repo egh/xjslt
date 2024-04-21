@@ -35,6 +35,6 @@
     "commander": "*",
     "fontoxpath": "^3.18.1",
     "slimdom": "*",
-    "slimdom-sax-parser": "*",
+    "slimdom-sax-parser": "*"
   }
 }

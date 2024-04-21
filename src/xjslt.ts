@@ -545,7 +545,7 @@ function extractText(document: any) {
  * Build a stylesheet. Returns a function that will take an input DOM
  * document and return an output DOM document.
  */
-export function buildStylesheet(xsltPath: string) {
+export async function buildStylesheet(xsltPath: string) {
   let slimdom_path = require.resolve("slimdom").split(path.sep);
   let root_dir = path.join(
     "/",
@@ -564,7 +564,7 @@ export function buildStylesheet(xsltPath: string) {
   var tempfile = path.join(tempdir, "transform.js");
   const xsltDoc = stripSpaceStylesheet(sync(readFileSync(xsltPath).toString()));
   writeFileSync(tempfile, generate(compileNode(xsltDoc)));
-  let transform = require(tempfile);
+  let transform = await import(tempfile);
   rmdirSync(tempdir, { recursive: true });
   return transform.transform;
 }

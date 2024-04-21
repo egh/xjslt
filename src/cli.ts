@@ -27,7 +27,7 @@ import { createReadStream } from "fs";
 import { async } from "slimdom-sax-parser";
 
 async function run(xslt: string, xmls: Array<string>) {
-  const transform = buildStylesheet(xslt);
+  const transform = await buildStylesheet(xslt);
   const serializer = new slimdom.XMLSerializer();
   for (let xml of xmls) {
     const xmlDom = await async(createReadStream(xml));
