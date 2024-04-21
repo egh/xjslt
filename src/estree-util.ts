@@ -35,7 +35,7 @@ import {
  */
 
 export function makeArrowFunction(
-  body: Array<Statement>
+  body: Array<Statement>,
 ): ArrowFunctionExpression {
   return {
     type: "ArrowFunctionExpression",

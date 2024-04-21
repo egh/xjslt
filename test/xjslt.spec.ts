@@ -61,7 +61,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <root><xsl:apply-templates/></root>
 </xsl:template>
 ${body}
-</xsl:stylesheet>`
+</xsl:stylesheet>`,
   );
   const transform = buildStylesheet(tempfile);
   unlinkSync(tempfile);
@@ -159,7 +159,7 @@ test("compiled", () => {
 const xsltDoc = sync(readFileSync("./test/simple.xslt").toString());
 
 const xslt2Doc = stripSpaceStylesheet(
-  sync(readFileSync("./test/simple2.xslt").toString())
+  sync(readFileSync("./test/simple2.xslt").toString()),
 );
 
 function walkTree(node: any, func: (node: any) => void): void {
@@ -176,21 +176,21 @@ const GENERATE_OPTS = { indent: "", lineEnd: "" };
 test("compileTextNode", () => {
   const nodes = evaluateXPathToNodes("//text()", xsltDoc);
   expect(generate(compileNode(nodes[2]), GENERATE_OPTS)).toEqual(
-    'xjslt.literalTextInternal(context, "Article -\\n");'
+    'xjslt.literalTextInternal(context, "Article -\\n");',
   );
 });
 
 test("compileValueOfNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:value-of", xsltDoc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.valueOfInternal(context, {select: "/Article/Title"});'
+    'xjslt.valueOfInternal(context, {select: "/Article/Title"});',
   );
 });
 
 test("compileApplyTemplatesNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:apply-templates", xsltDoc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.applyTemplatesInternal(context, {select: "/Article/Authors/Author"});'
+    'xjslt.applyTemplatesInternal(context, {select: "/Article/Authors/Author"});',
   );
 });
 
@@ -200,7 +200,7 @@ test("compileForEachNode", () => {
   const dom = sync(xml);
   const nodes = evaluateXPathToNodes("//xsl:for-each", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.forEachInternal(context, {select: "./*"}, context => {xjslt.literalTextInternal(context, "foo");});'
+    'xjslt.forEachInternal(context, {select: "./*"}, context => {xjslt.literalTextInternal(context, "foo");});',
   );
 });
 
@@ -210,7 +210,7 @@ test("compileChooseNode", () => {
   const dom = sync(xml);
   const nodes = evaluateXPathToNodes("//xsl:choose", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.chooseInternal(context, [{test: "[@att=\'bar\']",apply: context => {xjslt.literalTextInternal(context, "foo");}}, {apply: context => {xjslt.literalTextInternal(context, "bar");}}]);'
+    'xjslt.chooseInternal(context, [{test: "[@att=\'bar\']",apply: context => {xjslt.literalTextInternal(context, "foo");}}, {apply: context => {xjslt.literalTextInternal(context, "bar");}}]);',
   );
 });
 
@@ -220,21 +220,21 @@ test("compileIfNode", () => {
   const dom = sync(xml);
   const nodes = evaluateXPathToNodes("//xsl:if", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.ifInternal(context, {test: "[@att=\'bar\']"}, context => {xjslt.literalTextInternal(context, "foo");});'
+    'xjslt.ifInternal(context, {test: "[@att=\'bar\']"}, context => {xjslt.literalTextInternal(context, "foo");});',
   );
 });
 
 test("compileLiteralElementNode", () => {
   const nodes = evaluateXPathToNodes("//heading", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.literalElementInternal(context, {name: "heading",attributes: [{name: "type",value: "top"}]}, context => {xjslt.valueOfInternal(context, {select: "Title"});});'
+    'xjslt.literalElementInternal(context, {name: "heading",attributes: [{name: "type",value: "top"}]}, context => {xjslt.valueOfInternal(context, {select: "Title"});});',
   );
 });
 
 test("stripSpaceStylesheet", () => {
   const document = sync("<root> text </root>");
   const xml = slimdom.serializeToWellFormedString(
-    stripSpaceStylesheet(document)
+    stripSpaceStylesheet(document),
   );
   expect(xml).toEqual("<root> text </root>");
 });
@@ -242,7 +242,7 @@ test("stripSpaceStylesheet", () => {
 test("stripSpaceStylesheet with space", () => {
   const document = sync("<root>\n <foo> <bar>text</bar> </foo>\n </root>");
   const xml = slimdom.serializeToWellFormedString(
-    stripSpaceStylesheet(document)
+    stripSpaceStylesheet(document),
   );
   expect(xml).toEqual("<root><foo><bar>text</bar></foo></root>");
 });
@@ -252,14 +252,14 @@ test("stripSpaceStylesheet with preserved", () => {
     '<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match="/"><xsl:text> </xsl:text></xsl:template></xsl:stylesheet>';
   const document = sync(raw);
   expect(
-    slimdom.serializeToWellFormedString(stripSpaceStylesheet(document))
+    slimdom.serializeToWellFormedString(stripSpaceStylesheet(document)),
   ).toEqual(raw);
 });
 
 test("compileTemplateNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:template", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'templates.push({attributes: {match: "/"},apply: context => {xjslt.literalElementInternal(context, {name: "doc",attributes: []}, context => {xjslt.applyTemplatesInternal(context, {select: null});});}});'
+    'templates.push({attributes: {match: "/"},apply: context => {xjslt.literalElementInternal(context, {name: "doc",attributes: []}, context => {xjslt.applyTemplatesInternal(context, {select: null});});}});',
   );
 });
 
@@ -267,8 +267,8 @@ test("compileStylesheetNode", () => {
   const transform = buildStylesheet("./test/simple2.xslt");
   expect(
     slimdom.serializeToWellFormedString(
-      transform(sync(readFileSync("./test/simple.xml", "utf-8")))
-    )
+      transform(sync(readFileSync("./test/simple.xml", "utf-8"))),
+    ),
   ).toEqual(readFileSync("./test/simple2.out", "utf-8"));
 });
 
@@ -283,51 +283,51 @@ test("evaluateAttributeValueTemplate", () => {
     variableScopes: [{}],
   };
   expect(
-    evaluateAttributeValueTemplate(context, "{local-name()}-{text()}-foo")
+    evaluateAttributeValueTemplate(context, "{local-name()}-{text()}-foo"),
   ).toEqual("Author-Mr. Foo-foo");
 });
 
 test("elementNode", () => {
   const transform = makeSimpleTransform(
     "//Author",
-    "<xsl:element name='test-{local-name()}'>Hi!</xsl:element>"
+    "<xsl:element name='test-{local-name()}'>Hi!</xsl:element>",
   );
   const results = transform(document);
   expect(evaluateXPathToString("/root/test-Author[1]/text()", results)).toEqual(
-    "Hi!"
+    "Hi!",
   );
 });
 
 test("attributeNode", () => {
   const transform = makeSimpleTransform(
     "//Author",
-    "<test><xsl:attribute name='test-{local-name()}'><xsl:value-of select='text()'/></xsl:attribute></test>"
+    "<test><xsl:attribute name='test-{local-name()}'><xsl:value-of select='text()'/></xsl:attribute></test>",
   );
   const results = transform(document);
   expect(evaluateXPathToString("/root/test[1]/@test-Author", results)).toEqual(
-    "Mr. Foo"
+    "Mr. Foo",
   );
 });
 
 test("literalElementAttributeEvaluation", () => {
   const transform = makeSimpleTransform(
     "//Author",
-    "<test name='test-{local-name()}'><xsl:value-of select='text()'/></test>"
+    "<test name='test-{local-name()}'><xsl:value-of select='text()'/></test>",
   );
   const results = transform(document);
   expect(
-    evaluateXPathToString("/root/test[@name='test-Author'][1]", results)
+    evaluateXPathToString("/root/test[@name='test-Author'][1]", results),
   ).toEqual("Mr. Foo");
 });
 
 test("variableShadowing", () => {
   const transform = makeSimpleTransform(
     "//Author",
-    "<test><xsl:variable name='test' select='text()'/><xsl:value-of select='$test'/></test>"
+    "<test><xsl:variable name='test' select='text()'/><xsl:value-of select='$test'/></test>",
   );
   const results = transform(document);
   expect(evaluateXPathToString("/root/test[1]/text()", results)).toEqual(
-    "Mr. Foo"
+    "Mr. Foo",
   );
 });
 

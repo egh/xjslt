@@ -33,7 +33,7 @@ function compileApplyTemplatesNode(node: any) {
       estree.makeObject({
         select: estree.makeLiteral(node.getAttribute("select")),
       }),
-    ]
+    ],
   );
 }
 
@@ -46,7 +46,7 @@ function compileAttributeNode(node: any) {
         namespace: estree.makeLiteral(node.getAttribute("namespace")),
       }),
       estree.makeArrowFunction(compileNodeArray(node.childNodes)),
-    ]
+    ],
   );
 }
 
@@ -58,23 +58,23 @@ function compileChooseNode(node: any) {
         estree.makeObject({
           test: estree.makeLiteral(childNode.getAttribute("test")),
           apply: estree.makeArrowFunction(
-            compileNodeArray(childNode.childNodes)
+            compileNodeArray(childNode.childNodes),
           ),
-        })
+        }),
       );
     } else if (childNode.localName === "otherwise") {
       alternatives.push(
         estree.makeObject({
           apply: estree.makeArrowFunction(
-            compileNodeArray(childNode.childNodes)
+            compileNodeArray(childNode.childNodes),
           ),
-        })
+        }),
       );
     }
   }
   return estree.makeCallWithContext(
     estree.makeMember("xjslt", "chooseInternal"),
-    [{ type: "ArrayExpression", elements: alternatives }]
+    [{ type: "ArrayExpression", elements: alternatives }],
   );
 }
 
@@ -87,7 +87,7 @@ function compileElementNode(node: any) {
         namespace: estree.makeLiteral(node.getAttribute("namespace")),
       }),
       estree.makeArrowFunction(compileNodeArray(node.childNodes)),
-    ]
+    ],
   );
 }
 
@@ -108,7 +108,7 @@ function compileForEachNode(node: any) {
         select: estree.makeLiteral(node.getAttribute("select")),
       }),
       estree.makeArrowFunction(compileNodeArray(node.childNodes)),
-    ]
+    ],
   );
 }
 
@@ -119,7 +119,7 @@ function compileLiteralElementNode(node: any) {
       estree.makeObject({
         name: estree.makeLiteral(node.attributes[n].localName),
         value: estree.makeLiteral(node.attributes[n].value),
-      })
+      }),
     );
   }
   return estree.makeCallWithContext(
@@ -133,7 +133,7 @@ function compileLiteralElementNode(node: any) {
         },
       }),
       estree.makeArrowFunction(compileNodeArray(node.childNodes)),
-    ]
+    ],
   );
 }
 
@@ -263,7 +263,7 @@ function compileStylesheetNode(node: any) {
             },
             estree.makeCallWithContext(
               estree.makeMember("xjslt", "processNode"),
-              []
+              [],
             ),
             {
               type: "ReturnStatement",
@@ -306,7 +306,7 @@ function compileTextNode(node: any) {
   const args = [estree.makeLiteral(node.textContent)];
   return estree.makeCallWithContext(
     estree.makeMember("xjslt", "literalTextInternal"),
-    args
+    args,
   );
 }
 
@@ -317,7 +317,7 @@ function compileValueOfNode(node: any) {
       estree.makeObject({
         select: estree.makeLiteral(node.getAttribute("select")),
       }),
-    ]
+    ],
   );
 }
 
@@ -330,6 +330,6 @@ function compileVariableNode(node: any) {
         select: estree.makeLiteral(node.getAttribute("select")),
       }),
       estree.makeArrowFunction(compileNodeArray(node.childNodes)),
-    ]
+    ],
   );
 }

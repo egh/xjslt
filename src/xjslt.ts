@@ -123,7 +123,7 @@ function nameTest(
   name: string,
   node: any,
   variableScopes: Array<VariableScope>,
-  nsResolver?: (prefix: string) => string
+  nsResolver?: (prefix: string) => string,
 ) {
   let checkContext = node;
   let options = {};
@@ -137,7 +137,7 @@ function nameTest(
       checkContext,
       null,
       mergeVariableScopes(variableScopes),
-      options
+      options,
     );
     /* It counts as a match if the node we were testing against is in the resulting node set. */
     if (matches.includes(node)) {
@@ -157,7 +157,7 @@ function nameTest(
 function getTemplate(
   node: any,
   templates: Array<CompiledTemplate>,
-  variableScopes: Array<VariableScope>
+  variableScopes: Array<VariableScope>,
 ): CompiledTemplate {
   for (let template of templates) {
     if (nameTest(template.attributes.match, node, variableScopes)) {
@@ -195,7 +195,7 @@ export function processNode(context: ProcessingContext) {
     getTemplate(
       context.currentNode,
       context.templates,
-      context.variableScopes
+      context.variableScopes,
     ) || getTemplateBuiltin(context.currentNode);
   if (template) {
     template.apply(context);
@@ -204,7 +204,7 @@ export function processNode(context: ProcessingContext) {
 
 export function applyTemplatesInternal(
   context: ProcessingContext,
-  attributes: ApplyTemplateAttributes
+  attributes: ApplyTemplateAttributes,
 ) {
   /* The nodes we want to apply templates on.*/
   let select: string;
@@ -217,7 +217,7 @@ export function applyTemplatesInternal(
     select,
     context.currentNode,
     null,
-    mergeVariableScopes(context.variableScopes)
+    mergeVariableScopes(context.variableScopes),
   );
   for (let node of nodes) {
     /* for each node */
@@ -232,15 +232,15 @@ export function applyTemplatesInternal(
 
 export function valueOfInternal(
   context: ProcessingContext,
-  attributes: ValueOfAttributes
+  attributes: ValueOfAttributes,
 ) {
   const newNode = context.outputDocument.createTextNode(
     evaluateXPathToString(
       attributes.select,
       context.currentNode,
       null,
-      mergeVariableScopes(context.variableScopes)
-    )
+      mergeVariableScopes(context.variableScopes),
+    ),
   );
   context.outputNode.appendChild(newNode);
 }
@@ -248,12 +248,12 @@ export function valueOfInternal(
 export function variableInternal(
   context: ProcessingContext,
   attributes: VariableAttributes,
-  func: SequenceConstructor
+  func: SequenceConstructor,
 ) {
   setVariable(
     context.variableScopes,
     attributes.name,
-    evaluateSelectOrSequenceConstructor(context, attributes.select, func)
+    evaluateSelectOrSequenceConstructor(context, attributes.select, func),
   );
 }
 
@@ -264,7 +264,7 @@ export function extendScope(variableScopes: Array<VariableScope>) {
 export function setVariable(
   variableScopes: Array<VariableScope>,
   name: string,
-  value: any
+  value: any,
 ) {
   variableScopes[variableScopes.length - 1][name] = value;
 }
@@ -287,7 +287,7 @@ export function literalTextInternal(context: ProcessingContext, text: string) {
 export function literalElementInternal(
   context: ProcessingContext,
   node: NodeOutputData,
-  func: SequenceConstructor
+  func: SequenceConstructor,
 ) {
   let newNode: any;
   if (node.ns) {
@@ -310,11 +310,11 @@ export function literalElementInternal(
 export function attributeInternal(
   context: ProcessingContext,
   attributes: { name: string; ns?: string },
-  func: SequenceConstructor
+  func: SequenceConstructor,
 ) {
   const name = evaluateAttributeValueTemplate(context, attributes.name);
   const value = extractText(
-    evaluateSequenceConstructorInTemporaryTree(context, func)
+    evaluateSequenceConstructorInTemporaryTree(context, func),
   );
   context.outputNode.setAttribute(name, value);
 }
@@ -322,7 +322,7 @@ export function attributeInternal(
 export function elementInternal(
   context: ProcessingContext,
   node: NodeOutputData,
-  func: SequenceConstructor
+  func: SequenceConstructor,
 ) {
   let newNode: any;
   const name = evaluateAttributeValueTemplate(context, node.name);
@@ -342,14 +342,14 @@ export function elementInternal(
 export function ifInternal(
   context: ProcessingContext,
   attributes: IfAttributes,
-  func: SequenceConstructor
+  func: SequenceConstructor,
 ) {
   if (
     evaluateXPathToBoolean(
       attributes.test,
       context.currentNode,
       null,
-      mergeVariableScopes(context.variableScopes)
+      mergeVariableScopes(context.variableScopes),
     )
   ) {
     func(context);
@@ -358,7 +358,7 @@ export function ifInternal(
 
 export function chooseInternal(
   context: ProcessingContext,
-  alternatives: Array<ChooseAlternative>
+  alternatives: Array<ChooseAlternative>,
 ) {
   for (let alternative of alternatives) {
     if (!alternative.test) {
@@ -368,7 +368,7 @@ export function chooseInternal(
         alternative.test,
         context.currentNode,
         null,
-        mergeVariableScopes(context.variableScopes)
+        mergeVariableScopes(context.variableScopes),
       )
     ) {
       return alternative.apply(context);
@@ -379,13 +379,13 @@ export function chooseInternal(
 export function forEachInternal(
   context: ProcessingContext,
   attributes: ForEachAttributes,
-  func: SequenceConstructor
+  func: SequenceConstructor,
 ) {
   const nodeList = evaluateXPathToNodes(
     attributes.select,
     context.currentNode,
     null,
-    mergeVariableScopes(context.variableScopes)
+    mergeVariableScopes(context.variableScopes),
   );
   for (let node of nodeList) {
     func({
@@ -409,7 +409,7 @@ function findAttrValue(attrs: Array<any>, name: string) {
 function preserveSpace(
   node: any,
   preserve: Array<string>,
-  nsResolver: (prefix: string) => string
+  nsResolver: (prefix: string) => string,
 ) {
   for (let name of preserve) {
     if (nameTest(name, node, null, nsResolver)) {
@@ -423,7 +423,7 @@ function preserveSpace(
 export function stripSpace(
   doc: any,
   preserve: Array<string>,
-  nsResolver: (prefix: string) => string
+  nsResolver: (prefix: string) => string,
 ) {
   const ONLY_WHITESPACE = RegExp("^[ \n\r\t]+$");
   let toRemove = [];
@@ -462,7 +462,7 @@ export function stripSpaceStylesheet(doc: any) {
 
 export function evaluateAttributeValueTemplate(
   context: ProcessingContext,
-  avt: string
+  avt: string,
 ): string {
   return Array.from(avt.matchAll(/({[^}]+}|[^{}]+)/g))
     .map((match) => {
@@ -472,7 +472,7 @@ export function evaluateAttributeValueTemplate(
           piece.substring(1, piece.length - 1),
           context.currentNode,
           null,
-          mergeVariableScopes(context.variableScopes)
+          mergeVariableScopes(context.variableScopes),
         );
       } else {
         return piece;
@@ -484,14 +484,14 @@ export function evaluateAttributeValueTemplate(
 function evaluateSelectOrSequenceConstructor(
   context: ProcessingContext,
   select: string,
-  func: SequenceConstructor
+  func: SequenceConstructor,
 ): EvaluateXPath | slimdom.Document {
   if (select) {
     return evaluateXPath(
       select,
       context.currentNode,
       null,
-      mergeVariableScopes(context.variableScopes)
+      mergeVariableScopes(context.variableScopes),
     );
   } else {
     return evaluateSequenceConstructorInTemporaryTree(context, func);
@@ -505,12 +505,13 @@ function evaluateSelectOrSequenceConstructor(
  */
 function evaluateSequenceConstructorInTemporaryTree(
   origContext: ProcessingContext,
-  func: SequenceConstructor
+  func: SequenceConstructor,
 ) {
   const doc = new slimdom.Document();
   doc.appendChild(doc.createElement("root"));
   let context = {
     outputDocument: doc,
+
     outputNode: doc.documentElement,
     currentNode: origContext.currentNode,
     currentNodeList: [],
@@ -549,16 +550,16 @@ export async function buildStylesheet(xsltPath: string) {
   let slimdom_path = require.resolve("slimdom").split(path.sep);
   let root_dir = path.join(
     "/",
-    ...slimdom_path.slice(0, slimdom_path.indexOf("node_modules"))
+    ...slimdom_path.slice(0, slimdom_path.indexOf("node_modules")),
   );
   var tempdir = await mkdtemp(path.join(tmpdir(), "xjslt-"));
   symlinkSync(
     path.join(root_dir, "node_modules"),
-    path.join(tempdir, "node_modules")
+    path.join(tempdir, "node_modules"),
   );
   symlinkSync(
     path.join(root_dir, "package.json"),
-    path.join(tempdir, "package.json")
+    path.join(tempdir, "package.json"),
   );
   symlinkSync(path.join(root_dir, "dist"), path.join(tempdir, "dist"));
   var tempfile = path.join(tempdir, "transform.js");
