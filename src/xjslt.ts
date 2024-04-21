@@ -27,7 +27,7 @@ import {
   evaluateXPathToBoolean,
   EvaluateXPath,
 } from "fontoxpath";
-import { readFileSync, writeFileSync, symlinkSync, rmdirSync } from "fs";
+import { readFileSync, writeFileSync, symlinkSync, rmSync } from "fs";
 import * as path from "path";
 import { tmpdir } from "os";
 import { mkdtemp } from "fs/promises";
@@ -566,6 +566,6 @@ export async function buildStylesheet(xsltPath: string) {
   const xsltDoc = stripSpaceStylesheet(sync(readFileSync(xsltPath).toString()));
   writeFileSync(tempfile, generate(compileNode(xsltDoc)));
   let transform = await import(tempfile);
-  rmdirSync(tempdir, { recursive: true });
+  rmSync(tempdir, { recursive: true });
   return transform.transform;
 }
