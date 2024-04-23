@@ -38,7 +38,6 @@ import { evaluateXPathToString, evaluateXPathToNodes } from "fontoxpath";
 import { generate } from "astring";
 import { Parser } from "acorn";
 import { tmpdir } from "os";
-import * as saxes from "saxes";
 import { readFileSync, mkdtempSync, writeFileSync, unlinkSync } from "fs";
 
 function makeSimpleTransform(match: string, template: string) {
@@ -48,9 +47,9 @@ ${template}
 </xsl:template>`);
 }
 
-function makeTransform(body: string) {
+async function makeTransform(body: string) {
   const tempdir = mkdtempSync(path.join(tmpdir(), "xjslt-"));
-  const tempfile = path.join(tmpDir(), "temp.xsl");
+  const tempfile = path.join(tmpdir(), "temp.xsl");
   writeFileSync(
     tempfile,
     `<xsl:stylesheet
@@ -62,7 +61,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 ${body}
 </xsl:stylesheet>`,
   );
-  const transform = buildStylesheet(tempfile);
+  const transform = await buildStylesheet(tempfile);
   unlinkSync(tempfile);
   return transform;
 }
@@ -74,36 +73,14 @@ test("slimdon", () => {
   expect(xml).toEqual("<root/>");
 });
 
-test("slimdon-sax", () => {
-  const document = slimdom.parseXmlDocument("<root />");
-  const xml = slimdom.serializeToWellFormedString(document);
-  expect(xml).toEqual("<root/>");
-});
-
 test("slimdon", () => {
-  const document = sync("<root>text</root>");
+  const document = slimdom.parseXmlDocument("<root>text</root>");
   expect(evaluateXPathToString("/root/text()", document)).toEqual("text");
 });
 
 test("astring", () => {
   const parsed = Parser.parse("my('code');", { ecmaVersion: 2020 });
   expect(generate(parsed)).toEqual("my('code');\n");
-});
-
-test("saxes", () => {
-  const parser = new saxes.SaxesParser();
-  const textCallback = jest.fn((_text) => {});
-  const openCallback = jest.fn((_node) => {});
-  parser.on("text", textCallback);
-  parser.on("opentag", openCallback);
-
-  parser.write('<xml>Hello, <who name="world">world</who>!</xml>').close();
-  expect(textCallback.mock.calls[0][0]).toBe("Hello, ");
-  expect(textCallback.mock.calls[1][0]).toBe("world");
-  expect(textCallback.mock.calls[2][0]).toBe("!");
-  expect(openCallback.mock.calls[0][0].name).toBe("xml");
-  expect(openCallback.mock.calls[1][0].name).toBe("who");
-  expect(openCallback.mock.calls[1][0].attributes.name).toBe("world");
 });
 
 /* Goal: generate a function that looks like this.*/
@@ -145,7 +122,9 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
   });
 }
 
-const document = sync(readFileSync("./test/simple.xml").toString());
+const document = slimdom.parseXmlDocument(
+  readFileSync("./test/simple.xml").toString(),
+);
 
 test("compiled", () => {
   let str = "";
@@ -155,10 +134,12 @@ test("compiled", () => {
   expect(str).toEqual(readFileSync("./test/simple.out", "utf8"));
 });
 
-const xsltDoc = sync(readFileSync("./test/simple.xslt").toString());
+const xsltDoc = slimdom.parseXmlDocument(
+  readFileSync("./test/simple.xslt").toString(),
+);
 
 const xslt2Doc = stripSpaceStylesheet(
-  sync(readFileSync("./test/simple2.xslt").toString()),
+  slimdom.parseXmlDocument(readFileSync("./test/simple2.xslt").toString()),
 );
 
 function walkTree(node: any, func: (node: any) => void): void {
@@ -196,7 +177,7 @@ test("compileApplyTemplatesNode", () => {
 test("compileForEachNode", () => {
   const xml =
     '<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match="/"><doc><xsl:for-each select="./*">foo</xsl:for-each></doc></xsl:template></xsl:stylesheet>';
-  const dom = sync(xml);
+  const dom = slimdom.parseXmlDocument(xml);
   const nodes = evaluateXPathToNodes("//xsl:for-each", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
     'xjslt.forEachInternal(context, {select: "./*"}, context => {xjslt.literalTextInternal(context, "foo");});',
@@ -206,7 +187,7 @@ test("compileForEachNode", () => {
 test("compileChooseNode", () => {
   const xml =
     '<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match="/"><xsl:choose><xsl:when test="[@att=\'bar\']">foo</xsl:when><xsl:otherwise>bar</xsl:otherwise></xsl:choose></xsl:template></xsl:stylesheet>';
-  const dom = sync(xml);
+  const dom = slimdom.parseXmlDocument(xml);
   const nodes = evaluateXPathToNodes("//xsl:choose", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
     'xjslt.chooseInternal(context, [{test: "[@att=\'bar\']",apply: context => {xjslt.literalTextInternal(context, "foo");}}, {apply: context => {xjslt.literalTextInternal(context, "bar");}}]);',
@@ -216,7 +197,7 @@ test("compileChooseNode", () => {
 test("compileIfNode", () => {
   const xml =
     '<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match="/"><doc><xsl:if test="[@att=\'bar\']">foo</xsl:if></doc></xsl:template></xsl:stylesheet>';
-  const dom = sync(xml);
+  const dom = slimdom.parseXmlDocument(xml);
   const nodes = evaluateXPathToNodes("//xsl:if", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
     'xjslt.ifInternal(context, {test: "[@att=\'bar\']"}, context => {xjslt.literalTextInternal(context, "foo");});',
@@ -231,7 +212,7 @@ test("compileLiteralElementNode", () => {
 });
 
 test("stripSpaceStylesheet", () => {
-  const document = sync("<root> text </root>");
+  const document = slimdom.parseXmlDocument("<root> text </root>");
   const xml = slimdom.serializeToWellFormedString(
     stripSpaceStylesheet(document),
   );
@@ -239,7 +220,9 @@ test("stripSpaceStylesheet", () => {
 });
 
 test("stripSpaceStylesheet with space", () => {
-  const document = sync("<root>\n <foo> <bar>text</bar> </foo>\n </root>");
+  const document = slimdom.parseXmlDocument(
+    "<root>\n <foo> <bar>text</bar> </foo>\n </root>",
+  );
   const xml = slimdom.serializeToWellFormedString(
     stripSpaceStylesheet(document),
   );
@@ -249,7 +232,7 @@ test("stripSpaceStylesheet with space", () => {
 test("stripSpaceStylesheet with preserved", () => {
   const raw =
     '<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match="/"><xsl:text> </xsl:text></xsl:template></xsl:stylesheet>';
-  const document = sync(raw);
+  const document = slimdom.parseXmlDocument(raw);
   expect(
     slimdom.serializeToWellFormedString(stripSpaceStylesheet(document)),
   ).toEqual(raw);
@@ -262,11 +245,13 @@ test("compileTemplateNode", () => {
   );
 });
 
-test("compileStylesheetNode", () => {
-  const transform = buildStylesheet("./test/simple2.xslt");
+test("compileStylesheetNode", async () => {
+  const transform = await buildStylesheet("./test/simple2.xslt");
   expect(
     slimdom.serializeToWellFormedString(
-      transform(sync(readFileSync("./test/simple.xml", "utf-8"))),
+      transform(
+        slimdom.parseXmlDocument(readFileSync("./test/simple.xml", "utf-8")),
+      ),
     ),
   ).toEqual(readFileSync("./test/simple2.out", "utf-8"));
 });
@@ -286,8 +271,8 @@ test("evaluateAttributeValueTemplate", () => {
   ).toEqual("Author-Mr. Foo-foo");
 });
 
-test("elementNode", () => {
-  const transform = makeSimpleTransform(
+test("elementNode", async () => {
+  const transform = await makeSimpleTransform(
     "//Author",
     "<xsl:element name='test-{local-name()}'>Hi!</xsl:element>",
   );
@@ -297,8 +282,8 @@ test("elementNode", () => {
   );
 });
 
-test("attributeNode", () => {
-  const transform = makeSimpleTransform(
+test("attributeNode", async () => {
+  const transform = await makeSimpleTransform(
     "//Author",
     "<test><xsl:attribute name='test-{local-name()}'><xsl:value-of select='text()'/></xsl:attribute></test>",
   );
@@ -308,8 +293,8 @@ test("attributeNode", () => {
   );
 });
 
-test("literalElementAttributeEvaluation", () => {
-  const transform = makeSimpleTransform(
+test("literalElementAttributeEvaluation", async () => {
+  const transform = await makeSimpleTransform(
     "//Author",
     "<test name='test-{local-name()}'><xsl:value-of select='text()'/></test>",
   );
@@ -319,8 +304,8 @@ test("literalElementAttributeEvaluation", () => {
   ).toEqual("Mr. Foo");
 });
 
-test("variableShadowing", () => {
-  const transform = makeSimpleTransform(
+test("variableShadowing", async () => {
+  const transform = await makeSimpleTransform(
     "//Author",
     "<test><xsl:variable name='test' select='text()'/><xsl:value-of select='$test'/></test>",
   );
