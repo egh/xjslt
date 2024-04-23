@@ -32,7 +32,13 @@ async function run(xslt: string, xmls: Array<string>) {
     const xmlDom = slimdom.parseXmlDocument(readFileSync(xml).toString());
     const transformed = transform(xmlDom);
     // wish there was a better way?
-    transformed.insertBefore(transformed.createProcessingInstruction('xml', 'version="1.0" encoding="utf-8"'), transformed.firstChild);
+    transformed.insertBefore(
+      transformed.createProcessingInstruction(
+        "xml",
+        'version="1.0" encoding="utf-8"',
+      ),
+      transformed.firstChild,
+    );
     process.stdout.write(serializer.serializeToString(transformed));
   }
 }

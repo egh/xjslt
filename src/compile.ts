@@ -176,6 +176,10 @@ export function compileNode(node: any) {
     }
   } else if (node.nodeType === NodeType.DOCUMENT_NODE) {
     return compileNode(node.documentElement);
+  } else if (node.nodeType === NodeType.COMMENT_NODE) {
+    // Ignore, it's a comment.
+  } else if (node.nodeType === NodeType.PROCESSING_INSTRUCTION_NODE) {
+    // Ignore??
   } else {
     throw new Error("Found node type: " + node.nodeType);
   }
