@@ -4,7 +4,7 @@ XJSLT is an incomplete implementation of an [XSLT 2.0](https://www.w3.org/TR/xsl
 
 XJSLT compiles stylesheets to runnable JavaScript, so it should be possible to create pure-javascript runnable transforms for use in a browser.
 
-Tested with [node 14.16.1](https://nodejs.org/)
+Tested with [node 20](https://nodejs.org/)
 
 # Use:
 
