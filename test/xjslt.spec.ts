@@ -36,7 +36,6 @@ import * as slimdom from "slimdom";
 import * as path from "path";
 import { evaluateXPathToString, evaluateXPathToNodes } from "fontoxpath";
 import { generate } from "astring";
-import { sync } from "slimdom-sax-parser";
 import { Parser } from "acorn";
 import { tmpdir } from "os";
 import * as saxes from "saxes";
@@ -76,7 +75,7 @@ test("slimdon", () => {
 });
 
 test("slimdon-sax", () => {
-  const document = sync("<root />");
+  const document = slimdom.parseXmlDocument("<root />");
   const xml = slimdom.serializeToWellFormedString(document);
   expect(xml).toEqual("<root/>");
 });

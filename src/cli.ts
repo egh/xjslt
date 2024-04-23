@@ -23,14 +23,13 @@
 import * as slimdom from "slimdom";
 import { Command } from "commander";
 import { buildStylesheet } from "./xjslt";
-import { createReadStream } from "fs";
-import { async } from "slimdom-sax-parser";
+import { readFileSync } from "fs";
 
 async function run(xslt: string, xmls: Array<string>) {
   const transform = await buildStylesheet(xslt);
   const serializer = new slimdom.XMLSerializer();
   for (let xml of xmls) {
-    const xmlDom = await async(createReadStream(xml));
+    const xmlDom = slimdom.parseXmlDocument(readFileSync(xml).toString());
     const transformed = transform(xmlDom);
     process.stdout.write(serializer.serializeToString(transformed));
   }

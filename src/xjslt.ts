@@ -19,7 +19,6 @@
  */
 
 import { generate } from "astring";
-import { sync } from "slimdom-sax-parser";
 import {
   evaluateXPath,
   evaluateXPathToString,
@@ -563,7 +562,9 @@ export async function buildStylesheet(xsltPath: string) {
   );
   symlinkSync(path.join(root_dir, "dist"), path.join(tempdir, "dist"));
   var tempfile = path.join(tempdir, "transform.js");
-  const xsltDoc = stripSpaceStylesheet(sync(readFileSync(xsltPath).toString()));
+  const xsltDoc = stripSpaceStylesheet(
+    slimdom.parseXmlDocument(readFileSync(xsltPath).toString()),
+  );
   writeFileSync(tempfile, generate(compileNode(xsltDoc)));
   let transform = await import(tempfile);
   rmSync(tempdir, { recursive: true });
