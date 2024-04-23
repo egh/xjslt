@@ -85,6 +85,10 @@ interface ForEachAttributes {
   select: string;
 }
 
+interface SequenceAttributes {
+  select: string;
+}
+
 interface NodeOutputData {
   ns?: string;
   name: string;
@@ -281,6 +285,21 @@ export function mergeVariableScopes(variableScopes: Array<VariableScope>) {
 
 export function literalTextInternal(context: ProcessingContext, text: string) {
   context.outputNode.appendChild(context.outputDocument.createTextNode(text));
+}
+
+export function sequenceInternal(
+  context: ProcessingContext,
+  attributes: SequenceAttributes,
+) {
+  const nodeList = evaluateXPathToNodes<slimdom.Node>(
+    attributes.select,
+    context.currentNode,
+    null,
+    mergeVariableScopes(context.variableScopes),
+  );
+  for (let node of nodeList) {
+    context.outputNode.appendChild(node);
+  }
 }
 
 export function literalElementInternal(

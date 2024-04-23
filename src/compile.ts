@@ -158,6 +158,8 @@ export function compileNode(node: any) {
         return compileForEachNode(node);
       } else if (node.localName === "template") {
         return compileTemplateNode(node);
+      } else if (node.localName === "sequence") {
+        return compileSequenceNode(node);
       } else if (node.localName === "variable") {
         return compileVariableNode(node);
       } else if (node.localName === "stylesheet") {
@@ -307,6 +309,18 @@ function compileTextNode(node: any) {
   return estree.makeCallWithContext(
     estree.makeMember("xjslt", "literalTextInternal"),
     args,
+  );
+}
+
+function compileSequenceNode(node: any) {
+  const args = [estree.makeLiteral(node.textContent)];
+  return estree.makeCallWithContext(
+    estree.makeMember("xjslt", "sequenceInternal"),
+    [
+      estree.makeObject({
+        select: estree.makeLiteral(node.getAttribute("select")),
+      }),
+    ],
   );
 }
 
