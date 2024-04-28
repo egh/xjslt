@@ -26,28 +26,98 @@ import { XSLT1_NSURI, NodeType } from "./xjslt";
  * ESTree that can be used to process an input document.
  */
 
-function compileApplyTemplatesNode(node: any) {
-  return estree.makeCallWithContext(
-    estree.makeMember("xjslt", "applyTemplatesInternal"),
-    [
-      estree.makeObject({
-        select: estree.makeLiteral(node.getAttribute("select")),
-      }),
-    ],
-  );
+interface SimpleElement {
+  name: string;
+  hasChildren: boolean;
+  arguments: Array<string>;
 }
 
-function compileAttributeNode(node: any) {
-  return estree.makeCallWithContext(
-    estree.makeMember("xjslt", "attributeInternal"),
-    [
-      estree.makeObject({
-        name: estree.makeLiteral(node.getAttribute("name")),
-        namespace: estree.makeLiteral(node.getAttribute("namespace")),
-      }),
-      estree.makeArrowFunction(compileNodeArray(node.childNodes)),
-    ],
-  );
+const simpleElements = new Map<string, SimpleElement>([
+  [
+    "apply-templates",
+    {
+      name: "applyTemplatesInternal",
+      arguments: ["select"],
+      hasChildren: false,
+    },
+  ],
+  [
+    "attribute",
+    {
+      name: "attributeInternal",
+      arguments: ["name", "namespace"],
+      hasChildren: true,
+    },
+  ],
+  [
+    "element",
+    {
+      name: "elementInternal",
+      arguments: ["name", "namespace"],
+      hasChildren: true,
+    },
+  ],
+  [
+    "if",
+    {
+      name: "ifInternal",
+      arguments: ["test"],
+      hasChildren: true,
+    },
+  ],
+  [
+    "for-each",
+    {
+      name: "forEachInternal",
+      arguments: ["select"],
+      hasChildren: true,
+    },
+  ],
+  [
+    "sequence",
+    { name: "sequenceInternal", arguments: ["select"], hasChildren: false },
+  ],
+  [
+    "value-of",
+    { name: "valueOfInternal", arguments: ["select"], hasChildren: false },
+  ],
+  [
+    "variable",
+    {
+      name: "variableInternal",
+      arguments: ["name", "select"],
+      hasChildren: false,
+    },
+  ],
+]);
+
+function compileFuncall(name, args) {
+  return estree.makeCallWithContext(estree.makeMember("xjslt", name), [args]);
+}
+
+function compileFuncallWithChildren(node, name, args) {
+  return estree.makeCallWithContext(estree.makeMember("xjslt", name), [
+    args,
+    estree.makeArrowFunction(compileNodeArray(node.childNodes)),
+  ]);
+}
+
+function compileArgs(node, keyList) {
+  var args = {};
+  for (var key of keyList) {
+    args[key] = estree.makeLiteral(node.getAttribute(key));
+  }
+  return estree.makeObject(args);
+}
+
+function compileSimpleElement(node: any) {
+  const what = simpleElements.get(node.localName);
+  const args = compileArgs(node, what.arguments);
+  if (what.hasChildren) {
+    return compileFuncallWithChildren(node, what.name, args);
+  } else {
+    return compileFuncall(what.name, args);
+  }
 }
 
 function compileChooseNode(node: any) {
@@ -75,40 +145,6 @@ function compileChooseNode(node: any) {
   return estree.makeCallWithContext(
     estree.makeMember("xjslt", "chooseInternal"),
     [{ type: "ArrayExpression", elements: alternatives }],
-  );
-}
-
-function compileElementNode(node: any) {
-  return estree.makeCallWithContext(
-    estree.makeMember("xjslt", "elementInternal"),
-    [
-      estree.makeObject({
-        name: estree.makeLiteral(node.getAttribute("name")),
-        namespace: estree.makeLiteral(node.getAttribute("namespace")),
-      }),
-      estree.makeArrowFunction(compileNodeArray(node.childNodes)),
-    ],
-  );
-}
-
-function compileIfNode(node: any) {
-  return estree.makeCallWithContext(estree.makeMember("xjslt", "ifInternal"), [
-    estree.makeObject({
-      test: estree.makeLiteral(node.getAttribute("test")),
-    }),
-    estree.makeArrowFunction(compileNodeArray(node.childNodes)),
-  ]);
-}
-
-function compileForEachNode(node: any) {
-  return estree.makeCallWithContext(
-    estree.makeMember("xjslt", "forEachInternal"),
-    [
-      estree.makeObject({
-        select: estree.makeLiteral(node.getAttribute("select")),
-      }),
-      estree.makeArrowFunction(compileNodeArray(node.childNodes)),
-    ],
   );
 }
 
@@ -142,26 +178,12 @@ export function compileNode(node: any) {
     return compileTextNode(node);
   } else if (node.nodeType === NodeType.ELEMENT_NODE) {
     if (node.namespaceURI === XSLT1_NSURI) {
-      if (node.localName === "value-of") {
-        return compileValueOfNode(node);
-      } else if (node.localName === "apply-templates") {
-        return compileApplyTemplatesNode(node);
-      } else if (node.localName === "attribute") {
-        return compileAttributeNode(node);
+      if (simpleElements.has(node.localName)) {
+        return compileSimpleElement(node);
       } else if (node.localName === "choose") {
         return compileChooseNode(node);
-      } else if (node.localName === "element") {
-        return compileElementNode(node);
-      } else if (node.localName === "if") {
-        return compileIfNode(node);
-      } else if (node.localName === "for-each") {
-        return compileForEachNode(node);
       } else if (node.localName === "template") {
         return compileTemplateNode(node);
-      } else if (node.localName === "sequence") {
-        return compileSequenceNode(node);
-      } else if (node.localName === "variable") {
-        return compileVariableNode(node);
       } else if (node.localName === "stylesheet") {
         return compileStylesheetNode(node);
       } else if (node.localName === "output") {
@@ -309,45 +331,8 @@ function compileTemplateNode(node: any) {
 }
 
 function compileTextNode(node: any) {
-  const args = [estree.makeLiteral(node.textContent)];
   return estree.makeCallWithContext(
     estree.makeMember("xjslt", "literalTextInternal"),
-    args,
-  );
-}
-
-function compileSequenceNode(node: any) {
-  const args = [estree.makeLiteral(node.textContent)];
-  return estree.makeCallWithContext(
-    estree.makeMember("xjslt", "sequenceInternal"),
-    [
-      estree.makeObject({
-        select: estree.makeLiteral(node.getAttribute("select")),
-      }),
-    ],
-  );
-}
-
-function compileValueOfNode(node: any) {
-  return estree.makeCallWithContext(
-    estree.makeMember("xjslt", "valueOfInternal"),
-    [
-      estree.makeObject({
-        select: estree.makeLiteral(node.getAttribute("select")),
-      }),
-    ],
-  );
-}
-
-function compileVariableNode(node: any) {
-  return estree.makeCallWithContext(
-    estree.makeMember("xjslt", "variableInternal"),
-    [
-      estree.makeObject({
-        name: estree.makeLiteral(node.getAttribute("name")),
-        select: estree.makeLiteral(node.getAttribute("select")),
-      }),
-      estree.makeArrowFunction(compileNodeArray(node.childNodes)),
-    ],
+    [estree.makeLiteral(node.textContent)],
   );
 }
