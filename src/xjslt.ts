@@ -62,6 +62,10 @@ interface VariableAttributes {
   name: string;
 }
 
+interface CallTemplateAttributes {
+  name: string;
+}
+
 interface AttributeOutputData {
   name: string;
   value: string;
@@ -231,6 +235,21 @@ export function applyTemplatesInternal(
       variableScopes: extendScope(context.variableScopes),
     });
   }
+}
+
+export function callTemplateInternal(
+  context: ProcessingContext,
+  attributes: CallTemplateAttributes,
+) {
+  for (let template of context.templates) {
+    if (
+      template.attributes.name !== null &&
+      attributes.name === template.attributes.name
+    ) {
+      return template.apply(context);
+    }
+  }
+  throw new Error(`Cannot find a template named ${attributes.name}`);
 }
 
 export function valueOfInternal(

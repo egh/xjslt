@@ -241,7 +241,7 @@ test("stripSpaceStylesheet with preserved", () => {
 test("compileTemplateNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:template", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'templates.push({attributes: {match: "/"},apply: context => {xjslt.literalElementInternal(context, {name: "doc",attributes: []}, context => {xjslt.applyTemplatesInternal(context, {select: null});});}});',
+    'templates.push({attributes: {match: "/",name: null},apply: context => {xjslt.literalElementInternal(context, {name: "doc",attributes: []}, context => {xjslt.applyTemplatesInternal(context, {select: null});});}});',
   );
 });
 

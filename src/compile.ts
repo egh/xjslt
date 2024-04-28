@@ -50,6 +50,14 @@ const simpleElements = new Map<string, SimpleElement>([
     },
   ],
   [
+    "call-template",
+    {
+      name: "callTemplateInternal",
+      arguments: ["name"],
+      hasChildren: false,
+    },
+  ],
+  [
     "element",
     {
       name: "elementInternal",
@@ -324,6 +332,7 @@ function compileTemplateNode(node: any) {
     estree.makeObject({
       attributes: estree.makeObject({
         match: estree.makeLiteral(node.getAttribute("match")),
+        name: estree.makeLiteral(node.getAttribute("name")),
       }),
       apply: estree.makeArrowFunction(compileNodeArray(node.childNodes)),
     }),

@@ -18,6 +18,10 @@
   </xsl:template>
 
   <xsl:template match="Author">
-    <item><xsl:value-of select="." /></item>
+    <xsl:call-template name="output-author-item"/>
   </xsl:template>
+
+  <xsl:template name="output-author-item">
+    <item><xsl:value-of select="." /></item>
+  </xsl:template>  
 </xsl:stylesheet>
