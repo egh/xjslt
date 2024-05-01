@@ -18,7 +18,24 @@
  * <https://www.gnu.org/licenses/>.
  */
 
-import * as estree from "./estree-util";
+import {
+  mkArray,
+  mkArrowFun,
+  mkBlock,
+  mkCall,
+  mkCallWithContext,
+  mkConst,
+  mkFun,
+  mkIdentifier,
+  mkImportsNode,
+  mkLet,
+  mkLiteral,
+  mkMember,
+  mkNew,
+  mkObject,
+  mkReturn,
+} from "./estree-util";
+import { ObjectExpression } from "estree";
 import { XSLT1_NSURI, NodeType } from "./xjslt";
 
 /**
@@ -99,23 +116,27 @@ const simpleElements = new Map<string, SimpleElement>([
   ],
 ]);
 
-function compileFuncall(name, args) {
-  return estree.makeCallWithContext(estree.makeMember("xjslt", name), [args]);
+function compileFuncall(name: string, args: ObjectExpression) {
+  return mkCallWithContext(mkMember("xjslt", name), [args]);
 }
 
-function compileFuncallWithChildren(node, name, args) {
-  return estree.makeCallWithContext(estree.makeMember("xjslt", name), [
+function compileFuncallWithChildren(
+  node: any,
+  name: string,
+  args: ObjectExpression,
+) {
+  return mkCallWithContext(mkMember("xjslt", name), [
     args,
-    estree.makeArrowFunction(compileNodeArray(node.childNodes)),
+    mkArrowFun(compileNodeArray(node.childNodes)),
   ]);
 }
 
-function compileArgs(node, keyList) {
+function compileArgs(node: any, keyList: string[]): ObjectExpression {
   var args = {};
   for (var key of keyList) {
-    args[key] = estree.makeLiteral(node.getAttribute(key));
+    args[key] = mkLiteral(node.getAttribute(key));
   }
-  return estree.makeObject(args);
+  return mkObject(args);
 }
 
 function compileSimpleElement(node: any) {
@@ -133,52 +154,41 @@ function compileChooseNode(node: any) {
   for (let childNode of node.childNodes) {
     if (childNode.localName === "when") {
       alternatives.push(
-        estree.makeObject({
-          test: estree.makeLiteral(childNode.getAttribute("test")),
-          apply: estree.makeArrowFunction(
-            compileNodeArray(childNode.childNodes),
-          ),
+        mkObject({
+          test: mkLiteral(childNode.getAttribute("test")),
+          apply: mkArrowFun(compileNodeArray(childNode.childNodes)),
         }),
       );
     } else if (childNode.localName === "otherwise") {
       alternatives.push(
-        estree.makeObject({
-          apply: estree.makeArrowFunction(
-            compileNodeArray(childNode.childNodes),
-          ),
+        mkObject({
+          apply: mkArrowFun(compileNodeArray(childNode.childNodes)),
         }),
       );
     }
   }
-  return estree.makeCallWithContext(
-    estree.makeMember("xjslt", "chooseInternal"),
-    [{ type: "ArrayExpression", elements: alternatives }],
-  );
+  return mkCallWithContext(mkMember("xjslt", "chooseInternal"), [
+    mkArray(alternatives),
+  ]);
 }
 
 function compileLiteralElementNode(node: any) {
   let attributes = [];
   for (let n in node.attributes) {
     attributes.push(
-      estree.makeObject({
-        name: estree.makeLiteral(node.attributes[n].localName),
-        value: estree.makeLiteral(node.attributes[n].value),
+      mkObject({
+        name: mkLiteral(node.attributes[n].localName),
+        value: mkLiteral(node.attributes[n].value),
       }),
     );
   }
-  return estree.makeCallWithContext(
-    estree.makeMember("xjslt", "literalElementInternal"),
-    [
-      estree.makeObject({
-        name: estree.makeLiteral(node.localName),
-        attributes: {
-          type: "ArrayExpression",
-          elements: attributes,
-        },
-      }),
-      estree.makeArrowFunction(compileNodeArray(node.childNodes)),
-    ],
-  );
+  return mkCallWithContext(mkMember("xjslt", "literalElementInternal"), [
+    mkObject({
+      name: mkLiteral(node.localName),
+      attributes: mkArray(attributes),
+    }),
+    mkArrowFun(compileNodeArray(node.childNodes)),
+  ]);
 }
 
 export function compileNode(node: any) {
@@ -194,7 +204,10 @@ export function compileNode(node: any) {
         return compileTemplateNode(node);
       } else if (node.localName === "stylesheet") {
         return compileStylesheetNode(node);
-      } else if (node.localName === "output") {
+      } else if (
+        node.localName === "output" ||
+        node.localName === "preserve-space"
+      ) {
         return undefined;
       } else if (node.localName === "strip-space") {
         return undefined;
@@ -228,86 +241,33 @@ function compileStylesheetNode(node: any) {
   return {
     type: "Program",
     body: [
-      ...estree.makeImportsNode(),
-      {
-        type: "FunctionDeclaration",
-        id: estree.makeIdentifier("transform"),
-        expression: false,
-        generator: false,
-        async: false,
-        params: [
-          estree.makeIdentifier("document"),
-          estree.makeIdentifier("output"),
-        ],
-        body: {
-          type: "BlockStatement",
-          body: [
-            {
-              type: "VariableDeclaration",
-              declarations: [
-                {
-                  type: "VariableDeclarator",
-                  id: estree.makeIdentifier("templates"),
-                  init: {
-                    type: "ArrayExpression",
-                    elements: [],
-                  },
-                },
-              ],
-              kind: "let",
-            },
-            ...compileNodeArray(node.childNodes),
-            {
-              type: "VariableDeclaration",
-              declarations: [
-                {
-                  type: "VariableDeclarator",
-                  id: estree.makeIdentifier("doc"),
-                  init: {
-                    type: "NewExpression",
-                    callee: estree.makeMember("slimdom", "Document"),
-                    arguments: [],
-                  },
-                },
-              ],
-              kind: "const",
-            },
-            {
-              type: "VariableDeclaration",
-              declarations: [
-                {
-                  type: "VariableDeclarator",
-                  id: estree.makeIdentifier("context"),
-                  init: estree.makeObject({
-                    outputDocument: estree.makeIdentifier("doc"),
-                    outputNode: estree.makeIdentifier("doc"),
-                    currentNode: estree.makeIdentifier("document"),
-                    currentNodeList: {
-                      type: "ArrayExpression",
-                      elements: [],
-                    },
-                    mode: estree.makeLiteral(null),
-                    templates: estree.makeIdentifier("templates"),
-                    variableScopes: {
-                      type: "ArrayExpression",
-                      elements: [],
-                    },
-                  }),
-                },
-              ],
-              kind: "let",
-            },
-            estree.makeCallWithContext(
-              estree.makeMember("xjslt", "processNode"),
-              [],
-            ),
-            {
-              type: "ReturnStatement",
-              argument: estree.makeIdentifier("context.outputDocument"),
-            },
-          ],
-        },
-      },
+      ...mkImportsNode(),
+      mkFun(
+        mkIdentifier("transform"),
+        [mkIdentifier("document"), mkIdentifier("output")],
+        mkBlock([
+          mkLet(mkIdentifier("templates"), mkArray([])),
+          ...compileNodeArray(node.childNodes),
+          mkConst(
+            mkIdentifier("doc"),
+            mkNew(mkMember("slimdom", "Document"), []),
+          ),
+          mkLet(
+            mkIdentifier("context"),
+            mkObject({
+              outputDocument: mkIdentifier("doc"),
+              outputNode: mkIdentifier("doc"),
+              currentNode: mkIdentifier("document"),
+              currentNodeList: mkArray([]),
+              mode: mkLiteral(null),
+              templates: mkIdentifier("templates"),
+              variableScopes: mkArray([]),
+            }),
+          ),
+          mkCallWithContext(mkMember("xjslt", "processNode"), []),
+          mkReturn(mkIdentifier("context.outputDocument")),
+        ]),
+      ),
       {
         type: "ExpressionStatement",
         expression: {
@@ -315,12 +275,12 @@ function compileStylesheetNode(node: any) {
           operator: "=",
           left: {
             type: "MemberExpression",
-            object: estree.makeMember("module", "exports"),
-            property: estree.makeIdentifier("transform"),
+            object: mkMember("module", "exports"),
+            property: mkIdentifier("transform"),
             computed: false,
             optional: false,
           },
-          right: estree.makeIdentifier("transform"),
+          right: mkIdentifier("transform"),
         },
       },
     ],
@@ -328,20 +288,19 @@ function compileStylesheetNode(node: any) {
 }
 
 function compileTemplateNode(node: any) {
-  return estree.makeCall(estree.makeMember("templates", "push"), [
-    estree.makeObject({
-      attributes: estree.makeObject({
-        match: estree.makeLiteral(node.getAttribute("match")),
-        name: estree.makeLiteral(node.getAttribute("name")),
+  return mkCall(mkMember("templates", "push"), [
+    mkObject({
+      attributes: mkObject({
+        match: mkLiteral(node.getAttribute("match")),
+        name: mkLiteral(node.getAttribute("name")),
       }),
-      apply: estree.makeArrowFunction(compileNodeArray(node.childNodes)),
+      apply: mkArrowFun(compileNodeArray(node.childNodes)),
     }),
   ]);
 }
 
 function compileTextNode(node: any) {
-  return estree.makeCallWithContext(
-    estree.makeMember("xjslt", "literalTextInternal"),
-    [estree.makeLiteral(node.textContent)],
-  );
+  return mkCallWithContext(mkMember("xjslt", "literalTextInternal"), [
+    mkLiteral(node.textContent),
+  ]);
 }

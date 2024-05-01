@@ -19,14 +19,22 @@
  */
 
 import {
+  ArrayExpression,
   ArrowFunctionExpression,
+  BlockStatement,
   Expression,
+  FunctionDeclaration,
   Identifier,
   Literal,
   MemberExpression,
   ModuleDeclaration,
+  NewExpression,
   ObjectExpression,
+  ReturnStatement,
+  SpreadElement,
   Statement,
+  Super,
+  VariableDeclaration,
 } from "estree";
 
 /**
@@ -34,20 +42,13 @@ import {
  * These are tailored very closely to what XJSLT needs.
  */
 
-export function makeArrowFunction(
-  body: Array<Statement>,
-): ArrowFunctionExpression {
+export function mkArrowFun(body: Array<Statement>): ArrowFunctionExpression {
   return {
     type: "ArrowFunctionExpression",
     expression: false,
     generator: false,
     async: false,
-    params: [
-      {
-        type: "Identifier",
-        name: "context",
-      },
-    ],
+    params: [mkIdentifier("context")],
     body: {
       type: "BlockStatement",
       body: body,
@@ -55,7 +56,22 @@ export function makeArrowFunction(
   };
 }
 
-export function makeCall(callee: Expression, args: Array<any>) {
+export function mkFun(
+  name: Identifier,
+  params: Identifier[],
+  body: BlockStatement,
+): FunctionDeclaration {
+  return {
+    type: "FunctionDeclaration",
+    id: name,
+    generator: false,
+    async: false,
+    params: params,
+    body: body,
+  };
+}
+
+export function mkCall(callee: Expression, args: Array<any>) {
   return {
     type: "ExpressionStatement",
     expression: {
@@ -67,69 +83,69 @@ export function makeCall(callee: Expression, args: Array<any>) {
   };
 }
 
-export function makeCallWithContext(callee: Expression, args: Array<any>) {
-  return makeCall(callee, [makeIdentifier("context"), ...args]);
+export function mkCallWithContext(callee: Expression, args: Array<any>) {
+  return mkCall(callee, [mkIdentifier("context"), ...args]);
 }
 
-export function makeIdentifier(name: string): Identifier {
+export function mkIdentifier(name: string): Identifier {
   return {
     type: "Identifier",
     name: name,
   };
 }
 
-export function makeImports(): Array<ModuleDeclaration> {
+export function mkImports(): Array<ModuleDeclaration> {
   return [
     {
       type: "ImportDeclaration",
       specifiers: [
         {
           type: "ImportNamespaceSpecifier",
-          local: makeIdentifier("slimdom"),
+          local: mkIdentifier("slimdom"),
         },
       ],
-      source: makeLiteral("slimdom"),
+      source: mkLiteral("slimdom"),
     },
     {
       type: "ImportDeclaration",
       specifiers: [
         {
           type: "ImportSpecifier",
-          imported: makeIdentifier("evaluateXPathToString"),
-          local: makeIdentifier("evaluateXPathToString"),
+          imported: mkIdentifier("evaluateXPathToString"),
+          local: mkIdentifier("evaluateXPathToString"),
         },
       ],
-      source: makeLiteral("fontoxpath"),
+      source: mkLiteral("fontoxpath"),
     },
   ];
 }
 
-export function makeImportsNode(): Array<Statement> {
+export function mkImportsNode(): Array<Statement> {
   return [
-    makeRequire("slimdom"),
-    makeRequire("fontoxpath"),
-    makeRequire("xjslt", "./dist/xjslt"),
+    mkRequire("slimdom"),
+    mkRequire("fontoxpath"),
+    mkRequire("xjslt", "./dist/xjslt"),
   ];
 }
 
-export function makeLiteral(value: string): Literal {
+export function mkLiteral(value: string): Literal {
   return {
     type: "Literal",
     value: value,
   };
 }
 
-export function makeMember(obj: string, prop: string): MemberExpression {
+export function mkMember(obj: string, prop: string): MemberExpression {
   return {
     type: "MemberExpression",
-    object: makeIdentifier(obj),
-    property: makeIdentifier(prop),
+    object: mkIdentifier(obj),
+    property: mkIdentifier(prop),
     computed: false,
     optional: false,
   };
 }
 
-export function makeObject(obj: any): ObjectExpression {
+export function mkObject(obj: any): ObjectExpression {
   let properties = [];
   for (let key in obj) {
     properties.push({
@@ -137,7 +153,7 @@ export function makeObject(obj: any): ObjectExpression {
       method: false,
       shorthand: false,
       computed: false,
-      key: makeIdentifier(key),
+      key: mkIdentifier(key),
       value: obj[key],
       kind: "init",
     });
@@ -149,7 +165,7 @@ export function makeObject(obj: any): ObjectExpression {
   };
 }
 
-export function makeRequire(name: string, path?: string): Statement {
+export function mkRequire(name: string, path?: string): Statement {
   if (!path) {
     path = name;
   }
@@ -158,15 +174,76 @@ export function makeRequire(name: string, path?: string): Statement {
     declarations: [
       {
         type: "VariableDeclarator",
-        id: makeIdentifier(name),
+        id: mkIdentifier(name),
         init: {
           type: "CallExpression",
-          callee: makeIdentifier("require"),
-          arguments: [makeLiteral(path)],
+          callee: mkIdentifier("require"),
+          arguments: [mkLiteral(path)],
           optional: false,
         },
       },
     ],
     kind: "let",
+  };
+}
+
+export function mkArray(elements: Array<any>): ArrayExpression {
+  return {
+    type: "ArrayExpression",
+    elements: elements,
+  };
+}
+
+export function mkReturn(argument: Expression | null): ReturnStatement {
+  return {
+    type: "ReturnStatement",
+    argument: argument,
+  };
+}
+
+export function mkBlock(body: Array<Statement>): BlockStatement {
+  return { type: "BlockStatement", body: body };
+}
+
+export function mkLet(
+  identifier: Identifier,
+  init?: Expression,
+): VariableDeclaration {
+  return mkVariableDeclaration(identifier, init, "let");
+}
+
+export function mkConst(
+  identifier: Identifier,
+  init?: Expression,
+): VariableDeclaration {
+  return mkVariableDeclaration(identifier, init, "const");
+}
+
+export function mkVariableDeclaration(
+  identifier: Identifier,
+  init: Expression | null,
+  kind: "var" | "let" | "const",
+): VariableDeclaration {
+  return {
+    type: "VariableDeclaration",
+    declarations: [
+      {
+        type: "VariableDeclarator",
+        id: identifier,
+        init: init,
+      },
+    ],
+    kind: kind,
+  };
+}
+
+export function mkNew(
+  callee: Expression | Super,
+  args: Array<Expression | SpreadElement>,
+): NewExpression {
+  return {
+    type: "NewExpression",
+    callee: callee,
+    arguments: args,
   };
 }
