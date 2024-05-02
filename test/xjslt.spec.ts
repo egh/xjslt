@@ -30,7 +30,7 @@ import {
   setVariable,
   stripSpaceStylesheet,
   valueOfInternal,
-  VariableScope
+  VariableScope,
 } from "../src/xjslt";
 import { compileNode } from "../src/compile";
 import * as slimdom from "slimdom";

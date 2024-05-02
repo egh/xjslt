@@ -35,7 +35,12 @@ import {
   mkObject,
   mkReturn,
 } from "./estree-util";
-import { ObjectExpression } from "estree";
+import {
+  ExpressionStatement,
+  ObjectExpression,
+  Program,
+  Statement,
+} from "estree";
 import { XSLT1_NSURI, NodeType } from "./xjslt";
 
 /**
@@ -124,7 +129,7 @@ function compileFuncallWithChildren(
   node: any,
   name: string,
   args: ObjectExpression,
-) {
+): ExpressionStatement {
   return mkCallWithContext(mkMember("xjslt", name), [
     args,
     mkArrowFun(compileNodeArray(node.childNodes)),
@@ -228,7 +233,7 @@ export function compileNode(node: any) {
   }
 }
 
-function compileNodeArray(nodes: Array<any>) {
+function compileNodeArray(nodes: Array<any>): Array<Statement> {
   let body = [];
   for (let n in nodes) {
     let compiled = compileNode(nodes[n]);
@@ -237,9 +242,10 @@ function compileNodeArray(nodes: Array<any>) {
   return body;
 }
 
-function compileStylesheetNode(node: any) {
+function compileStylesheetNode(node: any): Program {
   return {
     type: "Program",
+    sourceType: "module",
     body: [
       ...mkImportsNode(),
       mkFun(
@@ -287,7 +293,7 @@ function compileStylesheetNode(node: any) {
   };
 }
 
-function compileTemplateNode(node: any) {
+function compileTemplateNode(node: any): ExpressionStatement {
   return mkCall(mkMember("templates", "push"), [
     mkObject({
       attributes: mkObject({
@@ -299,7 +305,7 @@ function compileTemplateNode(node: any) {
   ]);
 }
 
-function compileTextNode(node: any) {
+function compileTextNode(node: any): ExpressionStatement {
   return mkCallWithContext(mkMember("xjslt", "literalTextInternal"), [
     mkLiteral(node.textContent),
   ]);

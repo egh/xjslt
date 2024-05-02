@@ -23,6 +23,7 @@ import {
   ArrowFunctionExpression,
   BlockStatement,
   Expression,
+  ExpressionStatement,
   FunctionDeclaration,
   Identifier,
   Literal,
@@ -71,7 +72,10 @@ export function mkFun(
   };
 }
 
-export function mkCall(callee: Expression, args: Array<any>) {
+export function mkCall(
+  callee: Expression,
+  args: Expression[],
+): ExpressionStatement {
   return {
     type: "ExpressionStatement",
     expression: {
@@ -83,7 +87,10 @@ export function mkCall(callee: Expression, args: Array<any>) {
   };
 }
 
-export function mkCallWithContext(callee: Expression, args: Array<any>) {
+export function mkCallWithContext(
+  callee: Expression,
+  args: Expression[],
+): ExpressionStatement {
   return mkCall(callee, [mkIdentifier("context"), ...args]);
 }
 
