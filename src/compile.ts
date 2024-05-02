@@ -261,7 +261,7 @@ function compileStylesheetNode(node: any) {
               currentNodeList: mkArray([]),
               mode: mkLiteral(null),
               templates: mkIdentifier("templates"),
-              variableScopes: mkArray([]),
+              variableScopes: mkArray([mkNew(mkIdentifier("Map"), [])]),
             }),
           ),
           mkCallWithContext(mkMember("xjslt", "processNode"), []),

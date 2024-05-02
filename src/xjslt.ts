@@ -52,6 +52,8 @@ export const enum NodeType {
 
 type SequenceConstructor = (context: ProcessingContext) => void;
 
+export type VariableScope = Map<string, any>;
+
 interface ApplyTemplateAttributes {
   select?: string;
   mode?: string;
@@ -97,10 +99,6 @@ interface NodeOutputData {
   ns?: string;
   name: string;
   attributes: Array<AttributeOutputData>;
-}
-
-interface VariableScope {
-  [key: string]: any;
 }
 
 interface ProcessingContext {
@@ -194,7 +192,7 @@ const BUILT_IN_TEMPLATES = [
 ];
 
 function getTemplateBuiltin(node: any): CompiledTemplate {
-  return getTemplate(node, BUILT_IN_TEMPLATES, null);
+  return getTemplate(node, BUILT_IN_TEMPLATES, []);
 }
 
 export function processNode(context: ProcessingContext) {
@@ -280,7 +278,7 @@ export function variableInternal(
 }
 
 export function extendScope(variableScopes: Array<VariableScope>) {
-  return variableScopes.concat([{}]);
+  return variableScopes.concat([new Map()]);
 }
 
 export function setVariable(
@@ -288,18 +286,17 @@ export function setVariable(
   name: string,
   value: any,
 ) {
-  variableScopes[variableScopes.length - 1][name] = value;
+  variableScopes[variableScopes.length - 1].set(name, value);
 }
 
 export function mergeVariableScopes(variableScopes: Array<VariableScope>) {
-  if (variableScopes) {
-    let retval = {};
-    for (let variableScope of variableScopes) {
-      Object.assign(retval, variableScope);
+  let retval = {};
+  for (let variableScope of variableScopes) {
+    for (let [key, value] of variableScope) {
+      retval[key] = value;
     }
-    return retval;
   }
-  return {};
+  return retval;
 }
 
 export function literalTextInternal(context: ProcessingContext, text: string) {
@@ -449,7 +446,7 @@ function preserveSpace(
   nsResolver: (prefix: string) => string,
 ) {
   for (let name of preserve) {
-    if (nameTest(name, node, null, nsResolver)) {
+    if (nameTest(name, node, [], nsResolver)) {
       return true;
     }
   }

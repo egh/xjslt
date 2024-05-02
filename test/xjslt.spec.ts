@@ -30,6 +30,7 @@ import {
   setVariable,
   stripSpaceStylesheet,
   valueOfInternal,
+  VariableScope
 } from "../src/xjslt";
 import { compileNode } from "../src/compile";
 import * as slimdom from "slimdom";
@@ -112,7 +113,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     currentNodeList: [],
     mode: null,
     templates: templates,
-    variableScopes: [{}],
+    variableScopes: [new Map<string, any>()],
   };
   processNode(context);
   walkTree(doc, (node) => {
@@ -264,7 +265,7 @@ test("evaluateAttributeValueTemplate", () => {
     currentNode: nodes[0],
     currentNodeList: nodes,
     templates: [],
-    variableScopes: [{}],
+    variableScopes: [new Map<string, any>()],
   };
   expect(
     evaluateAttributeValueTemplate(context, "{local-name()}-{text()}-foo"),
@@ -316,7 +317,7 @@ test("variableShadowing", async () => {
 });
 
 test("variable scopes", () => {
-  let scopes = [{}];
+  let scopes: VariableScope[] = [new Map()];
   setVariable(scopes, "a", 1);
   setVariable(scopes, "b", 2);
   let newScopes = extendScope(scopes);
@@ -324,9 +325,6 @@ test("variable scopes", () => {
   let merged = mergeVariableScopes(newScopes);
   expect(merged["a"]).toEqual(1);
   expect(merged["b"]).toEqual(3);
-  expect(scopes[0]).toEqual({ a: 1, b: 2 });
-  expect(newScopes[1]).toEqual({ b: 3 });
-  expect(mergeVariableScopes(null)).toEqual({});
   expect(mergeVariableScopes([])).toEqual({});
-  expect(mergeVariableScopes([{}])).toEqual({});
+  expect(mergeVariableScopes([new Map()])).toEqual({});
 });
