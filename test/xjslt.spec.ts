@@ -41,6 +41,8 @@ import { Parser } from "acorn";
 import { tmpdir } from "os";
 import { readFileSync, mkdtempSync, writeFileSync, unlinkSync } from "fs";
 
+const serializer = new slimdom.XMLSerializer();
+
 function makeSimpleTransform(match: string, template: string) {
   return makeTransform(`
 <xsl:template match="${match}">
@@ -49,7 +51,6 @@ ${template}
 }
 
 async function makeTransform(body: string) {
-  const tempdir = mkdtempSync(path.join(tmpdir(), "xjslt-"));
   const tempfile = path.join(tmpdir(), "temp.xsl");
   writeFileSync(
     tempfile,
@@ -88,16 +89,21 @@ test("astring", () => {
 function transform(document: slimdom.Document, output: (str: string) => void) {
   let templates = [];
   templates.push({
-    attributes: { match: "/" },
+    match: "/",
+    allowedParams: [],
     apply: function (context) {
       literalTextInternal(context, "Article -\n");
       valueOfInternal(context, { select: "/Article/Title" });
       literalTextInternal(context, "\nAuthors:");
-      applyTemplatesInternal(context, { select: "/Article/Authors/Author" });
+      applyTemplatesInternal(context, {
+        select: "/Article/Authors/Author",
+        params: [],
+      });
     },
   });
   templates.push({
-    attributes: { match: "Author" },
+    match: "Author",
+    allowedParams: [],
     apply: function (context) {
       literalTextInternal(context, "\n- ");
       valueOfInternal(context, { select: "." });
@@ -115,7 +121,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     templates: templates,
     variableScopes: [new Map<string, any>()],
   };
-  processNode(context);
+  processNode(context, []);
   walkTree(doc, (node) => {
     if (node.nodeType == NodeType.TEXT_NODE) {
       output(node.data);
@@ -165,6 +171,12 @@ test("compileValueOfNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:value-of", xsltDoc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
     'xjslt.valueOfInternal(context, {select: "/Article/Title"});',
+  );
+});
+test("compileVariableNode", () => {
+  const nodes = evaluateXPathToNodes("//xsl:variable", xsltDoc);
+  expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
+    'xjslt.variableInternal(context, {name: "author",content: "."});',
   );
 });
 
@@ -242,7 +254,7 @@ test("stripSpaceStylesheet with preserved", () => {
 test("compileTemplateNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:template", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'templates.push({attributes: {match: "/",name: null},apply: context => {xjslt.literalElementInternal(context, {name: "doc",attributes: []}, context => {xjslt.applyTemplatesInternal(context, {select: null});});}});',
+    'templates.push({match: "/",name: null,allowedParams: [],apply: context => {xjslt.literalElementInternal(context, {name: "doc",attributes: []}, context => {xjslt.applyTemplatesInternal(context, {select: null});});}});',
   );
 });
 
@@ -313,6 +325,84 @@ test("variableShadowing", async () => {
   const results = transform(document);
   expect(evaluateXPathToString("/root/test[1]/text()", results)).toEqual(
     "Mr. Foo",
+  );
+});
+
+test("call with param", async () => {
+  const transform = await makeTransform(
+    `
+  <xsl:template name="temp">
+    <xsl:param name="foo">default</xsl:param>
+    <xsl:value-of select="concat($foo, ' ', .)"/>
+  </xsl:template>
+  <xsl:template match="//Author">
+    <li><xsl:call-template name="temp">
+          <xsl:with-param name="foo" select="'foo'"/>
+        </xsl:call-template></li>
+  </xsl:template>
+`,
+  );
+  const results = transform(document);
+  expect(evaluateXPathToString("//li", results)).toEqual(
+    "foo Mr. Foo foo Mr. Bar",
+  );
+});
+
+test("param shadowed by variable", async () => {
+  const transform = await makeTransform(
+    `
+  <xsl:template name="temp">
+    <xsl:param name="foo">default</xsl:param>
+    <xsl:variable name="foo">shadowed</xsl:variable>
+    <xsl:value-of select="concat($foo, ' ', .)"/>
+  </xsl:template>
+  <xsl:template match="//Author">
+    <li><xsl:call-template name="temp">
+          <xsl:with-param name="foo" select="'foo'"/>
+        </xsl:call-template></li>
+  </xsl:template>
+`,
+  );
+  const results = transform(document);
+  expect(evaluateXPathToString("//li", results)).toEqual(
+    "shadowed Mr. Foo shadowed Mr. Bar",
+  );
+});
+
+test("toplevel param", async () => {
+  const transform = await makeTransform(
+    `
+    <xsl:param name="foo">toplevel</xsl:param>
+  <xsl:template name="temp">
+    <xsl:value-of select="concat($foo, ' ', .)"/>
+  </xsl:template>
+  <xsl:template match="//Author">
+    <li><xsl:call-template name="temp"></xsl:call-template></li>
+  </xsl:template>
+`,
+  );
+  const results = transform(document);
+  expect(evaluateXPathToString("//li", results)).toEqual(
+    "toplevel Mr. Foo toplevel Mr. Bar",
+  );
+});
+
+test("call with param defaults", async () => {
+  const transform = await makeTransform(
+    `
+  <xsl:template name="temp">
+    <xsl:param name="foo">default</xsl:param>
+    <xsl:value-of select="concat($foo, ' ', .)"/>
+  </xsl:template>
+  <xsl:template match="//Author">
+    <li><xsl:call-template name="temp">
+        </xsl:call-template></li>
+  </xsl:template>
+`,
+  );
+  const results = transform(document);
+  expect(evaluateXPathToString("//li", results)).toEqual(
+    "default Mr. Foo default Mr. Bar",
   );
 });
 

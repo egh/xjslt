@@ -10,6 +10,7 @@ Authors:<xsl:apply-templates select="/Article/Authors/Author" />
 </xsl:template>
 
 <xsl:template match="Author">
-- <xsl:value-of select="." />
+<xsl:variable name="author" select="."/>
+- <xsl:value-of select="$author" />
 </xsl:template>
 </xsl:stylesheet>

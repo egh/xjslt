@@ -18,10 +18,13 @@
   </xsl:template>
 
   <xsl:template match="Author">
-    <xsl:call-template name="output-author-item"/>
+    <xsl:call-template name="output-author-item">
+      <xsl:with-param name="out-type" select="'item'"/>
+    </xsl:call-template>
   </xsl:template>
 
   <xsl:template name="output-author-item">
-    <item><xsl:value-of select="." /></item>
+    <xsl:param name="out-type" select="'author'"/>
+    <xsl:element name="{$out-type}"><xsl:value-of select="." /></xsl:element>
   </xsl:template>  
 </xsl:stylesheet>

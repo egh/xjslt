@@ -50,22 +50,19 @@ export const enum NodeType {
   NOTATION_NODE = 12, // historical
 }
 
-type SequenceConstructor = (context: ProcessingContext) => void;
+export type SequenceConstructor = (context: ProcessingContext) => void;
 
 export type VariableScope = Map<string, any>;
 
 interface ApplyTemplateAttributes {
   select?: string;
   mode?: string;
-}
-
-interface VariableAttributes {
-  select?: string;
-  name: string;
+  params: VariableLike[];
 }
 
 interface CallTemplateAttributes {
   name: string;
+  params: VariableLike[];
 }
 
 interface AttributeOutputData {
@@ -79,8 +76,12 @@ interface ChooseAlternative {
 }
 
 interface CompiledTemplate {
-  attributes: TemplateAttributes;
+  match?: string;
+  name?: string;
+  mode?: string;
+  priority?: number;
   apply: SequenceConstructor;
+  allowedParams: Array<VariableLike>;
 }
 
 interface IfAttributes {
@@ -111,11 +112,9 @@ interface ProcessingContext {
   variableScopes: Array<VariableScope>;
 }
 
-interface TemplateAttributes {
-  match?: string;
-  name?: string;
-  mode?: string;
-  priority?: number;
+interface VariableLike {
+  name: string;
+  content: null | string | SequenceConstructor;
 }
 
 interface ValueOfAttributes {
@@ -165,8 +164,11 @@ function getTemplate(
   variableScopes: Array<VariableScope>,
 ): CompiledTemplate {
   for (let template of templates) {
-    if (nameTest(template.attributes.match, node, variableScopes)) {
-      return template;
+    if (template.match) {
+      /* some templates have no match */
+      if (nameTest(template.match, node, variableScopes)) {
+        return template;
+      }
     }
   }
   return undefined;
@@ -174,20 +176,23 @@ function getTemplate(
 
 const BUILT_IN_TEMPLATES = [
   {
-    attributes: { match: "*|/" },
+    match: "*|/",
     apply: (context: ProcessingContext) => {
-      applyTemplatesInternal(context, { select: null });
+      applyTemplatesInternal(context, { select: null, params: [] });
     },
+    allowedParams: [],
   },
   {
-    attributes: { match: "text()|@*" },
+    match: "text()|@*",
     apply: (context: ProcessingContext) => {
       valueOfInternal(context, { select: "." });
     },
+    allowedParams: [],
   },
   {
-    attributes: { match: "processing-instruction()|comment()" },
+    match: "processing-instruction()|comment()",
     apply: (_context: ProcessingContext) => {},
+    allowedParams: [],
   },
 ];
 
@@ -195,7 +200,10 @@ function getTemplateBuiltin(node: any): CompiledTemplate {
   return getTemplate(node, BUILT_IN_TEMPLATES, []);
 }
 
-export function processNode(context: ProcessingContext) {
+export function processNode(
+  context: ProcessingContext,
+  params: VariableLike[],
+) {
   const template =
     getTemplate(
       context.currentNode,
@@ -203,8 +211,47 @@ export function processNode(context: ProcessingContext) {
       context.variableScopes,
     ) || getTemplateBuiltin(context.currentNode);
   if (template) {
-    template.apply(context);
+    evaluateTemplate(template, context, params);
   }
+}
+
+function getParam(name: string, params: VariableLike[]): VariableLike | null {
+  for (let param of params) {
+    if (param.name === name) {
+      return param;
+    }
+  }
+  return null;
+}
+
+function evaluateTemplate(
+  template: CompiledTemplate,
+  context: ProcessingContext,
+  passedParams: VariableLike[],
+) {
+  let newScope = extendScope(context.variableScopes);
+  for (let allowedParam of template.allowedParams) {
+    let passedParam = getParam(allowedParam.name, passedParams);
+    if (passedParam !== null) {
+      /* we were passed this param */
+      setVariable(
+        newScope,
+        passedParam.name,
+        evaluateVariableLike(context, passedParam),
+      );
+    } else {
+      /* use the default */
+      setVariable(
+        newScope,
+        allowedParam.name,
+        evaluateVariableLike(context, allowedParam),
+      );
+    }
+  }
+  return template.apply({
+    ...context,
+    variableScopes: newScope,
+  });
 }
 
 export function applyTemplatesInternal(
@@ -226,25 +273,26 @@ export function applyTemplatesInternal(
   );
   for (let node of nodes) {
     /* for each node */
-    processNode({
-      ...context,
-      currentNode: node,
-      currentNodeList: nodes,
-      variableScopes: extendScope(context.variableScopes),
-    });
+    processNode(
+      {
+        ...context,
+        currentNode: node,
+        currentNodeList: nodes,
+        variableScopes: extendScope(context.variableScopes),
+      },
+      attributes.params,
+    );
   }
 }
 
 export function callTemplateInternal(
   context: ProcessingContext,
   attributes: CallTemplateAttributes,
+  params: VariableLike[],
 ) {
   for (let template of context.templates) {
-    if (
-      template.attributes.name !== null &&
-      attributes.name === template.attributes.name
-    ) {
-      return template.apply(context);
+    if (template.name !== null && attributes.name === template.name) {
+      return evaluateTemplate(template, context, params);
     }
   }
   throw new Error(`Cannot find a template named ${attributes.name}`);
@@ -267,13 +315,24 @@ export function valueOfInternal(
 
 export function variableInternal(
   context: ProcessingContext,
-  attributes: VariableAttributes,
-  func: SequenceConstructor,
+  variable: VariableLike,
 ) {
   setVariable(
     context.variableScopes,
-    attributes.name,
-    evaluateSelectOrSequenceConstructor(context, attributes.select, func),
+    variable.name,
+    evaluateVariableLike(context, variable),
+  );
+}
+
+export function paramInternal(
+  context: ProcessingContext,
+  variable: VariableLike,
+) {
+  /** todo: allow passing in params */
+  setVariable(
+    context.variableScopes,
+    variable.name,
+    evaluateVariableLike(context, variable),
   );
 }
 
@@ -515,20 +574,24 @@ export function evaluateAttributeValueTemplate(
     .join("");
 }
 
-function evaluateSelectOrSequenceConstructor(
+function evaluateVariableLike(
   context: ProcessingContext,
-  select: string,
-  func: SequenceConstructor,
-): EvaluateXPath | slimdom.Document {
-  if (select) {
+  variable: VariableLike,
+): string | EvaluateXPath | slimdom.Document {
+  if (typeof variable.content === "string") {
     return evaluateXPath(
-      select,
+      variable.content,
       context.currentNode,
       null,
       mergeVariableScopes(context.variableScopes),
     );
+  } else if (variable.content === null) {
+    return "";
   } else {
-    return evaluateSequenceConstructorInTemporaryTree(context, func);
+    return evaluateSequenceConstructorInTemporaryTree(
+      context,
+      variable.content,
+    );
   }
 }
 

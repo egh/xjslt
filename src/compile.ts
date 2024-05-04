@@ -36,6 +36,7 @@ import {
   mkReturn,
 } from "./estree-util";
 import {
+  Expression,
   ExpressionStatement,
   ObjectExpression,
   Program,
@@ -72,14 +73,6 @@ const simpleElements = new Map<string, SimpleElement>([
     },
   ],
   [
-    "call-template",
-    {
-      name: "callTemplateInternal",
-      arguments: ["name"],
-      hasChildren: false,
-    },
-  ],
-  [
     "element",
     {
       name: "elementInternal",
@@ -111,18 +104,49 @@ const simpleElements = new Map<string, SimpleElement>([
     "value-of",
     { name: "valueOfInternal", arguments: ["select"], hasChildren: false },
   ],
-  [
-    "variable",
-    {
-      name: "variableInternal",
-      arguments: ["name", "select"],
-      hasChildren: false,
-    },
-  ],
 ]);
 
-function compileFuncall(name: string, args: ObjectExpression) {
-  return mkCallWithContext(mkMember("xjslt", name), [args]);
+/* Compile a param or variable, which contains either a select
+   statement or a SequenceConstructor. */
+function compileVariableLike(node: any) {
+  let name = mkLiteral(node.getAttribute("name"));
+  if (node.hasAttribute("select")) {
+    return mkObject({
+      name: name,
+      content: mkLiteral(node.getAttribute("select")),
+    });
+  } else if (node.hasChildNodes()) {
+    return mkObject({
+      name: name,
+      content: mkArrowFun(compileNodeArray(node.childNodes)),
+    });
+  } else {
+    return mkObject({ name: name, content: mkLiteral(null) });
+  }
+}
+
+function compileVariable(node: any) {
+  return compileFuncall("variableInternal", [compileVariableLike(node)]);
+}
+
+function compileParams(nodename: string, nodes: any[]) {
+  let params = [];
+  for (let node of nodes) {
+    if (node.localName === nodename) {
+      params.push(compileVariableLike(node));
+    }
+  }
+  return mkArray(params);
+}
+
+function compileCallTemplate(node: any) {
+  let args = compileArgs(node, ["name"]);
+  let params = compileParams("with-param", node.childNodes);
+  return compileFuncall("callTemplateInternal", [args, params]);
+}
+
+function compileFuncall(name: string, args: Expression[]) {
+  return mkCallWithContext(mkMember("xjslt", name), args);
 }
 
 function compileFuncallWithChildren(
@@ -150,7 +174,7 @@ function compileSimpleElement(node: any) {
   if (what.hasChildren) {
     return compileFuncallWithChildren(node, what.name, args);
   } else {
-    return compileFuncall(what.name, args);
+    return compileFuncall(what.name, [args]);
   }
 }
 
@@ -177,6 +201,11 @@ function compileChooseNode(node: any) {
   ]);
 }
 
+function compileTopLevelParam(node: any) {
+  let param = compileVariableLike(node);
+  return mkCallWithContext(mkMember("xjslt", "paramInternal"), [param]);
+}
+
 function compileLiteralElementNode(node: any) {
   let attributes = [];
   for (let n in node.attributes) {
@@ -195,7 +224,7 @@ function compileLiteralElementNode(node: any) {
     mkArrowFun(compileNodeArray(node.childNodes)),
   ]);
 }
-
+/* todo - separate into top-level & sequence-generator versions */
 export function compileNode(node: any) {
   if (node.nodeType === NodeType.TEXT_NODE) {
     return compileTextNode(node);
@@ -205,10 +234,16 @@ export function compileNode(node: any) {
         return compileSimpleElement(node);
       } else if (node.localName === "choose") {
         return compileChooseNode(node);
+      } else if (node.localName === "call-template") {
+        return compileCallTemplate(node);
+      } else if (node.localName === "param") {
+        return compileTopLevelParam(node);
       } else if (node.localName === "template") {
         return compileTemplateNode(node);
       } else if (node.localName === "stylesheet") {
         return compileStylesheetNode(node);
+      } else if (node.localName === "variable") {
+        return compileVariable(node);
       } else if (
         node.localName === "output" ||
         node.localName === "preserve-space"
@@ -252,12 +287,11 @@ function compileStylesheetNode(node: any): Program {
         mkIdentifier("transform"),
         [mkIdentifier("document"), mkIdentifier("output")],
         mkBlock([
-          mkLet(mkIdentifier("templates"), mkArray([])),
-          ...compileNodeArray(node.childNodes),
           mkConst(
             mkIdentifier("doc"),
             mkNew(mkMember("slimdom", "Document"), []),
           ),
+          mkLet(mkIdentifier("templates"), mkArray([])),
           mkLet(
             mkIdentifier("context"),
             mkObject({
@@ -270,6 +304,7 @@ function compileStylesheetNode(node: any): Program {
               variableScopes: mkArray([mkNew(mkIdentifier("Map"), [])]),
             }),
           ),
+          ...compileNodeArray(node.childNodes),
           mkCallWithContext(mkMember("xjslt", "processNode"), []),
           mkReturn(mkIdentifier("context.outputDocument")),
         ]),
@@ -294,13 +329,14 @@ function compileStylesheetNode(node: any): Program {
 }
 
 function compileTemplateNode(node: any): ExpressionStatement {
+  let allowedParams = compileParams("param", node.childNodes);
+  let skipNodes = allowedParams.elements.length;
   return mkCall(mkMember("templates", "push"), [
     mkObject({
-      attributes: mkObject({
-        match: mkLiteral(node.getAttribute("match")),
-        name: mkLiteral(node.getAttribute("name")),
-      }),
-      apply: mkArrowFun(compileNodeArray(node.childNodes)),
+      match: mkLiteral(node.getAttribute("match")),
+      name: mkLiteral(node.getAttribute("name")),
+      allowedParams: allowedParams,
+      apply: mkArrowFun(compileNodeArray(node.childNodes.slice(skipNodes))),
     }),
   ]);
 }
