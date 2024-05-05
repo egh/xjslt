@@ -135,7 +135,7 @@ export function mkImportsNode(): Array<Statement> {
   ];
 }
 
-export function mkLiteral(value: string): Literal {
+export function mkLiteral(value: string | boolean | number | null): Literal {
   return {
     type: "Literal",
     value: value,

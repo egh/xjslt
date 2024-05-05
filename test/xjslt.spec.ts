@@ -406,6 +406,20 @@ test("call with param defaults", async () => {
   );
 });
 
+test("text node", async () => {
+  const transform = await makeSimpleTransform(
+    "//Author",
+    `<li><xsl:text>
+-</xsl:text><xsl:value-of select="."/></li>`,
+  );
+  const results = transform(document);
+  expect(evaluateXPathToString("//li/text()", results)).toEqual(
+    `
+- Mr. Foo 
+- Mr. Bar`,
+  );
+});
+
 test("variable scopes", () => {
   let scopes: VariableScope[] = [new Map()];
   setVariable(scopes, "a", 1);

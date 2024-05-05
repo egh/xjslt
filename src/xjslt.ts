@@ -96,6 +96,10 @@ interface SequenceAttributes {
   select: string;
 }
 
+interface TextAttributes {
+  disableOutputEscaping: boolean;
+}
+
 interface NodeOutputData {
   ns?: string;
   name: string;
@@ -310,6 +314,16 @@ export function valueOfInternal(
       mergeVariableScopes(context.variableScopes),
     ),
   );
+  context.outputNode.appendChild(newNode);
+}
+
+export function textInternal(
+  context: ProcessingContext,
+  attributes: TextAttributes,
+  func: SequenceConstructor,
+) {
+  const out = evaluateSequenceConstructorInTemporaryTree(context, func);
+  const newNode = context.outputDocument.createTextNode(extractText(out));
   context.outputNode.appendChild(newNode);
 }
 

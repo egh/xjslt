@@ -224,10 +224,11 @@ function compileLiteralElementNode(node: any) {
     mkArrowFun(compileNodeArray(node.childNodes)),
   ]);
 }
+
 /* todo - separate into top-level & sequence-generator versions */
 export function compileNode(node: any) {
   if (node.nodeType === NodeType.TEXT_NODE) {
-    return compileTextNode(node);
+    return compileLiteralTextNode(node);
   } else if (node.nodeType === NodeType.ELEMENT_NODE) {
     if (node.namespaceURI === XSLT1_NSURI) {
       if (simpleElements.has(node.localName)) {
@@ -240,8 +241,12 @@ export function compileNode(node: any) {
         return compileTopLevelParam(node);
       } else if (node.localName === "template") {
         return compileTemplateNode(node);
+      } else if (node.localName === "text") {
+        return compileTextNode(node);
       } else if (node.localName === "stylesheet") {
         return compileStylesheetNode(node);
+      } else if (node.localName === "text") {
+        return compileTextNode(node);
       } else if (node.localName === "variable") {
         return compileVariable(node);
       } else if (
@@ -266,6 +271,18 @@ export function compileNode(node: any) {
   } else {
     throw new Error("Found node type: " + node.nodeType);
   }
+}
+
+function compileTextNode(node: any) {
+  if (node.childNodes.childElementCount > 0) {
+    throw new Error("XTSE0010 element found as child of xsl:text");
+  }
+  return mkCallWithContext(mkMember("xjslt", "textInternal"), [
+    mkObject({
+      disableOutputEscaping: mkLiteral(false), // TODO
+    }),
+    mkArrowFun([compileLiteralTextNode(node)]),
+  ]);
 }
 
 function compileNodeArray(nodes: Array<any>): Array<Statement> {
@@ -341,7 +358,7 @@ function compileTemplateNode(node: any): ExpressionStatement {
   ]);
 }
 
-function compileTextNode(node: any): ExpressionStatement {
+function compileLiteralTextNode(node: any): ExpressionStatement {
   return mkCallWithContext(mkMember("xjslt", "literalTextInternal"), [
     mkLiteral(node.textContent),
   ]);
