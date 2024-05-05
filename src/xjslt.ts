@@ -488,7 +488,7 @@ export function forEachInternal(
   attributes: ForEachAttributes,
   func: SequenceConstructor,
 ) {
-  const nodeList = evaluateXPathToNodes(
+  const nodeList = evaluateXPath(
     attributes.select,
     context.currentNode,
     null,
