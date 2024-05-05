@@ -237,6 +237,16 @@ export function compileNode(node: any) {
         return compileChooseNode(node);
       } else if (node.localName === "call-template") {
         return compileCallTemplate(node);
+      } else if (node.localName === "copy-of") {
+        // TODO
+      } else if (node.localName === "key") {
+        // TODO
+      } else if (node.localName === "comment") {
+        // TODO
+      } else if (node.localName === "number") {
+        // TODO
+      } else if (node.localName === "copy") {
+        // TODO
       } else if (node.localName === "param") {
         return compileTopLevelParam(node);
       } else if (node.localName === "template") {
