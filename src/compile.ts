@@ -253,7 +253,10 @@ export function compileNode(node: any) {
         return compileTemplateNode(node);
       } else if (node.localName === "text") {
         return compileTextNode(node);
-      } else if (node.localName === "stylesheet") {
+      } else if (
+        node.localName === "stylesheet" ||
+        node.localName === "transform"
+      ) {
         return compileStylesheetNode(node);
       } else if (node.localName === "text") {
         return compileTextNode(node);
