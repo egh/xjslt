@@ -123,6 +123,7 @@ interface VariableLike {
 
 interface ValueOfAttributes {
   select: string;
+  separator?: string;
   disableOutputEscaping?: boolean;
 }
 
@@ -306,15 +307,18 @@ export function valueOfInternal(
   context: ProcessingContext,
   attributes: ValueOfAttributes,
 ) {
-  const newNode = context.outputDocument.createTextNode(
-    evaluateXPathToString(
-      attributes.select,
-      context.currentNode,
-      null,
-      mergeVariableScopes(context.variableScopes),
-    ),
+  let strs = evaluateXPath(
+    attributes.select,
+    context.currentNode,
+    null,
+    mergeVariableScopes(context.variableScopes),
+    evaluateXPath.STRINGS_TYPE,
   );
-  context.outputNode.appendChild(newNode);
+  const str = strs.join(attributes.separator || "");
+  if (str !== "") {
+    const newNode = context.outputDocument.createTextNode(str);
+    context.outputNode.appendChild(newNode);
+  }
 }
 
 export function textInternal(
@@ -376,18 +380,29 @@ export function literalTextInternal(context: ProcessingContext, text: string) {
   context.outputNode.appendChild(context.outputDocument.createTextNode(text));
 }
 
+function appendToTree(thing: any, context: ProcessingContext) {
+  if (thing instanceof slimdom.Node) {
+    context.outputNode.appendChild(thing);
+  } else {
+    context.outputNode.appendChild(
+      context.outputDocument.createTextNode(thing.toString()),
+    );
+  }
+}
+
 export function sequenceInternal(
   context: ProcessingContext,
   attributes: SequenceAttributes,
 ) {
-  const nodeList = evaluateXPathToNodes<slimdom.Node>(
+  const things = evaluateXPath(
     attributes.select,
     context.currentNode,
     null,
     mergeVariableScopes(context.variableScopes),
+    evaluateXPath.ALL_RESULTS_TYPE,
   );
-  for (let node of nodeList) {
-    context.outputNode.appendChild(node);
+  for (let thing of things) {
+    appendToTree(thing, context);
   }
 }
 

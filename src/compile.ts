@@ -102,7 +102,11 @@ const simpleElements = new Map<string, SimpleElement>([
   ],
   [
     "value-of",
-    { name: "valueOfInternal", arguments: ["select"], hasChildren: false },
+    {
+      name: "valueOfInternal",
+      arguments: ["select", "separator"],
+      hasChildren: false,
+    },
   ],
 ]);
 

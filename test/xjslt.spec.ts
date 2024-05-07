@@ -93,7 +93,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     allowedParams: [],
     apply: function (context) {
       literalTextInternal(context, "Article -\n");
-      valueOfInternal(context, { select: "/Article/Title" });
+      valueOfInternal(context, { select: "/Article/Title"});
       literalTextInternal(context, "\nAuthors:");
       applyTemplatesInternal(context, {
         select: "/Article/Authors/Author",
@@ -170,7 +170,7 @@ test("compileTextNode", () => {
 test("compileValueOfNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:value-of", xsltDoc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.valueOfInternal(context, {select: "/Article/Title"});',
+    'xjslt.valueOfInternal(context, {select: "/Article/Title",separator: null});',
   );
 });
 test("compileVariableNode", () => {
@@ -220,7 +220,7 @@ test("compileIfNode", () => {
 test("compileLiteralElementNode", () => {
   const nodes = evaluateXPathToNodes("//heading", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.literalElementInternal(context, {name: "heading",attributes: [{name: "type",value: "top"}]}, context => {xjslt.valueOfInternal(context, {select: "Title"});});',
+    'xjslt.literalElementInternal(context, {name: "heading",attributes: [{name: "type",value: "top"}]}, context => {xjslt.valueOfInternal(context, {select: "Title",separator: null});});',
   );
 });
 
