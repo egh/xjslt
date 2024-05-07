@@ -117,7 +117,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     outputNode: doc.documentElement,
     currentNode: document,
     currentNodeList: [],
-    mode: null,
+    mode: undefined,
     templates: templates,
     variableScopes: [new Map<string, any>()],
   };
@@ -170,7 +170,7 @@ test("compileTextNode", () => {
 test("compileValueOfNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:value-of", xsltDoc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.valueOfInternal(context, {select: "/Article/Title",separator: null});',
+    'xjslt.valueOfInternal(context, {select: "/Article/Title",separator: undefined});',
   );
 });
 test("compileVariableNode", () => {
@@ -220,7 +220,7 @@ test("compileIfNode", () => {
 test("compileLiteralElementNode", () => {
   const nodes = evaluateXPathToNodes("//heading", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.literalElementInternal(context, {name: "heading",attributes: [{name: "type",value: "top"}]}, context => {xjslt.valueOfInternal(context, {select: "Title",separator: null});});',
+    'xjslt.literalElementInternal(context, {name: "heading",attributes: [{name: "type",value: "top"}]}, context => {xjslt.valueOfInternal(context, {select: "Title",separator: undefined});});',
   );
 });
 
@@ -254,7 +254,7 @@ test("stripSpaceStylesheet with preserved", () => {
 test("compileTemplateNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:template", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'templates.push({match: "/",name: null,allowedParams: [],apply: context => {xjslt.literalElementInternal(context, {name: "doc",attributes: []}, context => {xjslt.applyTemplatesInternal(context, {select: null});});}});',
+    'templates.push({match: "/",name: undefined,allowedParams: [],apply: context => {xjslt.literalElementInternal(context, {name: "doc",attributes: []}, context => {xjslt.applyTemplatesInternal(context, {select: undefined});});}});',
   );
 });
 
@@ -272,8 +272,8 @@ test("compileStylesheetNode", async () => {
 test("evaluateAttributeValueTemplate", () => {
   const nodes = evaluateXPathToNodes("//Author", document);
   const context = {
-    outputDocument: null,
-    outputNode: null,
+    outputDocument: undefined,
+    outputNode: undefined,
     currentNode: nodes[0],
     currentNodeList: nodes,
     templates: [],

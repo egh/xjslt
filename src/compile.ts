@@ -113,11 +113,11 @@ const simpleElements = new Map<string, SimpleElement>([
 /* Compile a param or variable, which contains either a select
    statement or a SequenceConstructor. */
 function compileVariableLike(node: any) {
-  let name = mkLiteral(node.getAttribute("name"));
+  let name = mkLiteral(node.getAttribute("name") || undefined);
   if (node.hasAttribute("select")) {
     return mkObject({
       name: name,
-      content: mkLiteral(node.getAttribute("select")),
+      content: mkLiteral(node.getAttribute("select") || undefined),
     });
   } else if (node.hasChildNodes()) {
     return mkObject({
@@ -125,7 +125,7 @@ function compileVariableLike(node: any) {
       content: mkArrowFun(compileNodeArray(node.childNodes)),
     });
   } else {
-    return mkObject({ name: name, content: mkLiteral(null) });
+    return mkObject({ name: name, content: mkLiteral(undefined) });
   }
 }
 
@@ -167,7 +167,7 @@ function compileFuncallWithChildren(
 function compileArgs(node: any, keyList: string[]): ObjectExpression {
   var args = {};
   for (var key of keyList) {
-    args[key] = mkLiteral(node.getAttribute(key));
+    args[key] = mkLiteral(node.getAttribute(key) || undefined);
   }
   return mkObject(args);
 }
@@ -188,7 +188,7 @@ function compileChooseNode(node: any) {
     if (childNode.localName === "when") {
       alternatives.push(
         mkObject({
-          test: mkLiteral(childNode.getAttribute("test")),
+          test: mkLiteral(childNode.getAttribute("test") || undefined),
           apply: mkArrowFun(compileNodeArray(childNode.childNodes)),
         }),
       );
@@ -333,7 +333,7 @@ function compileStylesheetNode(node: any): Program {
               outputNode: mkIdentifier("doc"),
               currentNode: mkIdentifier("document"),
               currentNodeList: mkArray([]),
-              mode: mkLiteral(null),
+              mode: mkLiteral(undefined),
               templates: mkIdentifier("templates"),
               variableScopes: mkArray([mkNew(mkIdentifier("Map"), [])]),
             }),
@@ -367,8 +367,8 @@ function compileTemplateNode(node: any): ExpressionStatement {
   let skipNodes = allowedParams.elements.length;
   return mkCall(mkMember("templates", "push"), [
     mkObject({
-      match: mkLiteral(node.getAttribute("match")),
-      name: mkLiteral(node.getAttribute("name")),
+      match: mkLiteral(node.getAttribute("match") || undefined),
+      name: mkLiteral(node.getAttribute("name") || undefined),
       allowedParams: allowedParams,
       apply: mkArrowFun(compileNodeArray(node.childNodes.slice(skipNodes))),
     }),

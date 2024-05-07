@@ -135,7 +135,7 @@ export function mkImportsNode(): Array<Statement> {
   ];
 }
 
-export function mkLiteral(value: string | boolean | number | null): Literal {
+export function mkLiteral(value: string | boolean | number | undefined): Literal {
   return {
     type: "Literal",
     value: value,
@@ -201,7 +201,7 @@ export function mkArray(elements: Array<any>): ArrayExpression {
   };
 }
 
-export function mkReturn(argument: Expression | null): ReturnStatement {
+export function mkReturn(argument: Expression | undefined): ReturnStatement {
   return {
     type: "ReturnStatement",
     argument: argument,
@@ -228,7 +228,7 @@ export function mkConst(
 
 export function mkVariableDeclaration(
   identifier: Identifier,
-  init: Expression | null,
+  init: Expression | undefined,
   kind: "var" | "let" | "const",
 ): VariableDeclaration {
   return {

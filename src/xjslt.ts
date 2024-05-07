@@ -118,7 +118,7 @@ interface ProcessingContext {
 
 interface VariableLike {
   name: string;
-  content: null | string | SequenceConstructor;
+  content: undefined | string | SequenceConstructor;
 }
 
 interface ValueOfAttributes {
@@ -144,7 +144,7 @@ function nameTest(
     const matches = evaluateXPathToNodes(
       name,
       checkContext,
-      null,
+      undefined,
       mergeVariableScopes(variableScopes),
       options,
     );
@@ -183,7 +183,7 @@ const BUILT_IN_TEMPLATES = [
   {
     match: "*|/",
     apply: (context: ProcessingContext) => {
-      applyTemplatesInternal(context, { select: null, params: [] });
+      applyTemplatesInternal(context, { select: undefined, params: [] });
     },
     allowedParams: [],
   },
@@ -220,13 +220,13 @@ export function processNode(
   }
 }
 
-function getParam(name: string, params: VariableLike[]): VariableLike | null {
+function getParam(name: string, params: VariableLike[]): VariableLike | undefined {
   for (let param of params) {
     if (param.name === name) {
       return param;
     }
   }
-  return null;
+  return undefined;
 }
 
 function evaluateTemplate(
@@ -237,7 +237,7 @@ function evaluateTemplate(
   let newScope = extendScope(context.variableScopes);
   for (let allowedParam of template.allowedParams) {
     let passedParam = getParam(allowedParam.name, passedParams);
-    if (passedParam !== null) {
+    if (passedParam !== undefined) {
       /* we were passed this param */
       setVariable(
         newScope,
@@ -273,7 +273,7 @@ export function applyTemplatesInternal(
   const nodes = evaluateXPathToNodes(
     select,
     context.currentNode,
-    null,
+    undefined,
     mergeVariableScopes(context.variableScopes),
   );
   for (let node of nodes) {
@@ -296,7 +296,7 @@ export function callTemplateInternal(
   params: VariableLike[],
 ) {
   for (let template of context.templates) {
-    if (template.name !== null && attributes.name === template.name) {
+    if (template.name !== undefined && attributes.name === template.name) {
       return evaluateTemplate(template, context, params);
     }
   }
@@ -310,7 +310,7 @@ export function valueOfInternal(
   let strs = evaluateXPath(
     attributes.select,
     context.currentNode,
-    null,
+    undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.STRINGS_TYPE,
   );
@@ -397,7 +397,7 @@ export function sequenceInternal(
   const things = evaluateXPath(
     attributes.select,
     context.currentNode,
-    null,
+    undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
   );
@@ -470,7 +470,7 @@ export function ifInternal(
     evaluateXPathToBoolean(
       attributes.test,
       context.currentNode,
-      null,
+      undefined,
       mergeVariableScopes(context.variableScopes),
     )
   ) {
@@ -489,7 +489,7 @@ export function chooseInternal(
       evaluateXPathToBoolean(
         alternative.test,
         context.currentNode,
-        null,
+        undefined,
         mergeVariableScopes(context.variableScopes),
       )
     ) {
@@ -506,7 +506,7 @@ export function forEachInternal(
   const nodeList = evaluateXPath(
     attributes.select,
     context.currentNode,
-    null,
+    undefined,
     mergeVariableScopes(context.variableScopes),
   );
   for (let node of nodeList) {
@@ -593,7 +593,7 @@ export function evaluateAttributeValueTemplate(
         return evaluateXPathToString(
           piece.substring(1, piece.length - 1),
           context.currentNode,
-          null,
+          undefined,
           mergeVariableScopes(context.variableScopes),
         );
       } else {
@@ -611,10 +611,10 @@ function evaluateVariableLike(
     return evaluateXPath(
       variable.content,
       context.currentNode,
-      null,
+      undefined,
       mergeVariableScopes(context.variableScopes),
     );
-  } else if (variable.content === null) {
+  } else if (variable.content == undefined) {
     return "";
   } else {
     return evaluateSequenceConstructorInTemporaryTree(
@@ -641,7 +641,7 @@ function evaluateSequenceConstructorInTemporaryTree(
     outputNode: doc.documentElement,
     currentNode: origContext.currentNode,
     currentNodeList: [],
-    mode: null,
+    mode: undefined,
     templates: origContext.templates,
     variableScopes: extendScope(origContext.variableScopes),
   };
