@@ -65,6 +65,10 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
       "/test-set/dependencies/spec/@value='XSLT30+'",
       testSetDom,
     ) &&
+    !evaluateXPathToBoolean(
+      "/test-set/dependencies/spec/@value='XML_1.1'",
+      testSetDom,
+    ) &&
     !evaluateXPathToBoolean("/test-set/@name='xml-version'", testSetDom) // slimdom doesn't support xml 1.1
   ) {
     for (let environment of evaluateXPathToNodes(
