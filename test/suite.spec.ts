@@ -63,33 +63,40 @@ function roundTrip(xml: string): string {
   }
 }
 
+function resolve(testSet: string, filename: string) {
+  return path.join(path.dirname(testSet), filename);
+}
+
+function setupEnvironment(testSet, testSetDom) {
+  let environments = new Map();
+  for (let environment of evaluateXPathToNodes(
+    "/test-set/environment",
+    testSetDom,
+  )) {
+    const file = evaluateXPathToString("source[@role='.']/@file", environment);
+    let xmlString: string;
+    const name = evaluateXPathToString("@name", environment);
+    if (file) {
+      xmlString = readFileSync(resolve(testSet, file)).toString();
+    } else {
+      xmlString = evaluateXPathToString("source/content", environment);
+    }
+    if (xmlString) {
+      environments.set(name, slimdom.parseXmlDocument(xmlString));
+    }
+  }
+  return environments;
+}
+
 for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
-  testSet = path.join("xslt30-test", testSet);
   function resolve(filename: string) {
     return path.join(path.dirname(testSet), filename);
   }
+  testSet = path.join("xslt30-test", testSet);
   const testSetFile = readFileSync(testSet);
   const testSetDom = slimdom.parseXmlDocument(testSetFile.toString());
   if (applicableTest(evaluateXPathToNodes("/test-set", testSetDom)[0])) {
-    for (let environment of evaluateXPathToNodes(
-      "/test-set/environment",
-      testSetDom,
-    )) {
-      const file = evaluateXPathToString(
-        "source[@role='.']/@file",
-        environment,
-      );
-      let xmlString: string;
-      const name = evaluateXPathToString("@name", environment);
-      if (file) {
-        xmlString = readFileSync(resolve(file)).toString();
-      } else {
-        xmlString = evaluateXPathToString("source/content", environment);
-      }
-      if (xmlString) {
-        environments.set(name, slimdom.parseXmlDocument(xmlString));
-      }
-    }
+    const environments = setupEnvironment(testSet, testSetDom);
     const testSetDescription = evaluateXPathToString(
       "/test-set/description",
       testSetDom,
@@ -101,7 +108,9 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
       const stylesheetFile = resolve(
         evaluateXPathToString("test/stylesheet/@file", testCase),
       );
-      const environment = evaluateXPathToString("environment/@ref", testCase);
+      const environment = environments.get(
+        evaluateXPathToString("environment/@ref", testCase),
+      );
       let assertXmlFile = evaluateXPathToString(
         "result/assert-xml/@file",
         testCase,
@@ -139,9 +148,14 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
   }
 }
 
-const tester = async (description, stylesheetFile, env, assertXml, assert) => {
+const tester = async (
+  description,
+  stylesheetFile,
+  envContent,
+  assertXml,
+  assert,
+) => {
   const transform = await buildStylesheet(stylesheetFile);
-  const envContent = environments.get(env);
   const transformed = transform(envContent);
   if (assert) {
     expect(evaluateXPathToBoolean(assert, transformed)).toBeTruthy();
