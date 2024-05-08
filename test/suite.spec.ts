@@ -33,8 +33,6 @@ import { KNOWN_SPEC_FAILURES } from "./suite.fail";
 
 const serializer = new slimdom.XMLSerializer();
 
-let testArray = [];
-let badTestArray = [];
 const testSetDom = slimdom.parseXmlDocument(
   readFileSync("xslt30-test/catalog.xml").toString(),
 );
@@ -115,53 +113,41 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
       "/test-set/description",
       testSetDom,
     );
-    for (let testCase of evaluateXPathToNodes(
-      "/test-set/test-case",
-      testSetDom,
-    )) {
-      const stylesheetFile = path.join(
-        rootDir,
-        evaluateXPathToString("test/stylesheet/@file", testCase),
-      );
-      const environment = environments.get(
-        evaluateXPathToString("environment/@ref", testCase),
-      );
-      const resultNode = evaluateXPathToNodes("result", testCase)[0];
-      if (
-        applicableTest(testCase) &&
-        !evaluateXPathToString("result/error/@code", testCase)
-      ) {
-        const testDescription = evaluateXPathToString("description", testCase);
-        const testName = evaluateXPathToString("@name", testCase);
-        const test = [
-          `${testSetDescription} / ${testDescription} (${testName}) - ${stylesheetFile}`,
+    describe(testSetDescription, () => {
+      for (let testCase of evaluateXPathToNodes(
+        "/test-set/test-case",
+        testSetDom,
+      )) {
+        const stylesheetFile = path.join(
           rootDir,
-          stylesheetFile,
-          environment,
-          resultNode,
-        ];
-        if (KNOWN_SPEC_FAILURES.includes(testName)) {
-          badTestArray.push(test);
-        } else {
-          testArray.push(test);
+          evaluateXPathToString("test/stylesheet/@file", testCase),
+        );
+        const environment = environments.get(
+          evaluateXPathToString("environment/@ref", testCase),
+        );
+        const resultNode = evaluateXPathToNodes("result", testCase)[0];
+        if (
+          applicableTest(testCase) &&
+          !evaluateXPathToString("result/error/@code", testCase)
+        ) {
+          const testDescription = evaluateXPathToString(
+            "description",
+            testCase,
+          );
+          const testName = evaluateXPathToString("@name", testCase);
+          const description = `${testDescription} (${testName}) - ${stylesheetFile}`;
+          const tester = async () => {
+            const transform = await buildStylesheet(stylesheetFile);
+            checkResult(rootDir, resultNode, transform(environment));
+          };
+
+          if (KNOWN_SPEC_FAILURES.includes(testName)) {
+            test.failing(description, tester);
+          } else {
+            test(description, tester);
+          }
         }
       }
-    }
+    });
   }
 }
-
-const tester = async (
-  description,
-  rootDir,
-  stylesheetFile,
-  envContent,
-  resultNode,
-) => {
-  const transform = await buildStylesheet(stylesheetFile);
-  const transformed = transform(envContent);
-  checkResult(rootDir, resultNode, transformed);
-};
-
-test.each(testArray)("%s", tester);
-
-test.failing.each(badTestArray)("%s", tester);
