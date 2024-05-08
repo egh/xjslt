@@ -220,7 +220,10 @@ export function processNode(
   }
 }
 
-function getParam(name: string, params: VariableLike[]): VariableLike | undefined {
+function getParam(
+  name: string,
+  params: VariableLike[],
+): VariableLike | undefined {
   for (let param of params) {
     if (param.name === name) {
       return param;
@@ -314,7 +317,9 @@ export function valueOfInternal(
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.STRINGS_TYPE,
   );
-  const str = strs.join(evaluateAttributeValueTemplate(context, (attributes.separator || "")));
+  const str = strs.join(
+    evaluateAttributeValueTemplate(context, attributes.separator || ""),
+  );
   if (str !== "") {
     const newNode = context.outputDocument.createTextNode(str);
     context.outputNode.appendChild(newNode);

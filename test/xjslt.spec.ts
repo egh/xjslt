@@ -93,7 +93,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     allowedParams: [],
     apply: function (context) {
       literalTextInternal(context, "Article -\n");
-      valueOfInternal(context, { select: "/Article/Title"});
+      valueOfInternal(context, { select: "/Article/Title" });
       literalTextInternal(context, "\nAuthors:");
       applyTemplatesInternal(context, {
         select: "/Article/Authors/Author",
