@@ -240,7 +240,6 @@ export const KNOWN_SPEC_FAILURES = [
   "attribute-set-1815",
   "avt-0201",
   "avt-0301",
-  "avt-0302",
   "avt-0303",
   "avt-0401",
   "avt-0501",

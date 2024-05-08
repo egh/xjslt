@@ -314,7 +314,7 @@ export function valueOfInternal(
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.STRINGS_TYPE,
   );
-  const str = strs.join(attributes.separator || "");
+  const str = strs.join(evaluateAttributeValueTemplate(context, (attributes.separator || "")));
   if (str !== "") {
     const newNode = context.outputDocument.createTextNode(str);
     context.outputNode.appendChild(newNode);
