@@ -18,9 +18,7 @@
  * <https://www.gnu.org/licenses/>.
  */
 
-import {
-  buildStylesheet,
-} from "../src/xjslt";
+import { buildStylesheet } from "../src/xjslt";
 import * as slimdom from "slimdom";
 import * as path from "path";
 import {
@@ -43,6 +41,18 @@ const testSetDom = slimdom.parseXmlDocument(
   readFileSync("xslt30-test/catalog.xml").toString(),
 );
 
+function applicableTest(node) {
+  return (
+    !evaluateXPathToBoolean("dependencies/spec/@value='XSLT30+'", node) &&
+    !evaluateXPathToBoolean("dependencies/spec/@value='XML_1.1'", node) &&
+    !evaluateXPathToBoolean("dependencies/spec/@value='XSLT30+'", node) &&
+    !evaluateXPathToBoolean(
+      "dependencies/feature", // We don't support any feature, (streaming, higher_order_functions, schema_aware)
+      node,
+    )
+  );
+}
+
 /* Roudd trip xml string through slimdom to eliminate any variations due to slimdom peculiarities.
 Self-closing tags, etc.*/
 function roundTrip(xml: string): string {
@@ -60,17 +70,7 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
   }
   const testSetFile = readFileSync(testSet);
   const testSetDom = slimdom.parseXmlDocument(testSetFile.toString());
-  if (
-    !evaluateXPathToBoolean(
-      "/test-set/dependencies/spec/@value='XSLT30+'",
-      testSetDom,
-    ) &&
-    !evaluateXPathToBoolean(
-      "/test-set/dependencies/spec/@value='XML_1.1'",
-      testSetDom,
-    ) &&
-    !evaluateXPathToBoolean("/test-set/@name='xml-version'", testSetDom) // slimdom doesn't support xml 1.1
-  ) {
+  if (applicableTest(evaluateXPathToNodes("/test-set", testSetDom)[0])) {
     for (let environment of evaluateXPathToNodes(
       "/test-set/environment",
       testSetDom,
@@ -117,14 +117,7 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
       }
       const assert = evaluateXPathToString("result/assert", testCase);
       if (
-        !evaluateXPathToBoolean(
-          "dependencies/spec/@value='XSLT30+'",
-          testCase,
-        ) &&
-        !evaluateXPathToBoolean(
-          "dependencies/feature/@value='schema_aware'",
-          testCase,
-        ) &&
+        applicableTest(testCase) &&
         !evaluateXPathToString("result/error/@code", testCase)
       ) {
         const testDescription = evaluateXPathToString("description", testCase);
