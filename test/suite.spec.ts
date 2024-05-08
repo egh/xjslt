@@ -28,7 +28,6 @@ import {
   evaluateXPath,
 } from "fontoxpath";
 import { readFileSync } from "fs";
-import * as process from "process";
 
 import { KNOWN_SPEC_FAILURES } from "./suite.fail";
 
@@ -36,7 +35,6 @@ const serializer = new slimdom.XMLSerializer();
 
 let testArray = [];
 let badTestArray = [];
-let environments = new Map();
 const testSetDom = slimdom.parseXmlDocument(
   readFileSync("xslt30-test/catalog.xml").toString(),
 );
@@ -64,11 +62,7 @@ function roundTrip(xml: string): string {
   }
 }
 
-function resolve(testSet: string, filename: string) {
-  return path.join(path.dirname(testSet), filename);
-}
-
-function setupEnvironment(testSet, testSetDom) {
+function setupEnvironment(rootDir, testSetDom) {
   let environments = new Map();
   for (let environment of evaluateXPathToNodes(
     "/test-set/environment",
@@ -78,7 +72,7 @@ function setupEnvironment(testSet, testSetDom) {
     let xmlString: string;
     const name = evaluateXPathToString("@name", environment);
     if (file) {
-      xmlString = readFileSync(resolve(testSet, file)).toString();
+      xmlString = readFileSync(path.join(rootDir, file)).toString();
     } else {
       xmlString = evaluateXPathToString("source/content", environment);
     }
@@ -89,15 +83,34 @@ function setupEnvironment(testSet, testSetDom) {
   return environments;
 }
 
-for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
-  function resolve(filename: string) {
-    return path.join(path.dirname(testSet), filename);
+function checkResult(rootDir, resultNode, transformed) {
+  let assertXmlFile = evaluateXPathToString("assert-xml/@file", resultNode);
+
+  // TODO support all-of, any-of, assert, assert-posture-and-sweep, assert-result-document, assert-string-value, assert-xml, error, serialization-matches
+  let assertXml;
+  if (assertXmlFile) {
+    assertXml = readFileSync(path.join(rootDir, assertXmlFile)).toString();
+  } else {
+    assertXml = evaluateXPathToString("assert-xml", resultNode);
   }
+  if (assertXml) {
+    assertXml = roundTrip(assertXml);
+  }
+  const assert = evaluateXPathToString("assert", resultNode);
+  if (assert) {
+    expect(evaluateXPathToBoolean(assert, transformed)).toBeTruthy();
+  } else {
+    expect(serializer.serializeToString(transformed)).toEqual(assertXml);
+  }
+}
+
+for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
   testSet = path.join("xslt30-test", testSet);
+  const rootDir = path.dirname(testSet);
   const testSetFile = readFileSync(testSet);
   const testSetDom = slimdom.parseXmlDocument(testSetFile.toString());
   if (applicableTest(evaluateXPathToNodes("/test-set", testSetDom)[0])) {
-    const environments = setupEnvironment(testSet, testSetDom);
+    const environments = setupEnvironment(rootDir, testSetDom);
     const testSetDescription = evaluateXPathToString(
       "/test-set/description",
       testSetDom,
@@ -106,26 +119,14 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
       "/test-set/test-case",
       testSetDom,
     )) {
-      const stylesheetFile = resolve(
+      const stylesheetFile = path.join(
+        rootDir,
         evaluateXPathToString("test/stylesheet/@file", testCase),
       );
       const environment = environments.get(
         evaluateXPathToString("environment/@ref", testCase),
       );
-      let assertXmlFile = evaluateXPathToString(
-        "result/assert-xml/@file",
-        testCase,
-      );
-      let assertXml;
-      if (assertXmlFile) {
-        assertXml = readFileSync(resolve(assertXmlFile)).toString();
-      } else {
-        assertXml = evaluateXPathToString("result/assert-xml", testCase);
-      }
-      if (assertXml) {
-        assertXml = roundTrip(assertXml);
-      }
-      const assert = evaluateXPathToString("result/assert", testCase);
+      const resultNode = evaluateXPathToNodes("result", testCase)[0];
       if (
         applicableTest(testCase) &&
         !evaluateXPathToString("result/error/@code", testCase)
@@ -134,10 +135,10 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
         const testName = evaluateXPathToString("@name", testCase);
         const test = [
           `${testSetDescription} / ${testDescription} (${testName}) - ${stylesheetFile}`,
+          rootDir,
           stylesheetFile,
           environment,
-          assertXml,
-          assert,
+          resultNode,
         ];
         if (KNOWN_SPEC_FAILURES.includes(testName)) {
           badTestArray.push(test);
@@ -151,18 +152,14 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
 
 const tester = async (
   description,
+  rootDir,
   stylesheetFile,
   envContent,
-  assertXml,
-  assert,
+  resultNode,
 ) => {
   const transform = await buildStylesheet(stylesheetFile);
   const transformed = transform(envContent);
-  if (assert) {
-    expect(evaluateXPathToBoolean(assert, transformed)).toBeTruthy();
-  } else {
-    expect(serializer.serializeToString(transformed)).toEqual(assertXml);
-  }
+  checkResult(rootDir, resultNode, transformed);
 };
 
 test.each(testArray)("%s", tester);
