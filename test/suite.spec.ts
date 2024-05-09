@@ -180,6 +180,10 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
           rootDir,
           evaluateXPathToString("test/stylesheet/@file", testCase),
         );
+        const initialMode =
+          evaluateXPathToString("test/initial-mode/@name", testCase) ||
+          undefined;
+
         const environment = environments.get(
           evaluateXPathToString("environment/@ref", testCase),
         );
@@ -202,7 +206,7 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
             checkResult(
               rootDir,
               evaluateXPathToNodes("./*", resultNode)[0],
-              transform(environment),
+              transform(environment, initialMode),
             )();
           };
 

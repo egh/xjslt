@@ -1609,9 +1609,7 @@ export const KNOWN_SPEC_FAILURES = [
   "mode-0108",
   "mode-0801a",
   "mode-0901", // depends on namespaces
-  "mode-1101",
   "mode-1102",
-  "mode-1103",
   "mode-1104",
   "mode-1105",
   "mode-1202", // depends on template priorties - #all should come last

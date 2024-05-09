@@ -344,13 +344,34 @@ function compileStylesheetNode(node: any): Program {
       ...mkImportsNode(),
       mkFun(
         mkIdentifier("transform"),
-        [mkIdentifier("document"), mkIdentifier("output")],
+        [mkIdentifier("document"), mkIdentifier("initialMode")],
         mkBlock([
           mkConst(
             mkIdentifier("doc"),
             mkNew(mkMember("slimdom", "Document"), []),
           ),
           mkLet(mkIdentifier("templates"), mkArray([])),
+          {
+            type: "IfStatement",
+            test: {
+              type: "UnaryExpression",
+              operator: "!",
+              prefix: true,
+              argument: mkIdentifier("initialMode"),
+            },
+            consequent: mkBlock([
+              {
+                type: "ExpressionStatement",
+                expression: {
+                  type: "AssignmentExpression",
+                  operator: "=",
+                  left: mkIdentifier("initialMode"),
+                  right: mkLiteral("#default"),
+                },
+              },
+            ]),
+            alternate: null,
+          },
           mkLet(
             mkIdentifier("context"),
             mkObject({
@@ -358,7 +379,7 @@ function compileStylesheetNode(node: any): Program {
               outputNode: mkIdentifier("doc"),
               currentNode: mkIdentifier("document"),
               currentNodeList: mkArray([]),
-              mode: mkLiteral("#default"),
+              mode: mkIdentifier("initialMode"),
               templates: mkIdentifier("templates"),
               variableScopes: mkArray([mkNew(mkIdentifier("Map"), [])]),
             }),
