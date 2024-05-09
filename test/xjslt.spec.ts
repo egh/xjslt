@@ -91,6 +91,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
   templates.push({
     match: "/",
     allowedParams: [],
+    modes: ["#default"],
     apply: function (context) {
       literalTextInternal(context, "Article -\n");
       valueOfInternal(context, { select: "/Article/Title" });
@@ -98,12 +99,14 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
       applyTemplatesInternal(context, {
         select: "/Article/Authors/Author",
         params: [],
+        mode: "#default",
       });
     },
   });
   templates.push({
     match: "Author",
     allowedParams: [],
+    modes: ["#default"],
     apply: function (context) {
       literalTextInternal(context, "\n- ");
       valueOfInternal(context, { select: "." });
@@ -117,7 +120,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     outputNode: doc.documentElement,
     currentNode: document,
     currentNodeList: [],
-    mode: undefined,
+    mode: "#default",
     templates: templates,
     variableScopes: [new Map<string, any>()],
   };
@@ -183,7 +186,7 @@ test("compileVariableNode", () => {
 test("compileApplyTemplatesNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:apply-templates", xsltDoc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.applyTemplatesInternal(context, {select: "/Article/Authors/Author"});',
+    'xjslt.applyTemplatesInternal(context, {select: "/Article/Authors/Author",mode: "#default"});',
   );
 });
 
@@ -254,7 +257,7 @@ test("stripSpaceStylesheet with preserved", () => {
 test("compileTemplateNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:template", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'templates.push({match: "/",name: undefined,allowedParams: [],apply: context => {xjslt.literalElementInternal(context, {name: "doc",attributes: []}, context => {xjslt.applyTemplatesInternal(context, {select: undefined});});}});',
+    'templates.push({match: "/",name: undefined,modes: ["#default"],allowedParams: [],apply: context => {xjslt.literalElementInternal(context, {name: "doc",attributes: []}, context => {xjslt.applyTemplatesInternal(context, {select: "child::node()",mode: "#default"});});}});',
   );
 });
 
@@ -277,6 +280,7 @@ test("evaluateAttributeValueTemplate", () => {
     currentNode: nodes[0],
     currentNodeList: nodes,
     templates: [],
+    mode: "#default",
     variableScopes: [new Map<string, any>()],
   };
   expect(
@@ -404,6 +408,26 @@ test("call with param defaults", async () => {
   expect(evaluateXPathToString("//li", results)).toEqual(
     "default Mr. Foo default Mr. Bar",
   );
+});
+
+test("template mode", async () => {
+  const transform = await makeTransform(
+    `
+  <xsl:template match="Author" mode="foo">
+    FOO <xsl:value-of select="."/>
+  </xsl:template>
+  <xsl:template match="Author" mode="bar">
+    BAR <xsl:value-of select="."/>
+  </xsl:template>
+  <xsl:template match="/Article">
+    <li><xsl:apply-templates mode="foo" select="Authors/Author"/></li>
+  </xsl:template>
+`,
+  );
+  const results = transform(document);
+  const str = evaluateXPathToString("//li", results);
+  expect(str).toMatch(/.*FOO Mr. Foo/);
+  expect(str).toMatch(/.*FOO Mr. Bar/);
 });
 
 test("text node", async () => {

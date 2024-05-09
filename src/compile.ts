@@ -52,7 +52,7 @@ import { XSLT1_NSURI, NodeType } from "./xjslt";
 interface SimpleElement {
   name: string;
   hasChildren: boolean;
-  arguments: Array<string>;
+  arguments: Map<string, string | undefined>;
 }
 
 const simpleElements = new Map<string, SimpleElement>([
@@ -60,7 +60,10 @@ const simpleElements = new Map<string, SimpleElement>([
     "apply-templates",
     {
       name: "applyTemplatesInternal",
-      arguments: ["select"],
+      arguments: new Map([
+        ["select", "child::node()"],
+        ["mode", "#default"],
+      ]),
       hasChildren: false,
     },
   ],
@@ -68,7 +71,10 @@ const simpleElements = new Map<string, SimpleElement>([
     "attribute",
     {
       name: "attributeInternal",
-      arguments: ["name", "namespace"],
+      arguments: new Map([
+        ["name", undefined],
+        ["namespace", undefined],
+      ]),
       hasChildren: true,
     },
   ],
@@ -76,7 +82,10 @@ const simpleElements = new Map<string, SimpleElement>([
     "element",
     {
       name: "elementInternal",
-      arguments: ["name", "namespace"],
+      arguments: new Map([
+        ["name", undefined],
+        ["namespace", undefined],
+      ]),
       hasChildren: true,
     },
   ],
@@ -84,7 +93,7 @@ const simpleElements = new Map<string, SimpleElement>([
     "if",
     {
       name: "ifInternal",
-      arguments: ["test"],
+      arguments: new Map([["test", undefined]]),
       hasChildren: true,
     },
   ],
@@ -92,19 +101,26 @@ const simpleElements = new Map<string, SimpleElement>([
     "for-each",
     {
       name: "forEachInternal",
-      arguments: ["select"],
+      arguments: new Map([["select", undefined]]),
       hasChildren: true,
     },
   ],
   [
     "sequence",
-    { name: "sequenceInternal", arguments: ["select"], hasChildren: false },
+    {
+      name: "sequenceInternal",
+      arguments: new Map([["select", undefined]]),
+      hasChildren: false,
+    },
   ],
   [
     "value-of",
     {
       name: "valueOfInternal",
-      arguments: ["select", "separator"],
+      arguments: new Map([
+        ["select", undefined],
+        ["separator", undefined],
+      ]),
       hasChildren: false,
     },
   ],
@@ -144,7 +160,13 @@ function compileParams(nodename: string, nodes: any[]) {
 }
 
 function compileCallTemplate(node: any) {
-  let args = compileArgs(node, ["name"]);
+  let args = compileArgs(
+    node,
+    new Map([
+      ["name", undefined],
+      ["mode", "#default"],
+    ]),
+  );
   let params = compileParams("with-param", node.childNodes);
   return compileFuncall("callTemplateInternal", [args, params]);
 }
@@ -164,10 +186,13 @@ function compileFuncallWithChildren(
   ]);
 }
 
-function compileArgs(node: any, keyList: string[]): ObjectExpression {
+function compileArgs(
+  node: any,
+  keyList: Map<string, string | undefined>,
+): ObjectExpression {
   var args = {};
-  for (var key of keyList) {
-    args[key] = mkLiteral(node.getAttribute(key) || undefined);
+  for (let [key, fallback] of keyList) {
+    args[key] = mkLiteral(node.getAttribute(key) || fallback);
   }
   return mkObject(args);
 }
@@ -333,7 +358,7 @@ function compileStylesheetNode(node: any): Program {
               outputNode: mkIdentifier("doc"),
               currentNode: mkIdentifier("document"),
               currentNodeList: mkArray([]),
-              mode: mkLiteral(undefined),
+              mode: mkLiteral("#default"),
               templates: mkIdentifier("templates"),
               variableScopes: mkArray([mkNew(mkIdentifier("Map"), [])]),
             }),
@@ -369,6 +394,9 @@ function compileTemplateNode(node: any): ExpressionStatement {
     mkObject({
       match: mkLiteral(node.getAttribute("match") || undefined),
       name: mkLiteral(node.getAttribute("name") || undefined),
+      modes: mkArray(
+        (node.getAttribute("mode") || "#default").split(",").map(mkLiteral),
+      ),
       allowedParams: allowedParams,
       apply: mkArrowFun(compileNodeArray(node.childNodes.slice(skipNodes))),
     }),

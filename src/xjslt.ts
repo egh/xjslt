@@ -56,7 +56,7 @@ export type VariableScope = Map<string, any>;
 
 interface ApplyTemplateAttributes {
   select?: string;
-  mode?: string;
+  mode: string;
   params: VariableLike[];
 }
 
@@ -78,7 +78,7 @@ interface ChooseAlternative {
 interface CompiledTemplate {
   match?: string;
   name?: string;
-  mode?: string;
+  modes: string[];
   priority?: number;
   apply: SequenceConstructor;
   allowedParams: Array<VariableLike>;
@@ -111,7 +111,7 @@ interface ProcessingContext {
   outputNode: any;
   currentNode: any;
   currentNodeList: Array<any>;
-  mode?: string;
+  mode: string;
   templates: Array<CompiledTemplate>;
   variableScopes: Array<VariableScope>;
 }
@@ -152,7 +152,7 @@ function nameTest(
     if (matches.includes(node)) {
       return true;
     } else {
-      checkContext = checkContext.parentNode;
+      checkContext = checkContext.parentNode || checkContext.ownerElement;
     }
   }
   return false;
@@ -167,12 +167,17 @@ function getTemplate(
   node: any,
   templates: Array<CompiledTemplate>,
   variableScopes: Array<VariableScope>,
+  mode: string,
 ): CompiledTemplate {
   for (let template of templates) {
-    if (template.match) {
-      /* some templates have no match */
-      if (nameTest(template.match, node, variableScopes)) {
-        return template;
+    if (template.modes.includes(mode) || template.modes[0] === "#all") {
+      if (template.match) {
+        /* some templates have no match */
+        // console.log(`checking for ${mode} on ${node.localName} in ${template.match} with modes ${template.modes.join(',')}...`);
+        if (nameTest(template.match, node, variableScopes)) {
+          // console.log("matched");
+          return template;
+        }
       }
     }
   }
@@ -183,9 +188,14 @@ const BUILT_IN_TEMPLATES = [
   {
     match: "*|/",
     apply: (context: ProcessingContext) => {
-      applyTemplatesInternal(context, { select: undefined, params: [] });
+      applyTemplatesInternal(context, {
+        select: "child::node()",
+        params: [],
+        mode: "#current",
+      });
     },
     allowedParams: [],
+    modes: ["#all"],
   },
   {
     match: "text()|@*",
@@ -193,16 +203,18 @@ const BUILT_IN_TEMPLATES = [
       valueOfInternal(context, { select: "." });
     },
     allowedParams: [],
+    modes: ["#all"],
   },
   {
     match: "processing-instruction()|comment()",
     apply: (_context: ProcessingContext) => {},
     allowedParams: [],
+    modes: ["#all"],
   },
 ];
 
 function getTemplateBuiltin(node: any): CompiledTemplate {
-  return getTemplate(node, BUILT_IN_TEMPLATES, []);
+  return getTemplate(node, BUILT_IN_TEMPLATES, [], "#default");
 }
 
 export function processNode(
@@ -214,6 +226,7 @@ export function processNode(
       context.currentNode,
       context.templates,
       context.variableScopes,
+      context.mode,
     ) || getTemplateBuiltin(context.currentNode);
   if (template) {
     evaluateTemplate(template, context, params);
@@ -267,23 +280,23 @@ export function applyTemplatesInternal(
   attributes: ApplyTemplateAttributes,
 ) {
   /* The nodes we want to apply templates on.*/
-  let select: string;
-  if (attributes.select) {
-    select = attributes.select;
-  } else {
-    select = "child::node()";
-  }
   const nodes = evaluateXPathToNodes(
-    select,
+    attributes.select,
     context.currentNode,
     undefined,
     mergeVariableScopes(context.variableScopes),
   );
+  let mode = attributes.mode || "#default";
+  if (mode === "#current") {
+    /* keep the current mode */
+    mode = context.mode;
+  }
   for (let node of nodes) {
     /* for each node */
     processNode(
       {
         ...context,
+        mode: mode,
         currentNode: node,
         currentNodeList: nodes,
         variableScopes: extendScope(context.variableScopes),
@@ -514,13 +527,15 @@ export function forEachInternal(
     undefined,
     mergeVariableScopes(context.variableScopes),
   );
-  for (let node of nodeList) {
-    func({
-      ...context,
-      currentNode: node,
-      currentNodeList: nodeList,
-      variableScopes: extendScope(context.variableScopes),
-    });
+  if (nodeList && Symbol.iterator in Object(nodeList)) {
+    for (let node of nodeList) {
+      func({
+        ...context,
+        currentNode: node,
+        currentNodeList: nodeList,
+        variableScopes: extendScope(context.variableScopes),
+      });
+    }
   }
 }
 
@@ -642,11 +657,10 @@ function evaluateSequenceConstructorInTemporaryTree(
   doc.appendChild(doc.createElement("root"));
   let context = {
     outputDocument: doc,
-
     outputNode: doc.documentElement,
     currentNode: origContext.currentNode,
     currentNodeList: [],
-    mode: undefined,
+    mode: "#default",
     templates: origContext.templates,
     variableScopes: extendScope(origContext.variableScopes),
   };
@@ -699,6 +713,7 @@ export async function buildStylesheet(xsltPath: string) {
   );
   writeFileSync(tempfile, generate(compileNode(xsltDoc)));
   let transform = await import(tempfile);
+  // console.log(readFileSync(tempfile).toString())
   rmSync(tempdir, { recursive: true });
   return transform.transform;
 }
