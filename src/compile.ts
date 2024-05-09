@@ -78,6 +78,7 @@ const simpleElements = new Map<string, SimpleElement>([
       hasChildren: true,
     },
   ],
+  ["copy", { name: "copyInternal", arguments: new Map(), hasChildren: true }],
   [
     "element",
     {

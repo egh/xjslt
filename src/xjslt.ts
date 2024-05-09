@@ -319,6 +319,28 @@ export function callTemplateInternal(
   throw new Error(`Cannot find a template named ${attributes.name}`);
 }
 
+export function copyInternal(
+  context: ProcessingContext,
+  attributes: {},
+  func: SequenceConstructor,
+) {
+  if (context.currentNode.nodeType === NodeType.ELEMENT_NODE) {
+    const newNode = context.outputDocument.createElementNS(
+      context.currentNode.ns,
+      context.currentNode.localName,
+    );
+    context.outputNode.appendChild(newNode);
+    if (func) {
+      func({
+        ...context,
+        outputNode: newNode,
+      });
+    }
+  } else {
+    context.outputNode.appendChild(context.currentNode);
+  }
+}
+
 export function valueOfInternal(
   context: ProcessingContext,
   attributes: ValueOfAttributes,
