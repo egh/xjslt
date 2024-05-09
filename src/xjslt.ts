@@ -337,7 +337,26 @@ export function copyInternal(
       });
     }
   } else {
-    context.outputNode.appendChild(context.currentNode);
+    context.outputNode.appendChild(
+      context.outputDocument.importNode(context.currentNode),
+    );
+  }
+}
+
+export function copyOfInternal(
+  context: ProcessingContext,
+  attributes: { select: string },
+  func: SequenceConstructor,
+) {
+  let things = evaluateXPath(
+    attributes.select,
+    context.currentNode,
+    undefined,
+    mergeVariableScopes(context.variableScopes),
+    evaluateXPath.ALL_RESULTS_TYPE,
+  );
+  for (let thing of things) {
+    appendToTree(thing, context);
   }
 }
 
@@ -355,10 +374,7 @@ export function valueOfInternal(
   const str = strs.join(
     evaluateAttributeValueTemplate(context, attributes.separator || ""),
   );
-  if (str !== "") {
-    const newNode = context.outputDocument.createTextNode(str);
-    context.outputNode.appendChild(newNode);
-  }
+  appendToTree(str, context);
 }
 
 export function textInternal(
@@ -422,11 +438,19 @@ export function literalTextInternal(context: ProcessingContext, text: string) {
 
 function appendToTree(thing: any, context: ProcessingContext) {
   if (thing instanceof slimdom.Node) {
-    context.outputNode.appendChild(thing);
-  } else {
+    if (thing.nodeType == slimdom.Node.DOCUMENT_NODE) {
+      thing = (thing as slimdom.Document).documentElement;
+    }
     context.outputNode.appendChild(
-      context.outputDocument.createTextNode(thing.toString()),
+      context.outputDocument.importNode(thing, true),
     );
+  } else {
+    let str = thing.toString();
+    if (str !== "") {
+      context.outputNode.appendChild(
+        context.outputDocument.createTextNode(str),
+      );
+    }
   }
 }
 

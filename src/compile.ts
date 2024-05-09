@@ -80,6 +80,14 @@ const simpleElements = new Map<string, SimpleElement>([
   ],
   ["copy", { name: "copyInternal", arguments: new Map(), hasChildren: true }],
   [
+    "copy-of",
+    {
+      name: "copyOfInternal",
+      arguments: new Map([["select", undefined]]),
+      hasChildren: true,
+    },
+  ],
+  [
     "element",
     {
       name: "elementInternal",
