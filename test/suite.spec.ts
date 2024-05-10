@@ -52,7 +52,20 @@ function applicableTest(node) {
   );
 }
 
-/* Roudd trip xml string through slimdom to eliminate any variations due to slimdom peculiarities.
+let fileParseCache = new Map<string, any>();
+
+/* Multiple tests use the same file, cache the parse */
+function parseFile(path: string) {
+  if (!fileParseCache.has(path)) {
+    fileParseCache.set(
+      path,
+      slimdom.parseXmlDocument(readFileSync(path).toString()),
+    );
+  }
+  return fileParseCache.get(path);
+}
+
+/* Round trip xml string through slimdom to eliminate any variations due to slimdom peculiarities.
 Self-closing tags, etc.*/
 function roundTrip(xml: string): string {
   try {
@@ -62,23 +75,28 @@ function roundTrip(xml: string): string {
   }
 }
 
+function parseEnvironment(rootDir, environment) {
+  const file = evaluateXPathToString("source[@role='.']/@file", environment);
+  let xmlString: string | undefined;
+  if (file) {
+    return parseFile(path.join(rootDir, file));
+  } else if (evaluateXPathToBoolean("source/content", environment)) {
+    return slimdom.parseXmlDocument(
+      evaluateXPathToString("source/content", environment),
+    );
+  } else {
+    return undefined;
+  }
+}
+
 function setupEnvironment(rootDir, testSetDom) {
   let environments = new Map();
   for (let environment of evaluateXPathToNodes(
     "/test-set/environment",
     testSetDom,
   )) {
-    const file = evaluateXPathToString("source[@role='.']/@file", environment);
-    let xmlString: string;
     const name = evaluateXPathToString("@name", environment);
-    if (file) {
-      xmlString = readFileSync(path.join(rootDir, file)).toString();
-    } else {
-      xmlString = evaluateXPathToString("source/content", environment);
-    }
-    if (xmlString) {
-      environments.set(name, slimdom.parseXmlDocument(xmlString));
-    }
+    environments.set(name, parseEnvironment(rootDir, environment));
   }
   return environments;
 }
@@ -176,22 +194,35 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
         "/test-set/test-case",
         testSetDom,
       )) {
-        const stylesheetFile = path.join(
-          rootDir,
-          evaluateXPathToString("test/stylesheet/@file", testCase),
-        );
-        const initialMode =
-          evaluateXPathToString("test/initial-mode/@name", testCase) ||
-          undefined;
-
-        const environment = environments.get(
-          evaluateXPathToString("environment/@ref", testCase),
-        );
         const resultNode = evaluateXPathToNodes("result", testCase)[0];
         if (
           applicableTest(testCase) &&
           !evaluateXPathToString("result/error/@code", testCase)
         ) {
+          const stylesheetFile = path.join(
+            rootDir,
+            evaluateXPathToString("test/stylesheet/@file", testCase),
+          );
+          const initialMode =
+            evaluateXPathToString("test/initial-mode/@name", testCase) ||
+            undefined;
+
+          let environment: any = undefined;
+          const environmentDom = evaluateXPathToNodes(
+            "environment",
+            testCase,
+          )[0];
+          if (environmentDom) {
+            const environmentRef = evaluateXPathToString(
+              "./@ref",
+              environmentDom,
+            );
+            if (environmentRef) {
+              environment = environments.get(environmentRef);
+            } else {
+              environment = parseEnvironment(rootDir, environmentDom);
+            }
+          }
           const testDescription = evaluateXPathToString(
             "description",
             testCase,

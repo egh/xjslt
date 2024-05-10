@@ -336,6 +336,10 @@ export function copyInternal(
         outputNode: newNode,
       });
     }
+  } else if (context.currentNode.nodeType === NodeType.DOCUMENT_NODE) {
+    context.outputNode.appendChild(
+      context.outputDocument.importNode(context.currentNode.documentElement),
+    );
   } else {
     context.outputNode.appendChild(
       context.outputDocument.importNode(context.currentNode),
