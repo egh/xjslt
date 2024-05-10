@@ -145,6 +145,8 @@ function nameTest(
       name,
       checkContext,
       undefined,
+      /* TODO: Only top level variables are applicable here, so top
+         level variables could be cached. */
       mergeVariableScopes(variableScopes),
       options,
     );
@@ -440,21 +442,38 @@ export function literalTextInternal(context: ProcessingContext, text: string) {
   context.outputNode.appendChild(context.outputDocument.createTextNode(text));
 }
 
+/* Return true if we output a string. */
 function appendToTree(thing: any, context: ProcessingContext) {
   if (thing instanceof slimdom.Node) {
     if (thing.nodeType == slimdom.Node.DOCUMENT_NODE) {
       thing = (thing as slimdom.Document).documentElement;
+      if (thing.localName === "xsl:document") {
+        thing = thing.firstChild;
+      }
     }
-    context.outputNode.appendChild(
-      context.outputDocument.importNode(thing, true),
-    );
+    let newNode = context.outputDocument.importNode(thing, true);
+    context.outputNode.appendChild(newNode);
   } else {
     let str = thing.toString();
     if (str !== "") {
       context.outputNode.appendChild(
         context.outputDocument.createTextNode(str),
       );
+      return true;
     }
+  }
+  return false;
+}
+
+function appendToTreeArray(things: any[], context: ProcessingContext) {
+  let lastWasString = false;
+  for (let thing of things) {
+    if (lastWasString) {
+      context.outputNode.appendChild(
+        context.outputDocument.createTextNode(" "),
+      );
+    }
+    lastWasString = appendToTree(thing, context);
   }
 }
 
@@ -469,9 +488,7 @@ export function sequenceInternal(
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
   );
-  for (let thing of things) {
-    appendToTree(thing, context);
-  }
+  appendToTreeArray(things, context);
 }
 
 export function literalElementInternal(
@@ -704,7 +721,7 @@ function evaluateSequenceConstructorInTemporaryTree(
   func: SequenceConstructor,
 ) {
   const doc = new slimdom.Document();
-  doc.appendChild(doc.createElement("root"));
+  doc.appendChild(doc.createElement("xsl:document"));
   let context = {
     outputDocument: doc,
     outputNode: doc.documentElement,
