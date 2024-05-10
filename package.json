@@ -7,7 +7,7 @@
   },
   "scripts": {
     "build": "tsc && npm link",
-    "test": "jest --coverage --verbose --watch",
+    "test": "jest --coverage --verbose",
     "check": "jest && prettier -c src/ test/"
   },
   "bin": {
