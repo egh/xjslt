@@ -170,15 +170,13 @@ function compileParams(nodename: string, nodes: any[]) {
 }
 
 function compileCallTemplate(node: any) {
-  let args = compileArgs(
-    node,
-    new Map([
-      ["name", undefined],
-      ["mode", "#default"],
-    ]),
-  );
-  let params = compileParams("with-param", node.childNodes);
-  return compileFuncall("callTemplate", [args, params]);
+  let args = {};
+  args["name"] = mkLiteral(node.getAttribute("name"));
+  if (!args["name"]) {
+    throw new Error("");
+  }
+  args["params"] = compileParams("with-param", node.childNodes);
+  return compileFuncall("callTemplate", [mkObject(args)]);
 }
 
 function compileFuncall(name: string, args: Expression[]) {

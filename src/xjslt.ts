@@ -39,17 +39,6 @@ export type SequenceConstructor = (context: ProcessingContext) => void;
 
 export type VariableScope = Map<string, any>;
 
-interface ApplyTemplateAttributes {
-  select?: string;
-  mode: string;
-  params: VariableLike[];
-}
-
-interface CallTemplateAttributes {
-  name: string;
-  params: VariableLike[];
-}
-
 interface AttributeOutputData {
   name: string;
   value: string;
@@ -67,22 +56,6 @@ interface CompiledTemplate {
   priority?: number;
   apply: SequenceConstructor;
   allowedParams: Array<VariableLike>;
-}
-
-interface IfAttributes {
-  test: string;
-}
-
-interface ForEachAttributes {
-  select: string;
-}
-
-interface SequenceAttributes {
-  select: string;
-}
-
-interface TextAttributes {
-  disableOutputEscaping: boolean;
 }
 
 interface NodeOutputData {
@@ -104,12 +77,6 @@ interface ProcessingContext {
 interface VariableLike {
   name: string;
   content: undefined | string | SequenceConstructor;
-}
-
-interface ValueOfAttributes {
-  select: string;
-  separator?: string;
-  disableOutputEscaping?: boolean;
 }
 
 /* Implementation of https://www.w3.org/TR/xslt11/#patterns */
@@ -264,7 +231,7 @@ function evaluateTemplate(
 
 export function applyTemplates(
   context: ProcessingContext,
-  attributes: ApplyTemplateAttributes,
+  attributes: { select?: string; mode: string; params: VariableLike[] },
 ) {
   /* The nodes we want to apply templates on.*/
   const nodes = evaluateXPathToNodes(
@@ -295,12 +262,14 @@ export function applyTemplates(
 
 export function callTemplate(
   context: ProcessingContext,
-  attributes: CallTemplateAttributes,
-  params: VariableLike[],
+  attributes: {
+    name: string;
+    params: VariableLike[];
+  },
 ) {
   for (let template of context.templates) {
     if (template.name !== undefined && attributes.name === template.name) {
-      return evaluateTemplate(template, context, params);
+      return evaluateTemplate(template, context, attributes.params);
     }
   }
   throw new Error(`Cannot find a template named ${attributes.name}`);
@@ -353,7 +322,11 @@ export function copyOf(
 
 export function valueOf(
   context: ProcessingContext,
-  attributes: ValueOfAttributes,
+  attributes: {
+    select: string;
+    separator?: string;
+    disableOutputEscaping?: boolean;
+  },
 ) {
   let separator = attributes.separator;
   if (!separator) {
@@ -376,7 +349,9 @@ export function valueOf(
 
 export function text(
   context: ProcessingContext,
-  attributes: TextAttributes,
+  attributes: {
+    disableOutputEscaping: boolean;
+  },
   func: SequenceConstructor,
 ) {
   const out = evaluateSequenceConstructorInTemporaryTree(context, func);
@@ -464,7 +439,7 @@ function appendToTreeArray(things: any[], context: ProcessingContext) {
 
 export function sequence(
   context: ProcessingContext,
-  attributes: SequenceAttributes,
+  attributes: { select: string },
 ) {
   const things = evaluateXPath(
     attributes.select,
@@ -533,7 +508,7 @@ export function element(
 
 export function ifX(
   context: ProcessingContext,
-  attributes: IfAttributes,
+  attributes: { test: string },
   func: SequenceConstructor,
 ) {
   if (
@@ -570,7 +545,7 @@ export function choose(
 
 export function forEach(
   context: ProcessingContext,
-  attributes: ForEachAttributes,
+  attributes: { select: string },
   func: SequenceConstructor,
 ) {
   const nodeList = evaluateXPath(
