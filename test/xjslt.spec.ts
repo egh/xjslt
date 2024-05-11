@@ -19,7 +19,6 @@
  */
 
 import {
-  NodeType,
   applyTemplatesInternal,
   buildStylesheet,
   evaluateAttributeValueTemplate,
@@ -126,7 +125,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
   };
   processNode(context, []);
   walkTree(doc, (node) => {
-    if (node.nodeType == NodeType.TEXT_NODE) {
+    if (node.nodeType == slimdom.Node.TEXT_NODE) {
       output(node.data);
     }
   });

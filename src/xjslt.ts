@@ -35,21 +35,6 @@ import { compileNode } from "./compile";
 
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
 
-export const enum NodeType {
-  ELEMENT_NODE = 1,
-  ATTRIBUTE_NODE = 2,
-  TEXT_NODE = 3,
-  CDATA_SECTION_NODE = 4,
-  ENTITY_REFERENCE_NODE = 5, // historical
-  ENTITY_NODE = 6, // historical
-  PROCESSING_INSTRUCTION_NODE = 7,
-  COMMENT_NODE = 8,
-  DOCUMENT_NODE = 9,
-  DOCUMENT_TYPE_NODE = 10,
-  DOCUMENT_FRAGMENT_NODE = 11,
-  NOTATION_NODE = 12, // historical
-}
-
 export type SequenceConstructor = (context: ProcessingContext) => void;
 
 export type VariableScope = Map<string, any>;
@@ -326,7 +311,7 @@ export function copyInternal(
   attributes: {},
   func: SequenceConstructor,
 ) {
-  if (context.currentNode.nodeType === NodeType.ELEMENT_NODE) {
+  if (context.currentNode.nodeType === slimdom.Node.ELEMENT_NODE) {
     const newNode = context.outputDocument.createElementNS(
       context.currentNode.ns,
       context.currentNode.localName,
@@ -338,7 +323,7 @@ export function copyInternal(
         outputNode: newNode,
       });
     }
-  } else if (context.currentNode.nodeType === NodeType.DOCUMENT_NODE) {
+  } else if (context.currentNode.nodeType === slimdom.Node.DOCUMENT_NODE) {
     context.outputNode.appendChild(
       context.outputDocument.importNode(context.currentNode.documentElement),
     );
@@ -637,7 +622,7 @@ export function stripSpace(
   const ONLY_WHITESPACE = RegExp("^[ \n\r\t]+$");
   let toRemove = [];
   function walkTree(node: any) {
-    if (node.nodeType === NodeType.TEXT_NODE) {
+    if (node.nodeType === slimdom.Node.TEXT_NODE) {
       if (
         ONLY_WHITESPACE.test(node.textContent) &&
         !preserveSpace(node.parentNode, preserve, nsResolver)
@@ -741,7 +726,7 @@ function evaluateSequenceConstructorInTemporaryTree(
 function extractText(document: any) {
   let str = "";
   function walkTree(node: any): void {
-    if (node.nodeType == NodeType.TEXT_NODE) {
+    if (node.nodeType == slimdom.Node.TEXT_NODE) {
       str += node.data;
     }
     if (node.childNodes) {

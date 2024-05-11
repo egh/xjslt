@@ -42,7 +42,8 @@ import {
   Program,
   Statement,
 } from "estree";
-import { XSLT1_NSURI, NodeType } from "./xjslt";
+import * as slimdom from "slimdom";
+import { XSLT1_NSURI } from "./xjslt";
 
 /**
  * Functions to walk a DOM tree of an XSLT stylesheet and generate an
@@ -265,9 +266,9 @@ function compileLiteralElementNode(node: any) {
 
 /* todo - separate into top-level & sequence-generator versions */
 export function compileNode(node: any) {
-  if (node.nodeType === NodeType.TEXT_NODE) {
+  if (node.nodeType === slimdom.Node.TEXT_NODE) {
     return compileLiteralTextNode(node);
-  } else if (node.nodeType === NodeType.ELEMENT_NODE) {
+  } else if (node.nodeType === slimdom.Node.ELEMENT_NODE) {
     if (node.namespaceURI === XSLT1_NSURI) {
       if (simpleElements.has(node.localName)) {
         return compileSimpleElement(node);
@@ -313,11 +314,11 @@ export function compileNode(node: any) {
     } else {
       return compileLiteralElementNode(node);
     }
-  } else if (node.nodeType === NodeType.DOCUMENT_NODE) {
+  } else if (node.nodeType === slimdom.Node.DOCUMENT_NODE) {
     return compileNode(node.documentElement);
-  } else if (node.nodeType === NodeType.COMMENT_NODE) {
+  } else if (node.nodeType === slimdom.Node.COMMENT_NODE) {
     // Ignore, it's a comment.
-  } else if (node.nodeType === NodeType.PROCESSING_INSTRUCTION_NODE) {
+  } else if (node.nodeType === slimdom.Node.PROCESSING_INSTRUCTION_NODE) {
     // Ignore??
   } else {
     throw new Error("Found node type: " + node.nodeType);
