@@ -355,6 +355,14 @@ export function valueOf(
   context: ProcessingContext,
   attributes: ValueOfAttributes,
 ) {
+  let separator = attributes.separator;
+  if (!separator) {
+    if (attributes.select) {
+      separator = " ";
+    } else {
+      separator = "";
+    }
+  }
   let strs = evaluateXPath(
     attributes.select,
     context.currentNode,
@@ -362,9 +370,7 @@ export function valueOf(
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.STRINGS_TYPE,
   );
-  const str = strs.join(
-    evaluateAttributeValueTemplate(context, attributes.separator || ""),
-  );
+  const str = strs.join(evaluateAttributeValueTemplate(context, separator));
   appendToTree(str, context);
 }
 
