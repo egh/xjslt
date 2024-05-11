@@ -60,7 +60,7 @@ const simpleElements = new Map<string, SimpleElement>([
   [
     "apply-templates",
     {
-      name: "applyTemplatesInternal",
+      name: "applyTemplates",
       arguments: new Map([
         ["select", "child::node()"],
         ["mode", "#default"],
@@ -71,7 +71,7 @@ const simpleElements = new Map<string, SimpleElement>([
   [
     "attribute",
     {
-      name: "attributeInternal",
+      name: "attribute",
       arguments: new Map([
         ["name", undefined],
         ["namespace", undefined],
@@ -79,11 +79,11 @@ const simpleElements = new Map<string, SimpleElement>([
       hasChildren: true,
     },
   ],
-  ["copy", { name: "copyInternal", arguments: new Map(), hasChildren: true }],
+  ["copy", { name: "copy", arguments: new Map(), hasChildren: true }],
   [
     "copy-of",
     {
-      name: "copyOfInternal",
+      name: "copyOf",
       arguments: new Map([["select", undefined]]),
       hasChildren: true,
     },
@@ -91,7 +91,7 @@ const simpleElements = new Map<string, SimpleElement>([
   [
     "element",
     {
-      name: "elementInternal",
+      name: "element",
       arguments: new Map([
         ["name", undefined],
         ["namespace", undefined],
@@ -102,7 +102,7 @@ const simpleElements = new Map<string, SimpleElement>([
   [
     "if",
     {
-      name: "ifInternal",
+      name: "ifX",
       arguments: new Map([["test", undefined]]),
       hasChildren: true,
     },
@@ -110,7 +110,7 @@ const simpleElements = new Map<string, SimpleElement>([
   [
     "for-each",
     {
-      name: "forEachInternal",
+      name: "forEach",
       arguments: new Map([["select", undefined]]),
       hasChildren: true,
     },
@@ -118,7 +118,7 @@ const simpleElements = new Map<string, SimpleElement>([
   [
     "sequence",
     {
-      name: "sequenceInternal",
+      name: "sequence",
       arguments: new Map([["select", undefined]]),
       hasChildren: false,
     },
@@ -126,7 +126,7 @@ const simpleElements = new Map<string, SimpleElement>([
   [
     "value-of",
     {
-      name: "valueOfInternal",
+      name: "valueOf",
       arguments: new Map([
         ["select", undefined],
         ["separator", undefined],
@@ -156,7 +156,7 @@ function compileVariableLike(node: any) {
 }
 
 function compileVariable(node: any) {
-  return compileFuncall("variableInternal", [compileVariableLike(node)]);
+  return compileFuncall("variable", [compileVariableLike(node)]);
 }
 
 function compileParams(nodename: string, nodes: any[]) {
@@ -178,7 +178,7 @@ function compileCallTemplate(node: any) {
     ]),
   );
   let params = compileParams("with-param", node.childNodes);
-  return compileFuncall("callTemplateInternal", [args, params]);
+  return compileFuncall("callTemplate", [args, params]);
 }
 
 function compileFuncall(name: string, args: Expression[]) {
@@ -235,14 +235,14 @@ function compileChooseNode(node: any) {
       );
     }
   }
-  return mkCallWithContext(mkMember("xjslt", "chooseInternal"), [
+  return mkCallWithContext(mkMember("xjslt", "choose"), [
     mkArray(alternatives),
   ]);
 }
 
 function compileTopLevelParam(node: any) {
   let param = compileVariableLike(node);
-  return mkCallWithContext(mkMember("xjslt", "paramInternal"), [param]);
+  return mkCallWithContext(mkMember("xjslt", "param"), [param]);
 }
 
 function compileLiteralElementNode(node: any) {
@@ -255,7 +255,7 @@ function compileLiteralElementNode(node: any) {
       }),
     );
   }
-  return mkCallWithContext(mkMember("xjslt", "literalElementInternal"), [
+  return mkCallWithContext(mkMember("xjslt", "literalElement"), [
     mkObject({
       name: mkLiteral(node.localName),
       attributes: mkArray(attributes),
@@ -329,7 +329,7 @@ function compileTextNode(node: any) {
   if (node.childNodes.childElementCount > 0) {
     throw new Error("XTSE0010 element found as child of xsl:text");
   }
-  return mkCallWithContext(mkMember("xjslt", "textInternal"), [
+  return mkCallWithContext(mkMember("xjslt", "text"), [
     mkObject({
       disableOutputEscaping: mkLiteral(false), // TODO
     }),
@@ -435,7 +435,7 @@ function compileTemplateNode(node: any): ExpressionStatement {
 }
 
 function compileLiteralTextNode(node: any): ExpressionStatement {
-  return mkCallWithContext(mkMember("xjslt", "literalTextInternal"), [
+  return mkCallWithContext(mkMember("xjslt", "literalText"), [
     mkLiteral(node.textContent),
   ]);
 }

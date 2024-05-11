@@ -19,16 +19,16 @@
  */
 
 import {
-  applyTemplatesInternal,
+  applyTemplates,
   buildStylesheet,
   evaluateAttributeValueTemplate,
   extendScope,
-  literalTextInternal,
+  literalText,
   mergeVariableScopes,
   processNode,
   setVariable,
   stripSpaceStylesheet,
-  valueOfInternal,
+  valueOf,
   VariableScope,
 } from "../src/xjslt";
 import { compileNode } from "../src/compile";
@@ -92,10 +92,10 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     allowedParams: [],
     modes: ["#default"],
     apply: function (context) {
-      literalTextInternal(context, "Article -\n");
-      valueOfInternal(context, { select: "/Article/Title" });
-      literalTextInternal(context, "\nAuthors:");
-      applyTemplatesInternal(context, {
+      literalText(context, "Article -\n");
+      valueOf(context, { select: "/Article/Title" });
+      literalText(context, "\nAuthors:");
+      applyTemplates(context, {
         select: "/Article/Authors/Author",
         params: [],
         mode: "#default",
@@ -107,8 +107,8 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     allowedParams: [],
     modes: ["#default"],
     apply: function (context) {
-      literalTextInternal(context, "\n- ");
-      valueOfInternal(context, { select: "." });
+      literalText(context, "\n- ");
+      valueOf(context, { select: "." });
     },
   });
 
@@ -165,27 +165,27 @@ const GENERATE_OPTS = { indent: "", lineEnd: "" };
 test("compileTextNode", () => {
   const nodes = evaluateXPathToNodes("//text()", xsltDoc);
   expect(generate(compileNode(nodes[2]), GENERATE_OPTS)).toEqual(
-    'xjslt.literalTextInternal(context, "Article -\\n");',
+    'xjslt.literalText(context, "Article -\\n");',
   );
 });
 
 test("compileValueOfNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:value-of", xsltDoc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.valueOfInternal(context, {select: "/Article/Title",separator: undefined});',
+    'xjslt.valueOf(context, {select: "/Article/Title",separator: undefined});',
   );
 });
 test("compileVariableNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:variable", xsltDoc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.variableInternal(context, {name: "author",content: "."});',
+    'xjslt.variable(context, {name: "author",content: "."});',
   );
 });
 
 test("compileApplyTemplatesNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:apply-templates", xsltDoc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.applyTemplatesInternal(context, {select: "/Article/Authors/Author",mode: "#default"});',
+    'xjslt.applyTemplates(context, {select: "/Article/Authors/Author",mode: "#default"});',
   );
 });
 
@@ -195,7 +195,7 @@ test("compileForEachNode", () => {
   const dom = slimdom.parseXmlDocument(xml);
   const nodes = evaluateXPathToNodes("//xsl:for-each", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.forEachInternal(context, {select: "./*"}, context => {xjslt.literalTextInternal(context, "foo");});',
+    'xjslt.forEach(context, {select: "./*"}, context => {xjslt.literalText(context, "foo");});',
   );
 });
 
@@ -205,7 +205,7 @@ test("compileChooseNode", () => {
   const dom = slimdom.parseXmlDocument(xml);
   const nodes = evaluateXPathToNodes("//xsl:choose", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.chooseInternal(context, [{test: "[@att=\'bar\']",apply: context => {xjslt.literalTextInternal(context, "foo");}}, {apply: context => {xjslt.literalTextInternal(context, "bar");}}]);',
+    'xjslt.choose(context, [{test: "[@att=\'bar\']",apply: context => {xjslt.literalText(context, "foo");}}, {apply: context => {xjslt.literalText(context, "bar");}}]);',
   );
 });
 
@@ -215,14 +215,14 @@ test("compileIfNode", () => {
   const dom = slimdom.parseXmlDocument(xml);
   const nodes = evaluateXPathToNodes("//xsl:if", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.ifInternal(context, {test: "[@att=\'bar\']"}, context => {xjslt.literalTextInternal(context, "foo");});',
+    'xjslt.ifX(context, {test: "[@att=\'bar\']"}, context => {xjslt.literalText(context, "foo");});',
   );
 });
 
 test("compileLiteralElementNode", () => {
   const nodes = evaluateXPathToNodes("//heading", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.literalElementInternal(context, {name: "heading",attributes: [{name: "type",value: "top"}]}, context => {xjslt.valueOfInternal(context, {select: "Title",separator: undefined});});',
+    'xjslt.literalElement(context, {name: "heading",attributes: [{name: "type",value: "top"}]}, context => {xjslt.valueOf(context, {select: "Title",separator: undefined});});',
   );
 });
 
@@ -256,7 +256,7 @@ test("stripSpaceStylesheet with preserved", () => {
 test("compileTemplateNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:template", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'templates.push({match: "/",name: undefined,modes: ["#default"],allowedParams: [],apply: context => {xjslt.literalElementInternal(context, {name: "doc",attributes: []}, context => {xjslt.applyTemplatesInternal(context, {select: "child::node()",mode: "#default"});});}});',
+    'templates.push({match: "/",name: undefined,modes: ["#default"],allowedParams: [],apply: context => {xjslt.literalElement(context, {name: "doc",attributes: []}, context => {xjslt.applyTemplates(context, {select: "child::node()",mode: "#default"});});}});',
   );
 });
 

@@ -175,7 +175,7 @@ const BUILT_IN_TEMPLATES = [
   {
     match: "*|/",
     apply: (context: ProcessingContext) => {
-      applyTemplatesInternal(context, {
+      applyTemplates(context, {
         select: "child::node()",
         params: [],
         mode: "#current",
@@ -187,7 +187,7 @@ const BUILT_IN_TEMPLATES = [
   {
     match: "text()|@*",
     apply: (context: ProcessingContext) => {
-      valueOfInternal(context, { select: "." });
+      valueOf(context, { select: "." });
     },
     allowedParams: [],
     modes: ["#all"],
@@ -262,7 +262,7 @@ function evaluateTemplate(
   });
 }
 
-export function applyTemplatesInternal(
+export function applyTemplates(
   context: ProcessingContext,
   attributes: ApplyTemplateAttributes,
 ) {
@@ -293,7 +293,7 @@ export function applyTemplatesInternal(
   }
 }
 
-export function callTemplateInternal(
+export function callTemplate(
   context: ProcessingContext,
   attributes: CallTemplateAttributes,
   params: VariableLike[],
@@ -306,7 +306,7 @@ export function callTemplateInternal(
   throw new Error(`Cannot find a template named ${attributes.name}`);
 }
 
-export function copyInternal(
+export function copy(
   context: ProcessingContext,
   attributes: {},
   func: SequenceConstructor,
@@ -334,7 +334,7 @@ export function copyInternal(
   }
 }
 
-export function copyOfInternal(
+export function copyOf(
   context: ProcessingContext,
   attributes: { select: string },
   func: SequenceConstructor,
@@ -351,7 +351,7 @@ export function copyOfInternal(
   }
 }
 
-export function valueOfInternal(
+export function valueOf(
   context: ProcessingContext,
   attributes: ValueOfAttributes,
 ) {
@@ -368,7 +368,7 @@ export function valueOfInternal(
   appendToTree(str, context);
 }
 
-export function textInternal(
+export function text(
   context: ProcessingContext,
   attributes: TextAttributes,
   func: SequenceConstructor,
@@ -378,10 +378,7 @@ export function textInternal(
   context.outputNode.appendChild(newNode);
 }
 
-export function variableInternal(
-  context: ProcessingContext,
-  variable: VariableLike,
-) {
+export function variable(context: ProcessingContext, variable: VariableLike) {
   setVariable(
     context.variableScopes,
     variable.name,
@@ -389,10 +386,7 @@ export function variableInternal(
   );
 }
 
-export function paramInternal(
-  context: ProcessingContext,
-  variable: VariableLike,
-) {
+export function param(context: ProcessingContext, variable: VariableLike) {
   /** todo: allow passing in params */
   setVariable(
     context.variableScopes,
@@ -423,7 +417,7 @@ export function mergeVariableScopes(variableScopes: Array<VariableScope>) {
   return retval;
 }
 
-export function literalTextInternal(context: ProcessingContext, text: string) {
+export function literalText(context: ProcessingContext, text: string) {
   context.outputNode.appendChild(context.outputDocument.createTextNode(text));
 }
 
@@ -462,7 +456,7 @@ function appendToTreeArray(things: any[], context: ProcessingContext) {
   }
 }
 
-export function sequenceInternal(
+export function sequence(
   context: ProcessingContext,
   attributes: SequenceAttributes,
 ) {
@@ -476,7 +470,7 @@ export function sequenceInternal(
   appendToTreeArray(things, context);
 }
 
-export function literalElementInternal(
+export function literalElement(
   context: ProcessingContext,
   node: NodeOutputData,
   func: SequenceConstructor,
@@ -499,7 +493,7 @@ export function literalElementInternal(
   });
 }
 
-export function attributeInternal(
+export function attribute(
   context: ProcessingContext,
   attributes: { name: string; ns?: string },
   func: SequenceConstructor,
@@ -511,7 +505,7 @@ export function attributeInternal(
   context.outputNode.setAttribute(name, value);
 }
 
-export function elementInternal(
+export function element(
   context: ProcessingContext,
   node: NodeOutputData,
   func: SequenceConstructor,
@@ -531,7 +525,7 @@ export function elementInternal(
   });
 }
 
-export function ifInternal(
+export function ifX(
   context: ProcessingContext,
   attributes: IfAttributes,
   func: SequenceConstructor,
@@ -548,7 +542,7 @@ export function ifInternal(
   }
 }
 
-export function chooseInternal(
+export function choose(
   context: ProcessingContext,
   alternatives: Array<ChooseAlternative>,
 ) {
@@ -568,7 +562,7 @@ export function chooseInternal(
   }
 }
 
-export function forEachInternal(
+export function forEach(
   context: ProcessingContext,
   attributes: ForEachAttributes,
   func: SequenceConstructor,
