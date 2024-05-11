@@ -20,6 +20,7 @@
 
 import { generate } from "astring";
 import {
+  createTypedValueFactory,
   evaluateXPath,
   evaluateXPathToString,
   evaluateXPathToNodes,
@@ -380,12 +381,27 @@ export function extendScope(variableScopes: Array<VariableScope>) {
   return variableScopes.concat([new Map()]);
 }
 
+const wrapNumericSequence = createTypedValueFactory("xs:numeric*");
+const wrapStringSequence = createTypedValueFactory("xs:string*");
+
+function wrapValue(thing: any) {
+  /* wraps a value for fontoxpath */
+  if (Array.isArray(thing)) {
+    if (typeof thing[0] === "string") {
+      return wrapStringSequence(thing, null);
+    } else if (typeof thing[0] === "number") {
+      return wrapNumericSequence(thing, null);
+    }
+  }
+  return thing;
+}
+
 export function setVariable(
   variableScopes: Array<VariableScope>,
   name: string,
   value: any,
 ) {
-  variableScopes[variableScopes.length - 1].set(name, value);
+  variableScopes[variableScopes.length - 1].set(name, wrapValue(value));
 }
 
 export function mergeVariableScopes(variableScopes: Array<VariableScope>) {
