@@ -172,20 +172,20 @@ test("compileTextNode", () => {
 test("compileValueOfNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:value-of", xsltDoc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.valueOf(context, {select: "/Article/Title",separator: undefined});',
+    'xjslt.valueOf(context, {"select": "/Article/Title","separator": undefined});',
   );
 });
 test("compileVariableNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:variable", xsltDoc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.variable(context, {name: "author",content: "."});',
+    'xjslt.variable(context, {"name": "author","content": "."});',
   );
 });
 
 test("compileApplyTemplatesNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:apply-templates", xsltDoc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.applyTemplates(context, {select: "/Article/Authors/Author",mode: "#default"});',
+    'xjslt.applyTemplates(context, {"select": "/Article/Authors/Author","mode": "#default"});',
   );
 });
 
@@ -195,7 +195,7 @@ test("compileForEachNode", () => {
   const dom = slimdom.parseXmlDocument(xml);
   const nodes = evaluateXPathToNodes("//xsl:for-each", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.forEach(context, {select: "./*"}, context => {xjslt.literalText(context, "foo");});',
+    'xjslt.forEach(context, {"select": "./*"}, context => {xjslt.literalText(context, "foo");});',
   );
 });
 
@@ -205,7 +205,7 @@ test("compileChooseNode", () => {
   const dom = slimdom.parseXmlDocument(xml);
   const nodes = evaluateXPathToNodes("//xsl:choose", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.choose(context, [{test: "[@att=\'bar\']",apply: context => {xjslt.literalText(context, "foo");}}, {apply: context => {xjslt.literalText(context, "bar");}}]);',
+    'xjslt.choose(context, [{"test": "[@att=\'bar\']","apply": context => {xjslt.literalText(context, "foo");}}, {"apply": context => {xjslt.literalText(context, "bar");}}]);',
   );
 });
 
@@ -215,14 +215,14 @@ test("compileIfNode", () => {
   const dom = slimdom.parseXmlDocument(xml);
   const nodes = evaluateXPathToNodes("//xsl:if", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.ifX(context, {test: "[@att=\'bar\']"}, context => {xjslt.literalText(context, "foo");});',
+    'xjslt.ifX(context, {"test": "[@att=\'bar\']"}, context => {xjslt.literalText(context, "foo");});',
   );
 });
 
 test("compileLiteralElementNode", () => {
   const nodes = evaluateXPathToNodes("//heading", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.literalElement(context, {name: "heading",attributes: [{name: "type",value: "top"}]}, context => {xjslt.valueOf(context, {select: "Title",separator: undefined});});',
+    'xjslt.literalElement(context, {"name": "heading","attributes": [{"name": "type","value": "top"}]}, context => {xjslt.valueOf(context, {"select": "Title","separator": undefined});});',
   );
 });
 
@@ -256,7 +256,7 @@ test("stripSpaceStylesheet with preserved", () => {
 test("compileTemplateNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:template", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'templates.push({match: "/",name: undefined,modes: ["#default"],allowedParams: [],apply: context => {xjslt.literalElement(context, {name: "doc",attributes: []}, context => {xjslt.applyTemplates(context, {select: "child::node()",mode: "#default"});});}});',
+    'templates.push({"match": "/","name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"name": "doc","attributes": []}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default"});});}});',
   );
 });
 

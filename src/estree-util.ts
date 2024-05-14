@@ -162,7 +162,7 @@ export function mkObject(obj: any): ObjectExpression {
       method: false,
       shorthand: false,
       computed: false,
-      key: mkIdentifier(key),
+      key: mkLiteral(key),
       value: obj[key],
       kind: "init",
     });
