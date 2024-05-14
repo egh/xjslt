@@ -31,7 +31,7 @@ import {
   valueOf,
   VariableScope,
 } from "../src/xjslt";
-import { compileNode } from "../src/compile";
+import { compileNode, getNodeNS } from "../src/compile";
 import * as slimdom from "slimdom";
 import * as path from "path";
 import { evaluateXPathToString, evaluateXPathToNodes } from "fontoxpath";
@@ -93,12 +93,13 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     modes: ["#default"],
     apply: function (context) {
       literalText(context, "Article -\n");
-      valueOf(context, { select: "/Article/Title" });
+      valueOf(context, { select: "/Article/Title", namespaces: {} });
       literalText(context, "\nAuthors:");
       applyTemplates(context, {
         select: "/Article/Authors/Author",
         params: [],
         mode: "#default",
+        namespaces: {},
       });
     },
   });
@@ -108,7 +109,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     modes: ["#default"],
     apply: function (context) {
       literalText(context, "\n- ");
-      valueOf(context, { select: "." });
+      valueOf(context, { select: ".", namespaces: {} });
     },
   });
 
@@ -123,7 +124,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     templates: templates,
     variableScopes: [new Map<string, any>()],
   };
-  processNode(context, []);
+  processNode(context, [], {});
   walkTree(doc, (node) => {
     if (node.nodeType == slimdom.Node.TEXT_NODE) {
       output(node.data);
@@ -172,20 +173,21 @@ test("compileTextNode", () => {
 test("compileValueOfNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:value-of", xsltDoc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.valueOf(context, {"select": "/Article/Title","separator": undefined});',
+    'xjslt.valueOf(context, {"select": "/Article/Title","separator": undefined,"namespaces": {}});',
   );
 });
+
 test("compileVariableNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:variable", xsltDoc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.variable(context, {"name": "author","content": "."});',
+    'xjslt.variable(context, {"name": "author","content": ".","namespaces": {}});',
   );
 });
 
 test("compileApplyTemplatesNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:apply-templates", xsltDoc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.applyTemplates(context, {"select": "/Article/Authors/Author","mode": "#default"});',
+    'xjslt.applyTemplates(context, {"select": "/Article/Authors/Author","mode": "#default","namespaces": {}});',
   );
 });
 
@@ -195,7 +197,7 @@ test("compileForEachNode", () => {
   const dom = slimdom.parseXmlDocument(xml);
   const nodes = evaluateXPathToNodes("//xsl:for-each", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.forEach(context, {"select": "./*"}, context => {xjslt.literalText(context, "foo");});',
+    'xjslt.forEach(context, {"select": "./*","namespaces": {}}, context => {xjslt.literalText(context, "foo");});',
   );
 });
 
@@ -215,14 +217,28 @@ test("compileIfNode", () => {
   const dom = slimdom.parseXmlDocument(xml);
   const nodes = evaluateXPathToNodes("//xsl:if", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.ifX(context, {"test": "[@att=\'bar\']"}, context => {xjslt.literalText(context, "foo");});',
+    'xjslt.ifX(context, {"test": "[@att=\'bar\']","namespaces": {}}, context => {xjslt.literalText(context, "foo");});',
   );
 });
 
 test("compileLiteralElementNode", () => {
   const nodes = evaluateXPathToNodes("//heading", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.literalElement(context, {"name": "heading","attributes": [{"name": "type","value": "top"}]}, context => {xjslt.valueOf(context, {"select": "Title","separator": undefined});});',
+    'xjslt.literalElement(context, {"ns": undefined,"name": "heading","attributes": [{"name": "type","value": "top"}]}, context => {xjslt.valueOf(context, {"select": "Title","separator": undefined,"namespaces": {}});});',
+  );
+});
+
+test("compileLiteralElementNode with namespace", () => {
+  const xml = `
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="//Author" mode="foo">
+    <foo:node xmlns:foo="http://example.org/foo"><xsl:value-of select="."/></foo:node>
+  </xsl:template>
+</xsl:stylesheet>`;
+  const dom = slimdom.parseXmlDocument(xml);
+  const nodes = evaluateXPathToNodes("//*[local-name()='node']", dom);
+  expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
+    'xjslt.literalElement(context, {"ns": "http://example.org/foo","name": "node","attributes": []}, context => {xjslt.valueOf(context, {"select": ".","separator": undefined,"namespaces": {"foo": "http://example.org/foo"}});});',
   );
 });
 
@@ -256,7 +272,7 @@ test("stripSpaceStylesheet with preserved", () => {
 test("compileTemplateNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:template", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'templates.push({"match": "/","name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"name": "doc","attributes": []}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default"});});}});',
+    'templates.push({"match": "/","name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"ns": undefined,"name": "doc","attributes": []}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default","namespaces": {}});});},"namespaces": {}});',
   );
 });
 
@@ -454,4 +470,41 @@ test("variable scopes", () => {
   expect(merged["b"]).toEqual(3);
   expect(mergeVariableScopes([])).toEqual({});
   expect(mergeVariableScopes([new Map()])).toEqual({});
+});
+
+test("getNodeNS", () => {
+  const xml =
+    '<foo:root xmlns:foo="http://example.org/foo" xmlns:bar="http://example.org/bar" baz="http://example.org/baz"><node/></foo:root>';
+  const dom = slimdom.parseXmlDocument(xml);
+  expect(getNodeNS(dom.documentElement)).toEqual({
+    foo: "http://example.org/foo",
+    bar: "http://example.org/bar",
+  });
+});
+
+test("getNodeNS with default ns", () => {
+  const xml = '<root xmlns="http://example.org/foo"><node/></root>';
+  const dom = slimdom.parseXmlDocument(xml);
+  expect(getNodeNS(dom.documentElement)).toEqual({
+    "": "http://example.org/foo",
+  });
+});
+
+test("getNodeNS nested", () => {
+  const xml =
+    '<foo:root xmlns:foo="http://example.org/foo"><bar:node xmlns:bar="http://example.org/bar"></bar:node></foo:root>';
+  const dom = slimdom.parseXmlDocument(xml);
+  expect(getNodeNS(dom.documentElement.firstChild)).toEqual({
+    foo: "http://example.org/foo",
+    bar: "http://example.org/bar",
+  });
+});
+
+test("getNodeNS override nested", () => {
+  const xml =
+    '<foo:root xmlns:foo="http://example.org/foo"><foo:node xmlns:foo="http://example.org/bar"></foo:node></foo:root>';
+  const dom = slimdom.parseXmlDocument(xml);
+  expect(getNodeNS(dom.documentElement.firstChild)).toEqual({
+    foo: "http://example.org/bar",
+  });
 });

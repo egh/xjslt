@@ -35,6 +35,7 @@ import * as slimdom from "slimdom";
 import { compileNode } from "./compile";
 
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
+export const XMLNS_NSURI = "http://www.w3.org/2000/xmlns/";
 
 export type SequenceConstructor = (context: ProcessingContext) => void;
 
@@ -78,6 +79,13 @@ interface ProcessingContext {
 interface VariableLike {
   name: string;
   content: undefined | string | SequenceConstructor;
+  namespaces: object;
+}
+
+function resolver(namespaces: object) {
+  return (prefix: string): string | null => {
+    return namespaces[prefix] || null;
+  };
 }
 
 /* Implementation of https://www.w3.org/TR/xslt11/#patterns */
@@ -85,13 +93,9 @@ function nameTest(
   name: string,
   node: any,
   variableScopes: Array<VariableScope>,
-  nsResolver?: (prefix: string) => string,
+  nsResolver: (prefix: string) => string,
 ) {
   let checkContext = node;
-  let options = {};
-  if (nsResolver) {
-    options["namespaceResolver"] = nsResolver;
-  }
   /* Using ancestors as the potential contexts */
   while (checkContext) {
     const matches = evaluateXPathToNodes(
@@ -101,7 +105,7 @@ function nameTest(
       /* TODO: Only top level variables are applicable here, so top
          level variables could be cached. */
       mergeVariableScopes(variableScopes),
-      options,
+      { namespaceResolver: nsResolver },
     );
     /* It counts as a match if the node we were testing against is in the resulting node set. */
     if (matches.includes(node)) {
@@ -123,13 +127,16 @@ function getTemplate(
   templates: Array<CompiledTemplate>,
   variableScopes: Array<VariableScope>,
   mode: string,
+  namespaces: object,
 ): CompiledTemplate {
   for (let template of templates) {
     if (template.modes.includes(mode) || template.modes[0] === "#all") {
       if (template.match) {
         /* some templates have no match */
         // console.log(`checking for ${mode} on ${node.localName} in ${template.match} with modes ${template.modes.join(',')}...`);
-        if (nameTest(template.match, node, variableScopes)) {
+        if (
+          nameTest(template.match, node, variableScopes, resolver(namespaces))
+        ) {
           // console.log("matched");
           return template;
         }
@@ -147,6 +154,7 @@ const BUILT_IN_TEMPLATES = [
         select: "child::node()",
         params: [],
         mode: "#current",
+        namespaces: {},
       });
     },
     allowedParams: [],
@@ -155,7 +163,7 @@ const BUILT_IN_TEMPLATES = [
   {
     match: "text()|@*",
     apply: (context: ProcessingContext) => {
-      valueOf(context, { select: "." });
+      valueOf(context, { select: ".", namespaces: {} });
     },
     allowedParams: [],
     modes: ["#all"],
@@ -169,12 +177,13 @@ const BUILT_IN_TEMPLATES = [
 ];
 
 function getTemplateBuiltin(node: any): CompiledTemplate {
-  return getTemplate(node, BUILT_IN_TEMPLATES, [], "#default");
+  return getTemplate(node, BUILT_IN_TEMPLATES, [], "#default", {});
 }
 
 export function processNode(
   context: ProcessingContext,
   params: VariableLike[],
+  namespaces: object,
 ) {
   const template =
     getTemplate(
@@ -182,6 +191,7 @@ export function processNode(
       context.templates,
       context.variableScopes,
       context.mode,
+      namespaces,
     ) || getTemplateBuiltin(context.currentNode);
   if (template) {
     evaluateTemplate(template, context, params);
@@ -232,7 +242,12 @@ function evaluateTemplate(
 
 export function applyTemplates(
   context: ProcessingContext,
-  attributes: { select?: string; mode: string; params: VariableLike[] },
+  attributes: {
+    select?: string;
+    mode: string;
+    params: VariableLike[];
+    namespaces: object;
+  },
 ) {
   /* The nodes we want to apply templates on.*/
   const nodes = evaluateXPathToNodes(
@@ -240,6 +255,7 @@ export function applyTemplates(
     context.currentNode,
     undefined,
     mergeVariableScopes(context.variableScopes),
+    { namespaceResolver: resolver(attributes.namespaces) },
   );
   let mode = attributes.mode || "#default";
   if (mode === "#current") {
@@ -257,6 +273,7 @@ export function applyTemplates(
         variableScopes: extendScope(context.variableScopes),
       },
       attributes.params,
+      attributes.namespaces,
     );
   }
 }
@@ -266,6 +283,7 @@ export function callTemplate(
   attributes: {
     name: string;
     params: VariableLike[];
+    namespaces: object;
   },
 ) {
   for (let template of context.templates) {
@@ -306,7 +324,7 @@ export function copy(
 
 export function copyOf(
   context: ProcessingContext,
-  attributes: { select: string },
+  attributes: { select: string; namespaces: object },
   func: SequenceConstructor,
 ) {
   let things = evaluateXPath(
@@ -315,6 +333,7 @@ export function copyOf(
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
+    { namespaceResolver: resolver(attributes.namespaces) },
   );
   for (let thing of things) {
     appendToTree(thing, context);
@@ -327,6 +346,7 @@ export function valueOf(
     select: string;
     separator?: string;
     disableOutputEscaping?: boolean;
+    namespaces: object;
   },
 ) {
   let separator = attributes.separator;
@@ -343,6 +363,7 @@ export function valueOf(
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.STRINGS_TYPE,
+    { namespaceResolver: resolver(attributes.namespaces) },
   );
   const str = strs.join(evaluateAttributeValueTemplate(context, separator));
   appendToTree(str, context);
@@ -352,6 +373,7 @@ export function text(
   context: ProcessingContext,
   attributes: {
     disableOutputEscaping: boolean;
+    namespaces: object;
   },
   func: SequenceConstructor,
 ) {
@@ -455,7 +477,7 @@ function appendToTreeArray(things: any[], context: ProcessingContext) {
 
 export function sequence(
   context: ProcessingContext,
-  attributes: { select: string },
+  attributes: { select: string; namespaces: object },
 ) {
   const things = evaluateXPath(
     attributes.select,
@@ -463,6 +485,7 @@ export function sequence(
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
+    { namespaceResolver: resolver(attributes.namespaces) },
   );
   appendToTreeArray(things, context);
 }
@@ -504,13 +527,13 @@ export function attribute(
 
 export function element(
   context: ProcessingContext,
-  node: NodeOutputData,
+  node: { name: string; namespace?: string },
   func: SequenceConstructor,
 ) {
   let newNode: any;
   const name = evaluateAttributeValueTemplate(context, node.name);
-  if (node.ns) {
-    newNode = context.outputDocument.createElementNS(node.ns, name);
+  if (node.namespace) {
+    newNode = context.outputDocument.createElementNS(node.namespace, name);
   } else {
     newNode = context.outputDocument.createElement(name);
   }
@@ -524,7 +547,7 @@ export function element(
 
 export function ifX(
   context: ProcessingContext,
-  attributes: { test: string },
+  attributes: { test: string; namespaces: object },
   func: SequenceConstructor,
 ) {
   if (
@@ -533,6 +556,7 @@ export function ifX(
       context.currentNode,
       undefined,
       mergeVariableScopes(context.variableScopes),
+      { namespaceResolver: resolver(attributes.namespaces) },
     )
   ) {
     func(context);
@@ -552,6 +576,7 @@ export function choose(
         context.currentNode,
         undefined,
         mergeVariableScopes(context.variableScopes),
+        //        {"namespaceResolver": resolver(attributes.namespaces)}
       )
     ) {
       return alternative.apply(context);
@@ -561,7 +586,7 @@ export function choose(
 
 export function forEach(
   context: ProcessingContext,
-  attributes: { select: string },
+  attributes: { select: string; namespaces: object },
   func: SequenceConstructor,
 ) {
   const nodeList = evaluateXPath(
@@ -569,6 +594,8 @@ export function forEach(
     context.currentNode,
     undefined,
     mergeVariableScopes(context.variableScopes),
+    evaluateXPath.ALL_RESULTS_TYPE,
+    { namespaceResolver: resolver(attributes.namespaces) },
   );
   if (nodeList && Symbol.iterator in Object(nodeList)) {
     for (let node of nodeList) {
@@ -676,6 +703,8 @@ function evaluateVariableLike(
       context.currentNode,
       undefined,
       mergeVariableScopes(context.variableScopes),
+      evaluateXPath.ANY_TYPE,
+      { namespaceResolver: resolver(variable.namespaces) },
     );
   } else if (variable.content == undefined) {
     return "";

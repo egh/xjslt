@@ -43,7 +43,7 @@ import {
   Statement,
 } from "estree";
 import * as slimdom from "slimdom";
-import { XSLT1_NSURI } from "./xjslt";
+import { XSLT1_NSURI, XMLNS_NSURI } from "./xjslt";
 
 /**
  * Functions to walk a DOM tree of an XSLT stylesheet and generate an
@@ -57,17 +57,6 @@ interface SimpleElement {
 }
 
 const simpleElements = new Map<string, SimpleElement>([
-  [
-    "apply-templates",
-    {
-      name: "applyTemplates",
-      arguments: new Map([
-        ["select", "child::node()"],
-        ["mode", "#default"],
-      ]),
-      hasChildren: false,
-    },
-  ],
   [
     "attribute",
     {
@@ -136,6 +125,16 @@ const simpleElements = new Map<string, SimpleElement>([
   ],
 ]);
 
+function compileApplyTemplatesNode(node: any) {
+  const mode = expandPrefixed(node.getAttribute("mode"), getNodeNS(node));
+  const args = {
+    select: mkLiteral(node.getAttribute("select") || "child::node()"),
+    mode: mkLiteral(mode || "#default"),
+    namespaces: mkNamespaceArg(node),
+  };
+  return compileFuncall("applyTemplates", [mkObject(args)]);
+}
+
 /* Compile a param or variable, which contains either a select
    statement or a SequenceConstructor. */
 function compileVariableLike(node: any) {
@@ -144,14 +143,20 @@ function compileVariableLike(node: any) {
     return mkObject({
       name: name,
       content: mkLiteral(node.getAttribute("select") || undefined),
+      namespaces: mkNamespaceArg(node),
     });
   } else if (node.hasChildNodes()) {
     return mkObject({
       name: name,
       content: mkArrowFun(compileNodeArray(node.childNodes)),
+      namespaces: mkNamespaceArg(node),
     });
   } else {
-    return mkObject({ name: name, content: mkLiteral(undefined) });
+    return mkObject({
+      name: name,
+      content: mkLiteral(undefined),
+      namespaces: mkObject({}),
+    });
   }
 }
 
@@ -171,7 +176,8 @@ function compileParams(nodename: string, nodes: any[]) {
 
 function compileCallTemplate(node: any) {
   let args = {};
-  args["name"] = mkLiteral(node.getAttribute("name"));
+  let name = expandPrefixed(node.getAttribute("name"), getNodeNS(node));
+  args["name"] = mkLiteral(name);
   if (!args["name"]) {
     throw new Error("");
   }
@@ -194,6 +200,14 @@ function compileFuncallWithChildren(
   ]);
 }
 
+function mkNamespaceArg(node: any) {
+  let namespaces = getNodeNS(node);
+  for (let key in namespaces) {
+    namespaces[key] = mkLiteral(namespaces[key]);
+  }
+  return mkObject(namespaces);
+}
+
 function compileArgs(
   node: any,
   keyList: Map<string, string | undefined>,
@@ -202,6 +216,7 @@ function compileArgs(
   for (let [key, fallback] of keyList) {
     args[key] = mkLiteral(node.getAttribute(key) || fallback);
   }
+  args["namespaces"] = mkNamespaceArg(node);
   return mkObject(args);
 }
 
@@ -246,20 +261,51 @@ function compileTopLevelParam(node: any) {
 function compileLiteralElementNode(node: any) {
   let attributes = [];
   for (let n in node.attributes) {
-    attributes.push(
-      mkObject({
-        name: mkLiteral(node.attributes[n].localName),
-        value: mkLiteral(node.attributes[n].value),
-      }),
-    );
+    let attr = node.attributes[n];
+    /* Skip if this is the attr for the namespace for this element,
+       which will be output by the serializer automatically. */
+    if (
+      !(attr.namespaceURI === XMLNS_NSURI && attr.value === node.namespaceURI)
+    ) {
+      attributes.push(
+        mkObject({
+          name: mkLiteral(node.attributes[n].name),
+          value: mkLiteral(node.attributes[n].value),
+        }),
+      );
+    }
   }
   return mkCallWithContext(mkMember("xjslt", "literalElement"), [
     mkObject({
+      ns: mkLiteral(node.namespaceURI || undefined),
       name: mkLiteral(node.localName),
       attributes: mkArray(attributes),
     }),
     mkArrowFun(compileNodeArray(node.childNodes)),
   ]);
+}
+
+export function getNodeNS(node: any, retval: object = undefined) {
+  if (!retval) {
+    retval = {};
+  }
+  if (node.parentElement) {
+    getNodeNS(node.parentElement, retval);
+  }
+  if (node.attributes) {
+    for (let attribute of node.attributes) {
+      if (attribute.value === XSLT1_NSURI) {
+        // We know about this!
+      } else if (attribute.namespaceURI === XMLNS_NSURI) {
+        let name = attribute.localName;
+        if (name === "xmlns") {
+          name = "";
+        }
+        retval[name] = attribute.value;
+      }
+    }
+  }
+  return retval;
 }
 
 /* todo - separate into top-level & sequence-generator versions */
@@ -270,6 +316,8 @@ export function compileNode(node: any) {
     if (node.namespaceURI === XSLT1_NSURI) {
       if (simpleElements.has(node.localName)) {
         return compileSimpleElement(node);
+      } else if (node.localName === "apply-templates") {
+        return compileApplyTemplatesNode(node);
       } else if (node.localName === "choose") {
         return compileChooseNode(node);
       } else if (node.localName === "call-template") {
@@ -393,7 +441,10 @@ function compileStylesheetNode(node: any): Program {
             }),
           ),
           ...compileNodeArray(node.childNodes),
-          mkCallWithContext(mkMember("xjslt", "processNode"), []),
+          mkCallWithContext(mkMember("xjslt", "processNode"), [
+            mkArray([]),
+            mkNamespaceArg(node),
+          ]),
           mkReturn(mkIdentifier("context.outputDocument")),
         ]),
       ),
@@ -416,18 +467,35 @@ function compileStylesheetNode(node: any): Program {
   };
 }
 
+function expandPrefixed(name: string, namespaces: object) {
+  if (!name) {
+    return name;
+  }
+  const [prefix, localName] = name.split(":");
+  if (localName && namespaces[prefix]) {
+    return `${namespaces[prefix]}#${localName}`;
+  }
+  return name;
+}
+
 function compileTemplateNode(node: any): ExpressionStatement {
   let allowedParams = compileParams("param", node.childNodes);
   let skipNodes = allowedParams.elements.length;
+  let namespaces = getNodeNS(node);
   return mkCall(mkMember("templates", "push"), [
     mkObject({
       match: mkLiteral(node.getAttribute("match") || undefined),
-      name: mkLiteral(node.getAttribute("name") || undefined),
+      name: mkLiteral(
+        expandPrefixed(node.getAttribute("name"), namespaces) || undefined,
+      ),
       modes: mkArray(
-        (node.getAttribute("mode") || "#default").split(",").map(mkLiteral),
+        (expandPrefixed(node.getAttribute("mode"), namespaces) || "#default")
+          .split(",")
+          .map(mkLiteral),
       ),
       allowedParams: allowedParams,
       apply: mkArrowFun(compileNodeArray(node.childNodes.slice(skipNodes))),
+      namespaces: mkNamespaceArg(node),
     }),
   ]);
 }

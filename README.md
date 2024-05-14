@@ -18,6 +18,7 @@ Tested with [node 20](https://nodejs.org/)
 - `element`/`attribute`/`value-of` - dynamic elements, attributes, and text
 - literal text and xml element output
 - `variable`
+- namespaces
 
 # Incompletely supported features
 
@@ -32,5 +33,4 @@ Tested with [node 20](https://nodejs.org/)
 - [ ] `attribute-set`
 - [ ] template priority
 - [ ] webpack compilation for browsers
-- [ ] namespaces
 - [ ] …
