@@ -44,7 +44,9 @@ export type VariableScope = Map<string, any>;
 export type NamespaceResolver = (prefix: string) => string;
 
 interface AttributeOutputData {
+  ns?: string;
   name: string;
+  prefix?: string;
   value: string;
 }
 
@@ -509,6 +511,23 @@ export function buildNode(
   return newNode;
 }
 
+export function buildAttributeNode(
+  context: ProcessingContext,
+  data: AttributeOutputData,
+): any {
+  let newNode: any;
+  if (data.ns) {
+    newNode = context.outputDocument.createAttributeNS(data.ns, data.name);
+  } else {
+    newNode = context.outputDocument.createAttribute(data.name);
+  }
+  if (data.prefix) {
+    newNode.prefix = data.prefix;
+  }
+  newNode.value = data.value;
+  return newNode;
+}
+
 export function literalElement(
   context: ProcessingContext,
   node: NodeOutputData,
@@ -517,7 +536,8 @@ export function literalElement(
   let newNode = buildNode(context, node);
   for (let attr of node.attributes) {
     const value = evaluateAttributeValueTemplate(context, attr.value);
-    newNode.setAttribute(attr.name, value);
+    const attrNode = buildAttributeNode(context, { ...attr, value: value });
+    newNode.setAttributeNode(attrNode);
   }
   context.outputNode.appendChild(newNode);
   func({
@@ -536,7 +556,12 @@ export function attribute(
   const value = extractText(
     evaluateSequenceConstructorInTemporaryTree(context, func),
   );
-  context.outputNode.setAttribute(name, value);
+  const attrNode = buildAttributeNode(context, {
+    name: name,
+    ns: attributes.ns,
+    value: value,
+  });
+  context.outputNode.setAttributeNode(attrNode);
 }
 
 export function element(

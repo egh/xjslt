@@ -20,6 +20,7 @@
 
 import {
   applyTemplates,
+  buildAttributeNode,
   buildNode,
   buildStylesheet,
   determineNamespace,
@@ -554,17 +555,57 @@ test("buildNode", () => {
   expect(nodeA.localName).toEqual("foo");
   expect(nodeA.namespaceURI).toEqual("http://example.org/baz");
 
-  let nodeB = buildNode(context, { name: "foo", ns: undefined, prefix: "baz" });
+  let nodeB = buildNode(context, { name: "foo", prefix: "baz" });
   expect(nodeB.prefix).toEqual("baz");
   expect(nodeB.localName).toEqual("foo");
   expect(nodeB.namespaceURI).toEqual(null);
 
   let nodeC = buildNode(context, {
     name: "foo",
-    ns: undefined,
-    prefix: undefined,
   });
   expect(nodeC.prefix).toEqual(null);
   expect(nodeC.localName).toEqual("foo");
   expect(nodeC.namespaceURI).toEqual(null);
+});
+
+test("buildAttributeNode", () => {
+  const doc = new slimdom.Document();
+  let context = {
+    outputDocument: doc,
+    outputNode: doc.documentElement,
+    currentNode: undefined,
+    currentNodeList: [],
+    mode: "#default",
+    templates: [],
+    variableScopes: [new Map<string, any>()],
+  };
+  let nodeA = buildAttributeNode(context, {
+    name: "foo",
+    ns: "http://example.org/baz",
+    prefix: "baz",
+    value: "value",
+  });
+  expect(nodeA.prefix).toEqual("baz");
+  expect(nodeA.localName).toEqual("foo");
+  expect(nodeA.namespaceURI).toEqual("http://example.org/baz");
+  expect(nodeA.value).toEqual("value");
+
+  let nodeB = buildAttributeNode(context, {
+    name: "foo",
+    prefix: "baz",
+    value: "value",
+  });
+  expect(nodeB.prefix).toEqual("baz");
+  expect(nodeB.localName).toEqual("foo");
+  expect(nodeB.namespaceURI).toEqual(null);
+  expect(nodeB.value).toEqual("value");
+
+  let nodeC = buildAttributeNode(context, {
+    name: "foo",
+    value: "foo",
+  });
+  expect(nodeC.prefix).toEqual(null);
+  expect(nodeC.localName).toEqual("foo");
+  expect(nodeC.namespaceURI).toEqual(null);
+  expect(nodeC.value).toEqual("foo");
 });
