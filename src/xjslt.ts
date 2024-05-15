@@ -41,6 +41,8 @@ export type SequenceConstructor = (context: ProcessingContext) => void;
 
 export type VariableScope = Map<string, any>;
 
+export type NamespaceResolver = (prefix: string) => string;
+
 interface AttributeOutputData {
   name: string;
   value: string;
@@ -63,7 +65,8 @@ interface CompiledTemplate {
 interface NodeOutputData {
   ns?: string;
   name: string;
-  attributes: Array<AttributeOutputData>;
+  prefix?: string;
+  attributes?: Array<AttributeOutputData>;
 }
 
 interface ProcessingContext {
@@ -93,7 +96,7 @@ function nameTest(
   name: string,
   node: any,
   variableScopes: Array<VariableScope>,
-  nsResolver: (prefix: string) => string,
+  nsResolver: NamespaceResolver,
 ) {
   let checkContext = node;
   /* Using ancestors as the potential contexts */
@@ -490,17 +493,28 @@ export function sequence(
   appendToTreeArray(things, context);
 }
 
+export function buildNode(
+  context: ProcessingContext,
+  data: NodeOutputData,
+): any {
+  let newNode: any;
+  if (data.ns) {
+    newNode = context.outputDocument.createElementNS(data.ns, data.name);
+  } else {
+    newNode = context.outputDocument.createElement(data.name);
+  }
+  if (data.prefix) {
+    newNode.prefix = data.prefix;
+  }
+  return newNode;
+}
+
 export function literalElement(
   context: ProcessingContext,
   node: NodeOutputData,
   func: SequenceConstructor,
 ) {
-  let newNode: any;
-  if (node.ns) {
-    newNode = context.outputDocument.createElementNS(node.ns, node.name);
-  } else {
-    newNode = context.outputDocument.createElement(node.name);
-  }
+  let newNode = buildNode(context, node);
   for (let attr of node.attributes) {
     const value = evaluateAttributeValueTemplate(context, attr.value);
     newNode.setAttribute(attr.name, value);
@@ -527,16 +541,11 @@ export function attribute(
 
 export function element(
   context: ProcessingContext,
-  node: { name: string; namespace?: string },
+  data: NodeOutputData,
   func: SequenceConstructor,
 ) {
-  let newNode: any;
-  const name = evaluateAttributeValueTemplate(context, node.name);
-  if (node.namespace) {
-    newNode = context.outputDocument.createElementNS(node.namespace, name);
-  } else {
-    newNode = context.outputDocument.createElement(name);
-  }
+  const name = evaluateAttributeValueTemplate(context, data.name);
+  let newNode = buildNode(context, { ...data, name: name });
   context.outputNode.appendChild(newNode);
   func({
     ...context,
@@ -757,6 +766,26 @@ function extractText(document: any) {
   }
   walkTree(document);
   return str;
+}
+
+/* Implement algorithm to determine a namespace for a name. Takes a
+   prefix:local name and resolver and an optional namespace and
+   returns a [namespace, prefix, local] tuple. */
+export function determineNamespace(
+  name: string,
+  nsResolver: NamespaceResolver,
+  passedNamespace?: string,
+): [string | undefined, string | undefined, string] {
+  let localName: string = name;
+  let namespace: string | undefined = passedNamespace;
+  let prefix: string | undefined = undefined;
+  if (localName.includes(":")) {
+    [prefix, localName] = name.split(":");
+  }
+  if (!namespace && prefix !== undefined) {
+    namespace = nsResolver(prefix);
+  }
+  return [namespace, prefix, localName];
 }
 
 /**

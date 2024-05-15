@@ -43,7 +43,12 @@ import {
   Statement,
 } from "estree";
 import * as slimdom from "slimdom";
-import { XSLT1_NSURI, XMLNS_NSURI } from "./xjslt";
+import {
+  XSLT1_NSURI,
+  XMLNS_NSURI,
+  determineNamespace,
+  NamespaceResolver,
+} from "./xjslt";
 
 /**
  * Functions to walk a DOM tree of an XSLT stylesheet and generate an
@@ -258,6 +263,12 @@ function compileTopLevelParam(node: any) {
   return mkCallWithContext(mkMember("xjslt", "param"), [param]);
 }
 
+function mkResolver(node: any): NamespaceResolver {
+  return (prefix: string) => {
+    return node.lookupNamespace(prefix);
+  };
+}
+
 function compileLiteralElementNode(node: any) {
   let attributes = [];
   for (let n in node.attributes) {
@@ -275,10 +286,17 @@ function compileLiteralElementNode(node: any) {
       );
     }
   }
+
+  const [namespace, prefix, localName] = determineNamespace(
+    node.localName,
+    mkResolver(node),
+    node.namespaceURI || undefined,
+  );
   return mkCallWithContext(mkMember("xjslt", "literalElement"), [
     mkObject({
-      ns: mkLiteral(node.namespaceURI || undefined),
-      name: mkLiteral(node.localName),
+      ns: mkLiteral(namespace),
+      prefix: mkLiteral(prefix),
+      name: mkLiteral(localName),
       attributes: mkArray(attributes),
     }),
     mkArrowFun(compileNodeArray(node.childNodes)),

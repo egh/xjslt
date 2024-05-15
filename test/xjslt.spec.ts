@@ -20,7 +20,9 @@
 
 import {
   applyTemplates,
+  buildNode,
   buildStylesheet,
+  determineNamespace,
   evaluateAttributeValueTemplate,
   extendScope,
   literalText,
@@ -224,7 +226,7 @@ test("compileIfNode", () => {
 test("compileLiteralElementNode", () => {
   const nodes = evaluateXPathToNodes("//heading", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.literalElement(context, {"ns": undefined,"name": "heading","attributes": [{"name": "type","value": "top"}]}, context => {xjslt.valueOf(context, {"select": "Title","separator": undefined,"namespaces": {}});});',
+    'xjslt.literalElement(context, {"ns": undefined,"prefix": undefined,"name": "heading","attributes": [{"name": "type","value": "top"}]}, context => {xjslt.valueOf(context, {"select": "Title","separator": undefined,"namespaces": {}});});',
   );
 });
 
@@ -238,7 +240,7 @@ test("compileLiteralElementNode with namespace", () => {
   const dom = slimdom.parseXmlDocument(xml);
   const nodes = evaluateXPathToNodes("//*[local-name()='node']", dom);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.literalElement(context, {"ns": "http://example.org/foo","name": "node","attributes": []}, context => {xjslt.valueOf(context, {"select": ".","separator": undefined,"namespaces": {"foo": "http://example.org/foo"}});});',
+    'xjslt.literalElement(context, {"ns": "http://example.org/foo","prefix": undefined,"name": "node","attributes": []}, context => {xjslt.valueOf(context, {"select": ".","separator": undefined,"namespaces": {"foo": "http://example.org/foo"}});});',
   );
 });
 
@@ -272,7 +274,7 @@ test("stripSpaceStylesheet with preserved", () => {
 test("compileTemplateNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:template", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'templates.push({"match": "/","name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"ns": undefined,"name": "doc","attributes": []}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default","namespaces": {}});});},"namespaces": {}});',
+    'templates.push({"match": "/","name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"ns": undefined,"prefix": undefined,"name": "doc","attributes": []}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default","namespaces": {}});});},"namespaces": {}});',
   );
 });
 
@@ -507,4 +509,62 @@ test("getNodeNS override nested", () => {
   expect(getNodeNS(dom.documentElement.firstChild)).toEqual({
     foo: "http://example.org/bar",
   });
+});
+
+test("determineNamespace", () => {
+  const nsResolver = (prefix) => {
+    return {
+      foo: "http://example.org/foo",
+      bar: "http://example.org/bar",
+    }[prefix];
+  };
+  expect(
+    determineNamespace("foo", nsResolver, "http://example.org/baz"),
+  ).toEqual(["http://example.org/baz", undefined, "foo"]);
+  expect(
+    determineNamespace("foo:bar", nsResolver, "http://example.org/baz"),
+  ).toEqual(["http://example.org/baz", "foo", "bar"]);
+  expect(determineNamespace("foo:bar", nsResolver, undefined)).toEqual([
+    "http://example.org/foo",
+    "foo",
+    "bar",
+  ]);
+  expect(
+    determineNamespace("foo:bar", nsResolver, "http://example.org/override"),
+  ).toEqual(["http://example.org/override", "foo", "bar"]);
+});
+
+test("buildNode", () => {
+  const doc = new slimdom.Document();
+  let context = {
+    outputDocument: doc,
+    outputNode: doc.documentElement,
+    currentNode: undefined,
+    currentNodeList: [],
+    mode: "#default",
+    templates: [],
+    variableScopes: [new Map<string, any>()],
+  };
+  let nodeA = buildNode(context, {
+    name: "foo",
+    ns: "http://example.org/baz",
+    prefix: "baz",
+  });
+  expect(nodeA.prefix).toEqual("baz");
+  expect(nodeA.localName).toEqual("foo");
+  expect(nodeA.namespaceURI).toEqual("http://example.org/baz");
+
+  let nodeB = buildNode(context, { name: "foo", ns: undefined, prefix: "baz" });
+  expect(nodeB.prefix).toEqual("baz");
+  expect(nodeB.localName).toEqual("foo");
+  expect(nodeB.namespaceURI).toEqual(null);
+
+  let nodeC = buildNode(context, {
+    name: "foo",
+    ns: undefined,
+    prefix: undefined,
+  });
+  expect(nodeC.prefix).toEqual(null);
+  expect(nodeC.localName).toEqual("foo");
+  expect(nodeC.namespaceURI).toEqual(null);
 });
