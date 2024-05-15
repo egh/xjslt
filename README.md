@@ -13,7 +13,7 @@ Tested with [node 20](https://nodejs.org/)
 
 # Supported features
 - `if`/`choose/when/otherwise` - conditional evaluation
-- `template` - named templates, priority, mode, and params are not yet support
+- `template`
 - `apply-templates`/`for-each` - recursive evaluation
 - `element`/`attribute`/`value-of` - dynamic elements, attributes, and text
 - literal text and xml element output
