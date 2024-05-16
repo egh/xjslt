@@ -125,16 +125,17 @@ function checkResult(rootDir, node, transformed) {
     };
   } else if (node.localName === "any-of") {
     return () => {
+      let lastCheck;
       for (let childNode of evaluateXPathToNodes("./*", node)) {
-        let lastErr;
+        /* hack to work with any of these results */
         try {
-          checkResult(rootDir, childNode, transformed)();
+          lastCheck = checkResult(rootDir, childNode, transformed);
+          lastCheck();
           return;
         } catch (err) {
-          lastErr = err;
         }
-        throw lastErr;
       }
+      lastCheck();
     };
   } else if (node.localName === "assert-xml") {
     return () => {

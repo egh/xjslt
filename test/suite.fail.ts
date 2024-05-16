@@ -275,7 +275,6 @@ export const KNOWN_SPEC_FAILURES = [
   "axes-057",
   "axes-058",
   "axes-059",
-  "axes-061",
   "axes-062",
   "axes-064",
   "axes-065",
