@@ -44,10 +44,9 @@ export type VariableScope = Map<string, any>;
 export type NamespaceResolver = (prefix: string) => string;
 
 interface AttributeOutputData {
-  ns?: string;
   name: string;
-  prefix?: string;
   value: string;
+  namespace?: string;
 }
 
 interface ChooseAlternative {
@@ -62,13 +61,6 @@ interface CompiledTemplate {
   priority?: number;
   apply: SequenceConstructor;
   allowedParams: Array<VariableLike>;
-}
-
-interface NodeOutputData {
-  ns?: string;
-  name: string;
-  prefix?: string;
-  attributes?: Array<AttributeOutputData>;
 }
 
 interface ProcessingContext {
@@ -87,9 +79,9 @@ interface VariableLike {
   namespaces: object;
 }
 
-function resolver(namespaces: object) {
+function mkResolver(namespaces: object) {
   return (prefix: string): string | null => {
-    return namespaces[prefix] || null;
+    return namespaces[prefix];
   };
 }
 
@@ -140,7 +132,7 @@ function getTemplate(
         /* some templates have no match */
         // console.log(`checking for ${mode} on ${node.localName} in ${template.match} with modes ${template.modes.join(',')}...`);
         if (
-          nameTest(template.match, node, variableScopes, resolver(namespaces))
+          nameTest(template.match, node, variableScopes, mkResolver(namespaces))
         ) {
           // console.log("matched");
           return template;
@@ -260,7 +252,7 @@ export function applyTemplates(
     context.currentNode,
     undefined,
     mergeVariableScopes(context.variableScopes),
-    { namespaceResolver: resolver(attributes.namespaces) },
+    { namespaceResolver: mkResolver(attributes.namespaces) },
   );
   let mode = attributes.mode || "#default";
   if (mode === "#current") {
@@ -338,7 +330,7 @@ export function copyOf(
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
-    { namespaceResolver: resolver(attributes.namespaces) },
+    { namespaceResolver: mkResolver(attributes.namespaces) },
   );
   for (let thing of things) {
     appendToTree(thing, context);
@@ -368,7 +360,7 @@ export function valueOf(
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.STRINGS_TYPE,
-    { namespaceResolver: resolver(attributes.namespaces) },
+    { namespaceResolver: mkResolver(attributes.namespaces) },
   );
   const str = strs.join(evaluateAttributeValueTemplate(context, separator));
   appendToTree(str, context);
@@ -490,39 +482,36 @@ export function sequence(
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
-    { namespaceResolver: resolver(attributes.namespaces) },
+    { namespaceResolver: mkResolver(attributes.namespaces) },
   );
   appendToTreeArray(things, context);
 }
 
 export function buildNode(
   context: ProcessingContext,
-  data: NodeOutputData,
+  data: { name: string; namespace?: string },
 ): any {
   let newNode: any;
-  if (data.ns) {
-    newNode = context.outputDocument.createElementNS(data.ns, data.name);
+  if (data.namespace !== undefined && data.namespace !== null) {
+    newNode = context.outputDocument.createElementNS(data.namespace, data.name);
   } else {
     newNode = context.outputDocument.createElement(data.name);
-  }
-  if (data.prefix) {
-    newNode.prefix = data.prefix;
   }
   return newNode;
 }
 
 export function buildAttributeNode(
   context: ProcessingContext,
-  data: AttributeOutputData,
+  data: { name: string; value: string; namespace?: string },
 ): any {
   let newNode: any;
-  if (data.ns) {
-    newNode = context.outputDocument.createAttributeNS(data.ns, data.name);
+  if (data.namespace) {
+    newNode = context.outputDocument.createAttributeNS(
+      data.namespace,
+      data.name,
+    );
   } else {
     newNode = context.outputDocument.createAttribute(data.name);
-  }
-  if (data.prefix) {
-    newNode.prefix = data.prefix;
   }
   newNode.value = data.value;
   return newNode;
@@ -530,13 +519,24 @@ export function buildAttributeNode(
 
 export function literalElement(
   context: ProcessingContext,
-  node: NodeOutputData,
+  data: {
+    name: string;
+    namespace?: string;
+    attributes: AttributeOutputData[];
+  },
   func: SequenceConstructor,
 ) {
-  let newNode = buildNode(context, node);
-  for (let attr of node.attributes) {
+  let newNode = buildNode(context, {
+    name: data.name,
+    namespace: data.namespace,
+  });
+  for (let attr of data.attributes) {
     const value = evaluateAttributeValueTemplate(context, attr.value);
-    const attrNode = buildAttributeNode(context, { ...attr, value: value });
+    const attrNode = buildAttributeNode(context, {
+      name: attr.name,
+      namespace: attr.namespace,
+      value: value,
+    });
     newNode.setAttributeNode(attrNode);
   }
   context.outputNode.appendChild(newNode);
@@ -549,16 +549,21 @@ export function literalElement(
 
 export function attribute(
   context: ProcessingContext,
-  attributes: { name: string; ns?: string },
+  data: { name: string; namespace?: string; namespaces: object },
   func: SequenceConstructor,
 ) {
-  const name = evaluateAttributeValueTemplate(context, attributes.name);
+  const name = evaluateAttributeValueTemplate(context, data.name);
+  const ns = determineNamespace(
+    name,
+    mkResolver(data.namespaces),
+    data.namespace,
+  );
   const value = extractText(
     evaluateSequenceConstructorInTemporaryTree(context, func),
   );
   const attrNode = buildAttributeNode(context, {
     name: name,
-    ns: attributes.ns,
+    namespace: ns,
     value: value,
   });
   context.outputNode.setAttributeNode(attrNode);
@@ -566,11 +571,18 @@ export function attribute(
 
 export function element(
   context: ProcessingContext,
-  data: NodeOutputData,
+  data: { name: string; namespace?: string; namespaces: object },
   func: SequenceConstructor,
 ) {
   const name = evaluateAttributeValueTemplate(context, data.name);
-  let newNode = buildNode(context, { ...data, name: name });
+  let newNode = buildNode(context, {
+    name: name,
+    namespace: determineNamespace(
+      name,
+      mkResolver(data.namespaces),
+      data.namespace,
+    ),
+  });
   context.outputNode.appendChild(newNode);
   func({
     ...context,
@@ -590,7 +602,7 @@ export function ifX(
       context.currentNode,
       undefined,
       mergeVariableScopes(context.variableScopes),
-      { namespaceResolver: resolver(attributes.namespaces) },
+      { namespaceResolver: mkResolver(attributes.namespaces) },
     )
   ) {
     func(context);
@@ -610,7 +622,7 @@ export function choose(
         context.currentNode,
         undefined,
         mergeVariableScopes(context.variableScopes),
-        //        {"namespaceResolver": resolver(attributes.namespaces)}
+        // {"namespaceResolver": mkResolver(attributes.namespaces)}
       )
     ) {
       return alternative.apply(context);
@@ -629,7 +641,7 @@ export function forEach(
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
-    { namespaceResolver: resolver(attributes.namespaces) },
+    { namespaceResolver: mkResolver(attributes.namespaces) },
   );
   if (nodeList && Symbol.iterator in Object(nodeList)) {
     for (let node of nodeList) {
@@ -738,7 +750,7 @@ function evaluateVariableLike(
       undefined,
       mergeVariableScopes(context.variableScopes),
       evaluateXPath.ANY_TYPE,
-      { namespaceResolver: resolver(variable.namespaces) },
+      { namespaceResolver: mkResolver(variable.namespaces) },
     );
   } else if (variable.content == undefined) {
     return "";
@@ -794,23 +806,23 @@ function extractText(document: any) {
 }
 
 /* Implement algorithm to determine a namespace for a name. Takes a
-   prefix:local name and resolver and an optional namespace and
-   returns a [namespace, prefix, local] tuple. */
+   qname and resolver and an optional namespace and returns a
+   namespace, or undefined if it's unqualified. */
 export function determineNamespace(
   name: string,
   nsResolver: NamespaceResolver,
   passedNamespace?: string,
-): [string | undefined, string | undefined, string] {
-  let localName: string = name;
+): string | undefined {
   let namespace: string | undefined = passedNamespace;
-  let prefix: string | undefined = undefined;
-  if (localName.includes(":")) {
-    [prefix, localName] = name.split(":");
+  if (namespace !== undefined) {
+    return namespace;
   }
-  if (!namespace && prefix !== undefined) {
-    namespace = nsResolver(prefix);
+  let prefix: string = "";
+  if (name.includes(":")) {
+    prefix = name.split(":")[0];
   }
-  return [namespace, prefix, localName];
+  namespace = nsResolver(prefix);
+  return namespace;
 }
 
 /**

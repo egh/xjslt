@@ -43,12 +43,7 @@ import {
   Statement,
 } from "estree";
 import * as slimdom from "slimdom";
-import {
-  XSLT1_NSURI,
-  XMLNS_NSURI,
-  determineNamespace,
-  NamespaceResolver,
-} from "./xjslt";
+import { XSLT1_NSURI, XMLNS_NSURI, NamespaceResolver } from "./xjslt";
 
 /**
  * Functions to walk a DOM tree of an XSLT stylesheet and generate an
@@ -219,7 +214,11 @@ function compileArgs(
 ): ObjectExpression {
   var args = {};
   for (let [key, fallback] of keyList) {
-    args[key] = mkLiteral(node.getAttribute(key) || fallback);
+    let value = node.getAttribute(key);
+    if (value === null) {
+      value = fallback;
+    }
+    args[key] = mkLiteral(value);
   }
   args["namespaces"] = mkNamespaceArg(node);
   return mkObject(args);
@@ -273,31 +272,26 @@ function compileLiteralElementNode(node: any) {
   let attributes = [];
   for (let n in node.attributes) {
     let attr = node.attributes[n];
-    /* Skip if this is the attr for the namespace for this element,
-       which will be output by the serializer automatically. */
-    if (
-      !(attr.namespaceURI === XMLNS_NSURI && attr.value === node.namespaceURI)
-    ) {
-      attributes.push(
-        mkObject({
-          name: mkLiteral(node.attributes[n].name),
-          value: mkLiteral(node.attributes[n].value),
-        }),
-      );
-    }
+    attributes.push(
+      mkObject({
+        name: mkLiteral(node.attributes[n].name),
+        value: mkLiteral(node.attributes[n].value),
+        namespace: mkLiteral(node.attributes[n].namespaceURI),
+      }),
+    );
   }
 
-  const [namespace, prefix, localName] = determineNamespace(
-    node.localName,
-    mkResolver(node),
-    node.namespaceURI || undefined,
-  );
+  /* The DOM API is so confusing... we don't need to do this with
+     attributes. */
+  let name = node.localName;
+  if (node.prefix) {
+    name = `${node.prefix}:${name}`;
+  }
   return mkCallWithContext(mkMember("xjslt", "literalElement"), [
     mkObject({
-      ns: mkLiteral(namespace),
-      prefix: mkLiteral(prefix),
-      name: mkLiteral(localName),
+      name: mkLiteral(name),
       attributes: mkArray(attributes),
+      namespace: mkLiteral(node.namespaceURI),
     }),
     mkArrowFun(compileNodeArray(node.childNodes)),
   ]);
