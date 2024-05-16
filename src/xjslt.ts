@@ -575,12 +575,13 @@ export function element(
   func: SequenceConstructor,
 ) {
   const name = evaluateAttributeValueTemplate(context, data.name);
+  const namespace = evaluateAttributeValueTemplate(context, data.namespace);
   let newNode = buildNode(context, {
     name: name,
     namespace: determineNamespace(
       name,
       mkResolver(data.namespaces),
-      data.namespace,
+      namespace,
     ),
   });
   context.outputNode.appendChild(newNode);
