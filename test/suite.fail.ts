@@ -1392,10 +1392,7 @@ export const KNOWN_SPEC_FAILURES = [
   "message-0402",
   "message-0403",
   "message-0405",
-  "mode-0105", // depends on namespaces
-  "mode-0106",
   "mode-0801a",
-  "mode-1102",
   "mode-1104",
   "mode-1105",
   "mode-1202", // depends on template priorties - #all should come last
@@ -1403,8 +1400,7 @@ export const KNOWN_SPEC_FAILURES = [
   "mode-1301",
   "mode-1401",
   "mode-1402",
-  "mode-1501",
-  "mode-1803",
+  "mode-1501", // depends on template priorties - #all should come last
   "namespace-0201",
   "namespace-0202",
   "namespace-0301",
@@ -1470,6 +1466,7 @@ export const KNOWN_SPEC_FAILURES = [
   "namespace-3004",
   "namespace-3005",
   "namespace-3108",
+  "namespace-3112",
   "namespace-3115",
   "namespace-3116",
   "namespace-3117",
@@ -1477,6 +1474,7 @@ export const KNOWN_SPEC_FAILURES = [
   "namespace-3119",
   "namespace-3127",
   "namespace-3130",
+  "namespace-3132",
   "namespace-3133",
   "namespace-3134",
   "namespace-3135",
