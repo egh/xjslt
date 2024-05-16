@@ -126,7 +126,7 @@ const simpleElements = new Map<string, SimpleElement>([
 ]);
 
 function compileApplyTemplatesNode(node: any) {
-  const mode = expandPrefixed(node.getAttribute("mode"), getNodeNS(node));
+  const mode = expandQname(node.getAttribute("mode"), getNodeNS(node));
   const args = {
     select: mkLiteral(node.getAttribute("select") || "child::node()"),
     mode: mkLiteral(mode || "#default"),
@@ -176,7 +176,7 @@ function compileParams(nodename: string, nodes: any[]) {
 
 function compileCallTemplate(node: any) {
   let args = {};
-  let name = expandPrefixed(node.getAttribute("name"), getNodeNS(node));
+  let name = expandQname(node.getAttribute("name"), getNodeNS(node));
   args["name"] = mkLiteral(name);
   if (!args["name"]) {
     throw new Error("");
@@ -479,7 +479,7 @@ function compileStylesheetNode(node: any): Program {
   };
 }
 
-function expandPrefixed(name: string, namespaces: object) {
+function expandQname(name: string, namespaces: object) {
   if (!name) {
     return name;
   }
@@ -498,10 +498,10 @@ function compileTemplateNode(node: any): ExpressionStatement {
     mkObject({
       match: mkLiteral(node.getAttribute("match") || undefined),
       name: mkLiteral(
-        expandPrefixed(node.getAttribute("name"), namespaces) || undefined,
+        expandQname(node.getAttribute("name"), namespaces) || undefined,
       ),
       modes: mkArray(
-        (expandPrefixed(node.getAttribute("mode"), namespaces) || "#default")
+        (expandQname(node.getAttribute("mode"), namespaces) || "#default")
           .split(",")
           .map(mkLiteral),
       ),

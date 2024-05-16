@@ -132,8 +132,7 @@ function checkResult(rootDir, node, transformed) {
           lastCheck = checkResult(rootDir, childNode, transformed);
           lastCheck();
           return;
-        } catch (err) {
-        }
+        } catch (err) {}
       }
       lastCheck();
     };

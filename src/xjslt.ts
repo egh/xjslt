@@ -578,11 +578,7 @@ export function element(
   const namespace = evaluateAttributeValueTemplate(context, data.namespace);
   let newNode = buildNode(context, {
     name: name,
-    namespace: determineNamespace(
-      name,
-      mkResolver(data.namespaces),
-      namespace,
-    ),
+    namespace: determineNamespace(name, mkResolver(data.namespaces), namespace),
   });
   context.outputNode.appendChild(newNode);
   func({
