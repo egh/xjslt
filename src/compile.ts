@@ -502,8 +502,9 @@ function compileTemplateNode(node: any): ExpressionStatement {
       ),
       modes: mkArray(
         (node.getAttribute("mode") || "#default")
-          .split(",")
-          .map((m) => expandQname(m, namespaces))
+          .split(" ")
+          .filter((s) => s !== "")
+          .map((m) => expandQname(m.trim(), namespaces))
           .map(mkLiteral),
       ),
       allowedParams: allowedParams,
