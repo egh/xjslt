@@ -718,7 +718,10 @@ export function stripSpaceStylesheet(doc: any) {
 export function evaluateAttributeValueTemplate(
   context: ProcessingContext,
   avt: string,
-): string {
+): string | undefined {
+  if (!avt) {
+    return undefined;
+  }
   return Array.from(avt.matchAll(/({[^}]+}|[^{}]+)/g))
     .map((match) => {
       const piece = match[0];
