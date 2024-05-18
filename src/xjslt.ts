@@ -889,22 +889,20 @@ function evaluateVariableLike(
  * https://www.w3.org/TR/xslt20/#temporary-trees
  */
 function evaluateSequenceConstructorInTemporaryTree(
-  origContext: ProcessingContext,
+  context: ProcessingContext,
   func: SequenceConstructor,
 ) {
   const doc = new slimdom.Document();
   doc.appendChild(doc.createElement("xsl:document"));
-  let context = {
+  func({
+    ...context,
     outputDocument: doc,
     outputNode: doc.documentElement,
-    currentNode: origContext.currentNode,
     currentNodeList: [],
     mode: "#default",
-    templates: origContext.templates,
-    variableScopes: extendScope(origContext.variableScopes),
-  };
-  func(context);
-  return context.outputDocument;
+    variableScopes: extendScope(context.variableScopes),
+  });
+  return doc;
 }
 
 /**
