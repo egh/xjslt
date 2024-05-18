@@ -61,6 +61,7 @@ interface CompiledTemplate {
   priority?: number;
   apply: SequenceConstructor;
   allowedParams: Array<VariableLike>;
+  importPrecedence: number;
 }
 
 interface ProcessingContext {
@@ -119,14 +120,14 @@ function nameTest(
  *
  * @returns The template, or undefined if none can be found to match this node.
  */
-function getTemplate(
+function getTemplates(
   node: any,
   templates: Array<CompiledTemplate>,
   variableScopes: Array<VariableScope>,
   mode: string,
   namespaces: object,
-): CompiledTemplate {
-  for (let template of templates) {
+): Array<CompiledTemplate> {
+  return templates.filter((template) => {
     if (template.modes.includes(mode) || template.modes[0] === "#all") {
       if (template.match) {
         /* some templates have no match */
@@ -135,46 +136,164 @@ function getTemplate(
           nameTest(template.match, node, variableScopes, mkResolver(namespaces))
         ) {
           // console.log("matched");
-          return template;
+          return true;
         }
       }
     }
-  }
-  return undefined;
+    return false;
+  });
 }
 
-const BUILT_IN_TEMPLATES = [
-  {
-    match: "*|/",
-    apply: (context: ProcessingContext) => {
-      applyTemplates(context, {
-        select: "child::node()",
-        params: [],
-        mode: "#current",
-        namespaces: {},
-      });
+function mkBuiltInTemplates(namespaces: object): Array<CompiledTemplate> {
+  return [
+    {
+      match: "*|/",
+      apply: (context: ProcessingContext) => {
+        applyTemplates(context, {
+          select: "child::node()",
+          params: [],
+          mode: "#current",
+          namespaces: namespaces,
+        });
+      },
+      allowedParams: [],
+      modes: ["#all"],
+      importPrecedence: -Number.MAX_VALUE,
     },
-    allowedParams: [],
-    modes: ["#all"],
-  },
-  {
-    match: "text()|@*",
-    apply: (context: ProcessingContext) => {
-      valueOf(context, { select: ".", namespaces: {} });
+    {
+      match: "text()|@*",
+      apply: (context: ProcessingContext) => {
+        valueOf(context, { select: ".", namespaces: namespaces });
+      },
+      allowedParams: [],
+      modes: ["#all"],
+      importPrecedence: -Number.MAX_VALUE,
     },
-    allowedParams: [],
-    modes: ["#all"],
-  },
-  {
-    match: "processing-instruction()|comment()",
-    apply: (_context: ProcessingContext) => {},
-    allowedParams: [],
-    modes: ["#all"],
-  },
-];
+    {
+      match: "processing-instruction()|comment()",
+      apply: (_context: ProcessingContext) => {},
+      allowedParams: [],
+      modes: ["#all"],
+      importPrecedence: -Number.MAX_VALUE,
+    },
+  ];
+}
 
-function getTemplateBuiltin(node: any): CompiledTemplate {
-  return getTemplate(node, BUILT_IN_TEMPLATES, [], "#default", {});
+const NC = String.raw`[^,:\(\)\*\[\]/]`; // Pretty much anything is a NCName
+const PATTERN_AXIS = String.raw`(child::|attribute::|@)?`;
+const DOC_NODE_OPT = String.raw`(document-node\()?`;
+
+const DEFAULT_PRIORITIES = new Map<RegExp, number>([
+  [new RegExp(String.raw`^\s*/\s*$`), -0.5],
+  [new RegExp(String.raw`^\s*\*\s*$`), -0.5],
+  [
+    new RegExp(
+      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}processing-instruction`,
+    ),
+    0,
+  ],
+  [
+    new RegExp(
+      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}element\(\*?\)\)?\s*$`,
+    ),
+    -0.5,
+  ],
+  [
+    new RegExp(
+      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}attribute\(\*?\)\)?\s*$`,
+    ),
+    -0.5,
+  ],
+  [
+    new RegExp(
+      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}element\(${NC}+\)\)?\s*$`,
+    ),
+    0,
+  ],
+  [
+    new RegExp(
+      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}element\(\*,\s*${NC}+\)\)?\s*$`,
+    ),
+    0,
+  ],
+  [
+    new RegExp(
+      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}attribute\(${NC}+\)\)?\s*$`,
+    ),
+    0,
+  ],
+  [
+    new RegExp(
+      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}attribute\(\*,\s*${NC}+\)\)?\s*$`,
+    ),
+    0,
+  ],
+  [
+    new RegExp(
+      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}element\(${NC}+,\s*${NC}+\)\)?\s*$`,
+    ),
+    0.25,
+  ],
+  [
+    new RegExp(
+      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}attribute\(${NC}+,\s*${NC}+\)\)?\s*$`,
+    ),
+    0.25,
+  ],
+  [
+    new RegExp(
+      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}schema-element\(${NC}+\)\)?\s*$`,
+    ),
+    0.25,
+  ],
+  [
+    new RegExp(
+      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}schema-attribute\(${NC}+\)\)?\s*$`,
+    ),
+    0.25,
+  ],
+  [new RegExp(String.raw`^\s*document-node\(\)\s*$`), -0.5],
+  [
+    new RegExp(
+      String.raw`^\s*${PATTERN_AXIS}(node\(\)|text\(\)|comment\(\))\s*$`,
+    ),
+    -0.5,
+  ],
+  [new RegExp(String.raw`^\s*${PATTERN_AXIS}(${NC}:)?\*\s*$`), -0.25],
+  [new RegExp(String.raw`^\s*${PATTERN_AXIS}\*:${NC}+\s*$`), -0.25],
+  [new RegExp(String.raw`^\s*${PATTERN_AXIS}${NC}+\s*$`), 0],
+]);
+
+export function computeDefaultPriority(match: string): number {
+  /* https://www.w3.org/TR/xslt20/#conflict */
+  if (match && match.includes("|")) {
+    return Math.max(
+      ...match
+        .split("|")
+        .filter((s) => s !== "")
+        .map((s) => computeDefaultPriority(s)),
+    );
+  }
+  for (let [regexp, priority] of DEFAULT_PRIORITIES) {
+    if (regexp.test(match)) {
+      return priority;
+    }
+  }
+  return 0.5;
+}
+
+export function sortTemplates(templates: Array<CompiledTemplate>) {
+  /* https://www.w3.org/TR/xslt20/#conflict */
+  // Last declared is first priority.
+  templates.reverse();
+  // Higher priority comes first
+  templates.sort(
+    (a, b) =>
+      (b.priority || computeDefaultPriority(b.match)) -
+      (a.priority || computeDefaultPriority(a.match)),
+  );
+  // Higher import precedence comes first
+  templates.sort((a, b) => b.importPrecedence - a.importPrecedence);
 }
 
 export function processNode(
@@ -182,16 +301,18 @@ export function processNode(
   params: VariableLike[],
   namespaces: object,
 ) {
-  const template =
-    getTemplate(
-      context.currentNode,
-      context.templates,
-      context.variableScopes,
-      context.mode,
-      namespaces,
-    ) || getTemplateBuiltin(context.currentNode);
-  if (template) {
-    evaluateTemplate(template, context, params);
+  let allTemplates = [...context.templates, ...mkBuiltInTemplates(namespaces)];
+
+  let templates = getTemplates(
+    context.currentNode,
+    allTemplates,
+    context.variableScopes,
+    context.mode,
+    namespaces,
+  );
+  sortTemplates(templates);
+  if (templates.length > 0) {
+    evaluateTemplate(templates[0], context, params);
   }
 }
 
@@ -851,7 +972,7 @@ export async function buildStylesheet(xsltPath: string) {
   );
   writeFileSync(tempfile, generate(compileNode(xsltDoc)));
   let transform = await import(tempfile);
-  // console.log(readFileSync(tempfile).toString())
+  // console.log(readFileSync(tempfile).toString());
   rmSync(tempdir, { recursive: true });
   return transform.transform;
 }

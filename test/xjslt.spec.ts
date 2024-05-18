@@ -23,6 +23,7 @@ import {
   buildAttributeNode,
   buildNode,
   buildStylesheet,
+  computeDefaultPriority,
   determineNamespace,
   evaluateAttributeValueTemplate,
   extendScope,
@@ -94,6 +95,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     match: "/",
     allowedParams: [],
     modes: ["#default"],
+    importPrecedence: 1,
     apply: function (context) {
       literalText(context, "Article -\n");
       valueOf(context, { select: "/Article/Title", namespaces: {} });
@@ -110,6 +112,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     match: "Author",
     allowedParams: [],
     modes: ["#default"],
+    importPrecedence: 1,
     apply: function (context) {
       literalText(context, "\n- ");
       valueOf(context, { select: ".", namespaces: {} });
@@ -275,7 +278,7 @@ test("stripSpaceStylesheet with preserved", () => {
 test("compileTemplateNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:template", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'templates.push({"match": "/","name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"name": "doc","attributes": [],"namespace": null}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default","namespaces": {}});});},"namespaces": {}});',
+    'templates.push({"match": "/","name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"name": "doc","attributes": [],"namespace": null}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default","namespaces": {}});});},"namespaces": {},"priority": undefined,"importPrecedence": 1});',
   );
 });
 
@@ -607,4 +610,38 @@ test("buildAttributeNode", () => {
   expect(nodeC.name).toEqual("foo");
   expect(nodeC.namespaceURI).toEqual(null);
   expect(nodeC.value).toEqual("foo");
+});
+
+test("computeDefaultPriority", () => {
+  expect(computeDefaultPriority("/")).toEqual(-0.5);
+  expect(computeDefaultPriority("foo")).toEqual(0);
+  expect(computeDefaultPriority("@foo")).toEqual(0);
+  expect(computeDefaultPriority("child::foo")).toEqual(0);
+  expect(computeDefaultPriority("attribute::foo")).toEqual(0);
+  expect(computeDefaultPriority("processing-instruction('foo')")).toEqual(0);
+  expect(computeDefaultPriority("processing-instruction(foo)")).toEqual(0);
+  expect(
+    computeDefaultPriority("child::processing-instruction('foo')"),
+  ).toEqual(0);
+  expect(computeDefaultPriority("element()")).toEqual(-0.5);
+  expect(computeDefaultPriority("element(*)")).toEqual(-0.5);
+  expect(computeDefaultPriority("attribute()")).toEqual(-0.5);
+  expect(computeDefaultPriority("attribute(*)")).toEqual(-0.5);
+  expect(computeDefaultPriority("element(foo)")).toEqual(0);
+  expect(computeDefaultPriority("element(*, foo)")).toEqual(0);
+  expect(computeDefaultPriority("attribute(foo)")).toEqual(0);
+  expect(computeDefaultPriority("attribute(*, foo)")).toEqual(0);
+  expect(computeDefaultPriority("element(foo, bar)")).toEqual(0.25);
+  expect(computeDefaultPriority("attribute(foo, bar)")).toEqual(0.25);
+  expect(computeDefaultPriority("schema-element(foo)")).toEqual(0.25);
+  expect(computeDefaultPriority("schema-attribute(foo)")).toEqual(0.25);
+  expect(computeDefaultPriority("document-node()")).toEqual(-0.5);
+  expect(computeDefaultPriority("node()")).toEqual(-0.5);
+  expect(computeDefaultPriority("comment()")).toEqual(-0.5);
+  expect(computeDefaultPriority("child::comment()")).toEqual(-0.5);
+  expect(computeDefaultPriority("child::node()")).toEqual(-0.5);
+  expect(computeDefaultPriority("doc[true()]")).toEqual(0.5);
+  expect(computeDefaultPriority("foo/bar")).toEqual(0.5);
+  expect(computeDefaultPriority("*")).toEqual(-0.5);
+  expect(computeDefaultPriority("*|foo|element(foo,bar)")).toEqual(0.25);
 });

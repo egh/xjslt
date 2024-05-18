@@ -494,6 +494,7 @@ function compileTemplateNode(node: any): ExpressionStatement {
   let allowedParams = compileParams("param", node.childNodes);
   let skipNodes = allowedParams.elements.length;
   let namespaces = getNodeNS(node);
+
   return mkCall(mkMember("templates", "push"), [
     mkObject({
       match: mkLiteral(node.getAttribute("match") || undefined),
@@ -510,6 +511,8 @@ function compileTemplateNode(node: any): ExpressionStatement {
       allowedParams: allowedParams,
       apply: mkArrowFun(compileNodeArray(node.childNodes.slice(skipNodes))),
       namespaces: mkNamespaceArg(node),
+      priority: mkLiteral(node.getAttribute("priority") || undefined),
+      importPrecedence: mkLiteral(1), // TODO
     }),
   ]);
 }

@@ -31,6 +31,5 @@ Tested with [node 20](https://nodejs.org/)
 - [ ] `key`
 - [ ] `sort`
 - [ ] `attribute-set`
-- [ ] template priority
 - [ ] webpack compilation for browsers
 - [ ] …
