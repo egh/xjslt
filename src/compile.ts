@@ -130,6 +130,7 @@ function compileApplyTemplatesNode(node: any) {
   const args = {
     select: mkLiteral(node.getAttribute("select") || "child::node()"),
     mode: mkLiteral(mode || "#default"),
+    params: compileParams("with-param", node.childNodes),
     namespaces: mkNamespaceArg(node),
   };
   return compileFuncall("applyTemplates", [mkObject(args)]);
