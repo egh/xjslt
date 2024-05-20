@@ -379,6 +379,8 @@ export function compileSequenceConstructorNode(node: any) {
         // TODO
       } else if (node.localName === "copy") {
         // TODO
+      } else if (node.localName === "param") {
+        // Handled by special case.
       } else if (node.localName === "text") {
         return compileTextNode(node);
       } else if (node.localName === "variable") {
@@ -515,7 +517,6 @@ function expandQname(name: string, namespaces: object) {
 
 function compileTemplateNode(node: any): ExpressionStatement {
   let allowedParams = compileParams("param", node.childNodes);
-  let skipNodes = allowedParams.elements.length;
   let namespaces = getNodeNS(node);
 
   return mkCall(mkMember("templates", "push"), [
@@ -534,7 +535,7 @@ function compileTemplateNode(node: any): ExpressionStatement {
       allowedParams: allowedParams,
       apply: mkArrowFun(
         compileNodeArray(
-          node.childNodes.slice(skipNodes),
+          node.childNodes,
           compileSequenceConstructorNode,
         ),
       ),
