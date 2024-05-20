@@ -43,6 +43,7 @@ import {
   Statement,
 } from "estree";
 import * as slimdom from "slimdom";
+import { evaluateXPathToNodes } from "fontoxpath";
 import { XSLT1_NSURI, XMLNS_NSURI, NamespaceResolver } from "./xjslt";
 
 /**
@@ -54,6 +55,13 @@ interface SimpleElement {
   name: string;
   hasChildren: boolean;
   arguments: Map<string, string | undefined>;
+}
+
+function buildInResolver(prefix: string) {
+  if (prefix === "xsl") {
+    return XSLT1_NSURI;
+  }
+  return undefined;
 }
 
 const simpleElements = new Map<string, SimpleElement>([
@@ -477,7 +485,24 @@ export function compileStylesheetNode(node: any): Program {
               variableScopes: mkArray([mkNew(mkIdentifier("Map"), [])]),
             }),
           ),
-          ...compileNodeArray(node.childNodes, compileTopLevelNode),
+          /* First compile the templates */
+          ...compileNodeArray(
+            evaluateXPathToNodes("./xsl:template", node, null, null, {
+              namespaceResolver: buildInResolver,
+            }),
+            compileTopLevelNode,
+          ),
+          /* Then everything else */
+          ...compileNodeArray(
+            evaluateXPathToNodes(
+              "./xsl:*[local-name()!='template']",
+              node,
+              null,
+              null,
+              { namespaceResolver: buildInResolver },
+            ),
+            compileTopLevelNode,
+          ),
           mkCallWithContext(mkMember("xjslt", "processNode"), [
             mkArray([]),
             mkNamespaceArg(node),
@@ -534,10 +559,7 @@ function compileTemplateNode(node: any): ExpressionStatement {
       ),
       allowedParams: allowedParams,
       apply: mkArrowFun(
-        compileNodeArray(
-          node.childNodes,
-          compileSequenceConstructorNode,
-        ),
+        compileNodeArray(node.childNodes, compileSequenceConstructorNode),
       ),
       namespaces: mkNamespaceArg(node),
       priority: mkLiteral(node.getAttribute("priority") || undefined),
