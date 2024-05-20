@@ -193,7 +193,7 @@ test("compileVariableNode", () => {
 test("compileApplyTemplatesNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:apply-templates", xsltDoc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'xjslt.applyTemplates(context, {"select": "/Article/Authors/Author","mode": "#default","namespaces": {}});',
+    'xjslt.applyTemplates(context, {"select": "/Article/Authors/Author","mode": "#default","params": [],"namespaces": {}});',
   );
 });
 
@@ -278,7 +278,7 @@ test("stripSpaceStylesheet with preserved", () => {
 test("compileTemplateNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:template", xslt2Doc);
   expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'templates.push({"match": "/","name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"name": "doc","attributes": [],"namespace": null}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default","namespaces": {}});});},"namespaces": {},"priority": undefined,"importPrecedence": 1});',
+    'templates.push({"match": "/","name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"name": "doc","attributes": [],"namespace": null}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default","params": [],"namespaces": {}});});},"namespaces": {},"priority": undefined,"importPrecedence": 1});',
   );
 });
 
