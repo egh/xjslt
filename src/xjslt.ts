@@ -32,7 +32,7 @@ import * as path from "path";
 import { tmpdir } from "os";
 import { mkdtemp } from "fs/promises";
 import * as slimdom from "slimdom";
-import { compileNode } from "./compile";
+import { compileStylesheetNode } from "./compile";
 
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
 export const XMLNS_NSURI = "http://www.w3.org/2000/xmlns/";
@@ -968,7 +968,10 @@ export async function buildStylesheet(xsltPath: string) {
   const xsltDoc = stripSpaceStylesheet(
     slimdom.parseXmlDocument(readFileSync(xsltPath).toString()),
   );
-  writeFileSync(tempfile, generate(compileNode(xsltDoc)));
+  writeFileSync(
+    tempfile,
+    generate(compileStylesheetNode(xsltDoc.documentElement)),
+  );
   let transform = await import(tempfile);
   // console.log(readFileSync(tempfile).toString());
   rmSync(tempdir, { recursive: true });

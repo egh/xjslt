@@ -35,7 +35,11 @@ import {
   valueOf,
   VariableScope,
 } from "../src/xjslt";
-import { compileNode, getNodeNS } from "../src/compile";
+import {
+  compileSequenceConstructorNode,
+  compileTopLevelNode,
+  getNodeNS,
+} from "../src/compile";
 import * as slimdom from "slimdom";
 import * as path from "path";
 import { evaluateXPathToString, evaluateXPathToNodes } from "fontoxpath";
@@ -171,28 +175,34 @@ const GENERATE_OPTS = { indent: "", lineEnd: "" };
 
 test("compileTextNode", () => {
   const nodes = evaluateXPathToNodes("//text()", xsltDoc);
-  expect(generate(compileNode(nodes[2]), GENERATE_OPTS)).toEqual(
-    'xjslt.literalText(context, "Article -\\n");',
-  );
+  expect(
+    generate(compileSequenceConstructorNode(nodes[2]), GENERATE_OPTS),
+  ).toEqual('xjslt.literalText(context, "Article -\\n");');
 });
 
 test("compileValueOfNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:value-of", xsltDoc);
-  expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
+  expect(
+    generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
+  ).toEqual(
     'xjslt.valueOf(context, {"select": "/Article/Title","separator": undefined,"namespaces": {}});',
   );
 });
 
 test("compileVariableNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:variable", xsltDoc);
-  expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
+  expect(
+    generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
+  ).toEqual(
     'xjslt.variable(context, {"name": "author","content": ".","namespaces": {}});',
   );
 });
 
 test("compileApplyTemplatesNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:apply-templates", xsltDoc);
-  expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
+  expect(
+    generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
+  ).toEqual(
     'xjslt.applyTemplates(context, {"select": "/Article/Authors/Author","mode": "#default","params": [],"namespaces": {}});',
   );
 });
@@ -202,7 +212,9 @@ test("compileForEachNode", () => {
     '<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match="/"><doc><xsl:for-each select="./*">foo</xsl:for-each></doc></xsl:template></xsl:stylesheet>';
   const dom = slimdom.parseXmlDocument(xml);
   const nodes = evaluateXPathToNodes("//xsl:for-each", dom);
-  expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
+  expect(
+    generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
+  ).toEqual(
     'xjslt.forEach(context, {"select": "./*","namespaces": {}}, context => {xjslt.literalText(context, "foo");});',
   );
 });
@@ -212,7 +224,9 @@ test("compileChooseNode", () => {
     '<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match="/"><xsl:choose><xsl:when test="[@att=\'bar\']">foo</xsl:when><xsl:otherwise>bar</xsl:otherwise></xsl:choose></xsl:template></xsl:stylesheet>';
   const dom = slimdom.parseXmlDocument(xml);
   const nodes = evaluateXPathToNodes("//xsl:choose", dom);
-  expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
+  expect(
+    generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
+  ).toEqual(
     'xjslt.choose(context, [{"test": "[@att=\'bar\']","apply": context => {xjslt.literalText(context, "foo");}}, {"apply": context => {xjslt.literalText(context, "bar");}}]);',
   );
 });
@@ -222,14 +236,18 @@ test("compileIfNode", () => {
     '<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match="/"><doc><xsl:if test="[@att=\'bar\']">foo</xsl:if></doc></xsl:template></xsl:stylesheet>';
   const dom = slimdom.parseXmlDocument(xml);
   const nodes = evaluateXPathToNodes("//xsl:if", dom);
-  expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
+  expect(
+    generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
+  ).toEqual(
     'xjslt.ifX(context, {"test": "[@att=\'bar\']","namespaces": {}}, context => {xjslt.literalText(context, "foo");});',
   );
 });
 
 test("compileLiteralElementNode", () => {
   const nodes = evaluateXPathToNodes("//heading", xslt2Doc);
-  expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
+  expect(
+    generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
+  ).toEqual(
     'xjslt.literalElement(context, {"name": "heading","attributes": [{"name": "type","value": "top","namespace": null}],"namespace": null}, context => {xjslt.valueOf(context, {"select": "Title","separator": undefined,"namespaces": {}});});',
   );
 });
@@ -243,7 +261,9 @@ test("compileLiteralElementNode with namespace", () => {
 </xsl:stylesheet>`;
   const dom = slimdom.parseXmlDocument(xml);
   const nodes = evaluateXPathToNodes("//*[local-name()='node']", dom);
-  expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
+  expect(
+    generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
+  ).toEqual(
     'xjslt.literalElement(context, {"name": "foo:node","attributes": [{"name": "xmlns:foo","value": "http://example.org/foo","namespace": "http://www.w3.org/2000/xmlns/"}],"namespace": "http://example.org/foo"}, context => {xjslt.valueOf(context, {"select": ".","separator": undefined,"namespaces": {"foo": "http://example.org/foo"}});});',
   );
 });
@@ -277,7 +297,7 @@ test("stripSpaceStylesheet with preserved", () => {
 
 test("compileTemplateNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:template", xslt2Doc);
-  expect(generate(compileNode(nodes[0]), GENERATE_OPTS)).toEqual(
+  expect(generate(compileTopLevelNode(nodes[0]), GENERATE_OPTS)).toEqual(
     'templates.push({"match": "/","name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"name": "doc","attributes": [],"namespace": null}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default","params": [],"namespaces": {}});});},"namespaces": {},"priority": undefined,"importPrecedence": 1});',
   );
 });

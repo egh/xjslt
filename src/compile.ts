@@ -149,7 +149,7 @@ function compileVariableLike(node: any) {
   } else if (node.hasChildNodes()) {
     return mkObject({
       name: name,
-      content: mkArrowFun(compileNodeArray(node.childNodes)),
+      content: mkArrowFun(compileSequenceConstructor(node.childNodes)),
       namespaces: mkNamespaceArg(node),
     });
   } else {
@@ -197,7 +197,7 @@ function compileFuncallWithChildren(
 ): ExpressionStatement {
   return mkCallWithContext(mkMember("xjslt", name), [
     args,
-    mkArrowFun(compileNodeArray(node.childNodes)),
+    mkArrowFun(compileSequenceConstructor(node.childNodes)),
   ]);
 }
 
@@ -242,13 +242,13 @@ function compileChooseNode(node: any) {
       alternatives.push(
         mkObject({
           test: mkLiteral(childNode.getAttribute("test") || undefined),
-          apply: mkArrowFun(compileNodeArray(childNode.childNodes)),
+          apply: mkArrowFun(compileSequenceConstructor(childNode.childNodes)),
         }),
       );
     } else if (childNode.localName === "otherwise") {
       alternatives.push(
         mkObject({
-          apply: mkArrowFun(compileNodeArray(childNode.childNodes)),
+          apply: mkArrowFun(compileSequenceConstructor(childNode.childNodes)),
         }),
       );
     }
@@ -275,9 +275,9 @@ function compileLiteralElementNode(node: any) {
     let attr = node.attributes[n];
     attributes.push(
       mkObject({
-        name: mkLiteral(node.attributes[n].name),
-        value: mkLiteral(node.attributes[n].value),
-        namespace: mkLiteral(node.attributes[n].namespaceURI),
+        name: mkLiteral(attr.name),
+        value: mkLiteral(attr.value),
+        namespace: mkLiteral(attr.namespaceURI),
       }),
     );
   }
@@ -294,7 +294,7 @@ function compileLiteralElementNode(node: any) {
       attributes: mkArray(attributes),
       namespace: mkLiteral(node.namespaceURI),
     }),
-    mkArrowFun(compileNodeArray(node.childNodes)),
+    mkArrowFun(compileSequenceConstructor(node.childNodes)),
   ]);
 }
 
@@ -322,7 +322,41 @@ export function getNodeNS(node: any, retval: object = undefined) {
 }
 
 /* todo - separate into top-level & sequence-generator versions */
-export function compileNode(node: any) {
+export function compileTopLevelNode(node: any) {
+  if (node.nodeType === slimdom.Node.ELEMENT_NODE) {
+    if (node.namespaceURI === XSLT1_NSURI) {
+      if (node.localName === "template") {
+        return compileTemplateNode(node);
+      } else if (node.localName === "variable") {
+        return compileVariable(node);
+      } else if (node.localName === "param") {
+        return compileTopLevelParam(node);
+      } else if (
+        node.localName === "output" ||
+        node.localName === "preserve-space" ||
+        node.localName === "import" ||
+        node.localName === "include" ||
+        node.localName === "attribute-set" ||
+        node.localName === "character-map" ||
+        node.localName === "decimal-format" ||
+        node.localName === "function" ||
+        node.localName === "import-schema" ||
+        node.localName === "key" ||
+        node.localName === "namespace-alias" ||
+        node.localName === "output" ||
+        node.localName === "preserve-space"
+      ) {
+        return undefined;
+      } else if (node.localName === "strip-space") {
+        return undefined;
+      } else {
+        throw new Error("Found unexpected XSL element: " + node.tagName);
+      }
+    }
+  }
+}
+
+export function compileSequenceConstructorNode(node: any) {
   if (node.nodeType === slimdom.Node.TEXT_NODE) {
     return compileLiteralTextNode(node);
   } else if (node.nodeType === slimdom.Node.ELEMENT_NODE) {
@@ -345,17 +379,6 @@ export function compileNode(node: any) {
         // TODO
       } else if (node.localName === "copy") {
         // TODO
-      } else if (node.localName === "param") {
-        return compileTopLevelParam(node);
-      } else if (node.localName === "template") {
-        return compileTemplateNode(node);
-      } else if (node.localName === "text") {
-        return compileTextNode(node);
-      } else if (
-        node.localName === "stylesheet" ||
-        node.localName === "transform"
-      ) {
-        return compileStylesheetNode(node);
       } else if (node.localName === "text") {
         return compileTextNode(node);
       } else if (node.localName === "variable") {
@@ -373,14 +396,6 @@ export function compileNode(node: any) {
     } else {
       return compileLiteralElementNode(node);
     }
-  } else if (node.nodeType === slimdom.Node.DOCUMENT_NODE) {
-    return compileNode(node.documentElement);
-  } else if (node.nodeType === slimdom.Node.COMMENT_NODE) {
-    // Ignore, it's a comment.
-  } else if (node.nodeType === slimdom.Node.PROCESSING_INSTRUCTION_NODE) {
-    // Ignore??
-  } else {
-    throw new Error("Found node type: " + node.nodeType);
   }
 }
 
@@ -396,16 +411,23 @@ function compileTextNode(node: any) {
   ]);
 }
 
-function compileNodeArray(nodes: Array<any>): Array<Statement> {
+function compileNodeArray(
+  nodes: Array<any>,
+  compilerFunc: (any) => Statement,
+): Array<Statement> {
   let body = [];
   for (let n in nodes) {
-    let compiled = compileNode(nodes[n]);
+    let compiled = compilerFunc(nodes[n]);
     if (compiled) body.push(compiled);
   }
   return body;
 }
 
-function compileStylesheetNode(node: any): Program {
+function compileSequenceConstructor(nodes: Array<any>): Array<Statement> {
+  return compileNodeArray(nodes, compileSequenceConstructorNode);
+}
+
+export function compileStylesheetNode(node: any): Program {
   return {
     type: "Program",
     sourceType: "module",
@@ -453,7 +475,7 @@ function compileStylesheetNode(node: any): Program {
               variableScopes: mkArray([mkNew(mkIdentifier("Map"), [])]),
             }),
           ),
-          ...compileNodeArray(node.childNodes),
+          ...compileNodeArray(node.childNodes, compileTopLevelNode),
           mkCallWithContext(mkMember("xjslt", "processNode"), [
             mkArray([]),
             mkNamespaceArg(node),
@@ -510,7 +532,12 @@ function compileTemplateNode(node: any): ExpressionStatement {
           .map(mkLiteral),
       ),
       allowedParams: allowedParams,
-      apply: mkArrowFun(compileNodeArray(node.childNodes.slice(skipNodes))),
+      apply: mkArrowFun(
+        compileNodeArray(
+          node.childNodes.slice(skipNodes),
+          compileSequenceConstructorNode,
+        ),
+      ),
       namespaces: mkNamespaceArg(node),
       priority: mkLiteral(node.getAttribute("priority") || undefined),
       importPrecedence: mkLiteral(1), // TODO
