@@ -748,6 +748,22 @@ export function choose(
   }
 }
 
+export function document(
+  context: ProcessingContext,
+  attributes: { namespaces: object },
+  func: SequenceConstructor,
+) {
+  const doc = new slimdom.Document();
+  func({
+    ...context,
+    outputDocument: doc,
+    outputNode: doc,
+    currentNodeList: [],
+    mode: "#default",
+    variableScopes: extendScope(context.variableScopes),
+  });
+}
+
 export function forEach(
   context: ProcessingContext,
   attributes: { select: string; namespaces: object },

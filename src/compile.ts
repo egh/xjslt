@@ -85,6 +85,7 @@ const simpleElements = new Map<string, SimpleElement>([
       hasChildren: true,
     },
   ],
+  ["document", { name: "document", arguments: new Map(), hasChildren: true }],
   [
     "element",
     {
