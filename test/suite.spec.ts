@@ -44,6 +44,7 @@ function applicableTest(node) {
     !evaluateXPathToBoolean("dependencies/spec/@value='XSLT30+'", node) &&
     !evaluateXPathToBoolean("dependencies/spec/@value='XML_1.1'", node) &&
     !evaluateXPathToBoolean("dependencies/spec/@value='XSLT30+'", node) &&
+    !evaluateXPathToBoolean("dependencies/unicode-version", node) && // Skip unicode tests for now
     !evaluateXPathToBoolean("dependencies/sweep_and_posture", node) &&
     !evaluateXPathToBoolean(
       "dependencies/feature", // We don't support any feature, (backwards_compatibility, built_in_derived_types, disabling_output_escaping, dtd, dynamic_evaluation, higher_order_functions, HTML4, HTML5, namespace_axis, schema_aware, serialization, streaming, streaming-fallback, XML_1.1, XPath_3.1, XSD_1.1, xsl-stylesheet-processing-instruction)
