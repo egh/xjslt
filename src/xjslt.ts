@@ -917,6 +917,7 @@ function evaluateSequenceConstructorInTemporaryTree(
  */
 function extractText(document: any) {
   let str = "";
+  /* https://www.w3.org/TR/xslt20/#creating-text-nodes */
   function walkTree(node: any): void {
     if (node.nodeType == slimdom.Node.TEXT_NODE) {
       str += node.data;
