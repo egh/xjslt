@@ -789,15 +789,6 @@ export function forEach(
   }
 }
 
-function findAttrValue(attrs: Array<any>, name: string) {
-  const attr = attrs.find((attr) => attr.name === name);
-  if (attr) {
-    return attr.value;
-  } else {
-    return undefined;
-  }
-}
-
 function preserveSpace(
   node: any,
   preserve: Array<string>,
