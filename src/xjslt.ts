@@ -37,7 +37,7 @@ import { compileStylesheetNode } from "./compile";
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
 export const XMLNS_NSURI = "http://www.w3.org/2000/xmlns/";
 
-export type SequenceConstructor = (context: ProcessingContext) => void;
+export type SequenceConstructor = (context: DynamicContext) => void;
 
 export type VariableScope = Map<string, any>;
 
@@ -64,7 +64,7 @@ interface CompiledTemplate {
   importPrecedence: number;
 }
 
-interface ProcessingContext {
+interface DynamicContext {
   outputDocument: slimdom.Document;
   outputNode: any;
   currentNode: any;
@@ -148,7 +148,7 @@ function mkBuiltInTemplates(namespaces: object): Array<CompiledTemplate> {
   return [
     {
       match: "*|/",
-      apply: (context: ProcessingContext) => {
+      apply: (context: DynamicContext) => {
         applyTemplates(context, {
           select: "child::node()",
           params: [],
@@ -162,7 +162,7 @@ function mkBuiltInTemplates(namespaces: object): Array<CompiledTemplate> {
     },
     {
       match: "text()|@*",
-      apply: (context: ProcessingContext) => {
+      apply: (context: DynamicContext) => {
         valueOf(context, { select: ".", namespaces: namespaces });
       },
       allowedParams: [],
@@ -171,7 +171,7 @@ function mkBuiltInTemplates(namespaces: object): Array<CompiledTemplate> {
     },
     {
       match: "processing-instruction()|comment()",
-      apply: (_context: ProcessingContext) => {},
+      apply: (_context: DynamicContext) => {},
       allowedParams: [],
       modes: ["#all"],
       importPrecedence: -Number.MAX_VALUE,
@@ -297,7 +297,7 @@ export function sortTemplates(templates: Array<CompiledTemplate>) {
 }
 
 export function processNode(
-  context: ProcessingContext,
+  context: DynamicContext,
   params: VariableLike[],
   namespaces: object,
 ) {
@@ -330,7 +330,7 @@ function getParam(
 
 function evaluateTemplate(
   template: CompiledTemplate,
-  context: ProcessingContext,
+  context: DynamicContext,
   passedParams: VariableLike[],
 ) {
   let newScope = extendScope(context.variableScopes);
@@ -359,7 +359,7 @@ function evaluateTemplate(
 }
 
 export function applyTemplates(
-  context: ProcessingContext,
+  context: DynamicContext,
   attributes: {
     select?: string;
     mode: string;
@@ -397,7 +397,7 @@ export function applyTemplates(
 }
 
 export function callTemplate(
-  context: ProcessingContext,
+  context: DynamicContext,
   attributes: {
     name: string;
     params: VariableLike[];
@@ -413,7 +413,7 @@ export function callTemplate(
 }
 
 export function copy(
-  context: ProcessingContext,
+  context: DynamicContext,
   attributes: {},
   func: SequenceConstructor,
 ) {
@@ -441,7 +441,7 @@ export function copy(
 }
 
 export function copyOf(
-  context: ProcessingContext,
+  context: DynamicContext,
   attributes: { select: string; namespaces: object },
   func: SequenceConstructor,
 ) {
@@ -459,7 +459,7 @@ export function copyOf(
 }
 
 export function valueOf(
-  context: ProcessingContext,
+  context: DynamicContext,
   attributes: {
     select: string;
     separator?: string;
@@ -488,7 +488,7 @@ export function valueOf(
 }
 
 export function text(
-  context: ProcessingContext,
+  context: DynamicContext,
   attributes: {
     disableOutputEscaping: boolean;
     namespaces: object;
@@ -500,7 +500,7 @@ export function text(
   context.outputNode.appendChild(newNode);
 }
 
-export function variable(context: ProcessingContext, variable: VariableLike) {
+export function variable(context: DynamicContext, variable: VariableLike) {
   setVariable(
     context.variableScopes,
     variable.name,
@@ -508,7 +508,7 @@ export function variable(context: ProcessingContext, variable: VariableLike) {
   );
 }
 
-export function param(context: ProcessingContext, variable: VariableLike) {
+export function param(context: DynamicContext, variable: VariableLike) {
   /** todo: allow passing in params */
   setVariable(
     context.variableScopes,
@@ -554,12 +554,12 @@ export function mergeVariableScopes(variableScopes: Array<VariableScope>) {
   return retval;
 }
 
-export function literalText(context: ProcessingContext, text: string) {
+export function literalText(context: DynamicContext, text: string) {
   context.outputNode.appendChild(context.outputDocument.createTextNode(text));
 }
 
 /* Return true if we output a string. */
-function appendToTree(thing: any, context: ProcessingContext) {
+function appendToTree(thing: any, context: DynamicContext) {
   if (thing instanceof slimdom.Node) {
     if (thing.nodeType == slimdom.Node.DOCUMENT_NODE) {
       thing = (thing as slimdom.Document).documentElement;
@@ -581,7 +581,7 @@ function appendToTree(thing: any, context: ProcessingContext) {
   return false;
 }
 
-function appendToTreeArray(things: any[], context: ProcessingContext) {
+function appendToTreeArray(things: any[], context: DynamicContext) {
   let lastWasString = false;
   for (let thing of things) {
     if (lastWasString) {
@@ -594,7 +594,7 @@ function appendToTreeArray(things: any[], context: ProcessingContext) {
 }
 
 export function sequence(
-  context: ProcessingContext,
+  context: DynamicContext,
   attributes: { select: string; namespaces: object },
 ) {
   const things = evaluateXPath(
@@ -609,7 +609,7 @@ export function sequence(
 }
 
 export function buildNode(
-  context: ProcessingContext,
+  context: DynamicContext,
   data: { name: string; namespace?: string },
 ): any {
   let newNode: any;
@@ -622,7 +622,7 @@ export function buildNode(
 }
 
 export function buildAttributeNode(
-  context: ProcessingContext,
+  context: DynamicContext,
   data: { name: string; value: string; namespace?: string },
 ): any {
   let newNode: any;
@@ -639,7 +639,7 @@ export function buildAttributeNode(
 }
 
 export function literalElement(
-  context: ProcessingContext,
+  context: DynamicContext,
   data: {
     name: string;
     namespace?: string;
@@ -669,7 +669,7 @@ export function literalElement(
 }
 
 export function attribute(
-  context: ProcessingContext,
+  context: DynamicContext,
   data: { name: string; namespace?: string; namespaces: object },
   func: SequenceConstructor,
 ) {
@@ -691,7 +691,7 @@ export function attribute(
 }
 
 export function processingInstruction(
-  context: ProcessingContext,
+  context: DynamicContext,
   data: { name: string; select?: string },
   func: SequenceConstructor,
 ) {
@@ -705,7 +705,7 @@ export function processingInstruction(
 }
 
 export function element(
-  context: ProcessingContext,
+  context: DynamicContext,
   data: { name: string; namespace?: string; namespaces: object },
   func: SequenceConstructor,
 ) {
@@ -724,7 +724,7 @@ export function element(
 }
 
 export function ifX(
-  context: ProcessingContext,
+  context: DynamicContext,
   attributes: { test: string; namespaces: object },
   func: SequenceConstructor,
 ) {
@@ -742,7 +742,7 @@ export function ifX(
 }
 
 export function choose(
-  context: ProcessingContext,
+  context: DynamicContext,
   alternatives: Array<ChooseAlternative>,
 ) {
   for (let alternative of alternatives) {
@@ -763,7 +763,7 @@ export function choose(
 }
 
 export function document(
-  context: ProcessingContext,
+  context: DynamicContext,
   attributes: { namespaces: object },
   func: SequenceConstructor,
 ) {
@@ -779,7 +779,7 @@ export function document(
 }
 
 export function forEach(
-  context: ProcessingContext,
+  context: DynamicContext,
   attributes: { select: string; namespaces: object },
   func: SequenceConstructor,
 ) {
@@ -858,7 +858,7 @@ export function stripSpaceStylesheet(doc: any) {
 }
 
 export function evaluateAttributeValueTemplate(
-  context: ProcessingContext,
+  context: DynamicContext,
   avt: string,
 ): string | undefined {
   if (!avt) {
@@ -882,7 +882,7 @@ export function evaluateAttributeValueTemplate(
 }
 
 function evaluateVariableLike(
-  context: ProcessingContext,
+  context: DynamicContext,
   variable: VariableLike,
 ): string | EvaluateXPath | slimdom.Document {
   if (typeof variable.content === "string") {
@@ -910,7 +910,7 @@ function evaluateVariableLike(
  * https://www.w3.org/TR/xslt20/#temporary-trees
  */
 function evaluateSequenceConstructorInTemporaryTree(
-  context: ProcessingContext,
+  context: DynamicContext,
   func: SequenceConstructor,
 ) {
   const doc = new slimdom.Document();
