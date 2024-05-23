@@ -114,6 +114,17 @@ const simpleElements = new Map<string, SimpleElement>([
     },
   ],
   [
+    "processing-instruction",
+    {
+      name: "processingInstruction",
+      arguments: new Map([
+        ["name", undefined],
+        ["select", undefined],
+      ]),
+      hasChildren: true,
+    },
+  ],
+  [
     "sequence",
     {
       name: "sequence",

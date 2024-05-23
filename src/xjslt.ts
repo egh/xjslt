@@ -690,6 +690,20 @@ export function attribute(
   context.outputNode.setAttributeNode(attrNode);
 }
 
+export function processingInstruction(
+  context: ProcessingContext,
+  data: { name: string; select?: string },
+  func: SequenceConstructor,
+) {
+  const name = evaluateAttributeValueTemplate(context, data.name);
+  const value = extractText(
+    evaluateSequenceConstructorInTemporaryTree(context, func),
+  );
+  context.outputNode.appendChild(
+    context.outputDocument.createProcessingInstruction(name, value),
+  );
+}
+
 export function element(
   context: ProcessingContext,
   data: { name: string; namespace?: string; namespaces: object },
