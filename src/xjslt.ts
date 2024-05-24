@@ -127,21 +127,12 @@ function getTemplates(
   mode: string,
   namespaces: object,
 ): Array<CompiledTemplate> {
-  return templates.filter((template) => {
-    if (template.modes.includes(mode) || template.modes[0] === "#all") {
-      if (template.match) {
-        /* some templates have no match */
-        // console.log(`checking for ${mode} on ${node.localName} in ${template.match} with modes ${template.modes.join(',')}...`);
-        if (
-          nameTest(template.match, node, variableScopes, mkResolver(namespaces))
-        ) {
-          // console.log("matched");
-          return true;
-        }
-      }
-    }
-    return false;
-  });
+  return templates.filter(
+    (template) =>
+      (template.modes.includes(mode) || template.modes[0] === "#all") &&
+      template.match &&
+      nameTest(template.match, node, variableScopes, mkResolver(namespaces)),
+  );
 }
 
 function mkBuiltInTemplates(namespaces: object): Array<CompiledTemplate> {
