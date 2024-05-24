@@ -156,6 +156,14 @@ function compileApplyTemplatesNode(node: any) {
   return compileFuncall("applyTemplates", [mkObject(args)]);
 }
 
+function compileNextMatchNode(node: any) {
+  const args = {
+    params: compileParams("with-param", node.childNodes),
+    namespaces: mkNamespaceArg(node),
+  };
+  return compileFuncall("nextMatch", [mkObject(args)]);
+}
+
 /* Compile a param or variable, which contains either a select
    statement or a SequenceConstructor. */
 function compileVariableLike(node: any) {
@@ -405,6 +413,8 @@ export function compileSequenceConstructorNode(node: any) {
         // TODO
       } else if (node.localName === "comment") {
         // TODO
+      } else if (node.localName === "next-match") {
+        return compileNextMatchNode(node);
       } else if (node.localName === "number") {
         // TODO
       } else if (node.localName === "copy") {

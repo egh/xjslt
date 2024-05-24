@@ -72,6 +72,7 @@ interface DynamicContext {
   mode: string;
   templates: Array<CompiledTemplate>;
   variableScopes: Array<VariableScope>;
+  nextMatches?: Array<CompiledTemplate>;
 }
 
 interface VariableLike {
@@ -303,8 +304,27 @@ export function processNode(
   );
   sortTemplates(templates);
   if (templates.length > 0) {
-    evaluateTemplate(templates[0], context, params);
+    evaluateTemplate(
+      templates[0],
+      { ...context, nextMatches: templates.slice(1) },
+      params,
+    );
   }
+}
+
+export function nextMatch(
+  context: DynamicContext,
+  attributes: {
+    params: VariableLike[];
+    namespaces: object;
+  },
+) {
+  const nextMatches = context.nextMatches;
+  evaluateTemplate(
+    nextMatches[0],
+    { ...context, nextMatches: nextMatches.slice(1) },
+    attributes.params,
+  );
 }
 
 function getParam(
