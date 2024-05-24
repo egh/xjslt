@@ -289,10 +289,20 @@ function mkResolver(node: any): NamespaceResolver {
   };
 }
 
+function skipAttribute(attr: slimdom.Attr): boolean {
+  if (attr.namespaceURI === XMLNS_NSURI && attr.value === XSLT1_NSURI) {
+    return true;
+  }
+  return false;
+}
+
 function compileLiteralElementNode(node: any) {
   let attributes = [];
   for (let n in node.attributes) {
     let attr = node.attributes[n];
+    if (skipAttribute(attr)) {
+      continue;
+    }
     attributes.push(
       mkObject({
         name: mkLiteral(attr.name),
