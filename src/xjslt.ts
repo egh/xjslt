@@ -534,6 +534,7 @@ export function extendScope(variableScopes: Array<VariableScope>) {
 
 const wrapNumericSequence = createTypedValueFactory("xs:numeric*");
 const wrapStringSequence = createTypedValueFactory("xs:string*");
+const wrapItemSequence = createTypedValueFactory("item()*");
 
 function wrapValue(thing: any) {
   /* wraps a value for fontoxpath */
@@ -542,6 +543,8 @@ function wrapValue(thing: any) {
       return wrapStringSequence(thing, null);
     } else if (typeof thing[0] === "number") {
       return wrapNumericSequence(thing, null);
+    } else {
+      return wrapItemSequence(thing, null);
     }
   }
   return thing;
