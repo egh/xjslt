@@ -364,15 +364,18 @@ function sortNodesHelperNumeric(
 ): any[] {
   let keyed: { key: number; item: any }[] = [];
   for (let node of nodes) {
+    let key = evaluateXPathToNumber(
+      `number(${sort.sortKey as string})`,
+      node,
+      undefined,
+      mergeVariableScopes(context.variableScopes),
+      { namespaceResolver: namespaceResolver },
+    );
+    if (isNaN(key)) {
+      key = Number.MIN_SAFE_INTEGER; // if we can't calculate a sort key, sort before everything
+    }
     keyed.push({
-      key:
-        evaluateXPathToNumber(
-          `number(${sort.sortKey as string})`,
-          node,
-          undefined,
-          mergeVariableScopes(context.variableScopes),
-          { namespaceResolver: namespaceResolver },
-        ) || 0, // if we can't calculate a sort key, just use 0 so the sort works
+      key: key,
       item: node,
     });
   }

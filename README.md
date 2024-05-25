@@ -19,17 +19,17 @@ Tested with [node 20](https://nodejs.org/)
 - literal text and xml element output
 - `variable`
 - namespaces
+- `sort`
 
 # Incompletely supported features
 
 - ??
 
 # TODO (not yet implemented)
-- [ ] `include`
+- [ ] `include` / `import`
 - [ ] `strip-space`/`preserve-space`
 - [ ] `output`
 - [ ] `key`
-- [ ] `sort`
 - [ ] `attribute-set`
 - [ ] webpack compilation for browsers
 - [ ] …
