@@ -26,6 +26,7 @@ import {
   evaluateXPathToNodes,
   evaluateXPathToBoolean,
   EvaluateXPath,
+  evaluateXPathToNumber,
 } from "fontoxpath";
 import { readFileSync, writeFileSync, symlinkSync, rmSync } from "fs";
 import * as path from "path";
@@ -75,9 +76,18 @@ interface DynamicContext {
   nextMatches?: Array<CompiledTemplate>;
 }
 
+type Generator = string | SequenceConstructor;
+
+interface SortKeyComponent {
+  sortKey: Generator;
+  order?: string;
+  lang?: string;
+  dataType?: string;
+}
+
 interface VariableLike {
   name: string;
-  content: undefined | string | SequenceConstructor;
+  content: undefined | Generator;
   namespaces: object;
 }
 
@@ -146,6 +156,7 @@ function mkBuiltInTemplates(namespaces: object): Array<CompiledTemplate> {
           params: [],
           mode: "#current",
           namespaces: namespaces,
+          sortKeyComponents: [],
         });
       },
       allowedParams: [],
@@ -327,6 +338,85 @@ export function nextMatch(
   );
 }
 
+function sortNodesHelper(
+  context: DynamicContext,
+  nodes: any[],
+  sort: SortKeyComponent,
+  namespaceResolver: NamespaceResolver,
+): any[] {
+  let sorted: any[];
+  if (sort.dataType === "number" && typeof sort.sortKey === "string") {
+    sorted = sortNodesHelperNumeric(context, nodes, sort, namespaceResolver);
+  } else {
+    sorted = sortNodesHelperText(context, nodes, sort, namespaceResolver);
+  }
+  if (evaluateAttributeValueTemplate(context, sort.order) === "descending") {
+    sorted.reverse();
+  }
+  return sorted;
+}
+
+function sortNodesHelperNumeric(
+  context: DynamicContext,
+  nodes: any[],
+  sort: SortKeyComponent,
+  namespaceResolver: NamespaceResolver,
+): any[] {
+  let keyed: { key: number; item: any }[] = [];
+  for (let node of nodes) {
+    keyed.push({
+      key:
+        evaluateXPathToNumber(
+          `number(${sort.sortKey as string})`,
+          node,
+          undefined,
+          mergeVariableScopes(context.variableScopes),
+          { namespaceResolver: namespaceResolver },
+        ) || 0, // if we can't calculate a sort key, just use 0 so the sort works
+      item: node,
+    });
+  }
+  keyed.sort((a, b) => a.key - b.key);
+  return keyed.sort((a, b) => a.key - b.key).map((obj) => obj.item);
+}
+
+function sortNodesHelperText(
+  context: DynamicContext,
+  nodes: any[],
+  sort: SortKeyComponent,
+  namespaceResolver: NamespaceResolver,
+): any[] {
+  let keyed: { key: string; item: any }[] = [];
+  for (let node of nodes) {
+    const newContext = { ...context, currentNode: node };
+    keyed.push({
+      key: evaluateGeneratorToString(
+        newContext,
+        sort.sortKey,
+        namespaceResolver,
+      ),
+      item: node,
+    });
+  }
+  const lang = sort.lang && evaluateAttributeValueTemplate(context, sort.lang);
+  let collator = new Intl.Collator(lang).compare;
+  return keyed.sort((a, b) => collator(a.key, b.key)).map((obj) => obj.item);
+}
+
+export function sortNodes(
+  context: DynamicContext,
+  nodes: any[],
+  sorts: SortKeyComponent[],
+  namespaceResolver: NamespaceResolver,
+): any[] {
+  if (sorts) {
+    for (let sort of [...sorts].reverse()) {
+      nodes = sortNodesHelper(context, nodes, sort, namespaceResolver);
+    }
+  }
+  return nodes;
+}
+
 function getParam(
   name: string,
   params: VariableLike[],
@@ -376,22 +466,29 @@ export function applyTemplates(
     mode: string;
     params: VariableLike[];
     namespaces: object;
+    sortKeyComponents: SortKeyComponent[];
   },
 ) {
+  const nsResolver = mkResolver(attributes.namespaces);
   /* The nodes we want to apply templates on.*/
   const nodes = evaluateXPathToNodes(
     attributes.select,
     context.currentNode,
     undefined,
     mergeVariableScopes(context.variableScopes),
-    { namespaceResolver: mkResolver(attributes.namespaces) },
+    { namespaceResolver: nsResolver },
   );
   let mode = attributes.mode || "#default";
   if (mode === "#current") {
     /* keep the current mode */
     mode = context.mode;
   }
-  for (let node of nodes) {
+  for (let node of sortNodes(
+    context,
+    nodes,
+    attributes.sortKeyComponents,
+    nsResolver,
+  )) {
     /* for each node */
     processNode(
       {
@@ -794,19 +891,29 @@ export function document(
 
 export function forEach(
   context: DynamicContext,
-  attributes: { select: string; namespaces: object },
+  data: {
+    select: string;
+    namespaces: object;
+    sortKeyComponents: SortKeyComponent[];
+  },
   func: SequenceConstructor,
 ) {
+  const nsResolver = mkResolver(data.namespaces);
   const nodeList = evaluateXPath(
-    attributes.select,
+    data.select,
     context.currentNode,
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
-    { namespaceResolver: mkResolver(attributes.namespaces) },
+    { namespaceResolver: nsResolver },
   );
   if (nodeList && Symbol.iterator in Object(nodeList)) {
-    for (let node of nodeList) {
+    for (let node of sortNodes(
+      context,
+      nodeList,
+      data.sortKeyComponents,
+      nsResolver,
+    )) {
       func({
         ...context,
         currentNode: node,
@@ -893,6 +1000,26 @@ export function evaluateAttributeValueTemplate(
       }
     })
     .join("");
+}
+
+function evaluateGeneratorToString(
+  context: DynamicContext,
+  generator: Generator,
+  namespaceResolver: NamespaceResolver,
+): any {
+  if (typeof generator === "string") {
+    return evaluateXPathToString(
+      generator,
+      context.currentNode,
+      undefined,
+      mergeVariableScopes(context.variableScopes),
+      { namespaceResolver: namespaceResolver },
+    );
+  } else {
+    return extractText(
+      evaluateSequenceConstructorInTemporaryTree(context, generator),
+    );
+  }
 }
 
 function evaluateVariableLike(
@@ -1009,7 +1136,7 @@ export async function buildStylesheet(xsltPath: string) {
     generate(compileStylesheetNode(xsltDoc.documentElement)),
   );
   let transform = await import(tempfile);
-  // console.log(readFileSync(tempfile).toString());
+  //  console.log(readFileSync(tempfile).toString());
   rmSync(tempdir, { recursive: true });
   return transform.transform;
 }

@@ -106,14 +106,6 @@ const simpleElements = new Map<string, SimpleElement>([
     },
   ],
   [
-    "for-each",
-    {
-      name: "forEach",
-      arguments: new Map([["select", undefined]]),
-      hasChildren: true,
-    },
-  ],
-  [
     "processing-instruction",
     {
       name: "processingInstruction",
@@ -151,9 +143,19 @@ function compileApplyTemplatesNode(node: any) {
     select: mkLiteral(node.getAttribute("select") || "child::node()"),
     mode: mkLiteral(mode || "#default"),
     params: compileParams("with-param", node.childNodes),
+    sortKeyComponents: compileSortKeyComponents(node.childNodes),
     namespaces: mkNamespaceArg(node),
   };
   return compileFuncall("applyTemplates", [mkObject(args)]);
+}
+
+function compileForEachNode(node: any) {
+  const args = {
+    select: mkLiteral(node.getAttribute("select") || undefined),
+    sortKeyComponents: compileSortKeyComponents(node.childNodes),
+    namespaces: mkNamespaceArg(node),
+  };
+  return compileFuncallWithChildren(node, "forEach", mkObject(args));
 }
 
 function compileNextMatchNode(node: any) {
@@ -187,6 +189,36 @@ function compileVariableLike(node: any) {
       namespaces: mkObject({}),
     });
   }
+}
+
+function compileSortKeyComponents(nodes: any[]) {
+  let sortKeyComponents = [];
+  for (let node of nodes) {
+    if (node.localName === "sort") {
+      const args = {
+        namespaces: mkNamespaceArg(node),
+        order: mkLiteral(node.getAttribute("order")),
+        lang: mkLiteral(node.getAttribute("lang") || undefined),
+        dataType: mkLiteral(node.getAttribute("data-type") || undefined),
+      };
+      if (node.hasChildNodes()) {
+        sortKeyComponents.push(
+          mkObject({
+            ...args,
+            sortKey: mkArrowFun(compileSequenceConstructor(node.childNodes)),
+          }),
+        );
+      } else {
+        sortKeyComponents.push(
+          mkObject({
+            ...args,
+            sortKey: mkLiteral(node.getAttribute("select") || "."),
+          }),
+        );
+      }
+    }
+  }
+  return mkArray(sortKeyComponents);
 }
 
 function compileVariable(node: any) {
@@ -413,6 +445,8 @@ export function compileSequenceConstructorNode(node: any) {
         // TODO
       } else if (node.localName === "comment") {
         // TODO
+      } else if (node.localName === "for-each") {
+        return compileForEachNode(node);
       } else if (node.localName === "next-match") {
         return compileNextMatchNode(node);
       } else if (node.localName === "number") {
@@ -420,6 +454,8 @@ export function compileSequenceConstructorNode(node: any) {
       } else if (node.localName === "copy") {
         // TODO
       } else if (node.localName === "param") {
+        // Handled by special case.
+      } else if (node.localName === "sort") {
         // Handled by special case.
       } else if (node.localName === "text") {
         return compileTextNode(node);

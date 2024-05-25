@@ -109,6 +109,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
         params: [],
         mode: "#default",
         namespaces: {},
+        sortKeyComponents: [],
       });
     },
   });
@@ -203,7 +204,7 @@ test("compileApplyTemplatesNode", () => {
   expect(
     generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
   ).toEqual(
-    'xjslt.applyTemplates(context, {"select": "/Article/Authors/Author","mode": "#default","params": [],"namespaces": {}});',
+    'xjslt.applyTemplates(context, {"select": "/Article/Authors/Author","mode": "#default","params": [],"sortKeyComponents": [],"namespaces": {}});',
   );
 });
 
@@ -215,7 +216,7 @@ test("compileForEachNode", () => {
   expect(
     generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
   ).toEqual(
-    'xjslt.forEach(context, {"select": "./*","namespaces": {}}, context => {xjslt.literalText(context, "foo");});',
+    'xjslt.forEach(context, {"select": "./*","sortKeyComponents": [],"namespaces": {}}, context => {xjslt.literalText(context, "foo");});',
   );
 });
 
@@ -298,7 +299,7 @@ test("stripSpaceStylesheet with preserved", () => {
 test("compileTemplateNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:template", xslt2Doc);
   expect(generate(compileTopLevelNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'templates.push({"match": "/","name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"name": "doc","attributes": [],"namespace": null}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default","params": [],"namespaces": {}});});},"namespaces": {},"priority": undefined,"importPrecedence": 1});',
+    'templates.push({"match": "/","name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"name": "doc","attributes": [],"namespace": null}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default","params": [],"sortKeyComponents": [],"namespaces": {}});});},"namespaces": {},"priority": undefined,"importPrecedence": 1});',
   );
 });
 
