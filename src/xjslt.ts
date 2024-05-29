@@ -35,6 +35,7 @@ import { tmpdir } from "os";
 import { mkdtemp } from "fs/promises";
 import * as slimdom from "slimdom";
 import { compileStylesheetNode } from "./compile";
+import { fileURLToPath, resolve } from "url";
 
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
 export const XMLNS_NSURI = "http://www.w3.org/2000/xmlns/";
@@ -76,6 +77,7 @@ interface DynamicContext {
   templates: Array<CompiledTemplate>;
   variableScopes: Array<VariableScope>;
   nextMatches?: Array<CompiledTemplate>;
+  inputURL: URL;
 }
 
 type Generator = string | SequenceConstructor;
@@ -371,7 +373,7 @@ function sortNodesHelperNumeric(
       node,
       undefined,
       mergeVariableScopes(context.variableScopes),
-      { namespaceResolver: namespaceResolver },
+      { currentContext: context, namespaceResolver: namespaceResolver },
     );
     if (isNaN(key)) {
       key = Number.MIN_SAFE_INTEGER; // if we can't calculate a sort key, sort before everything
@@ -481,7 +483,7 @@ export function applyTemplates(
     context.currentNode,
     undefined,
     mergeVariableScopes(context.variableScopes),
-    { namespaceResolver: nsResolver },
+    { currentContext: context, namespaceResolver: nsResolver },
   );
   let mode = attributes.mode || "#default";
   if (mode === "#current") {
@@ -564,7 +566,10 @@ export function copyOf(
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
-    { namespaceResolver: mkResolver(attributes.namespaces) },
+    {
+      currentContext: context,
+      namespaceResolver: mkResolver(attributes.namespaces),
+    },
   );
   for (let thing of things) {
     appendToTree(thing, context);
@@ -594,7 +599,10 @@ export function valueOf(
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.STRINGS_TYPE,
-    { namespaceResolver: mkResolver(attributes.namespaces) },
+    {
+      currentContext: context,
+      namespaceResolver: mkResolver(attributes.namespaces),
+    },
   );
   const str = strs.join(evaluateAttributeValueTemplate(context, separator));
   appendToTree(str, context);
@@ -720,8 +728,8 @@ export function sequence(
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
     {
-      namespaceResolver: mkResolver(attributes.namespaces),
       currentContext: context,
+      namespaceResolver: mkResolver(attributes.namespaces),
     },
   );
   appendToTreeArray(things, context);
@@ -854,8 +862,8 @@ export function ifX(
       undefined,
       mergeVariableScopes(context.variableScopes),
       {
-        namespaceResolver: mkResolver(attributes.namespaces),
         currentContext: context,
+        namespaceResolver: mkResolver(attributes.namespaces),
       },
     )
   ) {
@@ -1160,6 +1168,34 @@ registerCustomXPathFunction(
   fnGenerateId,
 );
 
+function urlToDom(context: DynamicContext, url: string) {
+  const absoluteURL = context.inputURL
+    ? resolve(context.inputURL.toString(), url)
+    : url;
+
+  if (absoluteURL.startsWith("file:")) {
+    return slimdom.parseXmlDocument(
+      readFileSync(fileURLToPath(new URL(absoluteURL))).toString(),
+    );
+  } else {
+    /** How to do async with fontoxpath? */
+    // const response = await fetch(absoluteURL);
+    // return slimdom.parseXmlDocument(response.body.toString());
+    return undefined;
+  }
+}
+
+function fnDoc({ currentContext }, url: string) {
+  return urlToDom(currentContext, url);
+}
+
+registerCustomXPathFunction(
+  { namespaceURI: XPATH_NSURI, localName: "doc" },
+  ["xs:string"],
+  "document-node()",
+  fnDoc as (context: any, url: string) => any,
+);
+
 /**
  * Build a stylesheet. Returns a function that will take an input DOM
  * document and return an output DOM document.
@@ -1189,7 +1225,7 @@ export async function buildStylesheet(xsltPath: string) {
     generate(compileStylesheetNode(xsltDoc.documentElement)),
   );
   let transform = await import(tempfile);
-  //  console.log(readFileSync(tempfile).toString());
+  // console.log(readFileSync(tempfile).toString());
   rmSync(tempdir, { recursive: true });
   return transform.transform;
 }

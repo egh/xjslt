@@ -134,6 +134,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     mode: "#default",
     templates: templates,
     variableScopes: [new Map<string, any>()],
+    inputURL: new URL("file:///fake.xml"),
   };
   processNode(context, [], {});
   walkTree(doc, (node) => {
@@ -324,6 +325,7 @@ test("evaluateAttributeValueTemplate", () => {
     templates: [],
     mode: "#default",
     variableScopes: [new Map<string, any>()],
+    inputURL: new URL("file:///fake.xml"),
   };
   expect(
     evaluateAttributeValueTemplate(context, "{local-name()}-{text()}-foo"),
@@ -567,6 +569,7 @@ test("buildNode", () => {
     mode: "#default",
     templates: [],
     variableScopes: [new Map<string, any>()],
+    inputURL: new URL("file:///fake.xml"),
   };
   let nodeA = buildNode(context, {
     name: "baz:foo",
@@ -599,6 +602,7 @@ test("buildAttributeNode", () => {
     mode: "#default",
     templates: [],
     variableScopes: [new Map<string, any>()],
+    inputURL: new URL("file:///fake.xml"),
   };
   let nodeA = buildAttributeNode(context, {
     name: "baz:foo",

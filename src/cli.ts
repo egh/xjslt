@@ -24,13 +24,14 @@ import * as slimdom from "slimdom";
 import { Command } from "commander";
 import { buildStylesheet } from "./xjslt";
 import { readFileSync } from "fs";
+import { pathToFileURL } from "url";
 
 async function run(xslt: string, xmls: Array<string>) {
   const transform = await buildStylesheet(xslt);
   const serializer = new slimdom.XMLSerializer();
   for (let xml of xmls) {
     const xmlDom = slimdom.parseXmlDocument(readFileSync(xml).toString());
-    const transformed = transform(xmlDom);
+    const transformed = transform(xmlDom, pathToFileURL(xml));
     // wish there was a better way?
     transformed.insertBefore(
       transformed.createProcessingInstruction(

@@ -30,6 +30,7 @@ import {
   evaluateXPathToNumber,
 } from "fontoxpath";
 import { readFileSync } from "fs";
+import { pathToFileURL } from "url";
 
 import { KNOWN_SPEC_FAILURES } from "./suite.fail";
 
@@ -78,15 +79,17 @@ function roundTrip(xml: string): string {
 
 function parseEnvironment(rootDir, environment) {
   const file = evaluateXPathToString("source[@role='.']/@file", environment);
-  let xmlString: string | undefined;
   if (file) {
-    return parseFile(path.join(rootDir, file));
+    return [parseFile(path.join(rootDir, file)), file];
   } else if (evaluateXPathToBoolean("source/content", environment)) {
-    return slimdom.parseXmlDocument(
-      evaluateXPathToString("source/content", environment),
-    );
+    return [
+      slimdom.parseXmlDocument(
+        evaluateXPathToString("source/content", environment),
+      ),
+      undefined,
+    ];
   } else {
-    return undefined;
+    return [undefined, undefined];
   }
 }
 
@@ -209,6 +212,7 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
             undefined;
 
           let environment: any = undefined;
+          let filepath: any = undefined;
           const environmentDom = evaluateXPathToNodes(
             "environment",
             testCase,
@@ -219,9 +223,12 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
               environmentDom,
             );
             if (environmentRef) {
-              environment = environments.get(environmentRef);
+              [environment, filepath] = environments.get(environmentRef);
             } else {
-              environment = parseEnvironment(rootDir, environmentDom);
+              [environment, filepath] = parseEnvironment(
+                rootDir,
+                environmentDom,
+              );
             }
           }
           const testDescription = evaluateXPathToString(
@@ -230,6 +237,10 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
           );
           const testName = evaluateXPathToString("@name", testCase);
           const description = `${testName}: ${testDescription} (${stylesheetFile})`;
+          let inputURL;
+          if (filepath) {
+            inputURL = pathToFileURL(filepath);
+          }
           const tester = async () => {
             const transform = await buildStylesheet(stylesheetFile);
             expect(
@@ -238,7 +249,7 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
             checkResult(
               rootDir,
               evaluateXPathToNodes("./*", resultNode)[0],
-              transform(environment, initialMode),
+              transform(environment, inputURL, initialMode),
             )();
           };
 

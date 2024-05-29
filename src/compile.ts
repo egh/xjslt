@@ -513,7 +513,11 @@ export function compileStylesheetNode(node: any): Program {
       ...mkImportsNode(),
       mkFun(
         mkIdentifier("transform"),
-        [mkIdentifier("document"), mkIdentifier("initialMode")],
+        [
+          mkIdentifier("document"),
+          mkIdentifier("inputURL"),
+          mkIdentifier("initialMode"),
+        ],
         mkBlock([
           mkConst(
             mkIdentifier("doc"),
@@ -551,6 +555,7 @@ export function compileStylesheetNode(node: any): Program {
               mode: mkIdentifier("initialMode"),
               templates: mkIdentifier("templates"),
               variableScopes: mkArray([mkNew(mkIdentifier("Map"), [])]),
+              inputURL: mkIdentifier("inputURL"),
             }),
           ),
           /* First compile the templates */
