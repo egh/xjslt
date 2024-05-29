@@ -27,6 +27,7 @@ import {
   evaluateXPathToBoolean,
   EvaluateXPath,
   evaluateXPathToNumber,
+  registerCustomXPathFunction,
 } from "fontoxpath";
 import { readFileSync, writeFileSync, symlinkSync, rmSync } from "fs";
 import * as path from "path";
@@ -37,6 +38,7 @@ import { compileStylesheetNode } from "./compile";
 
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
 export const XMLNS_NSURI = "http://www.w3.org/2000/xmlns/";
+export const XPATH_NSURI = "http://www.w3.org/2005/xpath-functions";
 
 export type SequenceConstructor = (context: DynamicContext) => void;
 
@@ -717,7 +719,10 @@ export function sequence(
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
-    { namespaceResolver: mkResolver(attributes.namespaces) },
+    {
+      namespaceResolver: mkResolver(attributes.namespaces),
+      currentContext: context,
+    },
   );
   appendToTreeArray(things, context);
 }
@@ -848,7 +853,10 @@ export function ifX(
       context.currentNode,
       undefined,
       mergeVariableScopes(context.variableScopes),
-      { namespaceResolver: mkResolver(attributes.namespaces) },
+      {
+        namespaceResolver: mkResolver(attributes.namespaces),
+        currentContext: context,
+      },
     )
   ) {
     func(context);
@@ -868,6 +876,7 @@ export function choose(
         context.currentNode,
         undefined,
         mergeVariableScopes(context.variableScopes),
+        { currentContext: context },
         // {"namespaceResolver": mkResolver(attributes.namespaces)}
       )
     ) {
@@ -908,7 +917,7 @@ export function forEach(
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
-    { namespaceResolver: nsResolver },
+    { currentContext: context, namespaceResolver: nsResolver },
   );
   if (nodeList && Symbol.iterator in Object(nodeList)) {
     for (let node of sortNodes(
@@ -997,6 +1006,7 @@ export function evaluateAttributeValueTemplate(
           context.currentNode,
           undefined,
           mergeVariableScopes(context.variableScopes),
+          { currentContext: context },
         );
       } else {
         return piece;
@@ -1016,7 +1026,7 @@ function evaluateGeneratorToString(
       context.currentNode,
       undefined,
       mergeVariableScopes(context.variableScopes),
-      { namespaceResolver: namespaceResolver },
+      { currentContext: context, namespaceResolver: namespaceResolver },
     );
   } else {
     return extractText(
@@ -1036,7 +1046,10 @@ function evaluateVariableLike(
       undefined,
       mergeVariableScopes(context.variableScopes),
       evaluateXPath.ANY_TYPE,
-      { namespaceResolver: mkResolver(variable.namespaces) },
+      {
+        currentContext: context,
+        namespaceResolver: mkResolver(variable.namespaces),
+      },
     );
   } else if (variable.content == undefined) {
     return "";
@@ -1109,6 +1122,43 @@ export function determineNamespace(
   namespace = nsResolver(prefix);
   return namespace;
 }
+
+function fnCurrent({ currentContext }) {
+  return currentContext.currentNode;
+}
+
+registerCustomXPathFunction(
+  { namespaceURI: XPATH_NSURI, localName: "current" },
+  [],
+  "item()",
+  fnCurrent,
+);
+
+let ids = new WeakMap<any, number>();
+let counter = 0;
+function fnGenerateId({ currentContext }, node: any) {
+  if (!node) {
+    node = currentContext.currentNode;
+  }
+  if (!ids.has(node)) {
+    ids.set(node, counter++);
+  }
+  return ids.get(node).toString();
+}
+
+registerCustomXPathFunction(
+  { namespaceURI: XPATH_NSURI, localName: "generate-id" },
+  [],
+  "xs:string",
+  fnGenerateId,
+);
+
+registerCustomXPathFunction(
+  { namespaceURI: XPATH_NSURI, localName: "generate-id" },
+  ["node()"],
+  "xs:string",
+  fnGenerateId,
+);
 
 /**
  * Build a stylesheet. Returns a function that will take an input DOM
