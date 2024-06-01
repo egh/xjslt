@@ -550,7 +550,7 @@ export function compileStylesheetNode(node: any): Program {
             mkObject({
               outputDocument: mkIdentifier("doc"),
               outputNode: mkIdentifier("doc"),
-              currentNode: mkIdentifier("document"),
+              contextItem: mkIdentifier("document"),
               currentNodeList: mkArray([]),
               mode: mkIdentifier("initialMode"),
               templates: mkIdentifier("templates"),

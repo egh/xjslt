@@ -129,7 +129,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
   let context = {
     outputDocument: doc,
     outputNode: doc.documentElement,
-    currentNode: document,
+    contextItem: document,
     currentNodeList: [],
     mode: "#default",
     templates: templates,
@@ -320,7 +320,7 @@ test("evaluateAttributeValueTemplate", () => {
   const context = {
     outputDocument: undefined,
     outputNode: undefined,
-    currentNode: nodes[0],
+    contextItem: nodes[0],
     currentNodeList: nodes,
     templates: [],
     mode: "#default",
@@ -564,7 +564,7 @@ test("buildNode", () => {
   let context = {
     outputDocument: doc,
     outputNode: doc.documentElement,
-    currentNode: undefined,
+    contextItem: undefined,
     currentNodeList: [],
     mode: "#default",
     templates: [],
@@ -597,7 +597,7 @@ test("buildAttributeNode", () => {
   let context = {
     outputDocument: doc,
     outputNode: doc.documentElement,
-    currentNode: undefined,
+    contextItem: undefined,
     currentNodeList: [],
     mode: "#default",
     templates: [],

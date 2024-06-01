@@ -71,7 +71,7 @@ interface CompiledTemplate {
 interface DynamicContext {
   outputDocument: slimdom.Document;
   outputNode: any;
-  currentNode: any;
+  contextItem: any;
   currentNodeList: Array<any>;
   mode: string;
   templates: Array<CompiledTemplate>;
@@ -311,7 +311,7 @@ export function processNode(
   let allTemplates = [...context.templates, ...mkBuiltInTemplates(namespaces)];
 
   let templates = getTemplates(
-    context.currentNode,
+    context.contextItem,
     allTemplates,
     context.variableScopes,
     context.mode,
@@ -395,7 +395,7 @@ function sortNodesHelperText(
 ): any[] {
   let keyed: { key: string; item: any }[] = [];
   for (let node of nodes) {
-    const newContext = { ...context, currentNode: node };
+    const newContext = { ...context, contextItem: node };
     keyed.push({
       key: evaluateGeneratorToString(
         newContext,
@@ -480,7 +480,7 @@ export function applyTemplates(
   /* The nodes we want to apply templates on.*/
   const nodes = evaluateXPathToNodes(
     attributes.select,
-    context.currentNode,
+    context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
     { currentContext: context, namespaceResolver: nsResolver },
@@ -501,7 +501,7 @@ export function applyTemplates(
       {
         ...context,
         mode: mode,
-        currentNode: node,
+        contextItem: node,
         currentNodeList: nodes,
         variableScopes: extendScope(context.variableScopes),
       },
@@ -532,10 +532,10 @@ export function copy(
   attributes: {},
   func: SequenceConstructor,
 ) {
-  if (context.currentNode.nodeType === slimdom.Node.ELEMENT_NODE) {
+  if (context.contextItem.nodeType === slimdom.Node.ELEMENT_NODE) {
     const newNode = context.outputDocument.createElementNS(
-      context.currentNode.ns,
-      context.currentNode.localName,
+      context.contextItem.ns,
+      context.contextItem.localName,
     );
     context.outputNode.appendChild(newNode);
     if (func) {
@@ -544,13 +544,13 @@ export function copy(
         outputNode: newNode,
       });
     }
-  } else if (context.currentNode.nodeType === slimdom.Node.DOCUMENT_NODE) {
+  } else if (context.contextItem.nodeType === slimdom.Node.DOCUMENT_NODE) {
     context.outputNode.appendChild(
-      context.outputDocument.importNode(context.currentNode.documentElement),
+      context.outputDocument.importNode(context.contextItem.documentElement),
     );
   } else {
     context.outputNode.appendChild(
-      context.outputDocument.importNode(context.currentNode),
+      context.outputDocument.importNode(context.contextItem),
     );
   }
 }
@@ -562,7 +562,7 @@ export function copyOf(
 ) {
   let things = evaluateXPath(
     attributes.select,
-    context.currentNode,
+    context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
@@ -595,7 +595,7 @@ export function valueOf(
   }
   let strs = evaluateXPath(
     attributes.select,
-    context.currentNode,
+    context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.STRINGS_TYPE,
@@ -723,7 +723,7 @@ export function sequence(
 ) {
   const things = evaluateXPath(
     attributes.select,
-    context.currentNode,
+    context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
@@ -858,7 +858,7 @@ export function ifX(
   if (
     evaluateXPathToBoolean(
       attributes.test,
-      context.currentNode,
+      context.contextItem,
       undefined,
       mergeVariableScopes(context.variableScopes),
       {
@@ -881,7 +881,7 @@ export function choose(
     } else if (
       evaluateXPathToBoolean(
         alternative.test,
-        context.currentNode,
+        context.contextItem,
         undefined,
         mergeVariableScopes(context.variableScopes),
         { currentContext: context },
@@ -921,7 +921,7 @@ export function forEach(
   const nsResolver = mkResolver(data.namespaces);
   const nodeList = evaluateXPath(
     data.select,
-    context.currentNode,
+    context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
@@ -936,7 +936,7 @@ export function forEach(
     )) {
       func({
         ...context,
-        currentNode: node,
+        contextItem: node,
         currentNodeList: nodeList,
         variableScopes: extendScope(context.variableScopes),
       });
@@ -1011,7 +1011,7 @@ export function evaluateAttributeValueTemplate(
       if (piece[0] === "{") {
         return evaluateXPathToString(
           piece.substring(1, piece.length - 1),
-          context.currentNode,
+          context.contextItem,
           undefined,
           mergeVariableScopes(context.variableScopes),
           { currentContext: context },
@@ -1031,7 +1031,7 @@ function evaluateGeneratorToString(
   if (typeof generator === "string") {
     return evaluateXPathToString(
       generator,
-      context.currentNode,
+      context.contextItem,
       undefined,
       mergeVariableScopes(context.variableScopes),
       { currentContext: context, namespaceResolver: namespaceResolver },
@@ -1050,7 +1050,7 @@ function evaluateVariableLike(
   if (typeof variable.content === "string") {
     return evaluateXPath(
       variable.content,
-      context.currentNode,
+      context.contextItem,
       undefined,
       mergeVariableScopes(context.variableScopes),
       evaluateXPath.ANY_TYPE,
@@ -1132,7 +1132,7 @@ export function determineNamespace(
 }
 
 function fnCurrent({ currentContext }) {
-  return currentContext.currentNode;
+  return currentContext.contextItem;
 }
 
 registerCustomXPathFunction(
@@ -1146,7 +1146,7 @@ let ids = new WeakMap<any, number>();
 let counter = 0;
 function fnGenerateId({ currentContext }, node: any) {
   if (!node) {
-    node = currentContext.currentNode;
+    node = currentContext.contextItem;
   }
   if (!ids.has(node)) {
     ids.set(node, counter++);
