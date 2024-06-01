@@ -72,7 +72,6 @@ interface DynamicContext {
   outputDocument: slimdom.Document;
   outputNode: any;
   contextItem: any;
-  currentNodeList: Array<any>;
   mode: string;
   templates: Array<CompiledTemplate>;
   variableScopes: Array<VariableScope>;
@@ -502,7 +501,6 @@ export function applyTemplates(
         ...context,
         mode: mode,
         contextItem: node,
-        currentNodeList: nodes,
         variableScopes: extendScope(context.variableScopes),
       },
       attributes.params,
@@ -903,7 +901,6 @@ export function document(
     ...context,
     outputDocument: doc,
     outputNode: doc,
-    currentNodeList: [],
     mode: "#default",
     variableScopes: extendScope(context.variableScopes),
   });
@@ -937,7 +934,6 @@ export function forEach(
       func({
         ...context,
         contextItem: node,
-        currentNodeList: nodeList,
         variableScopes: extendScope(context.variableScopes),
       });
     }
@@ -1084,7 +1080,6 @@ function evaluateSequenceConstructorInTemporaryTree(
     ...context,
     outputDocument: doc,
     outputNode: doc.documentElement,
-    currentNodeList: [],
     mode: "#default",
     variableScopes: extendScope(context.variableScopes),
   });

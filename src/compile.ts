@@ -551,7 +551,6 @@ export function compileStylesheetNode(node: any): Program {
               outputDocument: mkIdentifier("doc"),
               outputNode: mkIdentifier("doc"),
               contextItem: mkIdentifier("document"),
-              currentNodeList: mkArray([]),
               mode: mkIdentifier("initialMode"),
               templates: mkIdentifier("templates"),
               variableScopes: mkArray([mkNew(mkIdentifier("Map"), [])]),
