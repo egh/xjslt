@@ -77,6 +77,8 @@ interface DynamicContext {
   variableScopes: Array<VariableScope>;
   nextMatches?: Array<CompiledTemplate>;
   inputURL: URL;
+  currentGroup?: any[];
+  currentGroupingKey?: string;
 }
 
 type Generator = string | SequenceConstructor;
@@ -940,6 +942,61 @@ export function forEach(
   }
 }
 
+function groupBy(
+  context: DynamicContext,
+  nodes: any[],
+  groupBy: string,
+  nsResolver: NamespaceResolver,
+): Map<string, any[]> {
+  const variables = mergeVariableScopes(context.variableScopes);
+  let retval = new Map<string, any[]>();
+  for (let node of nodes) {
+    const key = evaluateXPathToString(groupBy, node, undefined, variables, {
+      currentContext: context,
+      namespaceResolver: nsResolver,
+    });
+    if (!retval.has(key)) {
+      retval.set(key, []);
+    }
+    retval.set(key, retval.get(key).concat(node));
+  }
+  return retval;
+}
+
+export function forEachGroup(
+  context: DynamicContext,
+  data: {
+    select: string;
+    groupBy?: string;
+    namespaces: object;
+    sortKeyComponents: SortKeyComponent[];
+  },
+  func: SequenceConstructor,
+) {
+  const nsResolver = mkResolver(data.namespaces);
+  const variables = mergeVariableScopes(context.variableScopes);
+  const nodeList = evaluateXPathToNodes(
+    data.select,
+    context.contextItem,
+    undefined,
+    variables,
+    { currentContext: context, namespaceResolver: nsResolver },
+  );
+  if (nodeList && Symbol.iterator in Object(nodeList)) {
+    let groupedNodes = groupBy(context, nodeList, data.groupBy, nsResolver);
+    // TODO: sort
+    for (let [key, nodes] of groupedNodes) {
+      func({
+        ...context,
+        contextItem: nodes[0],
+        currentGroupingKey: key,
+        currentGroup: nodes,
+        variableScopes: extendScope(context.variableScopes),
+      });
+    }
+  }
+}
+
 function preserveSpace(
   node: any,
   preserve: Array<string>,
@@ -1184,11 +1241,33 @@ function fnDoc({ currentContext }, url: string) {
   return urlToDom(currentContext, url);
 }
 
+function fnCurrentGroupingKey({ currentContext }) {
+  return currentContext.currentGroupingKey;
+}
+
+function fnCurrentGroup({ currentContext }) {
+  return currentContext.currentGroup;
+}
+
 registerCustomXPathFunction(
   { namespaceURI: XPATH_NSURI, localName: "doc" },
   ["xs:string"],
   "document-node()",
   fnDoc as (context: any, url: string) => any,
+);
+
+registerCustomXPathFunction(
+  { namespaceURI: XPATH_NSURI, localName: "current-grouping-key" },
+  [],
+  "xs:anyAtomicType?",
+  fnCurrentGroupingKey as (context: any) => any,
+);
+
+registerCustomXPathFunction(
+  { namespaceURI: XPATH_NSURI, localName: "current-group" },
+  [],
+  "item()*",
+  fnCurrentGroup as (context: any) => any,
 );
 
 /**

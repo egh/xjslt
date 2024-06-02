@@ -158,6 +158,16 @@ function compileForEachNode(node: any) {
   return compileFuncallWithChildren(node, "forEach", mkObject(args));
 }
 
+function compileForEachGroupNode(node: any) {
+  const args = {
+    select: mkLiteral(node.getAttribute("select") || undefined),
+    groupBy: mkLiteral(node.getAttribute("group-by") || undefined),
+    sortKeyComponents: compileSortKeyComponents(node.childNodes),
+    namespaces: mkNamespaceArg(node),
+  };
+  return compileFuncallWithChildren(node, "forEachGroup", mkObject(args));
+}
+
 function compileNextMatchNode(node: any) {
   const args = {
     params: compileParams("with-param", node.childNodes),
@@ -447,6 +457,8 @@ export function compileSequenceConstructorNode(node: any) {
         // TODO
       } else if (node.localName === "for-each") {
         return compileForEachNode(node);
+      } else if (node.localName === "for-each-group") {
+        return compileForEachGroupNode(node);
       } else if (node.localName === "next-match") {
         return compileNextMatchNode(node);
       } else if (node.localName === "number") {
