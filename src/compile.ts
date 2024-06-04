@@ -463,8 +463,6 @@ export function compileSequenceConstructorNode(node: any) {
         return compileNextMatchNode(node);
       } else if (node.localName === "number") {
         // TODO
-      } else if (node.localName === "copy") {
-        // TODO
       } else if (node.localName === "param") {
         // Handled by special case.
       } else if (node.localName === "sort") {

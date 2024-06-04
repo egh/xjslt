@@ -529,29 +529,32 @@ export function callTemplate(
 
 export function copy(
   context: DynamicContext,
-  attributes: {},
+  attributes: { namespaces: object },
   func: SequenceConstructor,
 ) {
+  let newNode;
   if (context.contextItem.nodeType === slimdom.Node.ELEMENT_NODE) {
-    const newNode = context.outputDocument.createElementNS(
+    newNode = context.outputDocument.createElementNS(
       context.contextItem.ns,
       context.contextItem.localName,
     );
+  } else if (context.contextItem.nodeType === slimdom.Node.DOCUMENT_NODE) {
+    newNode = context.outputDocument.importNode(
+      context.contextItem.documentElement,
+    );
+  } else {
+    newNode = context.outputDocument.importNode(context.contextItem);
+  }
+  if (newNode.nodeType === slimdom.Node.ATTRIBUTE_NODE) {
+    context.outputNode.setAttributeNode(newNode);
+  } else {
     context.outputNode.appendChild(newNode);
-    if (func) {
+  }
+  if (func) {
       func({
         ...context,
         outputNode: newNode,
       });
-    }
-  } else if (context.contextItem.nodeType === slimdom.Node.DOCUMENT_NODE) {
-    context.outputNode.appendChild(
-      context.outputDocument.importNode(context.contextItem.documentElement),
-    );
-  } else {
-    context.outputNode.appendChild(
-      context.outputDocument.importNode(context.contextItem),
-    );
   }
 }
 
