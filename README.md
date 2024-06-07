@@ -23,13 +23,12 @@ Tested with [node 20](https://nodejs.org/)
 
 # Incompletely supported features
 
-- ??
+- `for-each-group` (only `group-by` supported)
 
 # TODO (not yet implemented)
 - [ ] `include` / `import`
 - [ ] `strip-space`/`preserve-space`
 - [ ] `output`
-- [ ] `key`
 - [ ] `attribute-set`
 - [ ] webpack compilation for browsers
 - [ ] …
