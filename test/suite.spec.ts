@@ -31,8 +31,19 @@ import {
 } from "fontoxpath";
 import { readFileSync } from "fs";
 import { pathToFileURL } from "url";
-
 import { KNOWN_SPEC_FAILURES } from "./suite.fail";
+import { expect } from "@jest/globals";
+import { toBeEquivalentDom } from "./matchers";
+expect.extend({ toBeEquivalentDom });
+
+declare module "expect" {
+  interface AsymmetricMatchers {
+    toBeEquivalentDom(b: any): void;
+  }
+  interface Matchers<R> {
+    toBeEquivalentDom(b: any): R;
+  }
+}
 
 const serializer = new slimdom.XMLSerializer();
 
@@ -77,6 +88,14 @@ function roundTrip(xml: string): string {
   }
 }
 
+function roundTripDom(document: slimdom.Document): slimdom.Document {
+  try {
+    return slimdom.parseXmlDocument(serializer.serializeToString(document));
+  } catch (ex) {
+    return document;
+  }
+}
+
 function parseEnvironment(rootDir, environment) {
   const file = evaluateXPathToString("source[@role='.']/@file", environment);
   if (file) {
@@ -115,8 +134,8 @@ function checkAssertXml(rootDir: string, node: any, transformed: any) {
   } else {
     assertXmlContents = evaluateXPathToString(".", node);
   }
-  expect(serializer.serializeToString(transformed)).toEqual(
-    roundTrip(assertXmlContents),
+  expect(roundTripDom(transformed)).toBeEquivalentDom(
+    slimdom.parseXmlDocument(assertXmlContents),
   );
 }
 

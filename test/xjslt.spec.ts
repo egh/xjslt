@@ -47,6 +47,18 @@ import { generate } from "astring";
 import { Parser } from "acorn";
 import { tmpdir } from "os";
 import { readFileSync, mkdtempSync, writeFileSync, unlinkSync } from "fs";
+import { expect } from "@jest/globals";
+import { toBeEquivalentDom } from "./matchers";
+expect.extend({ toBeEquivalentDom });
+
+declare module "expect" {
+  interface AsymmetricMatchers {
+    toBeEquivalentDom(b: any): void;
+  }
+  interface Matchers<R> {
+    toBeEquivalentDom(b: any): R;
+  }
+}
 
 const serializer = new slimdom.XMLSerializer();
 
@@ -666,3 +678,34 @@ test("computeDefaultPriority", () => {
   expect(computeDefaultPriority("*")).toEqual(-0.5);
   expect(computeDefaultPriority("*|foo|element(foo,bar)")).toEqual(0.25);
 });
+
+test(`domCompare`, () => {
+  expect(() => expect(undefined).toBeEquivalentDom(null)).toThrow(TypeError);
+});
+
+let docs = [
+  [`<root/>`, `<root/>`],
+  [`<root>foo</root>`, `<root>foo</root>`],
+  [`<root a="b">foo</root>`, `<root a="b">foo</root>`],
+  [`<root a="b" b="a">foo</root>`, `<root b="a" a="b">foo</root>`],
+];
+for (const [astring, bstring] of docs) {
+  test(`domCompare ${astring} = ${bstring}`, () => {
+    const a = slimdom.parseXmlDocument(astring);
+    const b = slimdom.parseXmlDocument(bstring);
+    expect(a).toBeEquivalentDom(b);
+  });
+}
+
+for (const [astring, bstring] of [
+  [`<root/>`, `<rootx/>`],
+  [`<root>foo</root>`, `<root>foox</root>`],
+  [`<root a="b">foo</root>`, `<root a="bx">foo</root>`],
+  [`<root a="b" b="a">foo</root>`, `<root b="ax" a="b">foo</root>`],
+]) {
+  test(`domCompare ${astring} != ${bstring}`, () => {
+    const a = slimdom.parseXmlDocument(astring);
+    const b = slimdom.parseXmlDocument(bstring);
+    expect(a).not.toBeEquivalentDom(b);
+  });
+}
