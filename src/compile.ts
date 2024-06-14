@@ -387,9 +387,7 @@ export function getNodeNS(node: any, retval: object = undefined) {
   }
   if (node.attributes) {
     for (let attribute of node.attributes) {
-      if (attribute.value === XSLT1_NSURI) {
-        // We know about this!
-      } else if (attribute.namespaceURI === XMLNS_NSURI) {
+      if (attribute.namespaceURI === XMLNS_NSURI) {
         let name = attribute.localName;
         if (name === "xmlns") {
           name = "";

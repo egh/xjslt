@@ -198,7 +198,7 @@ test("compileValueOfNode", () => {
   expect(
     generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
   ).toEqual(
-    'xjslt.valueOf(context, {"select": "/Article/Title","separator": undefined,"namespaces": {}});',
+    'xjslt.valueOf(context, {"select": "/Article/Title","separator": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}});',
   );
 });
 
@@ -207,7 +207,7 @@ test("compileVariableNode", () => {
   expect(
     generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
   ).toEqual(
-    'xjslt.variable(context, {"name": "author","content": ".","namespaces": {}});',
+    'xjslt.variable(context, {"name": "author","content": ".","namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}});',
   );
 });
 
@@ -216,7 +216,7 @@ test("compileApplyTemplatesNode", () => {
   expect(
     generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
   ).toEqual(
-    'xjslt.applyTemplates(context, {"select": "/Article/Authors/Author","mode": "#default","params": [],"sortKeyComponents": [],"namespaces": {}});',
+    'xjslt.applyTemplates(context, {"select": "/Article/Authors/Author","mode": "#default","params": [],"sortKeyComponents": [],"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}});',
   );
 });
 
@@ -228,7 +228,7 @@ test("compileForEachNode", () => {
   expect(
     generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
   ).toEqual(
-    'xjslt.forEach(context, {"select": "./*","sortKeyComponents": [],"namespaces": {}}, context => {xjslt.literalText(context, "foo");});',
+    'xjslt.forEach(context, {"select": "./*","sortKeyComponents": [],"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}}, context => {xjslt.literalText(context, "foo");});',
   );
 });
 
@@ -252,7 +252,7 @@ test("compileIfNode", () => {
   expect(
     generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
   ).toEqual(
-    'xjslt.ifX(context, {"test": "[@att=\'bar\']","namespaces": {}}, context => {xjslt.literalText(context, "foo");});',
+    'xjslt.ifX(context, {"test": "[@att=\'bar\']","namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}}, context => {xjslt.literalText(context, "foo");});',
   );
 });
 
@@ -261,7 +261,7 @@ test("compileLiteralElementNode", () => {
   expect(
     generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
   ).toEqual(
-    'xjslt.literalElement(context, {"name": "heading","attributes": [{"name": "type","value": "top","namespace": null}],"namespace": null}, context => {xjslt.valueOf(context, {"select": "Title","separator": undefined,"namespaces": {}});});',
+    'xjslt.literalElement(context, {"name": "heading","attributes": [{"name": "type","value": "top","namespace": null}],"namespace": null}, context => {xjslt.valueOf(context, {"select": "Title","separator": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}});});',
   );
 });
 
@@ -277,7 +277,7 @@ test("compileLiteralElementNode with namespace", () => {
   expect(
     generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
   ).toEqual(
-    'xjslt.literalElement(context, {"name": "foo:node","attributes": [{"name": "xmlns:foo","value": "http://example.org/foo","namespace": "http://www.w3.org/2000/xmlns/"}],"namespace": "http://example.org/foo"}, context => {xjslt.valueOf(context, {"select": ".","separator": undefined,"namespaces": {"foo": "http://example.org/foo"}});});',
+    'xjslt.literalElement(context, {"name": "foo:node","attributes": [{"name": "xmlns:foo","value": "http://example.org/foo","namespace": "http://www.w3.org/2000/xmlns/"}],"namespace": "http://example.org/foo"}, context => {xjslt.valueOf(context, {"select": ".","separator": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform","foo": "http://example.org/foo"}});});',
   );
 });
 
@@ -311,7 +311,7 @@ test("stripSpaceStylesheet with preserved", () => {
 test("compileTemplateNode", () => {
   const nodes = evaluateXPathToNodes("//xsl:template", xslt2Doc);
   expect(generate(compileTopLevelNode(nodes[0]), GENERATE_OPTS)).toEqual(
-    'templates.push({"match": "/","name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"name": "doc","attributes": [],"namespace": null}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default","params": [],"sortKeyComponents": [],"namespaces": {}});});},"namespaces": {},"priority": undefined,"importPrecedence": 1});',
+    'templates.push({"match": "/","name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"name": "doc","attributes": [],"namespace": null}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default","params": [],"sortKeyComponents": [],"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}});});},"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"},"priority": undefined,"importPrecedence": 1});',
   );
 });
 
