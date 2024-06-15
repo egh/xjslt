@@ -532,20 +532,21 @@ export function copy(
   attributes: { namespaces: object },
   func: SequenceConstructor,
 ) {
+  const node = context.contextItem;
   let newNode;
-  if (context.contextItem.nodeType === slimdom.Node.ELEMENT_NODE) {
+  if (node.nodeType === slimdom.Node.ELEMENT_NODE) {
     newNode = context.outputDocument.createElementNS(
-      context.contextItem.ns,
-      context.contextItem.localName,
+      node.namespaceURI,
+      (node.prefix ? `${node.prefix}:${node.localName}` : node.localName),
     );
-  } else if (context.contextItem.nodeType === slimdom.Node.DOCUMENT_NODE) {
-    newNode = context.outputDocument.importNode(
-      context.contextItem.documentElement,
-    );
+  } else if (node.nodeType === slimdom.Node.DOCUMENT_NODE) {
+    newNode = undefined;
   } else {
-    newNode = context.outputDocument.importNode(context.contextItem);
+    newNode = context.outputDocument.importNode(node);
   }
-  if (newNode.nodeType === slimdom.Node.ATTRIBUTE_NODE) {
+  if (!newNode) {
+    // ...
+  } else if (newNode.nodeType === slimdom.Node.ATTRIBUTE_NODE) {
     context.outputNode.setAttributeNode(newNode);
   } else {
     context.outputNode.appendChild(newNode);
@@ -553,7 +554,7 @@ export function copy(
   if (func) {
       func({
         ...context,
-        outputNode: newNode,
+        outputNode: newNode || context.outputNode,
       });
   }
 }
