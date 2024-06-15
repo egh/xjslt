@@ -35,15 +35,29 @@ export const domCompare = function (
     }
   }
   if (a instanceof slimdom.Element && b instanceof slimdom.Element) {
-    if (a.attributes) {
-      if (a.attributes.length !== b.attributes.length) {
+    const xmlns = "http://www.w3.org/2000/xmlns/";
+    let attributesA: any[] = [];
+    let attributesB: any[] = [];
+    for (const attrA of a.attributes) {
+      if (attrA.namespaceURI !== xmlns) {
+        attributesA.push(attrA);
+      }
+    }
+    for (const attrB of b.attributes) {
+      if (attrB.namespaceURI !== xmlns) {
+        attributesB.push(attrB);
+      }
+    }
+
+    if (attributesA) {
+      if (attributesA.length !== attributesB.length) {
         return [
           false,
           () =>
             `expected ${that.utils.printReceived(a)} to have the same attribute count as ${that.utils.printReceived(b)}`,
         ];
       }
-      for (const attrA of a.attributes) {
+      for (const attrA of attributesA) {
         const attrB = b.getAttributeNode(attrA.name);
         if (!attrB) {
           return [
@@ -109,7 +123,6 @@ export const toBeEquivalentDom: MatcherFunction<[b: unknown]> = function (
     };
   }
 };
-
 
 expect.extend({ toBeEquivalentDom });
 expect.addEqualityTesters([
