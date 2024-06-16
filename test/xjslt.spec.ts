@@ -36,6 +36,7 @@ import {
   VariableScope,
 } from "../src/xjslt";
 import {
+  compileAvtRaw,
   compileSequenceConstructorNode,
   compileTopLevelNode,
   getNodeNS,
@@ -709,3 +710,17 @@ for (const [astring, bstring] of [
     expect(a).not.toBeEquivalentDom(b);
   });
 }
+
+test("compileAvtRaw", () => {
+  expect(compileAvtRaw("{$foo}")).toEqual([{ xpath: "$foo" }]);
+  expect(compileAvtRaw("{{{$foo}")).toEqual(["{", { xpath: "$foo" }]);
+  expect(compileAvtRaw("{{{$foo}}}")).toEqual(["{", { xpath: "$foo" }, "}"]);
+  expect(compileAvtRaw("")).toEqual([]);
+  expect(compileAvtRaw(undefined)).toEqual(undefined);
+  expect(() => {
+    compileAvtRaw("{$foo");
+  }).toThrow("XTSE0350");
+  expect(() => {
+    compileAvtRaw("fo}o");
+  }).toThrow("XTSE0370");
+});

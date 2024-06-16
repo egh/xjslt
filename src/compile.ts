@@ -57,6 +57,12 @@ interface SimpleElement {
   arguments: Map<string, string | undefined>;
 }
 
+export interface xpathstring {
+  xpath: string;
+}
+
+export type AttributeValueTemplate = Array<string | xpathstring>;
+
 function buildInResolver(prefix: string) {
   if (prefix === "xsl") {
     return XSLT1_NSURI;
@@ -652,4 +658,62 @@ function compileLiteralTextNode(node: any): ExpressionStatement {
   return mkCallWithContext(mkMember("xjslt", "literalText"), [
     mkLiteral(node.textContent),
   ]);
+}
+
+export function compileAvtRaw(avt: string | undefined): any {
+  if (avt === undefined || avt === null) {
+    return undefined;
+  }
+  let retval: Array<any> = [];
+  let strOutput: string = "";
+  let xpathOutput: xpathstring = { xpath: "" };
+  let inXpath = false;
+  for (let i = 0; i < avt.length; i++) {
+    if (avt[i] === "{") {
+      if (i + 1 < avt.length && avt[i + 1] === "{") {
+        // quoted {
+        i++;
+        strOutput += "{";
+      } else {
+        // starting xpath
+        if (inXpath) {
+          throw new Error();
+        }
+        if (strOutput != "") {
+          retval = retval.concat(strOutput);
+        }
+        strOutput = "";
+        inXpath = true;
+      }
+    } else if (avt[i] === "}") {
+      if (i + 1 < avt.length && avt[i + 1] === "}") {
+        // quoted }
+        i++;
+        strOutput += "}";
+      } else {
+        if (!inXpath) {
+          throw new Error("XTSE0370");
+        }
+        // Ending xpath
+        retval = retval.concat(xpathOutput);
+        xpathOutput = { xpath: "" };
+        inXpath = false;
+      }
+    } else {
+      if (inXpath) {
+        xpathOutput.xpath += avt[i];
+      } else {
+        strOutput += avt[i];
+      }
+    }
+  }
+  /* Finish up */
+  if (inXpath) {
+    throw new Error("XTSE0350");
+  } else {
+    if (strOutput != "") {
+      retval = retval.concat(strOutput);
+    }
+  }
+  return retval;
 }
