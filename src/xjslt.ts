@@ -109,11 +109,11 @@ function mkResolver(namespaces: object) {
 /* Implementation of https://www.w3.org/TR/xslt11/#patterns */
 function nameTest(
   name: string,
-  node: any,
+  node: slimdom.Element,
   variableScopes: Array<VariableScope>,
   nsResolver: NamespaceResolver,
 ) {
-  let checkContext = node;
+  let checkContext: slimdom.Node = node;
   /* Using ancestors as the potential contexts */
   while (checkContext) {
     const matches = evaluateXPathToNodes(
@@ -129,7 +129,9 @@ function nameTest(
     if (matches.includes(node)) {
       return true;
     } else {
-      checkContext = checkContext.parentNode || checkContext.ownerElement;
+      checkContext =
+        checkContext.parentNode ||
+        (checkContext instanceof slimdom.Attr && checkContext.ownerElement);
     }
   }
   return false;

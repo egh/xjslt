@@ -99,7 +99,7 @@ const simpleElements = new Map<string, SimpleElement>([
   ],
 ]);
 
-function compileApplyTemplatesNode(node: any) {
+function compileApplyTemplatesNode(node: slimdom.Element) {
   const mode = expandQname(node.getAttribute("mode"), getNodeNS(node));
   const args = {
     select: mkLiteral(node.getAttribute("select") || "child::node()"),
@@ -111,7 +111,7 @@ function compileApplyTemplatesNode(node: any) {
   return compileFuncall("applyTemplates", [mkObject(args)]);
 }
 
-function compileForEachNode(node: any) {
+function compileForEachNode(node: slimdom.Element) {
   const args = {
     select: mkLiteral(node.getAttribute("select") || undefined),
     sortKeyComponents: compileSortKeyComponents(node.childNodes),
@@ -120,7 +120,7 @@ function compileForEachNode(node: any) {
   return compileFuncallWithChildren(node, "forEach", mkObject(args));
 }
 
-function compileForEachGroupNode(node: any) {
+function compileForEachGroupNode(node: slimdom.Element) {
   const args = {
     select: mkLiteral(node.getAttribute("select") || undefined),
     groupBy: mkLiteral(node.getAttribute("group-by") || undefined),
@@ -130,7 +130,7 @@ function compileForEachGroupNode(node: any) {
   return compileFuncallWithChildren(node, "forEachGroup", mkObject(args));
 }
 
-function compileNextMatchNode(node: any) {
+function compileNextMatchNode(node: slimdom.Element) {
   const args = {
     params: compileParams("with-param", node.childNodes),
     namespaces: mkNamespaceArg(node),
@@ -140,7 +140,7 @@ function compileNextMatchNode(node: any) {
 
 /* Compile a param or variable, which contains either a select
    statement or a SequenceConstructor. */
-function compileVariableLike(node: any) {
+function compileVariableLike(node: slimdom.Element) {
   let name = mkLiteral(node.getAttribute("name") || undefined);
   if (node.hasAttribute("select")) {
     return mkObject({
@@ -193,7 +193,7 @@ function compileSortKeyComponents(nodes: any[]) {
   return mkArray(sortKeyComponents);
 }
 
-function compileVariable(node: any) {
+function compileVariable(node: slimdom.Element) {
   return compileFuncall("variable", [compileVariableLike(node)]);
 }
 
@@ -207,7 +207,7 @@ function compileParams(nodename: string, nodes: any[]) {
   return mkArray(params);
 }
 
-function compileCallTemplate(node: any) {
+function compileCallTemplate(node: slimdom.Element) {
   let args = {};
   let name = expandQname(node.getAttribute("name"), getNodeNS(node));
   args["name"] = mkLiteral(name);
@@ -223,7 +223,7 @@ function compileFuncall(name: string, args: Expression[]) {
 }
 
 function compileFuncallWithChildren(
-  node: any,
+  node: slimdom.Element,
   name: string,
   args: ObjectExpression,
 ): ExpressionStatement {
@@ -233,7 +233,7 @@ function compileFuncallWithChildren(
   ]);
 }
 
-function mkNamespaceArg(node: any) {
+function mkNamespaceArg(node: slimdom.Element) {
   let namespaces = getNodeNS(node);
   for (let key in namespaces) {
     namespaces[key] = mkLiteral(namespaces[key]);
@@ -242,7 +242,7 @@ function mkNamespaceArg(node: any) {
 }
 
 function compileArgs(
-  node: any,
+  node: slimdom.Element,
   keyList: Map<string, string | undefined>,
 ): ObjectExpression {
   var args = {};
@@ -257,7 +257,7 @@ function compileArgs(
   return mkObject(args);
 }
 
-function compileSimpleElement(node: any) {
+function compileSimpleElement(node: slimdom.Element) {
   const what = simpleElements.get(node.localName);
   const args = compileArgs(node, what.arguments);
   if (what.hasChildren) {
@@ -267,22 +267,24 @@ function compileSimpleElement(node: any) {
   }
 }
 
-function compileChooseNode(node: any) {
+function compileChooseNode(node: slimdom.Element) {
   let alternatives = [];
   for (let childNode of node.childNodes) {
-    if (childNode.localName === "when") {
-      alternatives.push(
-        mkObject({
-          test: mkLiteral(childNode.getAttribute("test") || undefined),
-          apply: mkArrowFun(compileSequenceConstructor(childNode.childNodes)),
-        }),
-      );
-    } else if (childNode.localName === "otherwise") {
-      alternatives.push(
-        mkObject({
-          apply: mkArrowFun(compileSequenceConstructor(childNode.childNodes)),
-        }),
-      );
+    if (childNode instanceof slimdom.Element) {
+      if (childNode.localName === "when") {
+        alternatives.push(
+          mkObject({
+            test: mkLiteral(childNode.getAttribute("test") || undefined),
+            apply: mkArrowFun(compileSequenceConstructor(childNode.childNodes)),
+          }),
+        );
+      } else if (childNode.localName === "otherwise") {
+        alternatives.push(
+          mkObject({
+            apply: mkArrowFun(compileSequenceConstructor(childNode.childNodes)),
+          }),
+        );
+      }
     }
   }
   return mkCallWithContext(mkMember("xjslt", "choose"), [
@@ -290,14 +292,14 @@ function compileChooseNode(node: any) {
   ]);
 }
 
-function compileTopLevelParam(node: any) {
+function compileTopLevelParam(node: slimdom.Element) {
   let param = compileVariableLike(node);
   return mkCallWithContext(mkMember("xjslt", "param"), [param]);
 }
 
-function mkResolver(node: any): NamespaceResolver {
+function mkResolver(node: slimdom.Element): NamespaceResolver {
   return (prefix: string) => {
-    return node.lookupNamespace(prefix);
+    return node.lookupNamespaceURI(prefix);
   };
 }
 
@@ -308,7 +310,7 @@ function skipAttribute(attr: slimdom.Attr): boolean {
   return false;
 }
 
-function compileLiteralElementNode(node: any) {
+function compileLiteralElementNode(node: slimdom.Element) {
   let attributes = [];
   for (let n in node.attributes) {
     let attr = node.attributes[n];
@@ -339,7 +341,7 @@ function compileLiteralElementNode(node: any) {
   ]);
 }
 
-export function getNodeNS(node: any, retval: object = undefined) {
+export function getNodeNS(node: slimdom.Element, retval: object = undefined) {
   if (!retval) {
     retval = {};
   }
@@ -361,7 +363,7 @@ export function getNodeNS(node: any, retval: object = undefined) {
 }
 
 /* todo - separate into top-level & sequence-generator versions */
-export function compileTopLevelNode(node: any) {
+export function compileTopLevelNode(node: slimdom.Element) {
   if (node.nodeType === slimdom.Node.ELEMENT_NODE) {
     if (node.namespaceURI === XSLT1_NSURI) {
       if (node.localName === "template") {
@@ -395,7 +397,7 @@ export function compileTopLevelNode(node: any) {
   }
 }
 
-export function compileSequenceConstructorNode(node: any) {
+export function compileSequenceConstructorNode(node: slimdom.Element) {
   if (node.nodeType === slimdom.Node.TEXT_NODE) {
     return compileLiteralTextNode(node);
   } else if (node.nodeType === slimdom.Node.ELEMENT_NODE) {
@@ -494,8 +496,8 @@ function compileValueOf(node: slimdom.Element) {
   return compileFuncall("valueOf", [mkObject(args)]);
 }
 
-function compileTextNode(node: any) {
-  if (node.childNodes.childElementCount > 0) {
+function compileTextNode(node: slimdom.Element) {
+  if (node instanceof slimdom.Element && node.childElementCount > 0) {
     throw new Error("XTSE0010 element found as child of xsl:text");
   }
   return mkCallWithContext(mkMember("xjslt", "text"), [
@@ -522,7 +524,7 @@ function compileSequenceConstructor(nodes: Array<any>): Array<Statement> {
   return compileNodeArray(nodes, compileSequenceConstructorNode);
 }
 
-export function compileStylesheetNode(node: any): Program {
+export function compileStylesheetNode(node: slimdom.Element): Program {
   return {
     type: "Program",
     sourceType: "module",
@@ -629,7 +631,7 @@ function expandQname(name: string, namespaces: object) {
   return name;
 }
 
-function compileTemplateNode(node: any): ExpressionStatement {
+function compileTemplateNode(node: slimdom.Element): ExpressionStatement {
   let allowedParams = compileParams("param", node.childNodes);
   let namespaces = getNodeNS(node);
 
@@ -657,7 +659,7 @@ function compileTemplateNode(node: any): ExpressionStatement {
   ]);
 }
 
-function compileLiteralTextNode(node: any): ExpressionStatement {
+function compileLiteralTextNode(node: slimdom.Element): ExpressionStatement {
   return mkCallWithContext(mkMember("xjslt", "literalText"), [
     mkLiteral(node.textContent),
   ]);
