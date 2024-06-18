@@ -39,12 +39,12 @@ export const domCompare = function (
     let attributesA: any[] = [];
     let attributesB: any[] = [];
     for (const attrA of a.attributes) {
-      if (attrA.namespaceURI !== xmlns) {
+      if (attrA.namespaceURI != xmlns) {
         attributesA.push(attrA);
       }
     }
     for (const attrB of b.attributes) {
-      if (attrB.namespaceURI !== xmlns) {
+      if (attrB.namespaceURI != xmlns) {
         attributesB.push(attrB);
       }
     }
@@ -69,12 +69,13 @@ export const domCompare = function (
         if (
           attrA.value !== attrB.value ||
           attrA.localName !== attrB.localName ||
-          attrA.namespaceURI !== attrB.namespaceURI
+          (attrA.namespaceURI || "").toString() !==
+            (attrB.namespaceURI || "").toString()
         ) {
           return [
             false,
             () =>
-              `expected ${that.utils.printReceived(b)} to have the attribute ${attrA.localName} with value ${attrB.value}`,
+              `expected ${that.utils.printReceived(b)} to have the attribute ${attrA.localName} with value ${attrA.value} and namespace ${attrB.namespaceURI}`,
           ];
         }
       }
