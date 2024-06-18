@@ -262,7 +262,7 @@ test("compileLiteralElementNode", () => {
   expect(
     generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
   ).toEqual(
-    'xjslt.literalElement(context, {"name": "heading","attributes": [{"name": "type","value": "top","namespace": null}],"namespace": null}, context => {xjslt.valueOf(context, {"select": "Title","separator": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}});});',
+    'xjslt.literalElement(context, {"name": "heading","attributes": [{"name": "type","value": ["top"],"namespace": null}],"namespace": null}, context => {xjslt.valueOf(context, {"select": "Title","separator": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}});});',
   );
 });
 
@@ -278,7 +278,7 @@ test("compileLiteralElementNode with namespace", () => {
   expect(
     generate(compileSequenceConstructorNode(nodes[0]), GENERATE_OPTS),
   ).toEqual(
-    'xjslt.literalElement(context, {"name": "foo:node","attributes": [{"name": "xmlns:foo","value": "http://example.org/foo","namespace": "http://www.w3.org/2000/xmlns/"}],"namespace": "http://example.org/foo"}, context => {xjslt.valueOf(context, {"select": ".","separator": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform","foo": "http://example.org/foo"}});});',
+    'xjslt.literalElement(context, {"name": "foo:node","attributes": [{"name": "xmlns:foo","value": ["http://example.org/foo"],"namespace": "http://www.w3.org/2000/xmlns/"}],"namespace": "http://example.org/foo"}, context => {xjslt.valueOf(context, {"select": ".","separator": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform","foo": "http://example.org/foo"}});});',
   );
 });
 
@@ -339,8 +339,14 @@ test("evaluateAttributeValueTemplate", () => {
     inputURL: new URL("file:///fake.xml"),
   };
   expect(
-    evaluateAttributeValueTemplate(context, "{local-name()}-{text()}-foo"),
+    evaluateAttributeValueTemplate(
+      context,
+      compileAvtRaw("{local-name()}-{text()}-foo"),
+    ),
   ).toEqual("Author-Mr. Foo-foo");
+  expect(evaluateAttributeValueTemplate(context, compileAvtRaw(""))).toEqual(
+    "",
+  );
 });
 
 test("elementNode", async () => {

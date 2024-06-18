@@ -34,7 +34,11 @@ import * as path from "path";
 import { tmpdir } from "os";
 import { mkdtemp } from "fs/promises";
 import * as slimdom from "slimdom";
-import { compileStylesheetNode } from "./compile";
+import {
+  compileStylesheetNode,
+  xpathstring,
+  AttributeValueTemplate,
+} from "./compile";
 import { fileURLToPath, resolve } from "url";
 
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
@@ -49,7 +53,7 @@ export type NamespaceResolver = (prefix: string) => string;
 
 interface AttributeOutputData {
   name: string;
-  value: string;
+  value: AttributeValueTemplate;
   namespace?: string;
 }
 
@@ -85,8 +89,8 @@ type Generator = string | SequenceConstructor;
 
 interface SortKeyComponent {
   sortKey: Generator;
-  order?: string;
-  lang?: string;
+  order?: AttributeValueTemplate;
+  lang?: AttributeValueTemplate;
   dataType?: string;
 }
 
@@ -537,7 +541,7 @@ export function copy(
   if (node.nodeType === slimdom.Node.ELEMENT_NODE) {
     newNode = context.outputDocument.createElementNS(
       node.namespaceURI,
-      (node.prefix ? `${node.prefix}:${node.localName}` : node.localName),
+      node.prefix ? `${node.prefix}:${node.localName}` : node.localName,
     );
   } else if (node.nodeType === slimdom.Node.DOCUMENT_NODE) {
     newNode = undefined;
@@ -552,10 +556,10 @@ export function copy(
     context.outputNode.appendChild(newNode);
   }
   if (func) {
-      func({
-        ...context,
-        outputNode: newNode || context.outputNode,
-      });
+    func({
+      ...context,
+      outputNode: newNode || context.outputNode,
+    });
   }
 }
 
@@ -584,7 +588,7 @@ export function valueOf(
   context: DynamicContext,
   attributes: {
     select: string;
-    separator?: string;
+    separator?: AttributeValueTemplate;
     disableOutputEscaping?: boolean;
     namespaces: object;
   },
@@ -592,9 +596,9 @@ export function valueOf(
   let separator = attributes.separator;
   if (!separator) {
     if (attributes.select) {
-      separator = " ";
+      separator = [" "];
     } else {
-      separator = "";
+      separator = [];
     }
   }
   let strs = evaluateXPath(
@@ -801,14 +805,18 @@ export function literalElement(
 
 export function attribute(
   context: DynamicContext,
-  data: { name: string; namespace?: string; namespaces: object },
+  data: {
+    name: AttributeValueTemplate;
+    namespace?: AttributeValueTemplate;
+    namespaces: object;
+  },
   func: SequenceConstructor,
 ) {
   const name = evaluateAttributeValueTemplate(context, data.name);
   const ns = determineNamespace(
     name,
     mkResolver(data.namespaces),
-    data.namespace,
+    evaluateAttributeValueTemplate(context, data.namespace),
   );
   const value = extractText(
     evaluateSequenceConstructorInTemporaryTree(context, func),
@@ -823,7 +831,7 @@ export function attribute(
 
 export function processingInstruction(
   context: DynamicContext,
-  data: { name: string; select?: string },
+  data: { name: AttributeValueTemplate; select?: string },
   func: SequenceConstructor,
 ) {
   const name = evaluateAttributeValueTemplate(context, data.name);
@@ -837,7 +845,11 @@ export function processingInstruction(
 
 export function element(
   context: DynamicContext,
-  data: { name: string; namespace?: string; namespaces: object },
+  data: {
+    name: AttributeValueTemplate;
+    namespace?: AttributeValueTemplate;
+    namespaces: object;
+  },
   func: SequenceConstructor,
 ) {
   const name = evaluateAttributeValueTemplate(context, data.name);
@@ -1057,24 +1069,23 @@ export function stripSpaceStylesheet(doc: any) {
 
 export function evaluateAttributeValueTemplate(
   context: DynamicContext,
-  avt: string,
+  avt: AttributeValueTemplate,
 ): string | undefined {
   if (!avt) {
     return undefined;
   }
-  return Array.from(avt.matchAll(/({[^}]+}|[^{}]+)/g))
-    .map((match) => {
-      const piece = match[0];
-      if (piece[0] === "{") {
+  return avt
+    .map((piece) => {
+      if (typeof piece === "string") {
+        return piece;
+      } else {
         return evaluateXPathToString(
-          piece.substring(1, piece.length - 1),
+          piece.xpath,
           context.contextItem,
           undefined,
           mergeVariableScopes(context.variableScopes),
           { currentContext: context },
         );
-      } else {
-        return piece;
       }
     })
     .join("");

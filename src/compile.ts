@@ -71,17 +71,6 @@ function buildInResolver(prefix: string) {
 }
 
 const simpleElements = new Map<string, SimpleElement>([
-  [
-    "attribute",
-    {
-      name: "attribute",
-      arguments: new Map([
-        ["name", undefined],
-        ["namespace", undefined],
-      ]),
-      hasChildren: true,
-    },
-  ],
   ["copy", { name: "copy", arguments: new Map(), hasChildren: true }],
   [
     "copy-of",
@@ -93,17 +82,6 @@ const simpleElements = new Map<string, SimpleElement>([
   ],
   ["document", { name: "document", arguments: new Map(), hasChildren: true }],
   [
-    "element",
-    {
-      name: "element",
-      arguments: new Map([
-        ["name", undefined],
-        ["namespace", undefined],
-      ]),
-      hasChildren: true,
-    },
-  ],
-  [
     "if",
     {
       name: "ifX",
@@ -112,32 +90,10 @@ const simpleElements = new Map<string, SimpleElement>([
     },
   ],
   [
-    "processing-instruction",
-    {
-      name: "processingInstruction",
-      arguments: new Map([
-        ["name", undefined],
-        ["select", undefined],
-      ]),
-      hasChildren: true,
-    },
-  ],
-  [
     "sequence",
     {
       name: "sequence",
       arguments: new Map([["select", undefined]]),
-      hasChildren: false,
-    },
-  ],
-  [
-    "value-of",
-    {
-      name: "valueOf",
-      arguments: new Map([
-        ["select", undefined],
-        ["separator", undefined],
-      ]),
       hasChildren: false,
     },
   ],
@@ -213,8 +169,8 @@ function compileSortKeyComponents(nodes: any[]) {
     if (node.localName === "sort") {
       const args = {
         namespaces: mkNamespaceArg(node),
-        order: mkLiteral(node.getAttribute("order")),
-        lang: mkLiteral(node.getAttribute("lang") || undefined),
+        order: compileAvt(node.getAttribute("order")),
+        lang: compileAvt(node.getAttribute("lang")),
         dataType: mkLiteral(node.getAttribute("data-type") || undefined),
       };
       if (node.hasChildNodes()) {
@@ -346,7 +302,7 @@ function mkResolver(node: any): NamespaceResolver {
 }
 
 function skipAttribute(attr: slimdom.Attr): boolean {
-  if (attr.namespaceURI === XMLNS_NSURI && attr.value === XSLT1_NSURI) {
+  if (attr.namespaceURI == XMLNS_NSURI && attr.value === XSLT1_NSURI) {
     return true;
   }
   return false;
@@ -362,12 +318,11 @@ function compileLiteralElementNode(node: any) {
     attributes.push(
       mkObject({
         name: mkLiteral(attr.name),
-        value: mkLiteral(attr.value),
+        value: compileAvt(attr.value),
         namespace: mkLiteral(attr.namespaceURI),
       }),
     );
   }
-
   /* The DOM API is so confusing... we don't need to do this with
      attributes. */
   let name = node.localName;
@@ -449,6 +404,8 @@ export function compileSequenceConstructorNode(node: any) {
         return compileSimpleElement(node);
       } else if (node.localName === "apply-templates") {
         return compileApplyTemplatesNode(node);
+      } else if (node.localName === "attribute") {
+        return compileAttributeNode(node);
       } else if (node.localName === "choose") {
         return compileChooseNode(node);
       } else if (node.localName === "call-template") {
@@ -459,6 +416,8 @@ export function compileSequenceConstructorNode(node: any) {
         // TODO
       } else if (node.localName === "comment") {
         // TODO
+      } else if (node.localName === "element") {
+        return compileElementNode(node);
       } else if (node.localName === "for-each") {
         return compileForEachNode(node);
       } else if (node.localName === "for-each-group") {
@@ -469,6 +428,8 @@ export function compileSequenceConstructorNode(node: any) {
         // TODO
       } else if (node.localName === "param") {
         // Handled by special case.
+      } else if (node.localName === "processing-instruction") {
+        return compileProcessingInstruction(node);
       } else if (node.localName === "sort") {
         // Handled by special case.
       } else if (node.localName === "text") {
@@ -482,6 +443,8 @@ export function compileSequenceConstructorNode(node: any) {
         return undefined;
       } else if (node.localName === "strip-space") {
         return undefined;
+      } else if (node.localName === "value-of") {
+        return compileValueOf(node);
       } else {
         throw new Error("Found unexpected XSL element: " + node.tagName);
       }
@@ -489,6 +452,46 @@ export function compileSequenceConstructorNode(node: any) {
       return compileLiteralElementNode(node);
     }
   }
+}
+
+function compileElementNode(node: slimdom.Element) {
+  const args = {
+    name: compileAvt(node.getAttribute("name")),
+    namespace: compileAvt(node.getAttribute("namespace")),
+    namespaces: mkNamespaceArg(node),
+  };
+  return compileFuncallWithChildren(node, "element", mkObject(args));
+}
+
+function compileAttributeNode(node: slimdom.Element) {
+  const args = {
+    name: compileAvt(node.getAttribute("name")),
+    namespace: compileAvt(node.getAttribute("namespace")),
+    namespaces: mkNamespaceArg(node),
+  };
+  return compileFuncallWithChildren(node, "attribute", mkObject(args));
+}
+
+function compileProcessingInstruction(node: slimdom.Element) {
+  const args = {
+    select: mkLiteral(node.getAttribute("select") || undefined),
+    name: compileAvt(node.getAttribute("name")),
+    namespaces: mkNamespaceArg(node),
+  };
+  return compileFuncallWithChildren(
+    node,
+    "processingInstruction",
+    mkObject(args),
+  );
+}
+
+function compileValueOf(node: slimdom.Element) {
+  const args = {
+    select: mkLiteral(node.getAttribute("select") || undefined),
+    separator: compileAvt(node.getAttribute("separator")),
+    namespaces: mkNamespaceArg(node),
+  };
+  return compileFuncall("valueOf", [mkObject(args)]);
 }
 
 function compileTextNode(node: any) {
@@ -701,6 +704,13 @@ export function compileAvtRaw(avt: string | undefined): any {
       }
     } else {
       if (inXpath) {
+        if (avt[i] === "'" || avt[i] === '"') {
+          /* In a silly exception, you don't need to escape braces in literals. Consume the literal. */
+          const quote = avt[i];
+          do {
+            xpathOutput.xpath += avt[i++];
+          } while (i < avt.length && avt[i] !== quote);
+        }
         xpathOutput.xpath += avt[i];
       } else {
         strOutput += avt[i];
@@ -716,4 +726,20 @@ export function compileAvtRaw(avt: string | undefined): any {
     }
   }
   return retval;
+}
+
+function compileAvt(avt: string) {
+  const avtRaw = compileAvtRaw(avt);
+  if (avtRaw === undefined) {
+    return mkLiteral(undefined);
+  }
+  return mkArray(
+    avtRaw.map((comp) => {
+      if (typeof comp === "string") {
+        return mkLiteral(comp);
+      } else {
+        return mkObject({ xpath: mkLiteral(comp.xpath) });
+      }
+    }),
+  );
 }
