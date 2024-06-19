@@ -856,6 +856,24 @@ export function comment(
   context.outputNode.appendChild(context.outputDocument.createComment(value));
 }
 
+export function namespace(
+  context: DynamicContext,
+  data: { name: AttributeValueTemplate; select?: string; namespaces: object },
+  func: SequenceConstructor,
+) {
+  const name = evaluateAttributeValueTemplate(context, data.name);
+  const resolver = mkResolver(data.namespaces);
+  const value = constructSimpleContent(context, data.select || func, resolver, [
+    "",
+  ]);
+  const attrNode = buildAttributeNode(context, {
+    name: `xmlns:${name}`,
+    namespace: XMLNS_NSURI,
+    value: value,
+  });
+  context.outputNode.setAttributeNode(attrNode);
+}
+
 export function element(
   context: DynamicContext,
   data: {
