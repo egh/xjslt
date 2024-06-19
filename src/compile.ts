@@ -417,7 +417,7 @@ export function compileSequenceConstructorNode(node: slimdom.Element) {
       } else if (node.localName === "key") {
         // TODO
       } else if (node.localName === "comment") {
-        // TODO
+        return compileCommentNode(node);
       } else if (node.localName === "element") {
         return compileElementNode(node);
       } else if (node.localName === "for-each") {
@@ -487,6 +487,14 @@ function compileProcessingInstruction(node: slimdom.Element) {
     "processingInstruction",
     mkObject(args),
   );
+}
+
+function compileCommentNode(node: slimdom.Element) {
+  const args = {
+    select: mkLiteral(node.getAttribute("select") || undefined),
+    namespaces: mkNamespaceArg(node),
+  };
+  return compileFuncallWithChildren(node, "comment", mkObject(args));
 }
 
 function compileValueOf(node: slimdom.Element) {

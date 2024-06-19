@@ -842,6 +842,20 @@ export function processingInstruction(
   );
 }
 
+export function comment(
+  context: DynamicContext,
+  data: { select?: string; namespaces: object },
+  func: SequenceConstructor,
+) {
+  const value = constructSimpleContent(
+    context,
+    data.select || func,
+    mkResolver(data.namespaces),
+    [""],
+  );
+  context.outputNode.appendChild(context.outputDocument.createComment(value));
+}
+
 export function element(
   context: DynamicContext,
   data: {
