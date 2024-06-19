@@ -34,6 +34,7 @@ import {
   stripSpaceStylesheet,
   valueOf,
   VariableScope,
+  Key,
 } from "../src/xjslt";
 import {
   compileAvtRaw,
@@ -151,6 +152,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     templates: templates,
     variableScopes: [new Map<string, any>()],
     inputURL: new URL("file:///fake.xml"),
+    keys: new Map(),
   };
   processNode(context, [], {});
   walkTree(doc, (node) => {
@@ -370,6 +372,7 @@ test("evaluateAttributeValueTemplate", () => {
     mode: "#default",
     variableScopes: [new Map<string, any>()],
     inputURL: new URL("file:///fake.xml"),
+    keys: new Map(),
   };
   expect(
     evaluateAttributeValueTemplate(
@@ -619,6 +622,7 @@ test("buildNode", () => {
     templates: [],
     variableScopes: [new Map<string, any>()],
     inputURL: new URL("file:///fake.xml"),
+    keys: new Map(),
   };
   let nodeA = buildNode(context, {
     name: "baz:foo",
@@ -651,6 +655,7 @@ test("buildAttributeNode", () => {
     templates: [],
     variableScopes: [new Map<string, any>()],
     inputURL: new URL("file:///fake.xml"),
+    keys: new Map(),
   };
   let nodeA = buildAttributeNode(context, {
     name: "baz:foo",
@@ -762,4 +767,15 @@ test("compileAvtRaw", () => {
   expect(() => {
     compileAvtRaw("fo}o");
   }).toThrow("XTSE0370");
+});
+
+test("key class", () => {
+  let key = new Key("foo", "@bar", {});
+  const dom = slimdom.parseXmlDocument(`
+<doc>
+<foo bar="1">one</foo>
+  </doc>`);
+  expect(key.lookup(dom, [], "1")).toEqual(
+    evaluateXPathToNodes("/doc/foo[@bar='1']", dom),
+  );
 });

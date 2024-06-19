@@ -886,8 +886,6 @@ export const KNOWN_SPEC_FAILURES = [
   "key-022",
   "key-023",
   "key-024",
-  "key-027",
-  "key-028",
   "key-029",
   "key-030",
   "key-031",

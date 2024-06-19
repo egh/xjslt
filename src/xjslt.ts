@@ -68,6 +68,69 @@ interface CompiledTemplate {
   importPrecedence: number;
 }
 
+/* Depth first node visit */
+export function visitNodes(node: any, visit: (node: any) => void) {
+  for (let childNode of node.childNodes) {
+    visitNodes(childNode, visit);
+  }
+  visit(node);
+}
+
+export class Key {
+  match: string;
+  use: string | SequenceConstructor;
+  namespaces: object;
+  cache: Map<slimdom.Document, Map<any, any>>;
+  constructor(
+    match: string,
+    use: string | SequenceConstructor,
+    namespaces: object,
+  ) {
+    this.match = match;
+    this.use = use;
+    this.namespaces = namespaces;
+    this.cache = new Map();
+  }
+  buildDocumentCache(
+    document: slimdom.Document,
+    variableScopes: VariableScope[],
+  ): Map<any, any> {
+    let docCache = new Map();
+    visitNodes(document, (node: any) => {
+      if (typeof this.use === "string") {
+        if (
+          nameTest(
+            this.match,
+            node,
+            variableScopes,
+            mkResolver(this.namespaces),
+          )
+        ) {
+          let key = evaluateXPathToString(this.use, node);
+          if (!docCache.has(key)) {
+            docCache.set(key, []);
+          }
+          docCache.set(key, docCache.get(key).concat(node));
+        }
+      }
+    });
+    return docCache;
+  }
+  lookup(
+    document: slimdom.Document,
+    variableScopes: VariableScope[],
+    value: string,
+  ) {
+    if (!this.cache.has(document)) {
+      this.cache.set(
+        document,
+        this.buildDocumentCache(document, variableScopes),
+      );
+    }
+    return this.cache.get(document).get(value);
+  }
+}
+
 interface DynamicContext {
   outputDocument: slimdom.Document;
   outputNode: any;
@@ -79,6 +142,7 @@ interface DynamicContext {
   inputURL: URL;
   currentGroup?: any[];
   currentGroupingKey?: string;
+  keys: Map<String, Key>;
 }
 
 type Generator = string | SequenceConstructor;
@@ -1305,6 +1369,22 @@ function fnCurrentGroup({ currentContext }) {
   return currentContext.currentGroup;
 }
 
+function fnKey({ currentContext }, name: string, value: any) {
+  const { keys, contextItem, variableScopes } =
+    currentContext as DynamicContext;
+  if (!keys.has(name)) {
+    throw new Error("XTDE1260");
+  }
+  const retval = keys
+    .get(name)
+    .lookup(contextItem.ownerDocument, variableScopes, value.textContent);
+  if (!retval) {
+    return [];
+  } else {
+    return retval;
+  }
+}
+
 registerCustomXPathFunction(
   { namespaceURI: XPATH_NSURI, localName: "doc" },
   ["xs:string"],
@@ -1324,6 +1404,20 @@ registerCustomXPathFunction(
   [],
   "item()*",
   fnCurrentGroup as (context: any) => any,
+);
+
+registerCustomXPathFunction(
+  { namespaceURI: XPATH_NSURI, localName: "key" },
+  ["xs:string", "item()"],
+  "node()*",
+  fnKey as (context: any, name: string, value: any) => any,
+);
+
+registerCustomXPathFunction(
+  { namespaceURI: XPATH_NSURI, localName: "key" },
+  ["xs:string", "item()*"],
+  "node()*",
+  fnKey as (context: any, name: string, value: any) => any,
 );
 
 /**

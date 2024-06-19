@@ -372,6 +372,8 @@ export function compileTopLevelNode(node: slimdom.Element) {
         return compileVariable(node);
       } else if (node.localName === "param") {
         return compileTopLevelParam(node);
+      } else if (node.localName === "key") {
+        return compileKeyNode(node);
       } else if (
         node.localName === "output" ||
         node.localName === "preserve-space" ||
@@ -382,7 +384,6 @@ export function compileTopLevelNode(node: slimdom.Element) {
         node.localName === "decimal-format" ||
         node.localName === "function" ||
         node.localName === "import-schema" ||
-        node.localName === "key" ||
         node.localName === "namespace-alias" ||
         node.localName === "output" ||
         node.localName === "preserve-space"
@@ -564,6 +565,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             mkNew(mkMember("slimdom", "Document"), []),
           ),
           mkLet(mkIdentifier("templates"), mkArray([])),
+          mkLet(mkIdentifier("keys"), mkNew(mkIdentifier("Map"), [])),
           {
             type: "IfStatement",
             test: {
@@ -595,9 +597,17 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               templates: mkIdentifier("templates"),
               variableScopes: mkArray([mkNew(mkIdentifier("Map"), [])]),
               inputURL: mkIdentifier("inputURL"),
+              keys: mkIdentifier("keys"),
             }),
           ),
-          /* First compile the templates */
+          /* First compile the keys */
+          ...compileNodeArray(
+            evaluateXPathToNodes("./xsl:key", node, null, null, {
+              namespaceResolver: buildInResolver,
+            }),
+            compileTopLevelNode,
+          ),
+          /* Then compile the templates */
           ...compileNodeArray(
             evaluateXPathToNodes("./xsl:template", node, null, null, {
               namespaceResolver: buildInResolver,
@@ -607,7 +617,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
           /* Then everything else */
           ...compileNodeArray(
             evaluateXPathToNodes(
-              "./xsl:*[local-name()!='template']",
+              "./xsl:*[local-name()!='template' and local-name()!='key']",
               node,
               null,
               null,
@@ -677,6 +687,23 @@ function compileTemplateNode(node: slimdom.Element): ExpressionStatement {
       priority: mkLiteral(node.getAttribute("priority") || undefined),
       importPrecedence: mkLiteral(1), // TODO
     }),
+  ]);
+}
+
+function compileKeyNode(node: slimdom.Element): ExpressionStatement {
+  let namespaces = getNodeNS(node);
+
+  return mkCall(mkMember("keys", "set"), [
+    mkLiteral(expandQname(node.getAttribute("name"), namespaces)),
+    mkNew(mkMember("xjslt", "Key"), [
+      mkLiteral(node.getAttribute("match")),
+      node.getAttribute("use")
+        ? mkLiteral(node.getAttribute("use"))
+        : mkArrowFun(
+            compileNodeArray(node.childNodes, compileSequenceConstructorNode),
+          ),
+      mkNamespaceArg(node),
+    ]),
   ]);
 }
 
