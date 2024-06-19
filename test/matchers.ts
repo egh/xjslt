@@ -30,7 +30,7 @@ export const domCompare = function (
       return [
         false,
         () =>
-          `expected ${that.utils.printReceived(a)} to have the same text data as ${that.utils.printReceived(b)}`,
+          `expected ${that.utils.printReceived(a.data)} to have the same text data as ${that.utils.printReceived(b.data)}`,
       ];
     }
   }
