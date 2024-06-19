@@ -468,6 +468,8 @@ function compileElementNode(node: slimdom.Element) {
 function compileAttributeNode(node: slimdom.Element) {
   const args = {
     name: compileAvt(node.getAttribute("name")),
+    separator: compileAvt(node.getAttribute("separator")),
+    select: mkLiteral(node.getAttribute("select") || undefined),
     namespace: compileAvt(node.getAttribute("namespace")),
     namespaces: mkNamespaceArg(node),
   };
@@ -493,7 +495,7 @@ function compileValueOf(node: slimdom.Element) {
     separator: compileAvt(node.getAttribute("separator")),
     namespaces: mkNamespaceArg(node),
   };
-  return compileFuncall("valueOf", [mkObject(args)]);
+  return compileFuncallWithChildren(node, "valueOf", mkObject(args));
 }
 
 function compileTextNode(node: slimdom.Element) {

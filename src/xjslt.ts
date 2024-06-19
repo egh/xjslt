@@ -34,11 +34,7 @@ import * as path from "path";
 import { tmpdir } from "os";
 import { mkdtemp } from "fs/promises";
 import * as slimdom from "slimdom";
-import {
-  compileStylesheetNode,
-  xpathstring,
-  AttributeValueTemplate,
-} from "./compile";
+import { compileStylesheetNode, AttributeValueTemplate } from "./compile";
 import { fileURLToPath, resolve } from "url";
 
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
@@ -177,7 +173,11 @@ function mkBuiltInTemplates(namespaces: object): Array<CompiledTemplate> {
     {
       match: "text()|@*",
       apply: (context: DynamicContext) => {
-        valueOf(context, { select: ".", namespaces: namespaces });
+        valueOf(
+          context,
+          { select: ".", namespaces: namespaces },
+          () => undefined,
+        );
       },
       allowedParams: [],
       modes: ["#all"],
@@ -404,11 +404,7 @@ function sortNodesHelperText(
   for (let node of nodes) {
     const newContext = { ...context, contextItem: node };
     keyed.push({
-      key: evaluateGeneratorToString(
-        newContext,
-        sort.sortKey,
-        namespaceResolver,
-      ),
+      key: constructSimpleContent(newContext, sort.sortKey, namespaceResolver),
       item: node,
     });
   }
@@ -589,33 +585,22 @@ export function copyOf(
 export function valueOf(
   context: DynamicContext,
   attributes: {
-    select: string;
+    select?: string;
     separator?: AttributeValueTemplate;
     disableOutputEscaping?: boolean;
     namespaces: object;
   },
+  func: SequenceConstructor,
 ) {
-  let separator = attributes.separator;
-  if (!separator) {
-    if (attributes.select) {
-      separator = [" "];
-    } else {
-      separator = [];
-    }
-  }
-  let strs = evaluateXPath(
-    attributes.select,
-    context.contextItem,
-    undefined,
-    mergeVariableScopes(context.variableScopes),
-    evaluateXPath.STRINGS_TYPE,
-    {
-      currentContext: context,
-      namespaceResolver: mkResolver(attributes.namespaces),
-    },
+  appendToTree(
+    constructSimpleContent(
+      context,
+      attributes.select || func,
+      mkResolver(attributes.namespaces),
+      attributes.separator,
+    ),
+    context,
   );
-  const str = strs.join(evaluateAttributeValueTemplate(context, separator));
-  appendToTree(str, context);
 }
 
 export function text(
@@ -626,9 +611,12 @@ export function text(
   },
   func: SequenceConstructor,
 ) {
-  const out = evaluateSequenceConstructorInTemporaryTree(context, func);
-  const newNode = context.outputDocument.createTextNode(extractText(out));
-  context.outputNode.appendChild(newNode);
+  appendToTree(
+    constructSimpleContent(context, func, mkResolver(attributes.namespaces), [
+      "",
+    ]),
+    context,
+  );
 }
 
 export function variable(context: DynamicContext, variable: VariableLike) {
@@ -811,17 +799,23 @@ export function attribute(
     name: AttributeValueTemplate;
     namespace?: AttributeValueTemplate;
     namespaces: object;
+    select?: string;
+    separator?: AttributeValueTemplate;
   },
   func: SequenceConstructor,
 ) {
   const name = evaluateAttributeValueTemplate(context, data.name);
+  const resolver = mkResolver(data.namespaces);
   const ns = determineNamespace(
     name,
-    mkResolver(data.namespaces),
+    resolver,
     evaluateAttributeValueTemplate(context, data.namespace),
   );
-  const value = extractText(
-    evaluateSequenceConstructorInTemporaryTree(context, func),
+  const value = constructSimpleContent(
+    context,
+    data.select || func,
+    resolver,
+    data.separator,
   );
   const attrNode = buildAttributeNode(context, {
     name: name,
@@ -833,12 +827,15 @@ export function attribute(
 
 export function processingInstruction(
   context: DynamicContext,
-  data: { name: AttributeValueTemplate; select?: string },
+  data: { name: AttributeValueTemplate; select?: string; namespaces: object },
   func: SequenceConstructor,
 ) {
   const name = evaluateAttributeValueTemplate(context, data.name);
-  const value = extractText(
-    evaluateSequenceConstructorInTemporaryTree(context, func),
+  const value = constructSimpleContent(
+    context,
+    data.select || func,
+    mkResolver(data.namespaces),
+    [""],
   );
   context.outputNode.appendChild(
     context.outputDocument.createProcessingInstruction(name, value),
@@ -1093,23 +1090,33 @@ export function evaluateAttributeValueTemplate(
     .join("");
 }
 
-function evaluateGeneratorToString(
+function constructSimpleContent(
   context: DynamicContext,
   generator: Generator,
   namespaceResolver: NamespaceResolver,
+  separator?: AttributeValueTemplate,
 ): any {
+  if (!separator) {
+    if (typeof generator === "string") {
+      separator = [" "];
+    } else {
+      separator = [];
+    }
+  }
+  const effectiveSeparator = evaluateAttributeValueTemplate(context, separator);
   if (typeof generator === "string") {
-    return evaluateXPathToString(
+    return evaluateXPath(
       generator,
       context.contextItem,
       undefined,
       mergeVariableScopes(context.variableScopes),
+      evaluateXPath.STRINGS_TYPE,
       { currentContext: context, namespaceResolver: namespaceResolver },
-    );
+    ).join(effectiveSeparator);
   } else {
     return extractText(
       evaluateSequenceConstructorInTemporaryTree(context, generator),
-    );
+    ).join(effectiveSeparator);
   }
 }
 
@@ -1163,12 +1170,12 @@ function evaluateSequenceConstructorInTemporaryTree(
 /**
  * Extract text content of a document.
  */
-function extractText(document: any) {
-  let str = "";
+function extractText(document: any): string[] {
+  let strs = [];
   /* https://www.w3.org/TR/xslt20/#creating-text-nodes */
   function walkTree(node: any): void {
-    if (node.nodeType == slimdom.Node.TEXT_NODE) {
-      str += node.data;
+    if (node.nodeType == slimdom.Node.TEXT_NODE && node.data !== "") {
+      strs = strs.concat(node.data);
     }
     if (node.childNodes) {
       for (let child of node.childNodes) {
@@ -1177,7 +1184,7 @@ function extractText(document: any) {
     }
   }
   walkTree(document);
-  return str;
+  return strs;
 }
 
 /* Implement algorithm to determine a namespace for a name. Takes a

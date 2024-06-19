@@ -115,7 +115,11 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     importPrecedence: 1,
     apply: function (context) {
       literalText(context, "Article -\n");
-      valueOf(context, { select: "/Article/Title", namespaces: {} });
+      valueOf(
+        context,
+        { select: "/Article/Title", namespaces: {} },
+        () => undefined,
+      );
       literalText(context, "\nAuthors:");
       applyTemplates(context, {
         select: "/Article/Authors/Author",
@@ -133,7 +137,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     importPrecedence: 1,
     apply: function (context) {
       literalText(context, "\n- ");
-      valueOf(context, { select: ".", namespaces: {} });
+      valueOf(context, { select: ".", namespaces: {} }, () => undefined);
     },
   });
 
@@ -205,7 +209,7 @@ test("compileValueOfNode", () => {
       GENERATE_OPTS,
     ),
   ).toEqual(
-    'xjslt.valueOf(context, {"select": "/Article/Title","separator": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}});',
+    'xjslt.valueOf(context, {"select": "/Article/Title","separator": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}}, context => {});',
   );
 });
 
@@ -286,7 +290,7 @@ test("compileLiteralElementNode", () => {
       GENERATE_OPTS,
     ),
   ).toEqual(
-    'xjslt.literalElement(context, {"name": "heading","attributes": [{"name": "type","value": ["top"],"namespace": null}],"namespace": null}, context => {xjslt.valueOf(context, {"select": "Title","separator": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}});});',
+    'xjslt.literalElement(context, {"name": "heading","attributes": [{"name": "type","value": ["top"],"namespace": null}],"namespace": null}, context => {xjslt.valueOf(context, {"select": "Title","separator": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}}, context => {});});',
   );
 });
 
@@ -305,7 +309,7 @@ test("compileLiteralElementNode with namespace", () => {
       GENERATE_OPTS,
     ),
   ).toEqual(
-    'xjslt.literalElement(context, {"name": "foo:node","attributes": [{"name": "xmlns:foo","value": ["http://example.org/foo"],"namespace": "http://www.w3.org/2000/xmlns/"}],"namespace": "http://example.org/foo"}, context => {xjslt.valueOf(context, {"select": ".","separator": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform","foo": "http://example.org/foo"}});});',
+    'xjslt.literalElement(context, {"name": "foo:node","attributes": [{"name": "xmlns:foo","value": ["http://example.org/foo"],"namespace": "http://www.w3.org/2000/xmlns/"}],"namespace": "http://example.org/foo"}, context => {xjslt.valueOf(context, {"select": ".","separator": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform","foo": "http://example.org/foo"}}, context => {});});',
   );
 });
 
