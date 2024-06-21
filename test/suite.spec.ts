@@ -224,7 +224,7 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
         ) {
           const stylesheetFile = path.join(
             rootDir,
-            evaluateXPathToString("test/stylesheet/@file", testCase),
+            evaluateXPathToString("test/stylesheet[1]/@file", testCase),
           );
           const initialMode =
             evaluateXPathToString("test/initial-mode/@name", testCase) ||

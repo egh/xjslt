@@ -20,13 +20,13 @@ Tested with [node 20](https://nodejs.org/)
 - `variable`
 - namespaces
 - `sort`
+- `include`
 
 # Incompletely supported features
 
 - `for-each-group` (only `group-by` supported)
-
+- `import` (precedence not supported)
 # TODO (not yet implemented)
-- [ ] `include` / `import`
 - [ ] `strip-space`/`preserve-space`
 - [ ] `output`
 - [ ] `attribute-set`

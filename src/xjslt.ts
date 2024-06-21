@@ -35,8 +35,10 @@ import { tmpdir } from "os";
 import { mkdtemp } from "fs/promises";
 import * as slimdom from "slimdom";
 import { compileStylesheetNode, AttributeValueTemplate } from "./compile";
-import { fileURLToPath, resolve } from "url";
+import { fileURLToPath, resolve, pathToFileURL } from "url";
 import { transform as preprocessSimplified } from "./preprocessSimplified";
+import { transform as preprocessInclude } from "./preprocessInclude";
+import { transform as preprocessImport } from "./preprocessImport";
 
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
 export const XMLNS_NSURI = "http://www.w3.org/2000/xmlns/";
@@ -1455,6 +1457,17 @@ export async function buildStylesheet(xsltPath: string) {
     )
   ) {
     xsltDoc = preprocessSimplified(xsltDoc);
+  }
+  let counter = 0;
+  while (
+    evaluateXPathToBoolean("//xsl:include|//xsl:import", xsltDoc, null, null, {
+      namespaceResolver: mkResolver({ xsl: XSLT1_NSURI }),
+    })
+  ) {
+    xsltDoc = preprocessInclude(xsltDoc, pathToFileURL(xsltPath));
+    xsltDoc = preprocessImport(xsltDoc, pathToFileURL(xsltPath));
+    if (counter > 100) throw new Error("Import level too deep!");
+    counter++;
   }
   writeFileSync(
     tempfile,
