@@ -36,6 +36,7 @@ import { mkdtemp } from "fs/promises";
 import * as slimdom from "slimdom";
 import { compileStylesheetNode, AttributeValueTemplate } from "./compile";
 import { fileURLToPath, resolve } from "url";
+import { transform as preprocessSimplified } from "./preprocessSimplified";
 
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
 export const XMLNS_NSURI = "http://www.w3.org/2000/xmlns/";
@@ -1441,9 +1442,20 @@ export async function buildStylesheet(xsltPath: string) {
   );
   symlinkSync(path.join(root_dir, "dist"), path.join(tempdir, "dist"));
   var tempfile = path.join(tempdir, "transform.js");
-  const xsltDoc = stripSpaceStylesheet(
+  let xsltDoc = stripSpaceStylesheet(
     slimdom.parseXmlDocument(readFileSync(xsltPath).toString()),
   );
+  if (
+    !evaluateXPathToBoolean(
+      "/xsl:stylesheet|/xsl:transform",
+      xsltDoc,
+      null,
+      null,
+      { namespaceResolver: mkResolver({ xsl: XSLT1_NSURI }) },
+    )
+  ) {
+    xsltDoc = preprocessSimplified(xsltDoc);
+  }
   writeFileSync(
     tempfile,
     generate(compileStylesheetNode(xsltDoc.documentElement)),
