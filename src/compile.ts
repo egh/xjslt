@@ -43,7 +43,7 @@ import {
   Statement,
 } from "estree";
 import * as slimdom from "slimdom";
-import { evaluateXPathToNodes } from "fontoxpath";
+import { evaluateXPathToBoolean, evaluateXPathToNodes } from "fontoxpath";
 import { XSLT1_NSURI, XMLNS_NSURI, NamespaceResolver } from "./xjslt";
 
 /**
@@ -366,6 +366,12 @@ export function getNodeNS(node: slimdom.Element, retval: object = undefined) {
 export function compileTopLevelNode(node: slimdom.Element) {
   if (node.nodeType === slimdom.Node.ELEMENT_NODE) {
     if (node.namespaceURI === XSLT1_NSURI) {
+      if (
+        node.hasAttribute("use-when") &&
+        !evaluateXPathToBoolean(node.getAttribute("use-when"))
+      ) {
+        return undefined;
+      }
       if (node.localName === "template") {
         return compileTemplateNode(node);
       } else if (node.localName === "variable") {
@@ -403,6 +409,12 @@ export function compileSequenceConstructorNode(node: slimdom.Element) {
     return compileLiteralTextNode(node);
   } else if (node.nodeType === slimdom.Node.ELEMENT_NODE) {
     if (node.namespaceURI === XSLT1_NSURI) {
+      if (
+        node.hasAttribute("use-when") &&
+        !evaluateXPathToBoolean(node.getAttribute("use-when"))
+      ) {
+        return undefined;
+      }
       if (simpleElements.has(node.localName)) {
         return compileSimpleElement(node);
       } else if (node.localName === "apply-templates") {
