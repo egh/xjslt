@@ -1394,7 +1394,7 @@ function fnCurrentGroup({ currentContext }) {
   return currentContext.currentGroup;
 }
 
-function fnKey({ currentContext }, name: string, value: any) {
+function fnKey({ currentContext }, name: string, value: any[]) {
   const { keys, contextItem, variableScopes } =
     currentContext as DynamicContext;
   if (!keys.has(name)) {
@@ -1402,7 +1402,11 @@ function fnKey({ currentContext }, name: string, value: any) {
   }
   const retval = keys
     .get(name)
-    .lookup(contextItem.ownerDocument, variableScopes, value.textContent);
+    .lookup(
+      contextItem.ownerDocument,
+      variableScopes,
+      value.map((s) => s.textContent).join(""),
+    );
   if (!retval) {
     return [];
   } else {
@@ -1433,7 +1437,7 @@ registerCustomXPathFunction(
 
 registerCustomXPathFunction(
   { namespaceURI: XPATH_NSURI, localName: "key" },
-  ["xs:string", "item()"],
+  ["xs:string", "item()*"],
   "node()*",
   fnKey as (context: any, name: string, value: any) => any,
 );
