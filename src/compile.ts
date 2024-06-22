@@ -383,8 +383,6 @@ export function compileTopLevelNode(node: slimdom.Element) {
       } else if (
         node.localName === "output" ||
         node.localName === "preserve-space" ||
-        node.localName === "import" ||
-        node.localName === "include" ||
         node.localName === "attribute-set" ||
         node.localName === "character-map" ||
         node.localName === "decimal-format" ||
@@ -425,10 +423,6 @@ export function compileSequenceConstructorNode(node: slimdom.Element) {
         return compileChooseNode(node);
       } else if (node.localName === "call-template") {
         return compileCallTemplate(node);
-      } else if (node.localName === "copy-of") {
-        // TODO
-      } else if (node.localName === "key") {
-        // TODO
       } else if (node.localName === "comment") {
         return compileCommentNode(node);
       } else if (node.localName === "element") {
@@ -457,6 +451,7 @@ export function compileSequenceConstructorNode(node: slimdom.Element) {
         node.localName === "output" ||
         node.localName === "preserve-space"
       ) {
+        // TODO
         return undefined;
       } else if (node.localName === "strip-space") {
         return undefined;
