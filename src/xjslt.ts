@@ -614,6 +614,22 @@ export function copy(
       node.namespaceURI,
       node.prefix ? `${node.prefix}:${node.localName}` : node.localName,
     );
+    // We maybe shouldn't do this, but in some cases we need to copy
+    // nodes & their namespaces & retain the namespaces even if not a
+    // single node beneath it uses the namespace. e.g.
+    // <xsl:template match="foo:bar" xmlns:foo="...">
+    //   <out/>
+    // </xsl:template>
+    for (let attribute of node.attributes) {
+      if (attribute.namespaceURI === XMLNS_NSURI) {
+        const name = attribute.localName;
+        newNode.setAttributeNode(
+          context.outputDocument.importNode(
+            node.getAttributeNodeNS(XMLNS_NSURI, name),
+          ),
+        );
+      }
+    }
   } else if (node.nodeType === slimdom.Node.DOCUMENT_NODE) {
     newNode = undefined;
   } else {
