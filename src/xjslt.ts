@@ -141,17 +141,17 @@ interface DynamicContext {
   mode: string;
   templates: Array<CompiledTemplate>;
   variableScopes: Array<VariableScope>;
-  nextMatches?: Array<CompiledTemplate>;
+  nextMatches?: Generator<CompiledTemplate>;
   inputURL: URL;
   currentGroup?: any[];
   currentGroupingKey?: string;
   keys: Map<String, Key>;
 }
 
-type Generator = string | SequenceConstructor;
+type Constructor = string | SequenceConstructor;
 
 interface SortKeyComponent {
-  sortKey: Generator;
+  sortKey: Constructor;
   order?: AttributeValueTemplate;
   lang?: AttributeValueTemplate;
   dataType?: string;
@@ -159,7 +159,7 @@ interface SortKeyComponent {
 
 interface VariableLike {
   name: string;
-  content: undefined | Generator;
+  content: undefined | Constructor;
   namespaces: object;
 }
 
@@ -205,19 +205,22 @@ function nameTest(
  *
  * @returns The template, or undefined if none can be found to match this node.
  */
-function getTemplates(
+function* getTemplates(
   node: any,
   templates: Array<CompiledTemplate>,
   variableScopes: Array<VariableScope>,
   mode: string,
   namespaces: object,
-): Array<CompiledTemplate> {
-  return templates.filter(
-    (template) =>
+): Generator<CompiledTemplate> {
+  for (let template of templates) {
+    if (
       (template.modes.includes(mode) || template.modes[0] === "#all") &&
       template.match &&
-      nameTest(template.match, node, variableScopes, mkResolver(namespaces)),
-  );
+      nameTest(template.match, node, variableScopes, mkResolver(namespaces))
+    ) {
+      yield template;
+    }
+  }
 }
 
 function mkBuiltInTemplates(namespaces: object): Array<CompiledTemplate> {
@@ -383,7 +386,7 @@ export function processNode(
   namespaces: object,
 ) {
   let allTemplates = [...context.templates, ...mkBuiltInTemplates(namespaces)];
-
+  sortTemplates(allTemplates);
   let templates = getTemplates(
     context.contextItem,
     allTemplates,
@@ -391,11 +394,11 @@ export function processNode(
     context.mode,
     namespaces,
   );
-  sortTemplates(templates);
-  if (templates.length > 0) {
+  const next = templates.next();
+  if (!next.done) {
     evaluateTemplate(
-      templates[0],
-      { ...context, nextMatches: templates.slice(1) },
+      next.value,
+      { ...context, nextMatches: templates },
       params,
     );
   }
@@ -409,11 +412,14 @@ export function nextMatch(
   },
 ) {
   const nextMatches = context.nextMatches;
-  evaluateTemplate(
-    nextMatches[0],
-    { ...context, nextMatches: nextMatches.slice(1) },
-    attributes.params,
-  );
+  const next = nextMatches.next();
+  if (!next.done) {
+    evaluateTemplate(
+      next.value,
+      { ...context, nextMatches: nextMatches },
+      attributes.params,
+    );
+  }
 }
 
 function sortNodesHelper(
@@ -1191,7 +1197,7 @@ export function evaluateAttributeValueTemplate(
 
 function constructSimpleContent(
   context: DynamicContext,
-  generator: Generator,
+  generator: Constructor,
   namespaceResolver: NamespaceResolver,
   separator?: AttributeValueTemplate,
 ): any {
