@@ -771,7 +771,10 @@ export function literalText(context: DynamicContext, text: string) {
 
 /* Return true if we output a string. */
 function appendToTree(thing: any, context: DynamicContext) {
-  if (thing instanceof slimdom.Node) {
+  if (thing instanceof slimdom.Attr) {
+    let newNode = context.outputDocument.importNode(thing, true);
+    context.outputNode.setAttributeNode(newNode);
+  } else if (thing instanceof slimdom.Node) {
     if (thing.nodeType == slimdom.Node.DOCUMENT_NODE) {
       thing = (thing as slimdom.Document).documentElement;
       if (thing.localName === "xsl:document") {
@@ -783,9 +786,10 @@ function appendToTree(thing: any, context: DynamicContext) {
   } else {
     let str = thing.toString();
     if (str !== "") {
-      context.outputNode.appendChild(
-        context.outputDocument.createTextNode(str),
-      );
+      const newNode = context.outputDocument.createTextNode(str);
+      if (newNode) {
+        context.outputNode.appendChild(newNode);
+      }
       return true;
     }
   }
