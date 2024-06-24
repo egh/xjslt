@@ -1471,6 +1471,30 @@ function fnKey({ currentContext }, name: string, value: any[]) {
   }
 }
 
+function fnSystemProperty(_, property: string) {
+  if (property.split(":")[1] === "version") {
+    return "2.0";
+  } else if (property.split(":")[1] === "vendor") {
+    return "Erik Hetzner";
+  } else if (property.split(":")[1] === "vendor-url") {
+    return "https://github.com/egh/xjslt";
+  } else if (property.split(":")[1] === "product-name") {
+    return "xjslt";
+  } else if (property.split(":")[1] === "product-version") {
+    return "0.1";
+  } else if (property.split(":")[1] === "supports-backwards-compatibility") {
+    return "no";
+  } else if (property.split(":")[1] === "is-schema-aware") {
+    return "no";
+  } else if (property.split(":")[1] === "supports-serialization") {
+    return "no";
+  } else if (property.split(":")[1] === "supports-backwards-compatibility") {
+    return "no";
+  } else {
+    return "";
+  }
+}
+
 registerCustomXPathFunction(
   { namespaceURI: XPATH_NSURI, localName: "doc" },
   ["xs:string"],
@@ -1504,6 +1528,13 @@ registerCustomXPathFunction(
   ["xs:string", "item()*"],
   "node()*",
   fnKey as (context: any, name: string, value: any) => any,
+);
+
+registerCustomXPathFunction(
+  { namespaceURI: XPATH_NSURI, localName: "system-property" },
+  ["xs:string"],
+  "xs:string",
+  fnSystemProperty as (context: any, name: string) => string,
 );
 
 /**
