@@ -184,6 +184,24 @@ function withCached<T>(
   }
   return cache.get(key);
 }
+
+/* Fast check to see if a pattern will not match. Will return true if
+   it will never match, false if it might be a match.*/
+function failFast(pattern: string, node: slimdom.Node) {
+  /* This should work, but doesn't */
+  // let bucket = getBucketForSelector(pattern);
+  // if (bucket && !getBucketsForNode(node).includes(bucket)) {
+  //   return true;
+  // }
+  if (pattern.match(/^[a-z]+$/) && !(node instanceof slimdom.Element)) {
+    return true;
+  }
+  if (pattern.match(/^@[a-z]+$/) && !(node instanceof slimdom.Attr)) {
+    return true;
+  }
+  return false;
+}
+
 /* Implementation of https://www.w3.org/TR/xslt11/#patterns */
 function nameTest(
   nameTestCache: LRUCache<string, Set<slimdom.Node>> | undefined,
@@ -198,28 +216,30 @@ function nameTest(
   let checkContext: slimdom.Node = node;
   /* Using ancestors as the potential contexts */
   while (checkContext) {
-    const nodeId = evaluateXPathToString("generate-id(.)", checkContext);
-    const matches = withCached(nameTestCache, `${name}-${nodeId}`, () => {
-      return new Set(
-        evaluateXPathToNodes(
-          name,
-          checkContext,
-          undefined,
-          /* TODO: Only top level variables are applicable here, so top
-           level variables could be cached. */
-          mergeVariableScopes(variableScopes),
-          { namespaceResolver: nsResolver },
-        ),
-      );
-    });
-    /* It counts as a match if the node we were testing against is in the resulting node set. */
-    if (matches.has(node)) {
-      return true;
-    } else {
-      checkContext =
-        checkContext.parentNode ||
-        (checkContext instanceof slimdom.Attr && checkContext.ownerElement);
+    if (!failFast(name, node)) {
+      const nodeId = evaluateXPathToString("generate-id(.)", checkContext);
+      const matches = withCached(nameTestCache, `${name}-${nodeId}`, () => {
+        return new Set(
+          evaluateXPathToNodes(
+            name,
+            checkContext,
+            undefined,
+            /* TODO: Only top level variables are applicable here, so top
+             level variables could be cached. */
+            mergeVariableScopes(variableScopes),
+            { namespaceResolver: nsResolver },
+          ),
+        );
+      });
+      /* It counts as a match if the node we were testing against is in the resulting node set. */
+      if (matches.has(node)) {
+        return true;
+      }
     }
+    /* Match not found, continue up the tree */
+    checkContext =
+      checkContext.parentNode ||
+      (checkContext instanceof slimdom.Attr && checkContext.ownerElement);
   }
   return false;
 }
