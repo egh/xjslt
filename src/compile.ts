@@ -605,6 +605,9 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               variableScopes: mkArray([mkNew(mkIdentifier("Map"), [])]),
               inputURL: mkIdentifier("inputURL"),
               keys: mkIdentifier("keys"),
+              nameTestCache: mkNew(mkMember("LRUCache", "LRUCache"), [
+                mkObject({ max: mkLiteral(10000) }),
+              ]),
             }),
           ),
           /* First compile the keys */

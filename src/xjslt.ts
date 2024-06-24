@@ -39,6 +39,7 @@ import { fileURLToPath, resolve, pathToFileURL } from "url";
 import { transform as preprocessSimplified } from "./preprocessSimplified";
 import { transform as preprocessInclude } from "./preprocessInclude";
 import { transform as preprocessImport } from "./preprocessImport";
+import { LRUCache } from "lru-cache";
 
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
 export const XMLNS_NSURI = "http://www.w3.org/2000/xmlns/";
@@ -95,6 +96,7 @@ export class Key {
     this.cache = new Map();
   }
   buildDocumentCache(
+    nameTestCache: LRUCache<string, Set<slimdom.Node>>,
     document: slimdom.Document,
     variableScopes: VariableScope[],
   ): Map<any, any> {
@@ -103,6 +105,7 @@ export class Key {
       if (typeof this.use === "string") {
         if (
           nameTest(
+            nameTestCache,
             this.match,
             node,
             variableScopes,
@@ -120,6 +123,7 @@ export class Key {
     return docCache;
   }
   lookup(
+    nameTestCache: LRUCache<string, Set<slimdom.Node>>,
     document: slimdom.Document,
     variableScopes: VariableScope[],
     value: string,
@@ -127,14 +131,14 @@ export class Key {
     if (!this.cache.has(document)) {
       this.cache.set(
         document,
-        this.buildDocumentCache(document, variableScopes),
+        this.buildDocumentCache(nameTestCache, document, variableScopes),
       );
     }
     return this.cache.get(document).get(value);
   }
 }
 
-interface DynamicContext {
+export interface DynamicContext {
   outputDocument: slimdom.Document;
   outputNode: any;
   contextItem: any;
@@ -146,6 +150,7 @@ interface DynamicContext {
   currentGroup?: any[];
   currentGroupingKey?: string;
   keys: Map<String, Key>;
+  nameTestCache: LRUCache<string, Set<slimdom.Node>>;
 }
 
 type Constructor = string | SequenceConstructor;
@@ -169,27 +174,46 @@ function mkResolver(namespaces: object) {
   };
 }
 
+function withCached<T>(
+  cache: LRUCache<string, T>,
+  key: string,
+  thunk: () => T,
+): T {
+  if (!cache.has(key)) {
+    cache.set(key, thunk());
+  }
+  return cache.get(key);
+}
 /* Implementation of https://www.w3.org/TR/xslt11/#patterns */
 function nameTest(
+  nameTestCache: LRUCache<string, Set<slimdom.Node>> | undefined,
   name: string,
   node: slimdom.Element,
   variableScopes: Array<VariableScope>,
   nsResolver: NamespaceResolver,
-) {
+): boolean {
+  if (!nameTestCache) {
+    nameTestCache = new LRUCache({ max: 1 });
+  }
   let checkContext: slimdom.Node = node;
   /* Using ancestors as the potential contexts */
   while (checkContext) {
-    const matches = evaluateXPathToNodes(
-      name,
-      checkContext,
-      undefined,
-      /* TODO: Only top level variables are applicable here, so top
-         level variables could be cached. */
-      mergeVariableScopes(variableScopes),
-      { namespaceResolver: nsResolver },
-    );
+    const nodeId = evaluateXPathToString("generate-id(.)", checkContext);
+    const matches = withCached(nameTestCache, `${name}-${nodeId}`, () => {
+      return new Set(
+        evaluateXPathToNodes(
+          name,
+          checkContext,
+          undefined,
+          /* TODO: Only top level variables are applicable here, so top
+           level variables could be cached. */
+          mergeVariableScopes(variableScopes),
+          { namespaceResolver: nsResolver },
+        ),
+      );
+    });
     /* It counts as a match if the node we were testing against is in the resulting node set. */
-    if (matches.includes(node)) {
+    if (matches.has(node)) {
       return true;
     } else {
       checkContext =
@@ -206,6 +230,7 @@ function nameTest(
  * @returns The template, or undefined if none can be found to match this node.
  */
 function* getTemplates(
+  nameTestCache: LRUCache<string, Set<slimdom.Node>>,
   node: any,
   templates: Array<CompiledTemplate>,
   variableScopes: Array<VariableScope>,
@@ -216,7 +241,13 @@ function* getTemplates(
     if (
       (template.modes.includes(mode) || template.modes[0] === "#all") &&
       template.match &&
-      nameTest(template.match, node, variableScopes, mkResolver(namespaces))
+      nameTest(
+        nameTestCache,
+        template.match,
+        node,
+        variableScopes,
+        mkResolver(namespaces),
+      )
     ) {
       yield template;
     }
@@ -388,6 +419,7 @@ export function processNode(
   let allTemplates = [...context.templates, ...mkBuiltInTemplates(namespaces)];
   sortTemplates(allTemplates);
   let templates = getTemplates(
+    context.nameTestCache,
     context.contextItem,
     allTemplates,
     context.variableScopes,
@@ -1143,7 +1175,7 @@ function preserveSpace(
   nsResolver: (prefix: string) => string,
 ) {
   for (let name of preserve) {
-    if (nameTest(name, node, [], nsResolver)) {
+    if (nameTest(undefined, name, node, [], nsResolver)) {
       return true;
     }
   }
@@ -1399,7 +1431,7 @@ function fnCurrentGroup({ currentContext }) {
 }
 
 function fnKey({ currentContext }, name: string, value: any[]) {
-  const { keys, contextItem, variableScopes } =
+  const { keys, contextItem, variableScopes, nameTestCache } =
     currentContext as DynamicContext;
   if (!keys.has(name)) {
     throw new Error("XTDE1260");
@@ -1407,6 +1439,7 @@ function fnKey({ currentContext }, name: string, value: any[]) {
   const retval = keys
     .get(name)
     .lookup(
+      nameTestCache,
       contextItem.ownerDocument,
       variableScopes,
       value.map((s) => s.textContent).join(""),

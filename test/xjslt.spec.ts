@@ -25,6 +25,7 @@ import {
   buildStylesheet,
   computeDefaultPriority,
   determineNamespace,
+  DynamicContext,
   evaluateAttributeValueTemplate,
   extendScope,
   literalText,
@@ -36,6 +37,7 @@ import {
   VariableScope,
   Key,
 } from "../src/xjslt";
+import { LRUCache } from "lru-cache";
 import {
   compileAvtRaw,
   compileSequenceConstructorNode,
@@ -144,7 +146,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
 
   const doc = new slimdom.Document();
   doc.appendChild(doc.createElement("root"));
-  let context = {
+  let context: DynamicContext = {
     outputDocument: doc,
     outputNode: doc.documentElement,
     contextItem: document,
@@ -153,6 +155,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     variableScopes: [new Map<string, any>()],
     inputURL: new URL("file:///fake.xml"),
     keys: new Map(),
+    nameTestCache: new LRUCache<string, Set<slimdom.Node>>({ max: 100 }),
   };
   processNode(context, [], {});
   walkTree(doc, (node) => {
@@ -373,6 +376,7 @@ test("evaluateAttributeValueTemplate", () => {
     variableScopes: [new Map<string, any>()],
     inputURL: new URL("file:///fake.xml"),
     keys: new Map(),
+    nameTestCache: new LRUCache<string, Set<slimdom.Node>>({ max: 100 }),
   };
   expect(
     evaluateAttributeValueTemplate(
@@ -623,6 +627,7 @@ test("buildNode", () => {
     variableScopes: [new Map<string, any>()],
     inputURL: new URL("file:///fake.xml"),
     keys: new Map(),
+    nameTestCache: new LRUCache<string, Set<slimdom.Node>>({ max: 100 }),
   };
   let nodeA = buildNode(context, {
     name: "baz:foo",
@@ -656,6 +661,7 @@ test("buildAttributeNode", () => {
     variableScopes: [new Map<string, any>()],
     inputURL: new URL("file:///fake.xml"),
     keys: new Map(),
+    nameTestCache: new LRUCache<string, Set<slimdom.Node>>({ max: 100 }),
   };
   let nodeA = buildAttributeNode(context, {
     name: "baz:foo",
@@ -775,7 +781,12 @@ test("key class", () => {
 <doc>
 <foo bar="1">one</foo>
   </doc>`);
-  expect(key.lookup(dom, [], "1")).toEqual(
-    evaluateXPathToNodes("/doc/foo[@bar='1']", dom),
-  );
+  expect(
+    key.lookup(
+      new LRUCache<string, Set<slimdom.Node>>({ max: 100 }),
+      dom,
+      [],
+      "1",
+    ),
+  ).toEqual(evaluateXPathToNodes("/doc/foo[@bar='1']", dom));
 });
