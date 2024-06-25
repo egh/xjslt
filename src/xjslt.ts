@@ -275,18 +275,11 @@ function* getTemplates(
 }
 
 function mkBuiltInTemplates(namespaces: object): Array<CompiledTemplate> {
+  /* Pre-sorted in order of default priority */
   return [
     {
-      match: "*|/",
-      apply: (context: DynamicContext) => {
-        applyTemplates(context, {
-          select: "child::node()",
-          params: [],
-          mode: "#current",
-          namespaces: namespaces,
-          sortKeyComponents: [],
-        });
-      },
+      match: "processing-instruction()|comment()",
+      apply: (_context: DynamicContext) => {},
       allowedParams: [],
       modes: ["#all"],
       importPrecedence: -Number.MAX_VALUE,
@@ -305,8 +298,16 @@ function mkBuiltInTemplates(namespaces: object): Array<CompiledTemplate> {
       importPrecedence: -Number.MAX_VALUE,
     },
     {
-      match: "processing-instruction()|comment()",
-      apply: (_context: DynamicContext) => {},
+      match: "*|/",
+      apply: (context: DynamicContext) => {
+        applyTemplates(context, {
+          select: "child::node()",
+          params: [],
+          mode: "#current",
+          namespaces: namespaces,
+          sortKeyComponents: [],
+        });
+      },
       allowedParams: [],
       modes: ["#all"],
       importPrecedence: -Number.MAX_VALUE,
@@ -436,12 +437,10 @@ export function processNode(
   params: VariableLike[],
   namespaces: object,
 ) {
-  let allTemplates = [...context.templates, ...mkBuiltInTemplates(namespaces)];
-  sortTemplates(allTemplates);
   let templates = getTemplates(
     context.nameTestCache,
     context.contextItem,
-    allTemplates,
+    context.templates.concat(mkBuiltInTemplates(namespaces)),
     context.variableScopes,
     context.mode,
     namespaces,

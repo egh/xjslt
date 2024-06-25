@@ -328,7 +328,6 @@ export const KNOWN_SPEC_FAILURES = [
   "call-template-0901",
   "call-template-1401",
   "call-template-1801",
-  "call-template-1802",
   "call-template-1803",
   "castable-002",
   "castable-003",

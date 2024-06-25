@@ -1,6 +1,7 @@
 let slimdom = require("slimdom");
 let fontoxpath = require("fontoxpath");
 let xjslt = require("./xjslt");
+let LRUCache = require("lru-cache");
 function transform(document, inputURL, initialMode) {
   const doc = new slimdom.Document();
   let templates = [];
@@ -17,6 +18,9 @@ function transform(document, inputURL, initialMode) {
     variableScopes: [new Map()],
     inputURL: inputURL,
     keys: keys,
+    nameTestCache: new LRUCache.LRUCache({
+      max: 10000,
+    }),
   };
   templates.push({
     match: "/",
@@ -125,6 +129,7 @@ function transform(document, inputURL, initialMode) {
     priority: undefined,
     importPrecedence: 1,
   });
+  xjslt.sortTemplates(templates);
   xjslt.processNode(context, [], {
     xsl: "http://www.w3.org/1999/XSL/Transform",
   });

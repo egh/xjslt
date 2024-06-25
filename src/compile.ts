@@ -624,6 +624,9 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             }),
             compileTopLevelNode,
           ),
+          mkCall(mkMember("xjslt", "sortTemplates"), [
+            mkIdentifier("templates"),
+          ]),
           /* Then everything else */
           ...compileNodeArray(
             evaluateXPathToNodes(
