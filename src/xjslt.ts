@@ -20,6 +20,7 @@
 
 import { generate } from "astring";
 import {
+  CompiledXPathFunction,
   createTypedValueFactory,
   evaluateXPath,
   evaluateXPathToString,
@@ -27,6 +28,7 @@ import {
   evaluateXPathToBoolean,
   EvaluateXPath,
   evaluateXPathToNumber,
+  executeJavaScriptCompiledXPath,
   registerCustomXPathFunction,
 } from "fontoxpath";
 import { readFileSync, writeFileSync, symlinkSync, rmSync } from "fs";
@@ -64,6 +66,7 @@ interface ChooseAlternative {
 
 interface CompiledTemplate {
   match?: string;
+  matchFunction?: CompiledXPathFunction;
   name?: string;
   modes: string[];
   priority?: number;
@@ -107,6 +110,7 @@ export class Key {
           nameTest(
             nameTestCache,
             this.match,
+            undefined,
             node,
             variableScopes,
             mkResolver(this.namespaces),
@@ -205,7 +209,8 @@ function failFast(pattern: string, node: slimdom.Node) {
 /* Implementation of https://www.w3.org/TR/xslt11/#patterns */
 function nameTest(
   nameTestCache: LRUCache<string, Set<slimdom.Node>> | undefined,
-  name: string,
+  match: string,
+  matchFunction: CompiledXPathFunction | undefined,
   node: slimdom.Element,
   variableScopes: Array<VariableScope>,
   nsResolver: NamespaceResolver,
@@ -216,20 +221,24 @@ function nameTest(
   let checkContext: slimdom.Node = node;
   /* Using ancestors as the potential contexts */
   while (checkContext) {
-    if (!failFast(name, node)) {
+    if (!failFast(match, node)) {
       const nodeId = evaluateXPathToString("generate-id(.)", checkContext);
-      const matches = withCached(nameTestCache, `${name}-${nodeId}`, () => {
-        return new Set(
-          evaluateXPathToNodes(
-            name,
+      const matches = withCached(nameTestCache, `${match}-${nodeId}`, () => {
+        let results: slimdom.Node[];
+        if (matchFunction) {
+          results = executeJavaScriptCompiledXPath(matchFunction, checkContext);
+        } else {
+          results = evaluateXPathToNodes(
+            match,
             checkContext,
             undefined,
             /* TODO: Only top level variables are applicable here, so top
              level variables could be cached. */
             mergeVariableScopes(variableScopes),
             { namespaceResolver: nsResolver },
-          ),
-        );
+          );
+        }
+        return new Set(results);
       });
       /* It counts as a match if the node we were testing against is in the resulting node set. */
       if (matches.has(node)) {
@@ -264,6 +273,7 @@ function* getTemplates(
       nameTest(
         nameTestCache,
         template.match,
+        template.matchFunction,
         node,
         variableScopes,
         mkResolver(namespaces),
@@ -1194,7 +1204,7 @@ function preserveSpace(
   nsResolver: (prefix: string) => string,
 ) {
   for (let name of preserve) {
-    if (nameTest(undefined, name, node, [], nsResolver)) {
+    if (nameTest(undefined, name, undefined, node, [], nsResolver)) {
       return true;
     }
   }

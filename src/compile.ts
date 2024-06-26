@@ -43,7 +43,12 @@ import {
   Statement,
 } from "estree";
 import * as slimdom from "slimdom";
-import { evaluateXPathToBoolean, evaluateXPathToNodes } from "fontoxpath";
+import {
+  compileXPathToJavaScript,
+  evaluateXPath,
+  evaluateXPathToBoolean,
+  evaluateXPathToNodes,
+} from "fontoxpath";
 import { XSLT1_NSURI, XMLNS_NSURI, NamespaceResolver } from "./xjslt";
 
 /**
@@ -678,10 +683,22 @@ function expandQname(name: string, namespaces: object) {
 function compileTemplateNode(node: slimdom.Element): ExpressionStatement {
   let allowedParams = compileParams("param", node.childNodes);
   let namespaces = getNodeNS(node);
-
+  const match: string | undefined = node.getAttribute("match") || undefined;
+  let matchFunction: any = mkLiteral(undefined);
+  if (match) {
+    let compiled = compileXPathToJavaScript(match, evaluateXPath.NODES_TYPE, {
+      namespaceResolver: mkResolver(node),
+    });
+    if (compiled.isAstAccepted) {
+      matchFunction = mkNew(mkIdentifier("Function"), [
+        mkLiteral(compiled.code),
+      ]);
+    }
+  }
   return mkCall(mkMember("templates", "push"), [
     mkObject({
-      match: mkLiteral(node.getAttribute("match") || undefined),
+      match: mkLiteral(match),
+      matchFunction: matchFunction,
       name: mkLiteral(
         expandQname(node.getAttribute("name"), namespaces) || undefined,
       ),
