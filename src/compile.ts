@@ -95,6 +95,17 @@ const simpleElements = new Map<string, SimpleElement>([
     },
   ],
   [
+    "message",
+    {
+      name: "message",
+      arguments: new Map([
+        ["select", undefined],
+        ["terminate", "no"],
+      ]),
+      hasChildren: true,
+    },
+  ],
+  [
     "sequence",
     {
       name: "sequence",

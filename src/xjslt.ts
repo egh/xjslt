@@ -753,6 +753,27 @@ export function valueOf(
   );
 }
 
+export function message(
+  context: DynamicContext,
+  attributes: {
+    select?: string;
+    namespaces: object;
+    terminate: string;
+  },
+  func: SequenceConstructor,
+) {
+  console.log(
+    constructSimpleContent(
+      context,
+      attributes.select || func,
+      mkResolver(attributes.namespaces),
+    ),
+  );
+  if (attributes.terminate === "yes") {
+    process.exit();
+  }
+}
+
 export function text(
   context: DynamicContext,
   attributes: {
