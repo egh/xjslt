@@ -856,13 +856,14 @@ function appendToTree(thing: any, context: DynamicContext) {
   if (thing instanceof slimdom.Attr) {
     let newNode = context.outputDocument.importNode(thing, true);
     context.outputNode.setAttributeNode(newNode);
-  } else if (thing instanceof slimdom.Node) {
-    if (thing.nodeType == slimdom.Node.DOCUMENT_NODE) {
-      thing = (thing as slimdom.Document).documentElement;
-      if (thing.localName === "xsl:document") {
-        thing = thing.firstChild;
-      }
+  } else if (thing instanceof slimdom.Document) {
+    thing = (thing as slimdom.Document).documentElement;
+    if (thing.localName === "xsl:document") {
+      appendToTreeArray(thing.childNodes, context);
+    } else {
+      appendToTree(thing, context);
     }
+  } else if (thing instanceof slimdom.Node) {
     let newNode = context.outputDocument.importNode(thing, true);
     context.outputNode.appendChild(newNode);
   } else {
