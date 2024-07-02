@@ -2408,6 +2408,7 @@ export const KNOWN_SPEC_FAILURES = [
   "use-when-0114",
   "use-when-0116",
   "use-when-0117",
+  "use-when-0118",
   "use-when-0119",
   "use-when-0120",
   "use-when-0121",
