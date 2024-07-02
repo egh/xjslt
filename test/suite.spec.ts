@@ -19,6 +19,7 @@
  */
 
 import { compile } from "xspattern";
+import { log } from "console";
 import { buildStylesheet } from "../src/xjslt";
 import * as slimdom from "slimdom";
 import * as path from "path";
@@ -201,6 +202,8 @@ function checkResult(rootDir, node, transformed) {
   }
 }
 
+let failingTests = 0;
+let passingTests = 0;
 for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
   testSet = path.join("xslt30-test", testSet);
   const rootDir = path.dirname(testSet);
@@ -273,8 +276,10 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
           };
 
           if (KNOWN_SPEC_FAILURES.includes(testName)) {
+            failingTests++;
             test.failing(description, tester);
           } else {
+            passingTests++;
             test(description, tester);
           }
         }
@@ -282,3 +287,5 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
     });
   }
 }
+log(`Failing test count: ${failingTests}`);
+log(`Passing test count: ${passingTests}`);
