@@ -1,5 +1,5 @@
 export default {
   preset: "ts-jest",
   testEnvironment: "node",
-  reporters: ["jest-wip-reporter"],
+  reporters: [["jest-simple-dot-reporter", { color: true }]],
 };

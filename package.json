@@ -23,7 +23,7 @@
   "devDependencies": {
     "@types/jest": "*",
     "jest": "*",
-    "jest-wip-reporter": "^2.1.0",
+    "jest-simple-dot-reporter": "^1.0.5",
     "ts-jest": "*",
     "ts-node": "*",
     "typescript": "*"
