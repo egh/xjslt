@@ -19,11 +19,9 @@
  */
 
 import { registerCustomXPathFunction } from "fontoxpath";
-import { readFileSync } from "fs";
 import * as slimdom from "slimdom";
-import { fileURLToPath, resolve } from "url";
 import { DynamicContext, XPATH_NSURI } from "./xjslt";
-
+import { urlToDom } from "./util";
 function fnCurrent({ currentContext }) {
   return currentContext.contextItem;
 }
@@ -38,23 +36,6 @@ function fnGenerateId({ currentContext }, node: any) {
     ids.set(node, counter++);
   }
   return ids.get(node).toString();
-}
-
-function urlToDom(context: DynamicContext, url: string) {
-  const absoluteURL = context.inputURL
-    ? resolve(context.inputURL.toString(), url)
-    : url;
-
-  if (absoluteURL.startsWith("file:")) {
-    return slimdom.parseXmlDocument(
-      readFileSync(fileURLToPath(new URL(absoluteURL))).toString(),
-    );
-  } else {
-    /** How to do async with fontoxpath? */
-    // const response = await fetch(absoluteURL);
-    // return slimdom.parseXmlDocument(response.body.toString());
-    return undefined;
-  }
 }
 
 function fnDoc({ currentContext }, url: string) {
