@@ -22,7 +22,6 @@ import {
   applyTemplates,
   buildAttributeNode,
   buildNode,
-  buildStylesheet,
   computeDefaultPriority,
   determineNamespace,
   DynamicContext,
@@ -32,17 +31,18 @@ import {
   mergeVariableScopes,
   processNode,
   setVariable,
-  stripSpaceStylesheet,
   valueOf,
   VariableScope,
   Key,
 } from "../src/xjslt";
 import { LRUCache } from "lru-cache";
 import {
+  buildStylesheet,
   compileAvtRaw,
   compileSequenceConstructorNode,
   compileTopLevelNode,
   getNodeNS,
+  stripSpaceStylesheet,
 } from "../src/compile";
 import * as slimdom from "slimdom";
 import * as path from "path";

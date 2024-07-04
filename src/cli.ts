@@ -22,7 +22,7 @@
 
 import * as slimdom from "slimdom";
 import { Command } from "commander";
-import { buildStylesheet } from "./xjslt";
+import { buildStylesheet } from "./compile";
 import { readFileSync } from "fs";
 import { pathToFileURL } from "url";
 

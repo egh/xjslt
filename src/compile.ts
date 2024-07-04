@@ -18,6 +18,7 @@
  * <https://www.gnu.org/licenses/>.
  */
 
+import { generate } from "astring";
 import {
   mkArray,
   mkArrowFun,
@@ -49,7 +50,21 @@ import {
   evaluateXPathToBoolean,
   evaluateXPathToNodes,
 } from "fontoxpath";
-import { XSLT1_NSURI, XMLNS_NSURI, NamespaceResolver } from "./xjslt";
+import { readFileSync, writeFileSync, symlinkSync, rmSync } from "fs";
+import { pathToFileURL } from "url";
+import * as path from "path";
+import { tmpdir } from "os";
+import { mkdtemp } from "fs/promises";
+import { transform as preprocessSimplified } from "./preprocessSimplified";
+import { transform as preprocessInclude } from "./preprocessInclude";
+import { transform as preprocessImport } from "./preprocessImport";
+import {
+  XSLT1_NSURI,
+  XMLNS_NSURI,
+  mkResolver,
+  NamespaceResolver,
+  stripSpace,
+} from "./xjslt";
 
 /**
  * Functions to walk a DOM tree of an XSLT stylesheet and generate an
@@ -313,7 +328,7 @@ function compileTopLevelParam(node: slimdom.Element) {
   return mkCallWithContext(mkMember("xjslt", "param"), [param]);
 }
 
-function mkResolver(node: slimdom.Element): NamespaceResolver {
+function mkResolverForNode(node: slimdom.Element): NamespaceResolver {
   return (prefix: string) => {
     return node.lookupNamespaceURI(prefix);
   };
@@ -698,7 +713,7 @@ function compileTemplateNode(node: slimdom.Element): ExpressionStatement {
   let matchFunction: any = mkLiteral(undefined);
   if (match) {
     let compiled = compileXPathToJavaScript(match, evaluateXPath.NODES_TYPE, {
-      namespaceResolver: mkResolver(node),
+      namespaceResolver: mkResolverForNode(node),
     });
     if (compiled.isAstAccepted) {
       matchFunction = mkNew(mkIdentifier("Function"), [
@@ -833,4 +848,70 @@ function compileAvt(avt: string) {
       }
     }),
   );
+}
+
+/* Strip space for an XSLT stylesheet. */
+export function stripSpaceStylesheet(doc: any) {
+  const nsResolver = (prefix: string): string => {
+    if (prefix === "xsl") {
+      return XSLT1_NSURI;
+    }
+  };
+  return stripSpace(doc, ["xsl:text"], nsResolver);
+}
+
+/**
+ * Build a stylesheet. Returns a function that will take an input DOM
+ * document and return an output DOM document.
+ */
+export async function buildStylesheet(xsltPath: string) {
+  let slimdom_path = require.resolve("slimdom").split(path.sep);
+  let root_dir = path.join(
+    "/",
+    ...slimdom_path.slice(0, slimdom_path.indexOf("node_modules")),
+  );
+  var tempdir = await mkdtemp(path.join(tmpdir(), "xjslt-"));
+  symlinkSync(
+    path.join(root_dir, "node_modules"),
+    path.join(tempdir, "node_modules"),
+  );
+  symlinkSync(
+    path.join(root_dir, "package.json"),
+    path.join(tempdir, "package.json"),
+  );
+  symlinkSync(path.join(root_dir, "dist"), path.join(tempdir, "dist"));
+  var tempfile = path.join(tempdir, "transform.js");
+  let xsltDoc = stripSpaceStylesheet(
+    slimdom.parseXmlDocument(readFileSync(xsltPath).toString()),
+  );
+  if (
+    !evaluateXPathToBoolean(
+      "/xsl:stylesheet|/xsl:transform",
+      xsltDoc,
+      null,
+      null,
+      { namespaceResolver: mkResolver({ xsl: XSLT1_NSURI }) },
+    )
+  ) {
+    xsltDoc = preprocessSimplified(xsltDoc);
+  }
+  let counter = 0;
+  while (
+    evaluateXPathToBoolean("//xsl:include|//xsl:import", xsltDoc, null, null, {
+      namespaceResolver: mkResolver({ xsl: XSLT1_NSURI }),
+    })
+  ) {
+    xsltDoc = preprocessInclude(xsltDoc, pathToFileURL(xsltPath));
+    xsltDoc = preprocessImport(xsltDoc, pathToFileURL(xsltPath));
+    if (counter > 100) throw new Error("Import level too deep!");
+    counter++;
+  }
+  writeFileSync(
+    tempfile,
+    generate(compileStylesheetNode(xsltDoc.documentElement)),
+  );
+  let transform = await import(tempfile);
+  // console.log(readFileSync(tempfile).toString());
+  rmSync(tempdir, { recursive: true });
+  return transform.transform;
 }

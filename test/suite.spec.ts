@@ -20,7 +20,7 @@
 
 import { compile } from "xspattern";
 import { log } from "console";
-import { buildStylesheet } from "../src/xjslt";
+import { buildStylesheet } from "../src/compile";
 import * as slimdom from "slimdom";
 import * as path from "path";
 import {
