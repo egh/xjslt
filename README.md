@@ -1,10 +1,10 @@
-# XJSLT - An incomplete XSLT processor in pure TypeScript
+# XJSLT - An XSLT compiler in TypeScript
 
-XJSLT is an implementation of an [XSLT 2.0](https://www.w3.org/TR/xslt20/) processor written in native TypeScript.
+XJSLT is an [XSLT 2.0](https://www.w3.org/TR/xslt20/) compiler written in TypeScript.
 
-XJSLT compiles stylesheets to runnable JavaScript, so you can create pure-javascript runnable transforms for use in a browser.
+XJSLT compiles stylesheets to runnable JavaScript, so you can create runnable transforms for use in a browser.
 
-Tested with [node 20](https://nodejs.org/)
+Tested with [node 20](https://nodejs.org/) and (less extensively) in Chrome and Firefox.
 
 # Installation:
 - `npm install && npm run build`
