@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="transform.js"></script>
+    <script>
+     async function update() {
+       const url = "https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml"
+       try {
+         const response = await fetch(url);
+         if (!response.ok) {
+           throw new Error(`Response status: ${response.status}`);
+         }
+         const xml = await response.text();
+         const html = slimdom.serializeToWellFormedString(transform(slimdom.parseXmlDocument(xml)));
+         document.getElementById('main').innerHTML = html;
+       } catch (error) {
+         console.error(error.message);
+       }
+     }
+     update();
+    </script>      
+  </head>
+  <body id="main"></body>
+</html>
