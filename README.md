@@ -13,7 +13,7 @@ Tested with [node 20](https://nodejs.org/) and (less extensively) in Chrome and 
 - `xjslt test/simple2.xslt test/simple.xml`
 
 # Stylesheet compilation example:
--`xjslt compile jats-html.xsl` (will generate a `transform.js` file)
+- `xjslt compile jats-html.xsl` (will generate a `transform.js` file)
 - Open `example.html` (will load the generated `transform.js` file)
 
 # Supported features
