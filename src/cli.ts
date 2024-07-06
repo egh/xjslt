@@ -22,9 +22,13 @@
 
 import * as slimdom from "slimdom";
 import { Command } from "commander";
-import { buildStylesheet } from "./compile";
+import { buildStylesheet, compileStylesheet } from "./compile";
 import { readFileSync } from "fs";
 import { pathToFileURL } from "url";
+import { webpack } from "webpack";
+import * as path from "path";
+import * as fs from "fs";
+import * as process from "process";
 
 async function run(xslt: string, xmls: Array<string>) {
   const transform = await buildStylesheet(xslt);
@@ -44,6 +48,45 @@ async function run(xslt: string, xmls: Array<string>) {
   }
 }
 
+async function compile(xslt: string, destination: string) {
+  const destinationAbs = path.resolve(destination);
+  if (fs.existsSync(destinationAbs)) {
+    throw new Error(`${destinationAbs} exists!`);
+  }
+  const src = await compileStylesheet(xslt);
+  const config = {
+    entry: [src],
+    output: {
+      path: path.dirname(destinationAbs),
+      filename: path.basename(destinationAbs),
+    },
+    module: {
+      rules: [
+        {
+          test: /\.ts(x)?$/,
+          loader: "ts-loader",
+          exclude: /node_modules/,
+        },
+      ],
+    },
+    resolve: {
+      extensions: [".web.ts", ".web.js", ".ts", ".js"],
+    },
+  };
+  const compiler = webpack(config);
+  try {
+    let err,
+      stats = await new Promise((resolve, reject) => {
+        compiler.run((err, stats) => {
+          resolve([err, stats]);
+        });
+      });
+    await compiler.close;
+  } catch (err) {
+    console.log(err);
+  }
+}
+
 async function main() {
   const program = new Command();
   program.version("0.0.1");
@@ -54,6 +97,15 @@ async function main() {
       xml: "XML files to process",
     })
     .action(run);
+  program
+    .command("compile")
+    .argument("<xslt>", "xslt file to compile")
+    .argument("[destination]", "destination file to compile to", "transform.js")
+    .description("Compile an XSLT stylesheet to JavaScript", {
+      xslt: "XSLT stylesheet",
+    })
+    .action(compile);
   await program.parseAsync(process.argv);
 }
+
 main();

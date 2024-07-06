@@ -36,6 +36,7 @@
     "commander": "*",
     "fontoxpath": "*",
     "lru-cache": "*",
-    "slimdom": "*"
+    "slimdom": "*",
+    "webpack": "^5.92.1"
   }
 }

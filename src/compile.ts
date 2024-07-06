@@ -691,6 +691,36 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
           right: mkIdentifier("transform"),
         },
       },
+      {
+        type: "ExpressionStatement",
+        expression: {
+          type: "AssignmentExpression",
+          operator: "=",
+          left: {
+            type: "MemberExpression",
+            object: mkIdentifier("global"),
+            property: mkIdentifier("transform"),
+            computed: false,
+            optional: false,
+          },
+          right: mkIdentifier("transform"),
+        },
+      },
+      {
+        type: "ExpressionStatement",
+        expression: {
+          type: "AssignmentExpression",
+          operator: "=",
+          left: {
+            type: "MemberExpression",
+            object: mkIdentifier("global"),
+            property: mkIdentifier("slimdom"),
+            computed: false,
+            optional: false,
+          },
+          right: mkIdentifier("slimdom"),
+        },
+      },
     ],
   };
 }
@@ -860,11 +890,7 @@ export function stripSpaceStylesheet(doc: any) {
   return stripSpace(doc, ["xsl:text"], nsResolver);
 }
 
-/**
- * Build a stylesheet. Returns a function that will take an input DOM
- * document and return an output DOM document.
- */
-export async function buildStylesheet(xsltPath: string) {
+export async function compileStylesheet(xsltPath: string) {
   let slimdom_path = require.resolve("slimdom").split(path.sep);
   let root_dir = path.join(
     "/",
@@ -910,8 +936,17 @@ export async function buildStylesheet(xsltPath: string) {
     tempfile,
     generate(compileStylesheetNode(xsltDoc.documentElement)),
   );
+  return tempfile;
+  //  rmSync(tempdir, { recursive: true });
+}
+
+/**
+ * Build a stylesheet. Returns a function that will take an input DOM
+ * document and return an output DOM document.
+ */
+export async function buildStylesheet(xsltPath: string) {
+  const tempfile = await compileStylesheet(xsltPath);
   let transform = await import(tempfile);
   // console.log(readFileSync(tempfile).toString());
-  rmSync(tempdir, { recursive: true });
   return transform.transform;
 }
