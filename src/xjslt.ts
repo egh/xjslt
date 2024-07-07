@@ -31,7 +31,6 @@ import {
 } from "fontoxpath";
 import * as slimdom from "slimdom";
 import { AttributeValueTemplate } from "./compile";
-import { LRUCache } from "lru-cache";
 import { registerFunctions } from "./functions";
 
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
@@ -103,7 +102,7 @@ export class Key {
     this.cache = new Map();
   }
   buildDocumentCache(
-    nameTestCache: LRUCache<string, Set<slimdom.Node>>,
+    nameTestCache: Map<string, Set<slimdom.Node>>,
     document: slimdom.Document,
     variableScopes: VariableScope[],
   ): Map<any, any> {
@@ -131,7 +130,7 @@ export class Key {
     return docCache;
   }
   lookup(
-    nameTestCache: LRUCache<string, Set<slimdom.Node>>,
+    nameTestCache: Map<string, Set<slimdom.Node>>,
     document: slimdom.Document,
     variableScopes: VariableScope[],
     value: string,
@@ -158,7 +157,7 @@ export interface DynamicContext {
   currentGroup?: any[];
   currentGroupingKey?: string;
   keys: Map<String, Key>;
-  nameTestCache: LRUCache<string, Set<slimdom.Node>>;
+  nameTestCache: Map<string, Set<slimdom.Node>>;
 }
 
 type Constructor = string | SequenceConstructor;
@@ -183,7 +182,7 @@ export function mkResolver(namespaces: object) {
 }
 
 function withCached<T>(
-  cache: LRUCache<string, T>,
+  cache: Map<string, T>,
   key: string,
   thunk: () => T,
 ): T {
@@ -212,16 +211,13 @@ function failFast(pattern: string, node: slimdom.Node) {
 
 /* Implementation of https://www.w3.org/TR/xslt11/#patterns */
 function nameTest(
-  nameTestCache: LRUCache<string, Set<slimdom.Node>> | undefined,
+  nameTestCache: Map<string, Set<slimdom.Node>> | undefined,
   match: string,
   matchFunction: CompiledXPathFunction | undefined,
   node: slimdom.Element,
   variableScopes: Array<VariableScope>,
   nsResolver: NamespaceResolver,
 ): boolean {
-  if (!nameTestCache) {
-    nameTestCache = new LRUCache({ max: 1 });
-  }
   let checkContext: slimdom.Node = node;
   /* Using ancestors as the potential contexts */
   while (checkContext) {
@@ -264,7 +260,7 @@ function nameTest(
  * @returns The template, or undefined if none can be found to match this node.
  */
 function* getTemplates(
-  nameTestCache: LRUCache<string, Set<slimdom.Node>>,
+  nameTestCache: Map<string, Set<slimdom.Node>>,
   node: any,
   templates: Array<CompiledTemplate>,
   variableScopes: Array<VariableScope>,
@@ -1235,7 +1231,8 @@ function preserveSpace(
   nsResolver: (prefix: string) => string,
 ) {
   for (let name of preserve) {
-    if (nameTest(undefined, name, undefined, node, [], nsResolver)) {
+    let nameTestCache: Map<string, Set<slimdom.Node>> = new Map();
+    if (nameTest(nameTestCache, name, undefined, node, [], nsResolver)) {
       return true;
     }
   }
