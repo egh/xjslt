@@ -192,6 +192,9 @@ function withCached<T>(
   return cache.get(key);
 }
 
+const ELEMENT_ONLY_PATTERN = new RegExp(/^[a-z |-]+$/);
+const ATTR_ONLY_PATTERN = new RegExp(/^@[a-z]+$/);
+
 /* Fast check to see if a pattern will not match. Will return true if
    it will never match, false if it might be a match.*/
 function failFast(pattern: string, node: slimdom.Node) {
@@ -200,10 +203,10 @@ function failFast(pattern: string, node: slimdom.Node) {
   // if (bucket && !getBucketsForNode(node).includes(bucket)) {
   //   return true;
   // }
-  if (pattern.match(/^[a-z]+$/) && !(node.nodeType === ELEMENT_NODE)) {
+  if (ELEMENT_ONLY_PATTERN.exec(pattern) && !(node.nodeType === ELEMENT_NODE)) {
     return true;
   }
-  if (pattern.match(/^@[a-z]+$/) && !(node.nodeType === ATTRIBUTE_NODE)) {
+  if (ATTR_ONLY_PATTERN.exec(pattern) && !(node.nodeType === ATTRIBUTE_NODE)) {
     return true;
   }
   return false;
@@ -269,8 +272,8 @@ function* getTemplates(
 ): Generator<CompiledTemplate> {
   for (let template of templates) {
     if (
-      (template.modes.includes(mode) || template.modes[0] === "#all") &&
       template.match &&
+        (template.modes[0] === "#all" || template.modes.includes(mode)) &&
       nameTest(
         nameTestCache,
         template.match,
