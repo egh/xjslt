@@ -271,7 +271,12 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
             checkResult(
               rootDir,
               evaluateXPathToNodes("./*", resultNode)[0],
-              transform(environment, inputURL, initialMode),
+              transform(
+                environment,
+                new slimdom.Document(),
+                inputURL,
+                initialMode,
+              ),
             )();
           };
 

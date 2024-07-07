@@ -360,6 +360,7 @@ test("compileStylesheetNode", async () => {
     slimdom.serializeToWellFormedString(
       transform(
         slimdom.parseXmlDocument(readFileSync("./test/simple.xml", "utf-8")),
+        new slimdom.Document(),
       ),
     ),
   ).toEqual(readFileSync("./test/simple2.out", "utf-8"));
@@ -394,7 +395,7 @@ test("elementNode", async () => {
     "//Author",
     "<xsl:element name='test-{local-name()}'>Hi!</xsl:element>",
   );
-  const results = transform(document);
+  const results = transform(document, new slimdom.Document());
   expect(evaluateXPathToString("/root/test-Author[1]/text()", results)).toEqual(
     "Hi!",
   );
@@ -405,7 +406,7 @@ test("attributeNode", async () => {
     "//Author",
     "<test><xsl:attribute name='test-{local-name()}'><xsl:value-of select='text()'/></xsl:attribute></test>",
   );
-  const results = transform(document);
+  const results = transform(document, new slimdom.Document());
   expect(evaluateXPathToString("/root/test[1]/@test-Author", results)).toEqual(
     "Mr. Foo",
   );
@@ -416,7 +417,7 @@ test("literalElementAttributeEvaluation", async () => {
     "//Author",
     "<test name='test-{local-name()}'><xsl:value-of select='text()'/></test>",
   );
-  const results = transform(document);
+  const results = transform(document, new slimdom.Document());
   expect(
     evaluateXPathToString("/root/test[@name='test-Author'][1]", results),
   ).toEqual("Mr. Foo");
@@ -427,7 +428,7 @@ test("variableShadowing", async () => {
     "//Author",
     "<test><xsl:variable name='test' select='text()'/><xsl:value-of select='$test'/></test>",
   );
-  const results = transform(document);
+  const results = transform(document, new slimdom.Document());
   expect(evaluateXPathToString("/root/test[1]/text()", results)).toEqual(
     "Mr. Foo",
   );
@@ -447,7 +448,7 @@ test("call with param", async () => {
   </xsl:template>
 `,
   );
-  const results = transform(document);
+  const results = transform(document, new slimdom.Document());
   expect(evaluateXPathToString("//li", results)).toEqual(
     "foo Mr. Foo foo Mr. Bar",
   );
@@ -468,7 +469,7 @@ test("param shadowed by variable", async () => {
   </xsl:template>
 `,
   );
-  const results = transform(document);
+  const results = transform(document, new slimdom.Document());
   expect(evaluateXPathToString("//li", results)).toEqual(
     "shadowed Mr. Foo shadowed Mr. Bar",
   );
@@ -486,7 +487,7 @@ test("toplevel param", async () => {
   </xsl:template>
 `,
   );
-  const results = transform(document);
+  const results = transform(document, new slimdom.Document());
   expect(evaluateXPathToString("//li", results)).toEqual(
     "toplevel Mr. Foo toplevel Mr. Bar",
   );
@@ -505,7 +506,7 @@ test("call with param defaults", async () => {
   </xsl:template>
 `,
   );
-  const results = transform(document);
+  const results = transform(document, new slimdom.Document());
   expect(evaluateXPathToString("//li", results)).toEqual(
     "default Mr. Foo default Mr. Bar",
   );
@@ -525,7 +526,7 @@ test("template mode", async () => {
   </xsl:template>
 `,
   );
-  const results = transform(document);
+  const results = transform(document, new slimdom.Document());
   const str = evaluateXPathToString("//li", results);
   expect(str).toMatch(/.*FOO Mr. Foo/);
   expect(str).toMatch(/.*FOO Mr. Bar/);
@@ -537,7 +538,7 @@ test("text node", async () => {
     `<li><xsl:text>
 -</xsl:text><xsl:value-of select="."/></li>`,
   );
-  const results = transform(document);
+  const results = transform(document, new slimdom.Document());
   expect(evaluateXPathToString("//li/text()", results)).toEqual(
     `
 - Mr. Foo 

@@ -35,7 +35,8 @@ async function run(xslt: string, xmls: Array<string>) {
   const serializer = new slimdom.XMLSerializer();
   for (let xml of xmls) {
     const xmlDom = slimdom.parseXmlDocument(readFileSync(xml).toString());
-    const transformed = transform(xmlDom, pathToFileURL(xml));
+    const outputDocument = new slimdom.Document();
+    const transformed = transform(xmlDom, outputDocument, pathToFileURL(xml));
     // wish there was a better way?
     transformed.insertBefore(
       transformed.createProcessingInstruction(

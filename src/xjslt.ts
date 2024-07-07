@@ -66,6 +66,19 @@ interface CompiledTemplate {
   importPrecedence: number;
 }
 
+const ELEMENT_NODE = 1;
+const ATTRIBUTE_NODE = 2;
+const TEXT_NODE = 3;
+const CDATA_SECTION_NODE = 4;
+const ENTITY_REFERENCE_NODE = 5;
+const ENTITY_NODE = 6;
+const PROCESSING_INSTRUCTION_NODE = 7;
+const COMMENT_NODE = 8;
+const DOCUMENT_NODE = 9;
+const DOCUMENT_TYPE_NODE = 10;
+const DOCUMENT_FRAGMENT_NODE = 11;
+const NOTATION_NODE = 12;
+
 /* Depth first node visit */
 export function visitNodes(node: any, visit: (node: any) => void) {
   for (let childNode of node.childNodes) {
@@ -188,10 +201,10 @@ function failFast(pattern: string, node: slimdom.Node) {
   // if (bucket && !getBucketsForNode(node).includes(bucket)) {
   //   return true;
   // }
-  if (pattern.match(/^[a-z]+$/) && !(node instanceof slimdom.Element)) {
+  if (pattern.match(/^[a-z]+$/) && !(node.nodeType === ELEMENT_NODE)) {
     return true;
   }
-  if (pattern.match(/^@[a-z]+$/) && !(node instanceof slimdom.Attr)) {
+  if (pattern.match(/^@[a-z]+$/) && !(node.nodeType === ATTRIBUTE_NODE)) {
     return true;
   }
   return false;
@@ -239,7 +252,8 @@ function nameTest(
     /* Match not found, continue up the tree */
     checkContext =
       checkContext.parentNode ||
-      (checkContext instanceof slimdom.Attr && checkContext.ownerElement);
+      (checkContext.nodeType === ATTRIBUTE_NODE &&
+        (checkContext as slimdom.Attr).ownerElement);
   }
   return false;
 }
@@ -661,7 +675,7 @@ export function copy(
 ) {
   const node = context.contextItem;
   let newNode;
-  if (node.nodeType === slimdom.Node.ELEMENT_NODE) {
+  if (node.nodeType === ELEMENT_NODE) {
     newNode = context.outputDocument.createElementNS(
       node.namespaceURI,
       node.prefix ? `${node.prefix}:${node.localName}` : node.localName,
@@ -682,14 +696,14 @@ export function copy(
         );
       }
     }
-  } else if (node.nodeType === slimdom.Node.DOCUMENT_NODE) {
+  } else if (node.nodeType === DOCUMENT_NODE) {
     newNode = undefined;
   } else {
     newNode = context.outputDocument.importNode(node);
   }
   if (!newNode) {
     // ...
-  } else if (newNode.nodeType === slimdom.Node.ATTRIBUTE_NODE) {
+  } else if (newNode.nodeType === ATTRIBUTE_NODE) {
     context.outputNode.setAttributeNode(newNode);
   } else {
     context.outputNode.appendChild(newNode);
@@ -844,21 +858,21 @@ export function literalText(context: DynamicContext, text: string) {
 
 /* Return true if we output a string. */
 function appendToTree(thing: any, context: DynamicContext) {
-  if (thing instanceof slimdom.Attr) {
+  if (thing.nodeType === ATTRIBUTE_NODE) {
     let newNode = context.outputDocument.importNode(thing, true);
     context.outputNode.setAttributeNode(newNode);
-  } else if (thing instanceof slimdom.Document) {
+  } else if (thing.nodeType === DOCUMENT_NODE) {
     thing = (thing as slimdom.Document).documentElement;
-    if (thing.localName === "xsl:document") {
+    if ((thing as slimdom.Element).localName === "xsl:document") {
       appendToTreeArray(thing.childNodes, context);
     } else {
       appendToTree(thing, context);
     }
-  } else if (thing instanceof slimdom.Node) {
+  } else if (thing.nodeType) {
     let newNode = context.outputDocument.importNode(thing, true);
     context.outputNode.appendChild(newNode);
   } else {
-    let str = thing.toString();
+    let str = `${thing}`;
     if (str !== "") {
       const newNode = context.outputDocument.createTextNode(str);
       if (newNode) {
@@ -1112,7 +1126,11 @@ export function document(
   attributes: { namespaces: object },
   func: SequenceConstructor,
 ) {
-  const doc = new slimdom.Document();
+  const doc = context.outputDocument.implementation.createDocument(
+    null,
+    null,
+    null,
+  );
   func({
     ...context,
     outputDocument: doc,
@@ -1233,7 +1251,7 @@ export function stripSpace(
   const ONLY_WHITESPACE = RegExp("^[ \n\r\t]+$");
   let toRemove = [];
   function walkTree(node: any) {
-    if (node.nodeType === slimdom.Node.TEXT_NODE) {
+    if (node.nodeType === TEXT_NODE) {
       if (
         ONLY_WHITESPACE.test(node.textContent) &&
         !preserveSpace(node.parentNode, preserve, nsResolver)
@@ -1344,7 +1362,11 @@ function evaluateSequenceConstructorInTemporaryTree(
   context: DynamicContext,
   func: SequenceConstructor,
 ) {
-  const doc = new slimdom.Document();
+  const doc = context.outputDocument.implementation.createDocument(
+    null,
+    null,
+    null,
+  );
   doc.appendChild(doc.createElement("xsl:document"));
   func({
     ...context,
@@ -1363,7 +1385,7 @@ function extractText(document: any): string[] {
   let strs = [];
   /* https://www.w3.org/TR/xslt20/#creating-text-nodes */
   function walkTree(node: any): void {
-    if (node.nodeType == slimdom.Node.TEXT_NODE && node.data !== "") {
+    if (node.nodeType === TEXT_NODE && node.data !== "") {
       strs = strs.concat(node.data);
     }
     if (node.childNodes) {

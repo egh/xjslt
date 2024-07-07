@@ -594,14 +594,11 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
         mkIdentifier("transform"),
         [
           mkIdentifier("document"),
+          mkIdentifier("outputDocument"),
           mkIdentifier("inputURL"),
           mkIdentifier("initialMode"),
         ],
         mkBlock([
-          mkConst(
-            mkIdentifier("doc"),
-            mkNew(mkMember("slimdom", "Document"), []),
-          ),
           mkLet(mkIdentifier("templates"), mkArray([])),
           mkLet(mkIdentifier("keys"), mkNew(mkIdentifier("Map"), [])),
           {
@@ -628,8 +625,8 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
           mkLet(
             mkIdentifier("context"),
             mkObject({
-              outputDocument: mkIdentifier("doc"),
-              outputNode: mkIdentifier("doc"),
+              outputDocument: mkIdentifier("outputDocument"),
+              outputNode: mkIdentifier("outputDocument"),
               contextItem: mkIdentifier("document"),
               mode: mkIdentifier("initialMode"),
               templates: mkIdentifier("templates"),
@@ -704,21 +701,6 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             optional: false,
           },
           right: mkIdentifier("transform"),
-        },
-      },
-      {
-        type: "ExpressionStatement",
-        expression: {
-          type: "AssignmentExpression",
-          operator: "=",
-          left: {
-            type: "MemberExpression",
-            object: mkIdentifier("global"),
-            property: mkIdentifier("slimdom"),
-            computed: false,
-            optional: false,
-          },
-          right: mkIdentifier("slimdom"),
         },
       },
     ],
