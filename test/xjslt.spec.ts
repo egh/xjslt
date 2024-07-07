@@ -35,7 +35,6 @@ import {
   VariableScope,
   Key,
 } from "../src/xjslt";
-import { LRUCache } from "lru-cache";
 import {
   buildStylesheet,
   compileAvtRaw,
@@ -155,7 +154,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
     variableScopes: [new Map<string, any>()],
     inputURL: new URL("file:///fake.xml"),
     keys: new Map(),
-    nameTestCache: new LRUCache<string, Set<slimdom.Node>>({ max: 100 }),
+    nameTestCache: new Map<string, Set<slimdom.Node>>(),
   };
   processNode(context, [], {});
   walkTree(doc, (node) => {
@@ -377,7 +376,7 @@ test("evaluateAttributeValueTemplate", () => {
     variableScopes: [new Map<string, any>()],
     inputURL: new URL("file:///fake.xml"),
     keys: new Map(),
-    nameTestCache: new LRUCache<string, Set<slimdom.Node>>({ max: 100 }),
+    nameTestCache: new Map<string, Set<slimdom.Node>>(),
   };
   expect(
     evaluateAttributeValueTemplate(
@@ -628,7 +627,7 @@ test("buildNode", () => {
     variableScopes: [new Map<string, any>()],
     inputURL: new URL("file:///fake.xml"),
     keys: new Map(),
-    nameTestCache: new LRUCache<string, Set<slimdom.Node>>({ max: 100 }),
+    nameTestCache: new Map<string, Set<slimdom.Node>>(),
   };
   let nodeA = buildNode(context, {
     name: "baz:foo",
@@ -662,7 +661,7 @@ test("buildAttributeNode", () => {
     variableScopes: [new Map<string, any>()],
     inputURL: new URL("file:///fake.xml"),
     keys: new Map(),
-    nameTestCache: new LRUCache<string, Set<slimdom.Node>>({ max: 100 }),
+    nameTestCache: new Map<string, Set<slimdom.Node>>(),
   };
   let nodeA = buildAttributeNode(context, {
     name: "baz:foo",
@@ -784,7 +783,7 @@ test("key class", () => {
   </doc>`);
   expect(
     key.lookup(
-      new LRUCache<string, Set<slimdom.Node>>({ max: 100 }),
+      new Map<string, Set<slimdom.Node>>(),
       dom,
       [],
       "1",

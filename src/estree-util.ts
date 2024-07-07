@@ -132,7 +132,6 @@ export function mkImportsNode(): Array<Statement> {
     mkRequire("slimdom"),
     mkRequire("fontoxpath"),
     mkRequire("xjslt", "./dist/xjslt"),
-    mkRequire("LRUCache", "lru-cache"),
   ];
 }
 
