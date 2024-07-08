@@ -1,6 +1,6 @@
 {
   "name": "xjslt",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "xslt 2 in javascript",
   "directories": {
     "test": "test"
