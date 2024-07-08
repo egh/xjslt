@@ -181,11 +181,7 @@ export function mkResolver(namespaces: object) {
   };
 }
 
-function withCached<T>(
-  cache: Map<string, T>,
-  key: string,
-  thunk: () => T,
-): T {
+function withCached<T>(cache: Map<string, T>, key: string, thunk: () => T): T {
   if (!cache.has(key)) {
     cache.set(key, thunk());
   }
@@ -194,6 +190,9 @@ function withCached<T>(
 
 const ELEMENT_ONLY_PATTERN = new RegExp(/^[a-z |-]+$/);
 const ATTR_ONLY_PATTERN = new RegExp(/^@[a-z]+$/);
+const TEXT_PATTERN = new RegExp(/text\(\)|node\(\)/);
+const ATTR_PATTERN = new RegExp(/@|attribute|node/);
+const DOCUMENT_PATTERN = new RegExp(/(^\/$|document-node\(|node\()/);
 
 /* Fast check to see if a pattern will not match. Will return true if
    it will never match, false if it might be a match.*/
@@ -201,6 +200,15 @@ function failFast(pattern: string, node: slimdom.Node) {
   /* This should work, but doesn't */
   // let bucket = getBucketForSelector(pattern);
   // if (bucket && !getBucketsForNode(node).includes(bucket)) {
+  //   return true;
+  // }
+  if (node.nodeType === ATTRIBUTE_NODE && !ATTR_PATTERN.exec(pattern)) {
+    return true;
+  }
+  if (node.nodeType === TEXT_NODE && !TEXT_PATTERN.exec(pattern)) {
+    return true;
+  }
+  // if (node.nodeType === DOCUMENT_NODE && !(DOCUMENT_PATTERN.exec(pattern))) {
   //   return true;
   // }
   if (ELEMENT_ONLY_PATTERN.exec(pattern) && !(node.nodeType === ELEMENT_NODE)) {
@@ -212,47 +220,73 @@ function failFast(pattern: string, node: slimdom.Node) {
   return false;
 }
 
+/* Fast check for success */
+function fastSuccess(pattern: string, node: slimdom.Node) {
+  if (pattern === "text()|@*") {
+    return node.nodeType === TEXT_NODE || node.nodeType === ATTRIBUTE_NODE;
+  } else if (pattern === "processing-instruction()|comment()") {
+    return (
+      node.nodeType === PROCESSING_INSTRUCTION_NODE ||
+      node.nodeType === COMMENT_NODE
+    );
+  } else if (pattern === "*|/") {
+    return node.nodeType === ELEMENT_NODE || node.nodeType === DOCUMENT_NODE;
+  } else if (pattern === "text()") {
+    return node.nodeType === TEXT_NODE;
+  } else if (pattern === "/") {
+    return node.nodeType === DOCUMENT_NODE;
+  }
+  return false;
+}
+
 /* Implementation of https://www.w3.org/TR/xslt11/#patterns */
 function nameTest(
   nameTestCache: Map<string, Set<slimdom.Node>> | undefined,
   match: string,
   matchFunction: CompiledXPathFunction | undefined,
-  node: slimdom.Element,
+  node: slimdom.Node,
   variableScopes: Array<VariableScope>,
   nsResolver: NamespaceResolver,
 ): boolean {
-  let checkContext: slimdom.Node = node;
+  let checkContext = node;
   /* Using ancestors as the potential contexts */
-  while (checkContext) {
-    if (!failFast(match, node)) {
-      const nodeId = evaluateXPathToString("generate-id(.)", checkContext);
-      const matches = withCached(nameTestCache, `${match}-${nodeId}`, () => {
-        let results: slimdom.Node[];
-        if (matchFunction) {
-          results = executeJavaScriptCompiledXPath(matchFunction, checkContext);
-        } else {
-          results = evaluateXPathToNodes(
-            match,
-            checkContext,
-            undefined,
-            /* TODO: Only top level variables are applicable here, so top
-             level variables could be cached. */
-            mergeVariableScopes(variableScopes),
-            { namespaceResolver: nsResolver },
-          );
+  if (node && !failFast(match, node)) {
+    if (fastSuccess(match, node)) {
+      return true;
+    } else {
+      while (checkContext) {
+        const nodeId = evaluateXPathToString("generate-id(.)", checkContext);
+        const matches = withCached(nameTestCache, `${match}-${nodeId}`, () => {
+          let results: slimdom.Node[];
+          if (matchFunction) {
+            results = executeJavaScriptCompiledXPath(
+              matchFunction,
+              checkContext,
+            );
+          } else {
+            results = evaluateXPathToNodes(
+              match,
+              checkContext,
+              undefined,
+              /* TODO: Only top level variables are applicable here, so top
+               level variables could be cached. */
+              mergeVariableScopes(variableScopes),
+              { namespaceResolver: nsResolver },
+            );
+          }
+          return new Set(results);
+        });
+        /* It counts as a match if the node we were testing against is in the resulting node set. */
+        if (matches.has(node)) {
+          return true;
         }
-        return new Set(results);
-      });
-      /* It counts as a match if the node we were testing against is in the resulting node set. */
-      if (matches.has(node)) {
-        return true;
+        /* Match not found, continue up the tree */
+        checkContext =
+          checkContext.parentNode ||
+          (checkContext.nodeType === ATTRIBUTE_NODE &&
+            (checkContext as slimdom.Attr).ownerElement);
       }
     }
-    /* Match not found, continue up the tree */
-    checkContext =
-      checkContext.parentNode ||
-      (checkContext.nodeType === ATTRIBUTE_NODE &&
-        (checkContext as slimdom.Attr).ownerElement);
   }
   return false;
 }
@@ -273,7 +307,7 @@ function* getTemplates(
   for (let template of templates) {
     if (
       template.match &&
-        (template.modes[0] === "#all" || template.modes.includes(mode)) &&
+      (template.modes[0] === "#all" || template.modes.includes(mode)) &&
       nameTest(
         nameTestCache,
         template.match,

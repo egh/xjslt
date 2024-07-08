@@ -782,11 +782,6 @@ test("key class", () => {
 <foo bar="1">one</foo>
   </doc>`);
   expect(
-    key.lookup(
-      new Map<string, Set<slimdom.Node>>(),
-      dom,
-      [],
-      "1",
-    ),
+    key.lookup(new Map<string, Set<slimdom.Node>>(), dom, [], "1"),
   ).toEqual(evaluateXPathToNodes("/doc/foo[@bar='1']", dom));
 });
