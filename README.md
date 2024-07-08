@@ -1,6 +1,6 @@
 # XJSLT - An XSLT compiler in TypeScript
 
-XJSLT is an [XSLT 2.0](https://www.w3.org/TR/xslt20/) compiler written in TypeScript, depending on [fontoxpath](https://github.com/FontoXML/fontoxpath) for an XPath implementation.
+XJSLT is an [XSLT 2.0](https://www.w3.org/TR/xslt20/) compiler (targeting JavaScript) written in TypeScript, depending on [fontoxpath](https://github.com/FontoXML/fontoxpath) for an XPath implementation.
 
 XJSLT compiles stylesheets to runnable JavaScript, so you can create transforms for use in a browser.
 
