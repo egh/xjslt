@@ -28,6 +28,7 @@ import {
   EvaluateXPath,
   evaluateXPathToNumber,
   executeJavaScriptCompiledXPath,
+  registerCustomXPathFunction,
 } from "fontoxpath";
 import * as slimdom from "slimdom";
 import { AttributeValueTemplate } from "./compile";
@@ -533,7 +534,10 @@ function sortNodesHelper(
   } else {
     sorted = sortNodesHelperText(context, nodes, sort, namespaceResolver);
   }
-  if (evaluateAttributeValueTemplate(context, sort.order) === "descending") {
+  if (
+    evaluateAttributeValueTemplate(context, sort.order, namespaceResolver) ===
+    "descending"
+  ) {
     sorted.reverse();
   }
   return sorted;
@@ -580,7 +584,9 @@ function sortNodesHelperText(
       item: node,
     });
   }
-  const lang = sort.lang && evaluateAttributeValueTemplate(context, sort.lang);
+  const lang =
+    sort.lang &&
+    evaluateAttributeValueTemplate(context, sort.lang, namespaceResolver);
   let collator = new Intl.Collator(lang).compare;
   return keyed.sort((a, b) => collator(a.key, b.key)).map((obj) => obj.item);
 }
@@ -699,6 +705,37 @@ export function callTemplate(
     }
   }
   throw new Error(`Cannot find a template named ${attributes.name}`);
+}
+
+export function functionX(
+  context: DynamicContext,
+  data: {
+    name: string;
+    as?: string;
+    namespace: string;
+    params: VariableLike[];
+    namespaces: object;
+  },
+  func: SequenceConstructor,
+) {
+  const signature = data.params.map((p) => "item()");
+  const variableNames = data.params.map((p) => p.name);
+  registerCustomXPathFunction(
+    { namespaceURI: data.namespace, localName: data.name },
+    signature,
+    data.as || "item()",
+    ({ currentContext }, ...args: any[]) => {
+      let vars = new Map<string, any>();
+      variableNames.forEach((name, i) => vars.set(name, args[i]));
+      return evaluateSequenceConstructorInTemporaryTree(
+        {
+          ...currentContext,
+          variableScopes: [vars].concat(currentContext.variableScopes),
+        },
+        func,
+      );
+    },
+  );
 }
 
 export function copy(
@@ -983,6 +1020,7 @@ export function literalElement(
     name: string;
     namespace?: string;
     attributes: AttributeOutputData[];
+    namespaces: object;
   },
   func: SequenceConstructor,
 ) {
@@ -990,8 +1028,9 @@ export function literalElement(
     name: data.name,
     namespace: data.namespace,
   });
+  const resolver = mkResolver(data.namespaces);
   for (let attr of data.attributes) {
-    const value = evaluateAttributeValueTemplate(context, attr.value);
+    const value = evaluateAttributeValueTemplate(context, attr.value, resolver);
     const attrNode = buildAttributeNode(context, {
       name: attr.name,
       namespace: attr.namespace,
@@ -1018,12 +1057,12 @@ export function attribute(
   },
   func: SequenceConstructor,
 ) {
-  const name = evaluateAttributeValueTemplate(context, data.name);
   const resolver = mkResolver(data.namespaces);
+  const name = evaluateAttributeValueTemplate(context, data.name, resolver);
   const ns = determineNamespace(
     name,
     resolver,
-    evaluateAttributeValueTemplate(context, data.namespace),
+    evaluateAttributeValueTemplate(context, data.namespace, resolver),
   );
   const value = constructSimpleContent(
     context,
@@ -1044,7 +1083,11 @@ export function processingInstruction(
   data: { name: AttributeValueTemplate; select?: string; namespaces: object },
   func: SequenceConstructor,
 ) {
-  const name = evaluateAttributeValueTemplate(context, data.name);
+  const name = evaluateAttributeValueTemplate(
+    context,
+    data.name,
+    mkResolver(data.namespaces),
+  );
   const value = constructSimpleContent(
     context,
     data.select || func,
@@ -1075,8 +1118,8 @@ export function namespace(
   data: { name: AttributeValueTemplate; select?: string; namespaces: object },
   func: SequenceConstructor,
 ) {
-  const name = evaluateAttributeValueTemplate(context, data.name);
   const resolver = mkResolver(data.namespaces);
+  const name = evaluateAttributeValueTemplate(context, data.name, resolver);
   const value = constructSimpleContent(context, data.select || func, resolver, [
     "",
   ]);
@@ -1097,8 +1140,13 @@ export function element(
   },
   func: SequenceConstructor,
 ) {
-  const name = evaluateAttributeValueTemplate(context, data.name);
-  const namespace = evaluateAttributeValueTemplate(context, data.namespace);
+  const resolver = mkResolver(data.namespaces);
+  const name = evaluateAttributeValueTemplate(context, data.name, resolver);
+  const namespace = evaluateAttributeValueTemplate(
+    context,
+    data.namespace,
+    resolver,
+  );
   let newNode = buildNode(context, {
     name: name,
     namespace: determineNamespace(name, mkResolver(data.namespaces), namespace),
@@ -1310,6 +1358,7 @@ export function stripSpace(
 export function evaluateAttributeValueTemplate(
   context: DynamicContext,
   avt: AttributeValueTemplate,
+  namespaceResolver: NamespaceResolver,
 ): string | undefined {
   if (!avt) {
     return undefined;
@@ -1324,7 +1373,7 @@ export function evaluateAttributeValueTemplate(
           context.contextItem,
           undefined,
           mergeVariableScopes(context.variableScopes),
-          { currentContext: context },
+          { currentContext: context, namespaceResolver: namespaceResolver },
         );
       }
     })
@@ -1344,7 +1393,11 @@ function constructSimpleContent(
       separator = [];
     }
   }
-  const effectiveSeparator = evaluateAttributeValueTemplate(context, separator);
+  const effectiveSeparator = evaluateAttributeValueTemplate(
+    context,
+    separator,
+    namespaceResolver,
+  );
   if (typeof generator === "string") {
     return evaluateXPath(
       generator,

@@ -142,6 +142,21 @@ function compileApplyTemplatesNode(node: slimdom.Element) {
   return compileFuncall("applyTemplates", [mkObject(args)]);
 }
 
+function compileFunctionNode(node: slimdom.Element) {
+  const [namespace, name] = resolveQname(
+    node.getAttribute("name"),
+    getNodeNS(node),
+  );
+  const args = {
+    name: mkLiteral(name),
+    namespace: mkLiteral(namespace),
+    as: mkLiteral(node.getAttribute("as") || undefined),
+    params: compileParams("param", node.childNodes),
+    namespaces: mkNamespaceArg(node),
+  };
+  return compileFuncallWithChildren(node, "functionX", mkObject(args));
+}
+
 function compileForEachNode(node: slimdom.Element) {
   const args = {
     select: mkLiteral(node.getAttribute("select") || undefined),
@@ -367,6 +382,7 @@ function compileLiteralElementNode(node: slimdom.Element) {
       name: mkLiteral(name),
       attributes: mkArray(attributes),
       namespace: mkLiteral(node.namespaceURI),
+      namespaces: mkNamespaceArg(node),
     }),
     mkArrowFun(compileSequenceConstructor(node.childNodes)),
   ]);
@@ -411,13 +427,14 @@ export function compileTopLevelNode(node: slimdom.Element) {
         return compileTopLevelParam(node);
       } else if (node.localName === "key") {
         return compileKeyNode(node);
+      } else if (node.localName === "function") {
+        return compileFunctionNode(node);
       } else if (
         node.localName === "output" ||
         node.localName === "preserve-space" ||
         node.localName === "attribute-set" ||
         node.localName === "character-map" ||
         node.localName === "decimal-format" ||
-        node.localName === "function" ||
         node.localName === "import-schema" ||
         node.localName === "namespace-alias" ||
         node.localName === "output" ||
@@ -643,6 +660,13 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             }),
             compileTopLevelNode,
           ),
+          /* Then the functions */
+          ...compileNodeArray(
+            evaluateXPathToNodes("./xsl:function", node, null, null, {
+              namespaceResolver: buildInResolver,
+            }),
+            compileTopLevelNode,
+          ),
           /* Then compile the templates */
           ...compileNodeArray(
             evaluateXPathToNodes("./xsl:template", node, null, null, {
@@ -656,7 +680,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
           /* Then everything else */
           ...compileNodeArray(
             evaluateXPathToNodes(
-              "./xsl:*[local-name()!='template' and local-name()!='key']",
+              "./xsl:*[local-name()!='template' and local-name()!='key' and local-name()!='function']",
               node,
               null,
               null,
@@ -714,6 +738,17 @@ function expandQname(name: string, namespaces: object) {
     return `${namespaces[prefix]}#${localName}`;
   }
   return name;
+}
+
+function resolveQname(name: string, namespaces: object) {
+  if (!name) {
+    return [undefined, name];
+  }
+  const [prefix, localName] = name.split(":");
+  if (localName && namespaces[prefix]) {
+    return [namespaces[prefix], localName];
+  }
+  return [undefined, name];
 }
 
 function compileTemplateNode(node: slimdom.Element): ExpressionStatement {

@@ -33,6 +33,7 @@ Tested with [node 20](https://nodejs.org/) and (less extensively) in Chrome and 
 # Incompletely supported features
 - `for-each-group` (only `group-by` supported)
 - `import` (precedence not supported)
+- `function` basically work, with better typing TBD
 
 # TODO (not yet implemented)
 - [ ] `strip-space`/`preserve-space`
