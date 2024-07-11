@@ -13,8 +13,7 @@
            throw new Error(`Response status: ${response.status}`);
          }
          const parsed = new DOMParser().parseFromString(await response.text(), "application/xml");
-         const out = new XMLSerializer().serializeToString(transform(parsed, parsed.implementation.createDocument(null, null, null)));
-         document.getElementById('main').innerHTML = out;
+         transform(parsed, document, document.getElementById('main'));
        } catch (error) {
          console.error(error.message);
        }

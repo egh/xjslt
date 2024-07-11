@@ -612,6 +612,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
         [
           mkIdentifier("document"),
           mkIdentifier("outputDocument"),
+          mkIdentifier("outputNode"),
           mkIdentifier("inputURL"),
           mkIdentifier("initialMode"),
         ],
@@ -643,7 +644,12 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             mkIdentifier("context"),
             mkObject({
               outputDocument: mkIdentifier("outputDocument"),
-              outputNode: mkIdentifier("outputDocument"),
+              outputNode: {
+                type: "BinaryExpression",
+                operator: "||",
+                left: mkIdentifier("outputNode"),
+                right: mkIdentifier("outputDocument"),
+              },
               contextItem: mkIdentifier("document"),
               mode: mkIdentifier("initialMode"),
               templates: mkIdentifier("templates"),

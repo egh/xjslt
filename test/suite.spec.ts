@@ -274,6 +274,7 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
               transform(
                 environment,
                 new slimdom.Document(),
+                undefined,
                 inputURL,
                 initialMode,
               ),
