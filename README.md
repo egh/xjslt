@@ -29,6 +29,7 @@ Tested with [node 20](https://nodejs.org/) and (less extensively) in Chrome and 
 - namespaces
 - `sort`
 - `include`
+- `result-document`
 
 # Incompletely supported features
 - `for-each-group` (only `group-by` supported)
