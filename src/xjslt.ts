@@ -1324,29 +1324,28 @@ export function resultDocument(
     data.href,
     mkResolver(data.namespaces),
   );
-  let resultDocument;
   if (!href) {
-    /* The #default result document will be set at the end of the
-       transform (outside of this) but this allows us to tell if the
-       user tries to output the default twice. Kind of a hack. */
-    href = "#default";
-    resultDocument = context.outputDocument;
+    if (context.outputDocument.documentElement) {
+      /* Already started writing to this, you can't write now! */
+      throw new Error("XTDE1490");
+    }
+    func(context);
   } else {
-    resultDocument = context.outputDocument.implementation.createDocument(
+    const resultDocument = context.outputDocument.implementation.createDocument(
       null,
       null,
       null,
     );
+    if (context.resultDocuments.has(href)) {
+      throw new Error("XTDE1490");
+    }
+    context.resultDocuments.set(href, resultDocument);
+    func({
+      ...context,
+      outputDocument: resultDocument,
+      outputNode: resultDocument,
+    });
   }
-  if (context.resultDocuments.has(href)) {
-    throw new Error("XTDE1490");
-  }
-  context.resultDocuments.set(href, resultDocument);
-  func({
-    ...context,
-    outputDocument: resultDocument,
-    outputNode: resultDocument,
-  });
 }
 
 function preserveSpace(

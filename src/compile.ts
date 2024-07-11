@@ -632,6 +632,10 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             mkIdentifier("resultDocuments"),
             mkNew(mkIdentifier("Map"), []),
           ),
+          mkCall(mkMember("resultDocuments", "set"), [
+            mkLiteral("#default"),
+            mkIdentifier("outputDocument"),
+          ]),
           mkLet(mkIdentifier("keys"), mkNew(mkIdentifier("Map"), [])),
           {
             type: "IfStatement",
@@ -712,10 +716,6 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
           mkCallWithContext(mkMember("xjslt", "processNode"), [
             mkArray([]),
             mkNamespaceArg(node),
-          ]),
-          mkCall(mkMember("resultDocuments", "set"), [
-            mkLiteral("#default"),
-            mkIdentifier("outputDocument"),
           ]),
           mkReturn(mkIdentifier("resultDocuments")),
         ]),

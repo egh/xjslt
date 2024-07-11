@@ -17,8 +17,8 @@ Tested with [node 20](https://nodejs.org/) and (less extensively) in Chrome and 
 - Open `example.html` (will load the generated `transform.js` file)
 
 # Supported features
-- 1882 passing tests in the XSLT test suite (https://github.com/w3c/xslt30-test)
-- 2522 not passing
+- 1985 passing tests in the XSLT test suite (https://github.com/w3c/xslt30-test)
+- 2419 not passing
 
 - `if`/`choose/when/otherwise` - conditional evaluation
 - `template`
