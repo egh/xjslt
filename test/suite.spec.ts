@@ -140,11 +140,11 @@ function checkAssertXml(rootDir: string, node: any, transformed: any) {
   );
 }
 
-function checkResult(rootDir, node, transformed) {
+function checkResult(rootDir, node, thunk) {
   if (node.localName == "all-of") {
     return () => {
       for (let childNode of evaluateXPathToNodes("./*", node)) {
-        checkResult(rootDir, childNode, transformed)();
+        checkResult(rootDir, childNode, thunk)();
       }
     };
   } else if (node.localName === "any-of") {
@@ -153,7 +153,7 @@ function checkResult(rootDir, node, transformed) {
       for (let childNode of evaluateXPathToNodes("./*", node)) {
         /* hack to work with any of these results */
         try {
-          lastCheck = checkResult(rootDir, childNode, transformed);
+          lastCheck = checkResult(rootDir, childNode, thunk);
           lastCheck();
           return;
         } catch (err) {}
@@ -162,25 +162,27 @@ function checkResult(rootDir, node, transformed) {
     };
   } else if (node.localName === "assert-xml") {
     return () => {
-      checkAssertXml(rootDir, node, transformed);
+      checkAssertXml(rootDir, node, thunk());
     };
   } else if (node.localName === "assert") {
     return () => {
       const assert = evaluateXPathToString(".", node);
-      expect(evaluateXPathToBoolean(assert, transformed)).toBeTruthy();
+      expect(evaluateXPathToBoolean(assert, thunk())).toBeTruthy();
     };
   } else if (node.localName === "assert-count") {
     return () => {
       const count = evaluateXPathToNumber(".", node);
-      expect(evaluateXPathToNumber("count(.)", transformed)).toEqual(count);
+      expect(evaluateXPathToNumber("count(.)", thunk())).toEqual(count);
     };
   } else if (node.localName === "serialization-matches") {
     return () => {
       const matcher = compile(evaluateXPathToString(".", node));
-      expect(matcher(serializer.serializeToString(transformed))).toBeTruthy();
+      expect(matcher(serializer.serializeToString(thunk()))).toBeTruthy();
     };
   } else if (node.localName === "error") {
-    return () => {};
+    return () => {
+      expect(thunk).toThrow(evaluateXPathToString("@code", node));
+    };
     // TODO: depends on error reporting
   } else if (node.localName === "assert-result-document") {
     // TODO: depends on separate output files
@@ -271,13 +273,14 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
             checkResult(
               rootDir,
               evaluateXPathToNodes("./*", resultNode)[0],
-              transform(
-                environment,
-                new slimdom.Document(),
-                undefined,
-                inputURL,
-                initialMode,
-              ),
+              () =>
+                transform(
+                  environment,
+                  new slimdom.Document(),
+                  undefined,
+                  inputURL,
+                  initialMode,
+                ),
             )();
           };
 
