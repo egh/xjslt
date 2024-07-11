@@ -25,6 +25,7 @@ import { buildStylesheet, compileStylesheet } from "./compile";
 import { readFileSync } from "fs";
 import { pathToFileURL } from "url";
 import { webpack } from "webpack";
+import * as url from "url";
 import * as path from "path";
 import * as fs from "fs";
 import * as process from "process";
@@ -35,16 +36,29 @@ async function run(xslt: string, xmls: Array<string>) {
   for (let xml of xmls) {
     const xmlDom = slimdom.parseXmlDocument(readFileSync(xml).toString());
     const outputDocument = new slimdom.Document();
-    const transformed = transform(xmlDom, outputDocument, pathToFileURL(xml));
+    const baseUrl = pathToFileURL(xml);
+    const results = transform(xmlDom, outputDocument, outputDocument, baseUrl);
     // wish there was a better way?
-    transformed.insertBefore(
-      transformed.createProcessingInstruction(
+    outputDocument.insertBefore(
+      outputDocument.createProcessingInstruction(
         "xml",
         'version="1.0" encoding="utf-8"',
       ),
-      transformed.firstChild,
+      outputDocument.firstChild,
     );
-    process.stdout.write(serializer.serializeToString(transformed));
+    for (const [uri, dom] of results) {
+      if (uri !== "#default") {
+        const path = url.fileURLToPath(url.resolve(baseUrl.toString(), uri));
+        if (!path) {
+          throw new Error(`Can't write to ${uri}`);
+        }
+        if (fs.existsSync(path)) {
+          throw new Error(`${path} exists!`);
+        }
+        fs.writeFileSync(path, serializer.serializeToString(dom));
+      }
+    }
+    process.stdout.write(serializer.serializeToString(outputDocument));
   }
 }
 

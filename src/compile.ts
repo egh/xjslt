@@ -264,6 +264,14 @@ function compileCallTemplate(node: slimdom.Element) {
   return compileFuncall("callTemplate", [mkObject(args)]);
 }
 
+function compileResultDocument(node: slimdom.Element) {
+  const args = {
+    href: compileAvt(node.getAttribute("href")),
+    namespaces: mkNamespaceArg(node),
+  };
+  return compileFuncallWithChildren(node, "resultDocument", mkObject(args));
+}
+
 function compileFuncall(name: string, args: Expression[]) {
   return mkCallWithContext(mkMember("xjslt", name), args);
 }
@@ -489,6 +497,8 @@ export function compileSequenceConstructorNode(node: slimdom.Element) {
         // Handled by special case.
       } else if (node.localName === "processing-instruction") {
         return compileProcessingInstruction(node);
+      } else if (node.localName === "result-document") {
+        return compileResultDocument(node);
       } else if (node.localName === "sort") {
         // Handled by special case.
       } else if (node.localName === "text") {
@@ -618,6 +628,10 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
         ],
         mkBlock([
           mkLet(mkIdentifier("templates"), mkArray([])),
+          mkLet(
+            mkIdentifier("resultDocuments"),
+            mkNew(mkIdentifier("Map"), []),
+          ),
           mkLet(mkIdentifier("keys"), mkNew(mkIdentifier("Map"), [])),
           {
             type: "IfStatement",
@@ -650,6 +664,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
                 left: mkIdentifier("outputNode"),
                 right: mkIdentifier("outputDocument"),
               },
+              resultDocuments: mkIdentifier("resultDocuments"),
               contextItem: mkIdentifier("document"),
               mode: mkIdentifier("initialMode"),
               templates: mkIdentifier("templates"),
@@ -698,7 +713,11 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             mkArray([]),
             mkNamespaceArg(node),
           ]),
-          mkReturn(mkIdentifier("context.outputDocument")),
+          mkCall(mkMember("resultDocuments", "set"), [
+            mkLiteral("#default"),
+            mkIdentifier("outputDocument"),
+          ]),
+          mkReturn(mkIdentifier("resultDocuments")),
         ]),
       ),
       {

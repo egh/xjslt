@@ -148,6 +148,7 @@ export class Key {
 
 export interface DynamicContext {
   outputDocument: slimdom.Document;
+  resultDocuments: Map<string, slimdom.Document>;
   outputNode: any;
   contextItem: any;
   mode: string;
@@ -1308,6 +1309,44 @@ export function forEachGroup(
       });
     }
   }
+}
+
+export function resultDocument(
+  context: DynamicContext,
+  data: {
+    href?: AttributeValueTemplate;
+    namespaces: object;
+  },
+  func: SequenceConstructor,
+) {
+  let href = evaluateAttributeValueTemplate(
+    context,
+    data.href,
+    mkResolver(data.namespaces),
+  );
+  let resultDocument;
+  if (!href) {
+    /* The #default result document will be set at the end of the
+       transform (outside of this) but this allows us to tell if the
+       user tries to output the default twice. Kind of a hack. */
+    href = "#default";
+    resultDocument = context.outputDocument;
+  } else {
+    resultDocument = context.outputDocument.implementation.createDocument(
+      null,
+      null,
+      null,
+    );
+  }
+  if (context.resultDocuments.has(href)) {
+    throw new Error("XTDE1490");
+  }
+  context.resultDocuments.set(href, resultDocument);
+  func({
+    ...context,
+    outputDocument: resultDocument,
+    outputNode: resultDocument,
+  });
 }
 
 function preserveSpace(

@@ -162,17 +162,21 @@ function checkResult(rootDir, node, thunk) {
     };
   } else if (node.localName === "assert-xml") {
     return () => {
-      checkAssertXml(rootDir, node, thunk());
+      checkAssertXml(rootDir, node, thunk().get("#default"));
     };
   } else if (node.localName === "assert") {
     return () => {
       const assert = evaluateXPathToString(".", node);
-      expect(evaluateXPathToBoolean(assert, thunk())).toBeTruthy();
+      expect(
+        evaluateXPathToBoolean(assert, thunk().get("#default")),
+      ).toBeTruthy();
     };
   } else if (node.localName === "assert-count") {
     return () => {
       const count = evaluateXPathToNumber(".", node);
-      expect(evaluateXPathToNumber("count(.)", thunk())).toEqual(count);
+      expect(
+        evaluateXPathToNumber("count(.)", thunk().get("#default")),
+      ).toEqual(count);
     };
   } else if (node.localName === "serialization-matches") {
     return () => {
@@ -185,8 +189,13 @@ function checkResult(rootDir, node, thunk) {
     };
     // TODO: depends on error reporting
   } else if (node.localName === "assert-result-document") {
-    // TODO: depends on separate output files
-    return () => {};
+    // Just map #default to this one
+    const newResults = new Map([
+      ["#default", () => thunk().get(evaluateXPathToString("@uri", node))],
+    ]);
+    return () => {
+      checkResult(rootDir, evaluateXPathToNodes("./*", node)[0], newResults);
+    };
   } else if (node.localName === "assert-string-value") {
     // TODO: not sure what this is?
     return () => {};

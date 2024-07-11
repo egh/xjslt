@@ -50,6 +50,15 @@ function fnCurrentGroup({ currentContext }) {
   return currentContext.currentGroup;
 }
 
+function fnCurrentOutputUri({ currentContext }) {
+  for (const [uri, doc] of currentContext.resultDocuments) {
+    if (doc === currentContext.outputDocument) {
+      return uri;
+    }
+  }
+  return "#default";
+}
+
 function fnKey({ currentContext }, name: string, value: any[]) {
   const { keys, contextItem, variableScopes, nameTestCache } =
     currentContext as DynamicContext;
@@ -101,6 +110,13 @@ export function registerFunctions() {
     [],
     "item()",
     fnCurrent,
+  );
+
+  registerCustomXPathFunction(
+    { namespaceURI: XPATH_NSURI, localName: "current-output-uri" },
+    [],
+    "xs:string",
+    fnCurrentOutputUri,
   );
 
   registerCustomXPathFunction(
