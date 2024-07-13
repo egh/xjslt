@@ -507,7 +507,7 @@ export function processNode(
 
 export function nextMatch(
   context: DynamicContext,
-  attributes: {
+  data: {
     params: VariableLike[];
     namespaces: object;
   },
@@ -518,7 +518,7 @@ export function nextMatch(
     evaluateTemplate(
       next.value,
       { ...context, nextMatches: nextMatches },
-      attributes.params,
+      data.params,
     );
   }
 }
@@ -650,7 +650,7 @@ function evaluateTemplate(
 
 export function applyTemplates(
   context: DynamicContext,
-  attributes: {
+  data: {
     select?: string;
     mode: string;
     params: VariableLike[];
@@ -658,16 +658,16 @@ export function applyTemplates(
     sortKeyComponents: SortKeyComponent[];
   },
 ) {
-  const nsResolver = mkResolver(attributes.namespaces);
+  const nsResolver = mkResolver(data.namespaces);
   /* The nodes we want to apply templates on.*/
   const nodes = evaluateXPathToNodes(
-    attributes.select,
+    data.select,
     context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
     { currentContext: context, namespaceResolver: nsResolver },
   );
-  let mode = attributes.mode || "#default";
+  let mode = data.mode || "#default";
   if (mode === "#current") {
     /* keep the current mode */
     mode = context.mode;
@@ -675,7 +675,7 @@ export function applyTemplates(
   for (let node of sortNodes(
     context,
     nodes,
-    attributes.sortKeyComponents,
+    data.sortKeyComponents,
     nsResolver,
   )) {
     /* for each node */
@@ -686,26 +686,26 @@ export function applyTemplates(
         contextItem: node,
         variableScopes: extendScope(context.variableScopes),
       },
-      attributes.params,
-      attributes.namespaces,
+      data.params,
+      data.namespaces,
     );
   }
 }
 
 export function callTemplate(
   context: DynamicContext,
-  attributes: {
+  data: {
     name: string;
     params: VariableLike[];
     namespaces: object;
   },
 ) {
   for (let template of context.templates) {
-    if (template.name !== undefined && attributes.name === template.name) {
-      return evaluateTemplate(template, context, attributes.params);
+    if (template.name !== undefined && data.name === template.name) {
+      return evaluateTemplate(template, context, data.params);
     }
   }
-  throw new Error(`Cannot find a template named ${attributes.name}`);
+  throw new Error(`Cannot find a template named ${data.name}`);
 }
 
 export function functionX(
@@ -741,7 +741,7 @@ export function functionX(
 
 export function copy(
   context: DynamicContext,
-  attributes: { namespaces: object },
+  data: { namespaces: object },
   func: SequenceConstructor,
 ) {
   const node = context.contextItem;
@@ -789,18 +789,18 @@ export function copy(
 
 export function copyOf(
   context: DynamicContext,
-  attributes: { select: string; namespaces: object },
+  data: { select: string; namespaces: object },
   func: SequenceConstructor,
 ) {
   let things = evaluateXPath(
-    attributes.select,
+    data.select,
     context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
     {
       currentContext: context,
-      namespaceResolver: mkResolver(attributes.namespaces),
+      namespaceResolver: mkResolver(data.namespaces),
     },
   );
   for (let thing of things) {
@@ -810,7 +810,7 @@ export function copyOf(
 
 export function valueOf(
   context: DynamicContext,
-  attributes: {
+  data: {
     select?: string;
     separator?: AttributeValueTemplate;
     disableOutputEscaping?: boolean;
@@ -821,9 +821,9 @@ export function valueOf(
   appendToTree(
     constructSimpleContent(
       context,
-      attributes.select || func,
-      mkResolver(attributes.namespaces),
-      attributes.separator,
+      data.select || func,
+      mkResolver(data.namespaces),
+      data.separator,
     ),
     context,
   );
@@ -831,7 +831,7 @@ export function valueOf(
 
 export function message(
   context: DynamicContext,
-  attributes: {
+  data: {
     select?: string;
     namespaces: object;
     terminate: string;
@@ -841,25 +841,25 @@ export function message(
   console.log(
     constructSimpleContent(
       context,
-      attributes.select || func,
-      mkResolver(attributes.namespaces),
+      data.select || func,
+      mkResolver(data.namespaces),
     ),
   );
-  if (attributes.terminate === "yes") {
+  if (data.terminate === "yes") {
     process.exit();
   }
 }
 
 export function text(
   context: DynamicContext,
-  attributes: {
+  data: {
     disableOutputEscaping: boolean;
     namespaces: object;
   },
   func: SequenceConstructor,
 ) {
   appendToTree(
-    constructSimpleContent(context, func, mkResolver(attributes.namespaces), [
+    constructSimpleContent(context, func, mkResolver(data.namespaces), [
       "",
     ]),
     context,
@@ -924,7 +924,9 @@ export function mergeVariableScopes(variableScopes: Array<VariableScope>) {
 }
 
 export function literalText(context: DynamicContext, text: string) {
-  context.outputNode.appendChild(context.outputDocument.createTextNode(text));
+  if (context.outputNode.nodeType !== DOCUMENT_NODE) {
+    context.outputNode.appendChild(context.outputDocument.createTextNode(text));
+  }
 }
 
 /* Return true if we output a string. */
@@ -969,17 +971,17 @@ function appendToTreeArray(things: any[], context: DynamicContext) {
 
 export function sequence(
   context: DynamicContext,
-  attributes: { select: string; namespaces: object },
+  data: { select: string; namespaces: object },
 ) {
   const things = evaluateXPath(
-    attributes.select,
+    data.select,
     context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
     {
       currentContext: context,
-      namespaceResolver: mkResolver(attributes.namespaces),
+      namespaceResolver: mkResolver(data.namespaces),
     },
   );
   appendToTreeArray(things, context);
@@ -1162,18 +1164,18 @@ export function element(
 
 export function ifX(
   context: DynamicContext,
-  attributes: { test: string; namespaces: object },
+  data: { test: string; namespaces: object },
   func: SequenceConstructor,
 ) {
   if (
     evaluateXPathToBoolean(
-      attributes.test,
+      data.test,
       context.contextItem,
       undefined,
       mergeVariableScopes(context.variableScopes),
       {
         currentContext: context,
-        namespaceResolver: mkResolver(attributes.namespaces),
+        namespaceResolver: mkResolver(data.namespaces),
       },
     )
   ) {
@@ -1205,7 +1207,7 @@ export function choose(
 
 export function document(
   context: DynamicContext,
-  attributes: { namespaces: object },
+  data: { namespaces: object },
   func: SequenceConstructor,
 ) {
   const doc = context.outputDocument.implementation.createDocument(
