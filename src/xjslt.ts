@@ -149,7 +149,7 @@ export class Key {
 export interface DynamicContext {
   outputDocument: slimdom.Document;
   resultDocuments: Map<string, slimdom.Document>;
-  outputNode: any;
+  outputNode: slimdom.Node;
   contextItem: any;
   mode: string;
   templates: Array<CompiledTemplate>;
@@ -775,7 +775,7 @@ export function copy(
   if (!newNode) {
     // ...
   } else if (newNode.nodeType === ATTRIBUTE_NODE) {
-    context.outputNode.setAttributeNode(newNode);
+    (context.outputNode as slimdom.Element).setAttributeNode(newNode);
   } else {
     context.outputNode.appendChild(newNode);
   }
@@ -945,7 +945,7 @@ export function literalText(context: DynamicContext, text: string) {
 function appendToTree(thing: any, context: DynamicContext) {
   if (thing.nodeType === ATTRIBUTE_NODE) {
     let newNode = context.outputDocument.importNode(thing, true);
-    context.outputNode.setAttributeNode(newNode);
+    (context.outputNode as slimdom.Element).setAttributeNode(newNode);
   } else if (thing.nodeType === DOCUMENT_NODE) {
     thing = (thing as slimdom.Document).documentElement;
     if ((thing as slimdom.Element).localName === "xsl:document") {
@@ -1087,7 +1087,7 @@ export function attribute(
     namespace: ns,
     value: value,
   });
-  context.outputNode.setAttributeNode(attrNode);
+  (context.outputNode as slimdom.Element).setAttributeNode(attrNode);
 }
 
 export function processingInstruction(
@@ -1140,7 +1140,7 @@ export function namespace(
     namespace: XMLNS_NSURI,
     value: value,
   });
-  context.outputNode.setAttributeNode(attrNode);
+  (context.outputNode as slimdom.Element).setAttributeNode(attrNode);
 }
 
 export function element(
