@@ -859,9 +859,7 @@ export function text(
   func: SequenceConstructor,
 ) {
   appendToTree(
-    constructSimpleContent(context, func, mkResolver(data.namespaces), [
-      "",
-    ]),
+    constructSimpleContent(context, func, mkResolver(data.namespaces), [""]),
     context,
   );
 }
@@ -923,10 +921,24 @@ export function mergeVariableScopes(variableScopes: Array<VariableScope>) {
   return retval;
 }
 
-export function literalText(context: DynamicContext, text: string) {
+function appendText(context: DynamicContext, text: string) {
   if (context.outputNode.nodeType !== DOCUMENT_NODE) {
-    context.outputNode.appendChild(context.outputDocument.createTextNode(text));
+    if (
+      context.outputNode.lastChild &&
+      context.outputNode.lastChild.nodeType === TEXT_NODE
+    ) {
+      (context.outputNode.lastChild as slimdom.Text).appendData(text);
+    } else {
+      const newNode = context.outputDocument.createTextNode(text);
+      if (newNode) {
+        context.outputNode.appendChild(newNode);
+      }
+    }
   }
+}
+
+export function literalText(context: DynamicContext, text: string) {
+  appendText(context, text);
 }
 
 /* Return true if we output a string. */
@@ -941,16 +953,15 @@ function appendToTree(thing: any, context: DynamicContext) {
     } else {
       appendToTree(thing, context);
     }
+  } else if (thing.nodeType === TEXT_NODE) {
+    appendText(context, (thing as slimdom.Text).data);
   } else if (thing.nodeType) {
     let newNode = context.outputDocument.importNode(thing, true);
     context.outputNode.appendChild(newNode);
   } else {
     let str = `${thing}`;
     if (str !== "") {
-      const newNode = context.outputDocument.createTextNode(str);
-      if (newNode) {
-        context.outputNode.appendChild(newNode);
-      }
+      appendText(context, str);
       return true;
     }
   }
@@ -961,9 +972,7 @@ function appendToTreeArray(things: any[], context: DynamicContext) {
   let lastWasString = false;
   for (let thing of things) {
     if (lastWasString) {
-      context.outputNode.appendChild(
-        context.outputDocument.createTextNode(" "),
-      );
+      appendText(context, " ");
     }
     lastWasString = appendToTree(thing, context);
   }
@@ -1096,7 +1105,7 @@ export function processingInstruction(
     data.select || func,
     mkResolver(data.namespaces),
     [""],
-  );
+  ).trimStart();
   context.outputNode.appendChild(
     context.outputDocument.createProcessingInstruction(name, value),
   );
@@ -1425,7 +1434,7 @@ function constructSimpleContent(
   generator: Constructor,
   namespaceResolver: NamespaceResolver,
   separator?: AttributeValueTemplate,
-): any {
+): string {
   if (!separator) {
     if (typeof generator === "string") {
       separator = [" "];

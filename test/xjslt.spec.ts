@@ -547,8 +547,8 @@ test("text node", async () => {
   const results = transform(document, new slimdom.Document()).get("#default");
   expect(evaluateXPathToString("//li/text()", results)).toEqual(
     `
-- Mr. Foo 
-- Mr. Bar`,
+-Mr. Foo 
+-Mr. Bar`,
   );
 });
 

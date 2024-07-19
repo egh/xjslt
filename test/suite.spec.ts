@@ -79,24 +79,6 @@ function parseFile(path: string) {
   return fileParseCache.get(path);
 }
 
-/* Round trip xml string through slimdom to eliminate any variations due to slimdom peculiarities.
-Self-closing tags, etc.*/
-function roundTrip(xml: string): string {
-  try {
-    return serializer.serializeToString(slimdom.parseXmlFragment(xml));
-  } catch (ex) {
-    return xml;
-  }
-}
-
-function roundTripDom(document: slimdom.Document): slimdom.Document {
-  try {
-    return slimdom.parseXmlDocument(serializer.serializeToString(document));
-  } catch (ex) {
-    return document;
-  }
-}
-
 function parseEnvironment(rootDir, environment) {
   const file = evaluateXPathToString("source[@role='.']/@file", environment);
   if (file) {
@@ -135,7 +117,7 @@ function checkAssertXml(rootDir: string, node: any, transformed: any) {
   } else {
     assertXmlContents = evaluateXPathToString(".", node);
   }
-  expect(roundTripDom(transformed)).toBeEquivalentDom(
+  expect(transformed).toBeEquivalentDom(
     slimdom.parseXmlDocument(assertXmlContents),
   );
 }
