@@ -21,6 +21,7 @@
 import { expect } from "@jest/globals";
 import * as slimdom from "slimdom";
 import type { MatcherFunction } from "expect";
+import { compile } from "xspattern";
 
 /* Compare two dom objects and return a boolean if they are the same, */
 export const domCompare = function (
@@ -145,6 +146,26 @@ export const toBeEquivalentDom: MatcherFunction<[b: unknown]> = function (
   }
 };
 
+export const toXSMatch: MatcherFunction<[expected: string]> = function (
+  a,
+  expected: string,
+) {
+  const matches = compile(expected as string)(a as string);
+  if (matches) {
+    return {
+      message: () =>
+        `expected ${this.utils.printReceived(a)} to match ${this.utils.printReceived(expected)}`,
+      pass: true,
+    };
+  } else {
+    return {
+      message: () =>
+        `expected ${this.utils.printReceived(a)} to match ${this.utils.printReceived(expected)}`,
+      pass: false,
+    };
+  }
+};
+
 expect.extend({ toBeEquivalentDom });
 expect.addEqualityTesters([
   (a: any, b: any) => {
@@ -154,3 +175,4 @@ expect.addEqualityTesters([
     return domCompare(undefined, a, b)[0];
   },
 ]);
+expect.extend({ toXSMatch });

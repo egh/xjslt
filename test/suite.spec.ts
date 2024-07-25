@@ -18,7 +18,6 @@
  * <https://www.gnu.org/licenses/>.
  */
 
-import { compile } from "xspattern";
 import { log } from "console";
 import { buildStylesheet } from "../src/compile";
 import * as slimdom from "slimdom";
@@ -34,15 +33,17 @@ import { readFileSync } from "fs";
 import { pathToFileURL } from "url";
 import { KNOWN_SPEC_FAILURES } from "./suite.fail";
 import { expect } from "@jest/globals";
-import { toBeEquivalentDom } from "./matchers";
-expect.extend({ toBeEquivalentDom });
+import { toBeEquivalentDom, toXSMatch } from "./matchers";
+expect.extend({ toBeEquivalentDom, toXSMatch });
 
 declare module "expect" {
   interface AsymmetricMatchers {
     toBeEquivalentDom(b: any): void;
+    toXSMatch(expected: string): void;
   }
   interface Matchers<R> {
     toBeEquivalentDom(b: any): R;
+    toXSMatch(expected: string): R;
   }
 }
 
@@ -162,8 +163,9 @@ function checkResult(rootDir, node, thunk) {
     };
   } else if (node.localName === "serialization-matches") {
     return () => {
-      const matcher = compile(evaluateXPathToString(".", node));
-      expect(matcher(serializer.serializeToString(thunk()))).toBeTruthy();
+      expect(serializer.serializeToString(thunk())).toXSMatch(
+        `.*${evaluateXPathToString(".", node)}.*`,
+      );
     };
   } else if (node.localName === "error") {
     return () => {
