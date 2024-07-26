@@ -22,6 +22,7 @@
 import * as slimdom from "slimdom";
 import { Command } from "commander";
 import { buildStylesheet, compileStylesheet } from "./compile";
+import { serialize } from "./xjslt";
 import { readFileSync } from "fs";
 import { pathToFileURL } from "url";
 import { webpack } from "webpack";
@@ -32,21 +33,13 @@ import * as process from "process";
 
 async function run(xslt: string, xmls: Array<string>) {
   const transform = await buildStylesheet(xslt);
-  const serializer = new slimdom.XMLSerializer();
   for (let xml of xmls) {
     const xmlDom = slimdom.parseXmlDocument(readFileSync(xml).toString());
     const outputDocument = new slimdom.Document();
     const baseUrl = pathToFileURL(xml);
     const results = transform(xmlDom, outputDocument, outputDocument, baseUrl);
-    // wish there was a better way?
-    outputDocument.insertBefore(
-      outputDocument.createProcessingInstruction(
-        "xml",
-        'version="1.0" encoding="utf-8"',
-      ),
-      outputDocument.firstChild,
-    );
-    for (const [uri, dom] of results) {
+    for (const [uri, result] of results) {
+      const serialized = serialize(result);
       if (uri !== "#default") {
         const path = url.fileURLToPath(url.resolve(baseUrl.toString(), uri));
         if (!path) {
@@ -55,10 +48,11 @@ async function run(xslt: string, xmls: Array<string>) {
         if (fs.existsSync(path)) {
           throw new Error(`${path} exists!`);
         }
-        fs.writeFileSync(path, serializer.serializeToString(dom));
+        fs.writeFileSync(path, serialized);
+      } else {
+        process.stdout.write(serialized);
       }
     }
-    process.stdout.write(serializer.serializeToString(outputDocument));
   }
 }
 

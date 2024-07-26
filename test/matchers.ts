@@ -150,7 +150,13 @@ export const toXSMatch: MatcherFunction<[expected: string]> = function (
   a,
   expected: string,
 ) {
-  const matches = compile(expected as string)(a as string);
+  if (!expected.startsWith("^")) {
+    expected = `^.*${expected}`;
+  }
+  if (!expected.endsWith("$")) {
+    expected = `${expected}.*\$`;
+  }
+  const matches = compile(expected, { language: "xpath" })(a as string);
   if (matches) {
     return {
       message: () =>

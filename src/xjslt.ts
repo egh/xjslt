@@ -33,6 +33,8 @@ import {
 import * as slimdom from "slimdom";
 import { AttributeValueTemplate } from "./compile";
 import { registerFunctions } from "./functions";
+import { OutputDefinition } from "./definitions";
+import { mkOutputDefinition } from "./shared";
 
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
 export const XMLNS_NSURI = "http://www.w3.org/2000/xmlns/";
@@ -146,9 +148,13 @@ export class Key {
   }
 }
 
+export type OutputResult = OutputDefinition & {
+  document: slimdom.Document;
+};
+
 export interface DynamicContext {
   outputDocument: slimdom.Document;
-  resultDocuments: Map<string, slimdom.Document>;
+  resultDocuments: Map<string, OutputResult>;
   outputNode: slimdom.Node;
   contextItem: any;
   mode: string;
@@ -160,6 +166,7 @@ export interface DynamicContext {
   currentGroupingKey?: string;
   keys: Map<String, Key>;
   nameTestCache: Map<string, Set<slimdom.Node>>;
+  outputDefinitions: Map<string, OutputDefinition>;
 }
 
 type Constructor = string | SequenceConstructor;
@@ -1325,32 +1332,81 @@ export function forEachGroup(
 export function resultDocument(
   context: DynamicContext,
   data: {
+    format?: AttributeValueTemplate;
     href?: AttributeValueTemplate;
     namespaces: object;
+    omitXmlDeclaration?: AttributeValueTemplate;
+    doctypePublic?: AttributeValueTemplate;
+    doctypeSystem?: AttributeValueTemplate;
+    standalone?: AttributeValueTemplate;
   },
   func: SequenceConstructor,
 ) {
-  let href = evaluateAttributeValueTemplate(
-    context,
-    data.href,
-    mkResolver(data.namespaces),
-  );
+  const resolver = mkResolver(data.namespaces);
+  function evalAvt(avt: AttributeValueTemplate) {
+    return evaluateAttributeValueTemplate(context, avt, resolver);
+  }
+  const format = evalAvt(data.format);
+  let overrideDefinition = mkOutputDefinition({
+    omitXmlDeclaration: evalAvt(data.omitXmlDeclaration),
+    doctypePublic: evalAvt(data.doctypePublic),
+    doctypeSystem: evalAvt(data.doctypeSystem),
+    standalone: evalAvt(data.standalone),
+  });
+  Object.keys(overrideDefinition).forEach((key) => {
+    if (!overrideDefinition[key]) {
+      delete overrideDefinition[key];
+    }
+  });
+  const od: OutputDefinition = {
+    ...(format ? context.outputDefinitions.get(format) : {}),
+    ...overrideDefinition,
+  };
+  const href = evalAvt(data.href);
+  let doctype: slimdom.DocumentType | null = null;
+  if (od.doctypePublic || od.doctypeSystem) {
+    // TODO: Get a better name?
+    doctype = context.outputDocument.implementation.createDocumentType(
+      "out",
+      od.doctypePublic || "",
+      od.doctypeSystem || "",
+    );
+  }
   if (!href) {
     if (context.outputDocument.documentElement) {
       /* Already started writing to this, you can't write now! */
       throw new Error("XTDE1490");
     }
+    let outputDocument = context.outputDocument;
+    if (doctype) {
+      /* Need to recreate document with doctype */
+      outputDocument = context.outputDocument.implementation.createDocument(
+        null,
+        null,
+        doctype,
+      );
+      context.outputDocument = outputDocument;
+      context.outputNode = outputDocument;
+    }
+    context.resultDocuments.set("#default", {
+      ...od,
+      document: outputDocument,
+    });
+    console.log(context.resultDocuments.get("#default"));
     func(context);
   } else {
     const resultDocument = context.outputDocument.implementation.createDocument(
       null,
       null,
-      null,
+      doctype,
     );
     if (context.resultDocuments.has(href)) {
-      throw new Error("XTDE1490");
+      throw new Error(`XTDE1490: ${href} is a duplicate`);
     }
-    context.resultDocuments.set(href, resultDocument);
+    context.resultDocuments.set(href, {
+      ...od,
+      document: resultDocument,
+    });
     func({
       ...context,
       outputDocument: resultDocument,
@@ -1552,6 +1608,34 @@ export function determineNamespace(
   }
   namespace = nsResolver(prefix);
   return namespace;
+}
+
+export function serialize(result: OutputResult): string {
+  const serializer = new slimdom.XMLSerializer();
+  if (result.omitXmlDeclaration !== true) {
+    let params: Map<string, string | undefined> = new Map([
+      ["version", "1.0"],
+      ["encoding", "UTF-8"],
+      ["standalone", undefined],
+    ]);
+    if (result.standalone !== undefined) {
+      params.set("standalone", result.standalone ? "yes" : "no");
+    }
+    const paramString = Array.from(params)
+      .map(([k, v]) => {
+        if (!v) {
+          return "";
+        } else {
+          return `${k}="${v}"`;
+        }
+      })
+      .join(" ");
+    result.document.insertBefore(
+      result.document.createProcessingInstruction("xml", paramString),
+      result.document.firstChild,
+    );
+  }
+  return serializer.serializeToString(result.document);
 }
 
 registerFunctions();

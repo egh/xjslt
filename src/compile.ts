@@ -65,6 +65,8 @@ import {
   NamespaceResolver,
   stripSpace,
 } from "./xjslt";
+import { OutputDefinition } from "./definitions";
+import { mkOutputDefinition } from "./shared";
 
 /**
  * Functions to walk a DOM tree of an XSLT stylesheet and generate an
@@ -266,7 +268,12 @@ function compileCallTemplate(node: slimdom.Element) {
 
 function compileResultDocument(node: slimdom.Element) {
   const args = {
+    format: compileAvt(node.getAttribute("format")),
     href: compileAvt(node.getAttribute("href")),
+    omitXmlDeclaration: compileAvt(node.getAttribute("omit-xml-declaration")),
+    doctypeSystem: compileAvt(node.getAttribute("doctype-system")),
+    doctypePublic: compileAvt(node.getAttribute("doctype-public")),
+    standalone: compileAvt(node.getAttribute("standalone")),
     namespaces: mkNamespaceArg(node),
   };
   return compileFuncallWithChildren(node, "resultDocument", mkObject(args));
@@ -437,8 +444,9 @@ export function compileTopLevelNode(node: slimdom.Element) {
         return compileKeyNode(node);
       } else if (node.localName === "function") {
         return compileFunctionNode(node);
+      } else if (node.localName === "output") {
+        return compileOutputNode(node);
       } else if (
-        node.localName === "output" ||
         node.localName === "preserve-space" ||
         node.localName === "attribute-set" ||
         node.localName === "character-map" ||
@@ -455,6 +463,44 @@ export function compileTopLevelNode(node: slimdom.Element) {
         throw new Error("Found unexpected XSL element: " + node.tagName);
       }
     }
+  }
+}
+
+export function compileOutputNode(node: slimdom.Element) {
+  const name = node.getAttribute("name") || "#default";
+  const outputDefinition: OutputDefinition = mkOutputDefinition({
+    omitXmlDeclaration: node.getAttribute("omit-xml-declaration") || undefined,
+    doctypeSystem: node.getAttribute("doctype-system") || undefined,
+    doctypePublic: node.getAttribute("doctype-public") || undefined,
+    standalone: node.getAttribute("standalone") || undefined,
+  });
+  let tmp = {};
+  for (const key in outputDefinition) {
+    tmp[key] = mkLiteral(outputDefinition[key]);
+  }
+  if (!name) {
+    mkCall(mkMember("outputDefinitions", "set"), [
+      {
+        type: "ObjectExpression",
+        properties: [
+          { type: "SpreadElement", argument: mkObject(tmp) },
+          {
+            type: "SpreadElement",
+            argument: {
+              type: "CallExpression",
+              callee: mkMember("outputDefinitions", "get"),
+              arguments: [mkLiteral("#default")],
+              optional: false,
+            },
+          },
+        ],
+      },
+    ]);
+  } else {
+    return mkCall(mkMember("outputDefinitions", "set"), [
+      mkLiteral(name),
+      mkObject(tmp),
+    ]);
   }
 }
 
@@ -634,9 +680,13 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
           ),
           mkCall(mkMember("resultDocuments", "set"), [
             mkLiteral("#default"),
-            mkIdentifier("outputDocument"),
+            mkObject({ document: mkIdentifier("outputDocument") }),
           ]),
           mkLet(mkIdentifier("keys"), mkNew(mkIdentifier("Map"), [])),
+          mkLet(
+            mkIdentifier("outputDefinitions"),
+            mkNew(mkIdentifier("Map"), []),
+          ),
           {
             type: "IfStatement",
             test: {
@@ -675,6 +725,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               variableScopes: mkArray([mkNew(mkIdentifier("Map"), [])]),
               inputURL: mkIdentifier("inputURL"),
               keys: mkIdentifier("keys"),
+              outputDefinitions: mkIdentifier("outputDefinitions"),
               nameTestCache: mkNew(mkIdentifier("Map"), []),
             }),
           ),
@@ -692,6 +743,13 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             }),
             compileTopLevelNode,
           ),
+          /* Then the output definitions */
+          ...compileNodeArray(
+            evaluateXPathToNodes("./xsl:output", node, null, null, {
+              namespaceResolver: buildInResolver,
+            }),
+            compileTopLevelNode,
+          ),
           /* Then compile the templates */
           ...compileNodeArray(
             evaluateXPathToNodes("./xsl:template", node, null, null, {
@@ -705,7 +763,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
           /* Then everything else */
           ...compileNodeArray(
             evaluateXPathToNodes(
-              "./xsl:*[local-name()!='template' and local-name()!='key' and local-name()!='function']",
+              "./xsl:*[local-name()!='template' and local-name()!='key' and local-name()!='function' and local-name()!='output']",
               node,
               null,
               null,

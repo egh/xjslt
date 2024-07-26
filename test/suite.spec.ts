@@ -34,6 +34,7 @@ import { pathToFileURL } from "url";
 import { KNOWN_SPEC_FAILURES } from "./suite.fail";
 import { expect } from "@jest/globals";
 import { toBeEquivalentDom, toXSMatch } from "./matchers";
+import { OutputResult, serialize } from "../src/xjslt";
 expect.extend({ toBeEquivalentDom, toXSMatch });
 
 declare module "expect" {
@@ -47,8 +48,6 @@ declare module "expect" {
   }
 }
 
-const serializer = new slimdom.XMLSerializer();
-
 const testSetDom = slimdom.parseXmlDocument(
   readFileSync("xslt30-test/catalog.xml").toString(),
 );
@@ -61,7 +60,47 @@ function applicableTest(node) {
     !evaluateXPathToBoolean("dependencies/unicode-version", node) && // Skip unicode tests for now
     !evaluateXPathToBoolean("dependencies/sweep_and_posture", node) &&
     !evaluateXPathToBoolean(
-      "dependencies/feature", // We don't support any feature, (backwards_compatibility, built_in_derived_types, disabling_output_escaping, dtd, dynamic_evaluation, higher_order_functions, HTML4, HTML5, namespace_axis, schema_aware, serialization, streaming, streaming-fallback, XML_1.1, XPath_3.1, XSD_1.1, xsl-stylesheet-processing-instruction)
+      "dependencies/feature[@value='backwards_compatibility']",
+      node,
+    ) &&
+    !evaluateXPathToBoolean(
+      "dependencies/feature[@value='built_in_derived_types']",
+      node,
+    ) &&
+    !evaluateXPathToBoolean(
+      "dependencies/feature[@value='disabling_output_escaping']",
+      node,
+    ) &&
+    !evaluateXPathToBoolean("dependencies/feature[@value='dtd']", node) &&
+    !evaluateXPathToBoolean(
+      "dependencies/feature[@value='dynamic_evaluation']",
+      node,
+    ) &&
+    !evaluateXPathToBoolean(
+      "dependencies/feature[@value='higher_order_functions']",
+      node,
+    ) &&
+    !evaluateXPathToBoolean("dependencies/feature[@value='HTML4']", node) &&
+    !evaluateXPathToBoolean("dependencies/feature[@value='HTML5']", node) &&
+    !evaluateXPathToBoolean(
+      "dependencies/feature[@value='namespace_axis']",
+      node,
+    ) &&
+    !evaluateXPathToBoolean(
+      "dependencies/feature[@value='schema_aware']",
+      node,
+    ) &&
+    //    !evaluateXPathToBoolean("dependencies/feature[@value='serialization']", node) &&
+    !evaluateXPathToBoolean("dependencies/feature[@value='streaming']", node) &&
+    !evaluateXPathToBoolean(
+      "dependencies/feature[@value='streaming-fallback']",
+      node,
+    ) &&
+    !evaluateXPathToBoolean("dependencies/feature[@value='XML_1.1']", node) &&
+    //    !evaluateXPathToBoolean("dependencies/feature[@value='XPath_3.1']", node) &&
+    !evaluateXPathToBoolean("dependencies/feature[@value='XSD_1.1']", node) &&
+    !evaluateXPathToBoolean(
+      "dependencies/feature[@value='xsl-stylesheet-processing-instruction']",
       node,
     )
   );
@@ -80,7 +119,7 @@ function parseFile(path: string) {
   return fileParseCache.get(path);
 }
 
-function parseEnvironment(rootDir, environment) {
+function parseEnvironment(rootDir: string, environment) {
   const file = evaluateXPathToString("source[@role='.']/@file", environment);
   if (file) {
     return [parseFile(path.join(rootDir, file)), file];
@@ -96,7 +135,7 @@ function parseEnvironment(rootDir, environment) {
   }
 }
 
-function setupEnvironment(rootDir, testSetDom) {
+function setupEnvironment(rootDir: string, testSetDom) {
   let environments = new Map();
   for (let environment of evaluateXPathToNodes(
     "/test-set/environment",
@@ -123,7 +162,7 @@ function checkAssertXml(rootDir: string, node: any, transformed: any) {
   );
 }
 
-function checkResult(rootDir, node, thunk) {
+function checkResult(rootDir, node, thunk: () => Map<string, OutputResult>) {
   if (node.localName == "all-of") {
     return () => {
       for (let childNode of evaluateXPathToNodes("./*", node)) {
@@ -145,26 +184,27 @@ function checkResult(rootDir, node, thunk) {
     };
   } else if (node.localName === "assert-xml") {
     return () => {
-      checkAssertXml(rootDir, node, thunk().get("#default"));
+      const dom = thunk().get("#default").document;
+      checkAssertXml(rootDir, node, dom);
     };
   } else if (node.localName === "assert") {
     return () => {
       const assert = evaluateXPathToString(".", node);
       expect(
-        evaluateXPathToBoolean(assert, thunk().get("#default")),
+        evaluateXPathToBoolean(assert, thunk().get("#default").document),
       ).toBeTruthy();
     };
   } else if (node.localName === "assert-count") {
     return () => {
       const count = evaluateXPathToNumber(".", node);
       expect(
-        evaluateXPathToNumber("count(.)", thunk().get("#default")),
+        evaluateXPathToNumber("count(.)", thunk().get("#default").document),
       ).toEqual(count);
     };
   } else if (node.localName === "serialization-matches") {
     return () => {
-      expect(serializer.serializeToString(thunk())).toXSMatch(
-        `.*${evaluateXPathToString(".", node)}.*`,
+      expect(serialize(thunk().get("#default") as OutputResult)).toXSMatch(
+        evaluateXPathToString(".", node),
       );
     };
   } else if (node.localName === "error") {
@@ -174,11 +214,18 @@ function checkResult(rootDir, node, thunk) {
     // TODO: depends on error reporting
   } else if (node.localName === "assert-result-document") {
     // Just map #default to this one
-    const newResults = new Map([
-      ["#default", () => thunk().get(evaluateXPathToString("@uri", node))],
+    const newResults = new Map<string, OutputResult>([
+      [
+        "#default",
+        thunk().get(evaluateXPathToString("@uri", node)) as OutputResult,
+      ],
     ]);
     return () => {
-      checkResult(rootDir, evaluateXPathToNodes("./*", node)[0], newResults);
+      checkResult(
+        rootDir,
+        evaluateXPathToNodes("./*", node)[0],
+        () => newResults,
+      );
     };
   } else if (node.localName === "assert-string-value") {
     // TODO: not sure what this is?
