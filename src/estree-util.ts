@@ -138,6 +138,7 @@ export function mkImportsNode(): Array<Statement> {
 export function mkLiteral(
   value: string | boolean | number | undefined,
 ): Literal {
+  value = value === null || value === undefined ? undefined : value;
   return {
     type: "Literal",
     value: value,

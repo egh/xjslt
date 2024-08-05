@@ -152,7 +152,7 @@ function compileFunctionNode(node: slimdom.Element) {
   const args = {
     name: mkLiteral(name),
     namespace: mkLiteral(namespace),
-    as: mkLiteral(node.getAttribute("as") || undefined),
+    as: mkLiteral(node.getAttribute("as")),
     params: compileParams("param", node.childNodes),
     namespaces: mkNamespaceArg(node),
   };
@@ -161,7 +161,7 @@ function compileFunctionNode(node: slimdom.Element) {
 
 function compileForEachNode(node: slimdom.Element) {
   const args = {
-    select: mkLiteral(node.getAttribute("select") || undefined),
+    select: mkLiteral(node.getAttribute("select")),
     sortKeyComponents: compileSortKeyComponents(node.childNodes),
     namespaces: mkNamespaceArg(node),
   };
@@ -170,8 +170,8 @@ function compileForEachNode(node: slimdom.Element) {
 
 function compileForEachGroupNode(node: slimdom.Element) {
   const args = {
-    select: mkLiteral(node.getAttribute("select") || undefined),
-    groupBy: mkLiteral(node.getAttribute("group-by") || undefined),
+    select: mkLiteral(node.getAttribute("select")),
+    groupBy: mkLiteral(node.getAttribute("group-by")),
     sortKeyComponents: compileSortKeyComponents(node.childNodes),
     namespaces: mkNamespaceArg(node),
   };
@@ -189,11 +189,11 @@ function compileNextMatchNode(node: slimdom.Element) {
 /* Compile a param or variable, which contains either a select
    statement or a SequenceConstructor. */
 function compileVariableLike(node: slimdom.Element) {
-  let name = mkLiteral(node.getAttribute("name") || undefined);
+  let name = mkLiteral(node.getAttribute("name"));
   if (node.hasAttribute("select")) {
     return mkObject({
       name: name,
-      content: mkLiteral(node.getAttribute("select") || undefined),
+      content: mkLiteral(node.getAttribute("select")),
       namespaces: mkNamespaceArg(node),
     });
   } else if (node.hasChildNodes()) {
@@ -219,7 +219,7 @@ function compileSortKeyComponents(nodes: any[]) {
         namespaces: mkNamespaceArg(node),
         order: compileAvt(node.getAttribute("order")),
         lang: compileAvt(node.getAttribute("lang")),
-        dataType: mkLiteral(node.getAttribute("data-type") || undefined),
+        dataType: mkLiteral(node.getAttribute("data-type")),
       };
       if (node.hasChildNodes()) {
         sortKeyComponents.push(
@@ -335,7 +335,7 @@ function compileChooseNode(node: slimdom.Element) {
       if (childNode.localName === "when") {
         alternatives.push(
           mkObject({
-            test: mkLiteral(childNode.getAttribute("test") || undefined),
+            test: mkLiteral(childNode.getAttribute("test")),
             apply: mkArrowFun(compileSequenceConstructor(childNode.childNodes)),
           }),
         );
@@ -583,7 +583,7 @@ function compileAttributeNode(node: slimdom.Element) {
   const args = {
     name: compileAvt(node.getAttribute("name")),
     separator: compileAvt(node.getAttribute("separator")),
-    select: mkLiteral(node.getAttribute("select") || undefined),
+    select: mkLiteral(node.getAttribute("select")),
     namespace: compileAvt(node.getAttribute("namespace")),
     namespaces: mkNamespaceArg(node),
   };
@@ -592,7 +592,7 @@ function compileAttributeNode(node: slimdom.Element) {
 
 function compileProcessingInstruction(node: slimdom.Element) {
   const args = {
-    select: mkLiteral(node.getAttribute("select") || undefined),
+    select: mkLiteral(node.getAttribute("select")),
     name: compileAvt(node.getAttribute("name")),
     namespaces: mkNamespaceArg(node),
   };
@@ -605,7 +605,7 @@ function compileProcessingInstruction(node: slimdom.Element) {
 
 function compileNamespaceNode(node: slimdom.Element) {
   const args = {
-    select: mkLiteral(node.getAttribute("select") || undefined),
+    select: mkLiteral(node.getAttribute("select")),
     name: compileAvt(node.getAttribute("name")),
     namespaces: mkNamespaceArg(node),
   };
@@ -614,7 +614,7 @@ function compileNamespaceNode(node: slimdom.Element) {
 
 function compileCommentNode(node: slimdom.Element) {
   const args = {
-    select: mkLiteral(node.getAttribute("select") || undefined),
+    select: mkLiteral(node.getAttribute("select")),
     namespaces: mkNamespaceArg(node),
   };
   return compileFuncallWithChildren(node, "comment", mkObject(args));
@@ -622,7 +622,7 @@ function compileCommentNode(node: slimdom.Element) {
 
 function compileValueOf(node: slimdom.Element) {
   const args = {
-    select: mkLiteral(node.getAttribute("select") || undefined),
+    select: mkLiteral(node.getAttribute("select")),
     separator: compileAvt(node.getAttribute("separator")),
     namespaces: mkNamespaceArg(node),
   };
@@ -706,7 +706,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
                 },
               },
             ]),
-            alternate: null,
+            alternate: undefined,
           },
           mkLet(
             mkIdentifier("context"),
@@ -731,28 +731,28 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
           ),
           /* First compile the keys */
           ...compileNodeArray(
-            evaluateXPathToNodes("./xsl:key", node, null, null, {
+            evaluateXPathToNodes("./xsl:key", node, undefined, undefined, {
               namespaceResolver: buildInResolver,
             }),
             compileTopLevelNode,
           ),
           /* Then the functions */
           ...compileNodeArray(
-            evaluateXPathToNodes("./xsl:function", node, null, null, {
+            evaluateXPathToNodes("./xsl:function", node, undefined, undefined, {
               namespaceResolver: buildInResolver,
             }),
             compileTopLevelNode,
           ),
           /* Then the output definitions */
           ...compileNodeArray(
-            evaluateXPathToNodes("./xsl:output", node, null, null, {
+            evaluateXPathToNodes("./xsl:output", node, undefined, undefined, {
               namespaceResolver: buildInResolver,
             }),
             compileTopLevelNode,
           ),
           /* Then compile the templates */
           ...compileNodeArray(
-            evaluateXPathToNodes("./xsl:template", node, null, null, {
+            evaluateXPathToNodes("./xsl:template", node, undefined, undefined, {
               namespaceResolver: buildInResolver,
             }),
             compileTopLevelNode,
@@ -765,8 +765,8 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             evaluateXPathToNodes(
               "./xsl:*[local-name()!='template' and local-name()!='key' and local-name()!='function' and local-name()!='output']",
               node,
-              null,
-              null,
+              undefined,
+              undefined,
               { namespaceResolver: buildInResolver },
             ),
             compileTopLevelNode,
@@ -868,7 +868,7 @@ function compileTemplateNode(node: slimdom.Element): ExpressionStatement {
         compileNodeArray(node.childNodes, compileSequenceConstructorNode),
       ),
       namespaces: mkNamespaceArg(node),
-      priority: mkLiteral(node.getAttribute("priority") || undefined),
+      priority: mkLiteral(node.getAttribute("priority")),
       importPrecedence: mkLiteral(1), // TODO
     }),
   ]);
@@ -1012,8 +1012,8 @@ export async function compileStylesheet(xsltPath: string) {
     !evaluateXPathToBoolean(
       "/xsl:stylesheet|/xsl:transform",
       xsltDoc,
-      null,
-      null,
+      undefined,
+      undefined,
       { namespaceResolver: mkResolver({ xsl: XSLT1_NSURI }) },
     )
   ) {
@@ -1021,9 +1021,15 @@ export async function compileStylesheet(xsltPath: string) {
   }
   let counter = 0;
   while (
-    evaluateXPathToBoolean("//xsl:include|//xsl:import", xsltDoc, null, null, {
-      namespaceResolver: mkResolver({ xsl: XSLT1_NSURI }),
-    })
+    evaluateXPathToBoolean(
+      "//xsl:include|//xsl:import",
+      xsltDoc,
+      undefined,
+      undefined,
+      {
+        namespaceResolver: mkResolver({ xsl: XSLT1_NSURI }),
+      },
+    )
   ) {
     xsltDoc = preprocessInclude(xsltDoc, pathToFileURL(xsltPath));
     xsltDoc = preprocessImport(xsltDoc, pathToFileURL(xsltPath));

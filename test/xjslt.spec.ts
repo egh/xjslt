@@ -299,7 +299,7 @@ test("compileLiteralElementNode", () => {
       GENERATE_OPTS,
     ),
   ).toEqual(
-    'xjslt.literalElement(context, {"name": "heading","attributes": [{"name": "type","value": ["top"],"namespace": null}],"namespace": null,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}}, context => {xjslt.valueOf(context, {"select": "Title","separator": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}}, context => {});});',
+    'xjslt.literalElement(context, {"name": "heading","attributes": [{"name": "type","value": ["top"],"namespace": undefined}],"namespace": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}}, context => {xjslt.valueOf(context, {"select": "Title","separator": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}}, context => {});});',
   );
 });
 
@@ -354,7 +354,7 @@ test("compileTemplateNode", () => {
   expect(
     generate(compileTopLevelNode(nodes[0] as slimdom.Element), GENERATE_OPTS),
   ).toEqual(
-    'templates.push({"match": "/","matchFunction": new Function("\\n\\treturn (contextItem, domFacade, runtimeLib, options) => {\\n\\t\\tconst {\\n\\t\\t\\terrXPDY0002,\\n\\t\\t} = runtimeLib;\\n\\t\\tif (!contextItem) {\\n\\t\\t\\tthrow errXPDY0002(\\"Context is needed to evaluate the given path expression.\\");\\n\\t\\t}\\n\\n\\t\\tif (!contextItem.nodeType) {\\n\\t\\t\\tthrow new Error(\\"Context item must be subtype of node().\\");\\n\\t\\t}\\n\\t\\t\\n\\t\\tconst nodes0 = (function* (contextItem0) {\\n\\t\\t\\tconst root0 = (function () {\\n\\t\\t\\t\\tlet n = contextItem0;\\n\\t\\t\\t\\twhile (n.nodeType !== /*DOCUMENT_NODE*/9) {\\n\\t\\t\\t\\t\\tn = domFacade.getParentNode(n);\\n\\t\\t\\t\\t\\tif (n === null) {\\n\\t\\t\\t\\t\\t\\tthrow new Error(\'XPDY0050: the root node of the context node is not a document node.\');\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t}\\n\\t\\t\\t\\treturn n;\\n\\t\\t\\t})();\\n\\t\\t\\tyield root0;\\n\\t\\t});\\n\\t\\treturn Array.from(nodes0(contextItem));}\\n//# sourceURL=generated.js"),"name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"name": "doc","attributes": [],"namespace": null,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default","params": [],"sortKeyComponents": [],"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}});});},"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"},"priority": undefined,"importPrecedence": 1});',
+    'templates.push({"match": "/","matchFunction": new Function("\\n\\treturn (contextItem, domFacade, runtimeLib, options) => {\\n\\t\\tconst {\\n\\t\\t\\terrXPDY0002,\\n\\t\\t} = runtimeLib;\\n\\t\\tif (!contextItem) {\\n\\t\\t\\tthrow errXPDY0002(\\"Context is needed to evaluate the given path expression.\\");\\n\\t\\t}\\n\\n\\t\\tif (!contextItem.nodeType) {\\n\\t\\t\\tthrow new Error(\\"Context item must be subtype of node().\\");\\n\\t\\t}\\n\\t\\t\\n\\t\\tconst nodes0 = (function* (contextItem0) {\\n\\t\\t\\tconst root0 = (function () {\\n\\t\\t\\t\\tlet n = contextItem0;\\n\\t\\t\\t\\twhile (n.nodeType !== /*DOCUMENT_NODE*/9) {\\n\\t\\t\\t\\t\\tn = domFacade.getParentNode(n);\\n\\t\\t\\t\\t\\tif (n === null) {\\n\\t\\t\\t\\t\\t\\tthrow new Error(\'XPDY0050: the root node of the context node is not a document node.\');\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t}\\n\\t\\t\\t\\treturn n;\\n\\t\\t\\t})();\\n\\t\\t\\tyield root0;\\n\\t\\t});\\n\\t\\treturn Array.from(nodes0(contextItem));}\\n//# sourceURL=generated.js"),"name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"name": "doc","attributes": [],"namespace": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default","params": [],"sortKeyComponents": [],"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}});});},"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"},"priority": undefined,"importPrecedence": 1});',
   );
 });
 
@@ -767,7 +767,9 @@ test("computeDefaultPriority", () => {
 });
 
 test(`domCompare`, () => {
-  expect(() => expect(undefined).toBeEquivalentDom(null)).toThrow(TypeError);
+  expect(() => expect(undefined).toBeEquivalentDom(undefined)).toThrow(
+    TypeError,
+  );
 });
 
 let docs = [
