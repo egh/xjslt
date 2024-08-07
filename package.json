@@ -7,6 +7,7 @@
   },
   "scripts": {
     "build": "tsc && npm link",
+    "build-preprocessors": "rm src/preprocess/*js && bash -c \"for n in src/preprocess/*xsl ; do xjslt compile -t internal \\$n \\${n/xsl/js} ; done\" && prettier -w src/preprocess/",
     "test": "jest --coverage --verbose",
     "check": "jest && prettier -c src/ test/"
   },

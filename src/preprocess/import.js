@@ -20,7 +20,7 @@
 
 let slimdom = require("slimdom");
 let fontoxpath = require("fontoxpath");
-let xjslt = require("./xjslt");
+let xjslt = require("../xjslt");
 function transform(document, inputURL, initialMode) {
   const doc = new slimdom.Document();
   let templates = [];

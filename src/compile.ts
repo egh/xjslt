@@ -55,9 +55,9 @@ import { pathToFileURL } from "url";
 import * as path from "path";
 import { tmpdir } from "os";
 import { mkdtemp } from "fs/promises";
-import { transform as preprocessSimplified } from "./preprocessSimplified";
-import { transform as preprocessInclude } from "./preprocessInclude";
-import { transform as preprocessImport } from "./preprocessImport";
+import { transform as preprocessSimplified } from "./preprocess/simplified";
+import { transform as preprocessInclude } from "./preprocess/include";
+import { transform as preprocessImport } from "./preprocess/import";
 import {
   XSLT1_NSURI,
   XMLNS_NSURI,
