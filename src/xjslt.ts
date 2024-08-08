@@ -1373,6 +1373,8 @@ export function resultDocument(
     );
   }
   if (!href) {
+    /* TODO: We probably shouldn't allow passing in an outputDocument
+       and then changing it. This logic could be improved. */
     if (context.outputDocument.documentElement) {
       /* Already started writing to this, you can't write now! */
       throw new Error("XTDE1490");
@@ -1392,7 +1394,6 @@ export function resultDocument(
       ...od,
       document: outputDocument,
     });
-    console.log(context.resultDocuments.get("#default"));
     func(context);
   } else {
     const resultDocument = context.outputDocument.implementation.createDocument(
