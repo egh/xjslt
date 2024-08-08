@@ -1,46 +1,39 @@
-/*
- * Copyright (C) 2021-2024 Erik Hetzner
- *
- * This file is part of XJSLT.
- *
- * XJSLT is free software: you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * XJSLT is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with XJSLT. If not, see
- * <https://www.gnu.org/licenses/>.
- */
-
 let slimdom = require("slimdom");
 let fontoxpath = require("fontoxpath");
-let xjslt = require("../xjslt");
-function transform(document, inputURL, initialMode) {
-  const doc = new slimdom.Document();
+let xjslt = require("./../xjslt");
+function transform(
+  document,
+  outputDocument,
+  outputNode,
+  inputURL,
+  initialMode,
+) {
   let templates = [];
+  let resultDocuments = new Map();
+  resultDocuments.set("#default", {
+    document: outputDocument,
+  });
   let keys = new Map();
+  let outputDefinitions = new Map();
   if (!initialMode) {
     initialMode = "#default";
   }
   let context = {
-    outputDocument: doc,
-    outputNode: doc,
+    outputDocument: outputDocument,
+    outputNode: outputNode || outputDocument,
+    resultDocuments: resultDocuments,
     contextItem: document,
     mode: initialMode,
     templates: templates,
     variableScopes: [new Map()],
     inputURL: inputURL,
     keys: keys,
+    outputDefinitions: outputDefinitions,
     nameTestCache: new Map(),
   };
   templates.push({
     match: "/ | @* | node()",
+    matchFunction: undefined,
     name: undefined,
     modes: ["#default"],
     allowedParams: [],
@@ -73,6 +66,9 @@ function transform(document, inputURL, initialMode) {
   });
   templates.push({
     match: "xsl:import",
+    matchFunction: new Function(
+      '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes0 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-import");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-import")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "import" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes0(contextItem));}\n//# sourceURL=generated.js',
+    ),
     name: undefined,
     modes: ["#default"],
     allowedParams: [],
@@ -104,6 +100,7 @@ function transform(document, inputURL, initialMode) {
   xjslt.processNode(context, [], {
     xsl: "http://www.w3.org/1999/XSL/Transform",
   });
-  return context.outputDocument;
+  return resultDocuments;
 }
 module.exports.transform = transform;
+global.transform = transform;

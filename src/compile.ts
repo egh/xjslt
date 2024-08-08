@@ -1017,7 +1017,8 @@ export async function compileStylesheet(xsltPath: string) {
       { namespaceResolver: mkResolver({ xsl: XSLT1_NSURI }) },
     )
   ) {
-    xsltDoc = preprocessSimplified(xsltDoc);
+    let outputDocument = new slimdom.Document();
+    xsltDoc = preprocessSimplified(xsltDoc, outputDocument).get("#default");
   }
   let counter = 0;
   while (
@@ -1031,8 +1032,20 @@ export async function compileStylesheet(xsltPath: string) {
       },
     )
   ) {
-    xsltDoc = preprocessInclude(xsltDoc, pathToFileURL(xsltPath));
-    xsltDoc = preprocessImport(xsltDoc, pathToFileURL(xsltPath));
+    let outputDocument = new slimdom.Document();
+    xsltDoc = preprocessInclude(
+      xsltDoc,
+      outputDocument,
+      null,
+      pathToFileURL(xsltPath),
+    ).get("#default").document;
+    outputDocument = new slimdom.Document();
+    xsltDoc = preprocessImport(
+      xsltDoc,
+      outputDocument,
+      null,
+      pathToFileURL(xsltPath),
+    ).get("#default").document;
     if (counter > 100) throw new Error("Import level too deep!");
     counter++;
   }
