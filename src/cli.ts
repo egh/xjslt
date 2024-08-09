@@ -63,7 +63,7 @@ async function compile(xslt: string, destination: string, options) {
   }
   const src = await compileStylesheet(xslt);
   try {
-    if (options.target === "internal") {
+    if (options.internal) {
       /* Stupid hack, but it's easier than figuring out nodejs build stuff. */
       const content = readFileSync(src).toString().replace("dist/", "../");
       writeFileSync(destinationAbs, content);
@@ -116,10 +116,9 @@ async function main() {
     .argument("<xslt>", "xslt file to compile")
     .argument("[destination]", "destination file to compile to", "transform.js")
     .addOption(
-      new Option("-t, --target <type>", "compilation target")
-        .choices(["web", "internal"])
-        .default("web"),
-    )
+      new Option("-w, --web", "build a standalone js file for the web").conflicts("internal"))
+    .addOption(
+      new Option("-i, --internal", "build an internal js file for prefilters").conflicts("web"))
     .description("Compile an XSLT stylesheet to JavaScript", {
       xslt: "XSLT stylesheet",
     })
