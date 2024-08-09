@@ -32,7 +32,13 @@ import * as fs from "fs";
 import * as process from "process";
 
 async function run(xslt: string, xmls: Array<string>) {
-  const transform = await buildStylesheet(xslt);
+  let transform;
+  if (xslt.endsWith(".xsl") || xslt.endsWith(".xslt")) {
+    transform = await buildStylesheet(xslt);
+  } else {
+    let tmp = await import(path.resolve(xslt));
+    transform = tmp.transform;
+  }
   for (let xml of xmls) {
     const xmlDom = slimdom.parseXmlDocument(readFileSync(xml).toString());
     const outputDocument = new slimdom.Document();
@@ -67,7 +73,7 @@ async function compile(xslt: string, destination: string, options) {
       /* Stupid hack, but it's easier than figuring out nodejs build stuff. */
       const content = readFileSync(src).toString().replace("dist/", "../");
       writeFileSync(destinationAbs, content);
-    } else {
+    } else if (options.web) {
       const config = {
         entry: [src],
         output: {
@@ -95,6 +101,8 @@ async function compile(xslt: string, destination: string, options) {
           });
         });
       await compiler.close;
+    } else {
+      writeFileSync(destinationAbs, readFileSync(src));
     }
   } catch (err) {
     console.log(err);
@@ -107,7 +115,7 @@ async function main() {
   program
     .arguments("<xslt> <xml...>")
     .description("Transform XML", {
-      xslt: "XSLT stylesheet",
+      xslt: "XSLT stylesheet or compiled js file",
       xml: "XML files to process",
     })
     .action(run);
