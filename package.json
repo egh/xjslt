@@ -12,6 +12,7 @@
     "check": "jest && prettier -c src/ test/",
     "prepare": "tsc"
   },
+  "exports": "./dist/xjslt.js",
   "bin": {
     "xjslt": "./dist/cli.js"
   },
