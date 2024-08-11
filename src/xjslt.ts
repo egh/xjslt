@@ -266,24 +266,25 @@ function nameTest(
       while (checkContext) {
         const nodeId = evaluateXPathToString("generate-id(.)", checkContext);
         const matches = withCached(nameTestCache, `${match}-${nodeId}`, () => {
-          let results: slimdom.Node[];
           if (matchFunction) {
-            results = executeJavaScriptCompiledXPath(
-              matchFunction,
-              checkContext,
-            );
-          } else {
-            results = evaluateXPathToNodes(
-              match,
-              checkContext,
-              undefined,
-              /* TODO: Only top level variables are applicable here, so top
-               level variables could be cached. */
-              mergeVariableScopes(variableScopes),
-              { namespaceResolver: nsResolver },
-            );
+            try {
+              return new Set(executeJavaScriptCompiledXPath(
+                matchFunction,
+                checkContext,
+              ));
+            } catch {
+              // Try without a function. Some environments don't allow eval.
+            }
           }
-          return new Set(results);
+          return new Set(evaluateXPathToNodes(
+            match,
+            checkContext,
+            undefined,
+            /* TODO: Only top level variables are applicable here, so top
+            level variables could be cached. */
+            mergeVariableScopes(variableScopes),
+            { namespaceResolver: nsResolver },
+          ));
         });
         /* It counts as a match if the node we were testing against is in the resulting node set. */
         if (matches.has(node)) {
