@@ -131,7 +131,7 @@ export function mkImportsNode(): Array<Statement> {
   return [
     mkRequire("slimdom"),
     mkRequire("fontoxpath"),
-    mkRequire("xjslt", "./dist/xjslt"),
+    mkRequire("xjslt", "xjslt"),
   ];
 }
 
