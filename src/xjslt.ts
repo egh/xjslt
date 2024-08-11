@@ -46,6 +46,13 @@ export type VariableScope = Map<string, any>;
 
 export type NamespaceResolver = (prefix: string) => string;
 
+interface TransformParams {
+  outputDocument?: slimdom.Document;
+  outputNode?: slimdom.Node;
+  inputURL?: string;
+  initialMode?: string;
+}
+
 interface AttributeOutputData {
   name: string;
   value: AttributeValueTemplate;
@@ -268,23 +275,24 @@ function nameTest(
         const matches = withCached(nameTestCache, `${match}-${nodeId}`, () => {
           if (matchFunction) {
             try {
-              return new Set(executeJavaScriptCompiledXPath(
-                matchFunction,
-                checkContext,
-              ));
+              return new Set(
+                executeJavaScriptCompiledXPath(matchFunction, checkContext),
+              );
             } catch {
               // Try without a function. Some environments don't allow eval.
             }
           }
-          return new Set(evaluateXPathToNodes(
-            match,
-            checkContext,
-            undefined,
-            /* TODO: Only top level variables are applicable here, so top
+          return new Set(
+            evaluateXPathToNodes(
+              match,
+              checkContext,
+              undefined,
+              /* TODO: Only top level variables are applicable here, so top
             level variables could be cached. */
-            mergeVariableScopes(variableScopes),
-            { namespaceResolver: nsResolver },
-          ));
+              mergeVariableScopes(variableScopes),
+              { namespaceResolver: nsResolver },
+            ),
+          );
         });
         /* It counts as a match if the node we were testing against is in the resulting node set. */
         if (matches.has(node)) {
@@ -1638,6 +1646,25 @@ export function serialize(result: OutputResult): string {
     );
   }
   return serializer.serializeToString(result.document);
+}
+
+export function setParamDefaults(
+  document: slimdom.Document,
+  params: TransformParams,
+) {
+  if (!params) {
+    params = {};
+  }
+  if (!params.outputDocument) {
+    params.outputDocument = document.implementation.createDocument(null, null);
+  }
+  if (!params.outputNode) {
+    params.outputNode = params.outputDocument;
+  }
+  if (!params.initialMode) {
+    params.initialMode = "#default";
+  }
+  return params;
 }
 
 registerFunctions();

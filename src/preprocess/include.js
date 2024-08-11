@@ -1,32 +1,24 @@
 let slimdom = require("slimdom");
 let fontoxpath = require("fontoxpath");
-let xjslt = require("./../xjslt");
-function transform(
-  document,
-  outputDocument,
-  outputNode,
-  inputURL,
-  initialMode,
-) {
+let xjslt = require("xjslt");
+function transform(document, params) {
+  xjslt.setParamDefaults(document, params);
   let templates = [];
   let resultDocuments = new Map();
   resultDocuments.set("#default", {
-    document: outputDocument,
+    document: params.outputDocument,
   });
   let keys = new Map();
   let outputDefinitions = new Map();
-  if (!initialMode) {
-    initialMode = "#default";
-  }
   let context = {
-    outputDocument: outputDocument,
-    outputNode: outputNode || outputDocument,
+    outputDocument: params.outputDocument,
+    outputNode: params.outputNode,
     resultDocuments: resultDocuments,
     contextItem: document,
-    mode: initialMode,
+    mode: params.initialMode,
     templates: templates,
     variableScopes: [new Map()],
-    inputURL: inputURL,
+    inputURL: params.inputURL,
     keys: keys,
     outputDefinitions: outputDefinitions,
     nameTestCache: new Map(),

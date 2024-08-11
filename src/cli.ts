@@ -43,7 +43,10 @@ async function run(xslt: string, xmls: Array<string>) {
     const xmlDom = slimdom.parseXmlDocument(readFileSync(xml).toString());
     const outputDocument = new slimdom.Document();
     const baseUrl = pathToFileURL(xml);
-    const results = transform(xmlDom, outputDocument, outputDocument, baseUrl);
+    const results = transform(xmlDom, {
+      outputDocument: outputDocument,
+      inputURL: baseUrl,
+    });
     for (const [uri, result] of results) {
       const serialized = serialize(result);
       if (uri !== "#default") {
@@ -120,7 +123,8 @@ async function main() {
     .argument("<xslt>", "xslt file to compile")
     .argument("[destination]", "destination file to compile to", "transform.js")
     .addOption(
-      new Option("-w, --web", "build a standalone js file for the web"))
+      new Option("-w, --web", "build a standalone js file for the web"),
+    )
     .description("Compile an XSLT stylesheet to JavaScript", {
       xslt: "XSLT stylesheet",
     })

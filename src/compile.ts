@@ -665,14 +665,22 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
       ...mkImportsNode(),
       mkFun(
         mkIdentifier("transform"),
-        [
-          mkIdentifier("document"),
-          mkIdentifier("outputDocument"),
-          mkIdentifier("outputNode"),
-          mkIdentifier("inputURL"),
-          mkIdentifier("initialMode"),
-        ],
+        [mkIdentifier("document"), mkIdentifier("params")],
         mkBlock([
+          {
+            type: "ExpressionStatement",
+            expression: {
+              type: "AssignmentExpression",
+              operator: "=",
+              left: mkIdentifier("params"),
+              right: {
+                type: "CallExpression",
+                callee: mkMember("xjslt", "setParamDefaults"),
+                arguments: [mkIdentifier("document"), mkIdentifier("params")],
+                optional: false,
+              },
+            },
+          },
           mkLet(mkIdentifier("templates"), mkArray([])),
           mkLet(
             mkIdentifier("resultDocuments"),
@@ -680,50 +688,24 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
           ),
           mkCall(mkMember("resultDocuments", "set"), [
             mkLiteral("#default"),
-            mkObject({ document: mkIdentifier("outputDocument") }),
+            mkObject({ document: mkMember("params", "outputDocument") }),
           ]),
           mkLet(mkIdentifier("keys"), mkNew(mkIdentifier("Map"), [])),
           mkLet(
             mkIdentifier("outputDefinitions"),
             mkNew(mkIdentifier("Map"), []),
           ),
-          {
-            type: "IfStatement",
-            test: {
-              type: "UnaryExpression",
-              operator: "!",
-              prefix: true,
-              argument: mkIdentifier("initialMode"),
-            },
-            consequent: mkBlock([
-              {
-                type: "ExpressionStatement",
-                expression: {
-                  type: "AssignmentExpression",
-                  operator: "=",
-                  left: mkIdentifier("initialMode"),
-                  right: mkLiteral("#default"),
-                },
-              },
-            ]),
-            alternate: undefined,
-          },
           mkLet(
             mkIdentifier("context"),
             mkObject({
-              outputDocument: mkIdentifier("outputDocument"),
-              outputNode: {
-                type: "BinaryExpression",
-                operator: "||",
-                left: mkIdentifier("outputNode"),
-                right: mkIdentifier("outputDocument"),
-              },
+              outputDocument: mkMember("params", "outputDocument"),
+              outputNode: mkMember("params", "outputNode"),
               resultDocuments: mkIdentifier("resultDocuments"),
               contextItem: mkIdentifier("document"),
-              mode: mkIdentifier("initialMode"),
+              mode: mkMember("params", "initialMode"),
               templates: mkIdentifier("templates"),
               variableScopes: mkArray([mkNew(mkIdentifier("Map"), [])]),
-              inputURL: mkIdentifier("inputURL"),
+              inputURL: mkMember("params", "inputURL"),
               keys: mkIdentifier("keys"),
               outputDefinitions: mkIdentifier("outputDefinitions"),
               nameTestCache: mkNew(mkIdentifier("Map"), []),
@@ -1017,8 +999,7 @@ export async function compileStylesheet(xsltPath: string) {
       { namespaceResolver: mkResolver({ xsl: XSLT1_NSURI }) },
     )
   ) {
-    let outputDocument = new slimdom.Document();
-    xsltDoc = preprocessSimplified(xsltDoc, outputDocument).get("#default");
+    xsltDoc = preprocessSimplified(xsltDoc).get("#default");
   }
   let counter = 0;
   while (
@@ -1032,20 +1013,12 @@ export async function compileStylesheet(xsltPath: string) {
       },
     )
   ) {
-    let outputDocument = new slimdom.Document();
-    xsltDoc = preprocessInclude(
-      xsltDoc,
-      outputDocument,
-      null,
-      pathToFileURL(xsltPath),
-    ).get("#default").document;
-    outputDocument = new slimdom.Document();
-    xsltDoc = preprocessImport(
-      xsltDoc,
-      outputDocument,
-      null,
-      pathToFileURL(xsltPath),
-    ).get("#default").document;
+    xsltDoc = preprocessInclude(xsltDoc, {
+      inputURL: pathToFileURL(xsltPath),
+    }).get("#default").document;
+    xsltDoc = preprocessImport(xsltDoc, {
+      inputURL: pathToFileURL(xsltPath),
+    }).get("#default").document;
     if (counter > 100) throw new Error("Import level too deep!");
     counter++;
   }

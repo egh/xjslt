@@ -467,9 +467,7 @@ test("call with param", async () => {
   </xsl:template>
 `,
   );
-  const results = transform(document, new slimdom.Document()).get(
-    "#default",
-  ).document;
+  const results = transform(document).get("#default").document;
   expect(evaluateXPathToString("//li", results)).toEqual(
     "foo Mr. Foo foo Mr. Bar",
   );
@@ -490,9 +488,7 @@ test("param shadowed by variable", async () => {
   </xsl:template>
 `,
   );
-  const results = transform(document, new slimdom.Document()).get(
-    "#default",
-  ).document;
+  const results = transform(document).get("#default").document;
   expect(evaluateXPathToString("//li", results)).toEqual(
     "shadowed Mr. Foo shadowed Mr. Bar",
   );
@@ -510,9 +506,7 @@ test("toplevel param", async () => {
   </xsl:template>
 `,
   );
-  const results = transform(document, new slimdom.Document()).get(
-    "#default",
-  ).document;
+  const results = transform(document).get("#default").document;
   expect(evaluateXPathToString("//li", results)).toEqual(
     "toplevel Mr. Foo toplevel Mr. Bar",
   );
@@ -531,9 +525,7 @@ test("call with param defaults", async () => {
   </xsl:template>
 `,
   );
-  const results = transform(document, new slimdom.Document()).get(
-    "#default",
-  ).document;
+  const results = transform(document).get("#default").document;
   expect(evaluateXPathToString("//li", results)).toEqual(
     "default Mr. Foo default Mr. Bar",
   );
@@ -553,9 +545,7 @@ test("template mode", async () => {
   </xsl:template>
 `,
   );
-  const results = transform(document, new slimdom.Document()).get(
-    "#default",
-  ).document;
+  const results = transform(document).get("#default").document;
   const str = evaluateXPathToString("//li", results);
   expect(str).toMatch(/.*FOO Mr. Foo/);
   expect(str).toMatch(/.*FOO Mr. Bar/);
@@ -567,9 +557,7 @@ test("text node", async () => {
     `<li><xsl:text>
 -</xsl:text><xsl:value-of select="."/></li>`,
   );
-  const results = transform(document, new slimdom.Document()).get(
-    "#default",
-  ).document;
+  const results = transform(document).get("#default").document;
   expect(evaluateXPathToString("//li/text()", results)).toEqual(
     `
 -Mr. Foo 

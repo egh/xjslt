@@ -301,9 +301,9 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
           );
           const testName = evaluateXPathToString("@name", testCase);
           const description = `${testName}: ${testDescription} (${stylesheetFile})`;
-          let inputURL;
+          let inputURL: string | null = null;
           if (filepath) {
-            inputURL = pathToFileURL(filepath);
+            inputURL = pathToFileURL(filepath).toString();
           }
           const tester = async () => {
             const transform = await buildStylesheet(stylesheetFile);
@@ -314,13 +314,10 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
               rootDir,
               evaluateXPathToNodes("./*", resultNode)[0],
               () =>
-                transform(
-                  environment,
-                  new slimdom.Document(),
-                  undefined,
-                  inputURL,
-                  initialMode,
-                ),
+                transform(environment || new slimdom.Document(), {
+                  inputURL: inputURL,
+                  initialMode: initialMode,
+                }),
             )();
           };
 
