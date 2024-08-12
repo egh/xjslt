@@ -12,9 +12,17 @@ Tested with [node 20](https://nodejs.org/) and (less extensively) in Chrome and 
 # Use:
 - `xjslt test/simple2.xslt test/simple.xml`
 
-# Stylesheet compilation example:
+# Compilation examples
+## In the browser
 - `xjslt compile --web jats-html.xsl examples/html/transform.js`
 - Open `examples/html/example.html` (will load the generated `transform.js` file)
+
+## In a google cloud function
+- `xjslt compile jats-html.xsl examples/google-cloud/transform.js`
+- `cd examples/google-cloud`
+- `npm install`
+- `npx @google-cloud/functions-framework --target=transform`
+- Visit http://localhost:8080/?url=https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml
 
 # Supported features
 - 1985 passing tests in the XSLT test suite (https://github.com/w3c/xslt30-test)
