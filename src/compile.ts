@@ -826,9 +826,12 @@ function compileTemplateNode(node: slimdom.Element): ExpressionStatement {
       namespaceResolver: mkResolverForNode(node),
     });
     if (compiled.isAstAccepted) {
-      matchFunction = mkNew(mkIdentifier("Function"), [
-        mkLiteral(compiled.code),
-      ]);
+      matchFunction = {
+        type: "CallExpression",
+        callee: mkMember("xjslt", "compileMatchFunction"),
+        arguments: [mkLiteral(compiled.code)],
+        optional: false,
+      };
     }
   }
   return mkCall(mkMember("templates", "push"), [

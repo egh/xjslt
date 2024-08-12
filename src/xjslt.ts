@@ -274,13 +274,9 @@ function nameTest(
         const nodeId = evaluateXPathToString("generate-id(.)", checkContext);
         const matches = withCached(nameTestCache, `${match}-${nodeId}`, () => {
           if (matchFunction) {
-            try {
-              return new Set(
-                executeJavaScriptCompiledXPath(matchFunction, checkContext),
-              );
-            } catch {
-              // Try without a function. Some environments don't allow eval.
-            }
+            return new Set(
+              executeJavaScriptCompiledXPath(matchFunction, checkContext),
+            );
           }
           return new Set(
             evaluateXPathToNodes(
@@ -1665,6 +1661,15 @@ export function setParamDefaults(
     params.initialMode = "#default";
   }
   return params;
+}
+
+export function compileMatchFunction(matchFunction: string) {
+  try {
+    return new Function(matchFunction);
+  } catch {
+    // Not allowed in some contexts, so just return undefined.
+    return undefined;
+  }
 }
 
 registerFunctions();
