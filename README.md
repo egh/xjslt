@@ -24,6 +24,13 @@ Tested with [node 20](https://nodejs.org/) and (less extensively) in Chrome and 
 - `npx @google-cloud/functions-framework --target=transform`
 - Visit http://localhost:8080/?url=https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml
 
+## In a cloudflare edge function
+- `xjslt compile jats-html.xsl examples/cloudflare/transform.js`
+- `cd examples/cloudflare`
+- `npm install`
+- `npm run start`
+- Visit http://localhost:8787/?url=https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml
+
 # Supported features
 - 1985 passing tests in the XSLT test suite (https://github.com/w3c/xslt30-test)
 - 2419 not passing
