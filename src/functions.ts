@@ -19,23 +19,10 @@
  */
 
 import { registerCustomXPathFunction } from "fontoxpath";
-import * as slimdom from "slimdom";
 import { DynamicContext, XPATH_NSURI } from "./xjslt";
 import { urlToDom } from "./util";
 function fnCurrent({ currentContext }) {
   return currentContext.contextItem;
-}
-
-let ids = new WeakMap<any, number>();
-let counter = 0;
-function fnGenerateId({ currentContext }, node: any) {
-  if (!node) {
-    node = currentContext.contextItem;
-  }
-  if (!ids.has(node)) {
-    ids.set(node, counter++);
-  }
-  return ids.get(node).toString();
 }
 
 function fnDoc({ currentContext }, url: string) {
@@ -117,20 +104,6 @@ export function registerFunctions() {
     [],
     "xs:string",
     fnCurrentOutputUri,
-  );
-
-  registerCustomXPathFunction(
-    { namespaceURI: XPATH_NSURI, localName: "generate-id" },
-    [],
-    "xs:string",
-    fnGenerateId,
-  );
-
-  registerCustomXPathFunction(
-    { namespaceURI: XPATH_NSURI, localName: "generate-id" },
-    ["node()"],
-    "xs:string",
-    fnGenerateId,
   );
 
   registerCustomXPathFunction(

@@ -2316,7 +2316,6 @@ export const KNOWN_SPEC_FAILURES = [
   "sort-072",
   "sort-073",
   "string-014",
-  "string-022",
   "string-026",
   "string-029",
   "string-117",
