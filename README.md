@@ -49,10 +49,10 @@ Tested with [node 20](https://nodejs.org/) and (less extensively) in Chrome and 
 # Incompletely supported features
 - `for-each-group` (only `group-by` supported)
 - `import` (precedence not supported)
-- `function` basically work, with better typing TBD
+- `function` basically working, with better typing TBD
+- `output` not all options supported
 
 # TODO (not yet implemented)
 - [ ] `strip-space`/`preserve-space`
-- [ ] `output`
 - [ ] `attribute-set`
 - [ ] … (probably other things I’m not aware of or forgot)
