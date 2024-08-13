@@ -162,7 +162,7 @@ export type OutputResult = OutputDefinition & {
 export interface DynamicContext {
   outputDocument: slimdom.Document;
   resultDocuments: Map<string, OutputResult>;
-  outputNode: slimdom.Node;
+  outputNode: slimdom.Element | slimdom.Document | slimdom.DocumentFragment;
   contextItem: any;
   mode: string;
   templates: Array<CompiledTemplate>;
@@ -789,7 +789,7 @@ export function copy(
   } else if (newNode.nodeType === ATTRIBUTE_NODE) {
     (context.outputNode as slimdom.Element).setAttributeNode(newNode);
   } else {
-    context.outputNode.appendChild(newNode);
+    context.outputNode.append(newNode);
   }
   if (func) {
     func({
@@ -943,7 +943,7 @@ function appendText(context: DynamicContext, text: string) {
     } else {
       const newNode = context.outputDocument.createTextNode(text);
       if (newNode) {
-        context.outputNode.appendChild(newNode);
+        context.outputNode.append(newNode);
       }
     }
   }
@@ -969,7 +969,7 @@ function appendToTree(thing: any, context: DynamicContext) {
     appendText(context, (thing as slimdom.Text).data);
   } else if (thing.nodeType) {
     let newNode = context.outputDocument.importNode(thing, true);
-    context.outputNode.appendChild(newNode);
+    context.outputNode.append(newNode);
   } else {
     let str = `${thing}`;
     if (str !== "") {
@@ -1062,7 +1062,7 @@ export function literalElement(
     });
     newNode.setAttributeNode(attrNode);
   }
-  context.outputNode.appendChild(newNode);
+  context.outputNode.append(newNode);
   func({
     ...context,
     outputNode: newNode,
@@ -1118,7 +1118,7 @@ export function processingInstruction(
     mkResolver(data.namespaces),
     [""],
   ).trimStart();
-  context.outputNode.appendChild(
+  context.outputNode.append(
     context.outputDocument.createProcessingInstruction(name, value),
   );
 }
@@ -1134,7 +1134,7 @@ export function comment(
     mkResolver(data.namespaces),
     [""],
   );
-  context.outputNode.appendChild(context.outputDocument.createComment(value));
+  context.outputNode.append(context.outputDocument.createComment(value));
 }
 
 export function namespace(
@@ -1175,7 +1175,7 @@ export function element(
     name: name,
     namespace: determineNamespace(name, mkResolver(data.namespaces), namespace),
   });
-  context.outputNode.appendChild(newNode);
+  context.outputNode.append(newNode);
   func({
     ...context,
     outputNode: newNode,

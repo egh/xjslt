@@ -95,7 +95,7 @@ ${body}
 
 test("slimdon", () => {
   const document = new slimdom.Document();
-  document.appendChild(document.createElement("root"));
+  document.append(document.createElement("root"));
   const xml = slimdom.serializeToWellFormedString(document);
   expect(xml).toEqual("<root/>");
 });
@@ -147,7 +147,7 @@ function transform(document: slimdom.Document, output: (str: string) => void) {
   });
 
   const doc = new slimdom.Document();
-  doc.appendChild(doc.createElement("root"));
+  doc.append(doc.createElement("root"));
   let context: DynamicContext = {
     outputDocument: doc,
     resultDocuments: new Map<string, OutputResult>(),
