@@ -4,15 +4,19 @@ XJSLT is an [XSLT 2.0](https://www.w3.org/TR/xslt20/) compiler (targeting JavaSc
 
 XJSLT compiles stylesheets to runnable JavaScript, so you can create transforms for use in a browser.
 
-Tested with [node 20](https://nodejs.org/) and (less extensively) in Chrome and Firefox.
+Tested with [node 20](https://nodejs.org/) and in Chrome and Firefox.
 
-# Installation:
+# Getting started
+
+## Installation:
 - `npm install && npm run build`
 
-# Use:
-- `xjslt test/simple2.xslt test/simple.xml`
+## Command line invocation:
+- `xjslt jats-html.xsl <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)`
 
 # Compilation examples
+XJSLT can compile XSLT stylesheets into executable JavaScript code, which can then be deployed to various platforms that support JavaScript, including the browser, NodeJS, and potentially other JavaScript runtimes. The following are some examples of how to do this for the browser, google cloud functions, and cloudflare edge functions.
+
 ## In the browser
 - `xjslt compile --web jats-html.xsl examples/html/transform.js`
 - Open `examples/html/example.html` (will load the generated `transform.js` file)
@@ -32,9 +36,6 @@ Tested with [node 20](https://nodejs.org/) and (less extensively) in Chrome and 
 - Visit http://localhost:8787/?url=https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml
 
 # Supported features
-- 1985 passing tests in the XSLT test suite (https://github.com/w3c/xslt30-test)
-- 2419 not passing
-
 - `if`/`choose/when/otherwise` - conditional evaluation
 - `template`
 - `apply-templates`/`for-each` - recursive evaluation
@@ -45,6 +46,7 @@ Tested with [node 20](https://nodejs.org/) and (less extensively) in Chrome and 
 - `sort`
 - `include`/`import`
 - `result-document`
+- 2108 passing tests in the XSLT test suite (https://github.com/w3c/xslt30-test) (2528 not passing)
 
 # Incompletely supported features
 - `for-each-group` (only `group-by` supported)
