@@ -51,6 +51,7 @@ interface TransformParams {
   outputNode?: slimdom.Node;
   inputURL?: string;
   initialMode?: string;
+  stylesheetParams?: object;
 }
 
 interface AttributeOutputData {
@@ -174,6 +175,7 @@ export interface DynamicContext {
   keys: Map<String, Key>;
   nameTestCache: Map<string, Set<slimdom.Node>>;
   outputDefinitions: Map<string, OutputDefinition>;
+  stylesheetParams?: object;
 }
 
 type Constructor = string | SequenceConstructor;
@@ -885,11 +887,12 @@ export function variable(context: DynamicContext, variable: VariableLike) {
 }
 
 export function param(context: DynamicContext, variable: VariableLike) {
-  /** todo: allow passing in params */
+  /** todo: check allowed, required params */
   setVariable(
     context.variableScopes,
     variable.name,
-    evaluateVariableLike(context, variable),
+    context.stylesheetParams[variable.name] ||
+      evaluateVariableLike(context, variable),
   );
 }
 
@@ -1659,6 +1662,9 @@ export function setParamDefaults(
   }
   if (!params.initialMode) {
     params.initialMode = "#default";
+  }
+  if (!params.stylesheetParams) {
+    params.stylesheetParams = {};
   }
   return params;
 }

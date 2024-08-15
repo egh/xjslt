@@ -1046,7 +1046,6 @@ export const KNOWN_SPEC_FAILURES = [
   "message-0306",
   "message-0313",
   "message-0314",
-  "mode-1104",
   "mode-1105",
   "mode-1402",
   "namespace-0201",

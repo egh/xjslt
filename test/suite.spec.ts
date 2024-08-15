@@ -275,6 +275,13 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
             evaluateXPathToString("test/initial-mode/@name", testCase) ||
             undefined;
 
+          let stylesheetParams = {};
+          evaluateXPathToNodes("test/param", testCase).forEach((node) => {
+            const name = evaluateXPathToString("@name", node);
+            const select = evaluateXPathToString("@select", node);
+            const value = evaluateXPathToString(select, null);
+            stylesheetParams[name] = value;
+          });
           let environment: any = undefined;
           let filepath: any = undefined;
           const environmentDom = evaluateXPathToNodes(
@@ -317,6 +324,7 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
                 transform(environment || new slimdom.Document(), {
                   inputURL: inputURL,
                   initialMode: initialMode,
+                  stylesheetParams: stylesheetParams,
                 }),
             )();
           };

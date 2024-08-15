@@ -353,7 +353,7 @@ function compileChooseNode(node: slimdom.Element) {
   ]);
 }
 
-function compileTopLevelParam(node: slimdom.Element) {
+function compileStylesheetParam(node: slimdom.Element) {
   let param = compileVariableLike(node);
   return mkCallWithContext(mkMember("xjslt", "param"), [param]);
 }
@@ -439,7 +439,7 @@ export function compileTopLevelNode(node: slimdom.Element) {
       } else if (node.localName === "variable") {
         return compileVariable(node);
       } else if (node.localName === "param") {
-        return compileTopLevelParam(node);
+        return compileStylesheetParam(node);
       } else if (node.localName === "key") {
         return compileKeyNode(node);
       } else if (node.localName === "function") {
@@ -709,6 +709,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               keys: mkIdentifier("keys"),
               outputDefinitions: mkIdentifier("outputDefinitions"),
               nameTestCache: mkNew(mkIdentifier("Map"), []),
+              stylesheetParams: mkMember("params", "stylesheetParams"),
             }),
           ),
           /* First compile the keys */

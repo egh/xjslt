@@ -22,6 +22,7 @@ function transform(document, params) {
     keys: keys,
     outputDefinitions: outputDefinitions,
     nameTestCache: new Map(),
+    stylesheetParams: params.stylesheetParams,
   };
   templates.push({
     match: "/ | @* | node()",

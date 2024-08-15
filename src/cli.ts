@@ -31,7 +31,7 @@ import * as path from "path";
 import * as fs from "fs";
 import * as process from "process";
 
-async function run(xslt: string, xmls: Array<string>) {
+async function run(xslt: string, xmls: Array<string>, options) {
   let transform;
   if (xslt.endsWith(".xsl") || xslt.endsWith(".xslt")) {
     transform = await buildStylesheet(xslt);
@@ -46,6 +46,7 @@ async function run(xslt: string, xmls: Array<string>) {
     const results = transform(xmlDom, {
       outputDocument: outputDocument,
       inputURL: baseUrl,
+      stylesheetParams: options.param,
     });
     for (const [uri, result] of results) {
       const serialized = serialize(result);
@@ -108,11 +109,21 @@ async function compile(xslt: string, destination: string, options) {
   }
 }
 
+function paramCollect(value: string, previous: object) {
+  const [key, val] = value.split("=");
+  return { ...previous, [key]: val };
+}
+
 async function main() {
   const program = new Command();
   program.version("0.0.1");
   program
     .arguments("<xslt> <xml...>")
+    .addOption(
+      new Option("-p, --param <name=value>", "set a parameter")
+        .default({})
+        .argParser(paramCollect),
+    )
     .description("Transform XML", {
       xslt: "XSLT stylesheet or compiled js file",
       xml: "XML files to process",
