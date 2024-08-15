@@ -486,14 +486,14 @@ export function sortTemplates(templates: Array<CompiledTemplate>) {
   /* https://www.w3.org/TR/xslt20/#conflict */
   // Last declared is first priority.
   templates.reverse();
+  // "Higher" (lower number) import precedence comes first
+  templates.sort((a, b) => a.importPrecedence - b.importPrecedence);
   // Higher priority comes first
   templates.sort(
     (a, b) =>
       (b.priority || computeDefaultPriority(b.match)) -
       (a.priority || computeDefaultPriority(a.match)),
   );
-  // Higher import precedence comes first
-  templates.sort((a, b) => b.importPrecedence - a.importPrecedence);
 }
 
 export function processNode(

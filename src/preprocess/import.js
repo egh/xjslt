@@ -58,6 +58,60 @@ function transform(document, params) {
     importPrecedence: 1,
   });
   templates.push({
+    match: "xsl:template",
+    matchFunction: xjslt.compileMatchFunction(
+      '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes0 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-template");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-template")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "template" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes0(contextItem));}\n//# sourceURL=generated.js',
+    ),
+    name: undefined,
+    modes: ["#default"],
+    allowedParams: [
+      {
+        name: "import-precedence",
+        content: undefined,
+        namespaces: {},
+      },
+    ],
+    apply: (context) => {
+      xjslt.copy(
+        context,
+        {
+          namespaces: {
+            xsl: "http://www.w3.org/1999/XSL/Transform",
+          },
+        },
+        (context) => {
+          xjslt.applyTemplates(context, {
+            select: "@* | node()",
+            mode: "#default",
+            params: [],
+            sortKeyComponents: [],
+            namespaces: {
+              xsl: "http://www.w3.org/1999/XSL/Transform",
+            },
+          });
+          xjslt.attribute(
+            context,
+            {
+              name: ["import-precedence"],
+              separator: undefined,
+              select: "$import-precedence",
+              namespace: undefined,
+              namespaces: {
+                xsl: "http://www.w3.org/1999/XSL/Transform",
+              },
+            },
+            (context) => {},
+          );
+        },
+      );
+    },
+    namespaces: {
+      xsl: "http://www.w3.org/1999/XSL/Transform",
+    },
+    priority: undefined,
+    importPrecedence: 1,
+  });
+  templates.push({
     match: "xsl:import",
     matchFunction: xjslt.compileMatchFunction(
       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes0 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-import");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-import")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "import" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes0(contextItem));}\n//# sourceURL=generated.js',
@@ -76,7 +130,15 @@ function transform(document, params) {
       xjslt.applyTemplates(context, {
         select: "$doc/xsl:stylesheet/* | $doc/xsl:transform/*",
         mode: "#default",
-        params: [],
+        params: [
+          {
+            name: "import-precedence",
+            content: "position() + $base-precedence",
+            namespaces: {
+              xsl: "http://www.w3.org/1999/XSL/Transform",
+            },
+          },
+        ],
         sortKeyComponents: [],
         namespaces: {
           xsl: "http://www.w3.org/1999/XSL/Transform",
@@ -90,6 +152,11 @@ function transform(document, params) {
     importPrecedence: 1,
   });
   xjslt.sortTemplates(templates);
+  xjslt.param(context, {
+    name: "base-precedence",
+    content: undefined,
+    namespaces: {},
+  });
   xjslt.processNode(context, [], {
     xsl: "http://www.w3.org/1999/XSL/Transform",
   });

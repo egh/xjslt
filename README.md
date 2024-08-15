@@ -43,12 +43,11 @@ Tested with [node 20](https://nodejs.org/) and (less extensively) in Chrome and 
 - `variable`
 - namespaces
 - `sort`
-- `include`
+- `include`/`import`
 - `result-document`
 
 # Incompletely supported features
 - `for-each-group` (only `group-by` supported)
-- `import` (precedence not supported)
 - `function` basically working, with better typing TBD
 - `output` not all options supported
 

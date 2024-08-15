@@ -855,7 +855,7 @@ function compileTemplateNode(node: slimdom.Element): ExpressionStatement {
       ),
       namespaces: mkNamespaceArg(node),
       priority: mkLiteral(node.getAttribute("priority")),
-      importPrecedence: mkLiteral(1), // TODO
+      importPrecedence: mkLiteral(node.getAttribute("import-precedence") || 1),
     }),
   ]);
 }
@@ -1017,12 +1017,15 @@ export async function compileStylesheet(xsltPath: string) {
       },
     )
   ) {
+    let basePrecedence = 100;
     xsltDoc = preprocessInclude(xsltDoc, {
       inputURL: pathToFileURL(xsltPath),
     }).get("#default").document;
     xsltDoc = preprocessImport(xsltDoc, {
       inputURL: pathToFileURL(xsltPath),
+      stylesheetParams: { "base-precedence": basePrecedence },
     }).get("#default").document;
+    basePrecedence += 100;
     if (counter > 100) throw new Error("Import level too deep!");
     counter++;
   }
