@@ -2,7 +2,7 @@
 
 XJSLT is an [XSLT 2.0](https://www.w3.org/TR/xslt20/) compiler (targeting JavaScript) written in TypeScript, depending on [fontoxpath](https://github.com/FontoXML/fontoxpath) for an XPath implementation.
 
-XJSLT compiles stylesheets to runnable JavaScript, so you can create transforms for use in a browser.
+XJSLT works by compiling stylesheets to runnable JavaScript. These compiled stylesheets can be used immediately in the command line, or they can be save for later use in the command line. They can also be used programmatically either in the browser or in another JavaScript runtime.
 
 Tested with [node 20](https://nodejs.org/) and in Chrome and Firefox.
 
@@ -15,11 +15,16 @@ Tested with [node 20](https://nodejs.org/) and in Chrome and Firefox.
 - `xjslt jats-html.xsl <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)`
 
 # Compilation examples
-XJSLT can compile XSLT stylesheets into executable JavaScript code, which can then be deployed to various platforms that support JavaScript, including the browser, NodeJS, and potentially other JavaScript runtimes. The following are some examples of how to do this for the browser, google cloud functions, and cloudflare edge functions.
+XJSLT can compile XSLT stylesheets into executable JavaScript code, which can then be deployed to various platforms that support JavaScript, including the browser, NodeJS, and potentially other JavaScript runtimes. The following are some examples of how to do this for the browser, google cloud functions, and cloudflare edge functions. Note that this compiled `.js` may need to be recompiled if the xjslt version changes.
+
 
 ## In the browser
 - `xjslt compile --web jats-html.xsl examples/html/transform.js`
 - Open `examples/html/example.html` (will load the generated `transform.js` file)
+
+## For reuse in the command line
+- `xjslt compile jats-html.xsl`
+- `xjslt transform.js <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)`
 
 ## In a google cloud function
 - `xjslt compile jats-html.xsl examples/google-cloud/transform.js`
@@ -56,4 +61,6 @@ XJSLT can compile XSLT stylesheets into executable JavaScript code, which can th
 # TODO (not yet implemented)
 - [ ] `strip-space`/`preserve-space`
 - [ ] `attribute-set`
+- [ ] `number`
+- [ ] tunneled parameters
 - [ ] … (probably other things I’m not aware of or forgot)
