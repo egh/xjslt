@@ -461,7 +461,6 @@ export function compileTopLevelNode(node: slimdom.Element) {
         node.localName === "decimal-format" ||
         node.localName === "import-schema" ||
         node.localName === "namespace-alias" ||
-        node.localName === "output" ||
         node.localName === "preserve-space"
       ) {
         return undefined;
@@ -561,12 +560,6 @@ export function compileSequenceConstructorNode(node: slimdom.Element) {
         return compileTextNode(node);
       } else if (node.localName === "variable") {
         return compileVariable(node);
-      } else if (
-        node.localName === "output" ||
-        node.localName === "preserve-space"
-      ) {
-        // TODO
-        return undefined;
       } else if (node.localName === "strip-space") {
         return undefined;
       } else if (node.localName === "value-of") {
