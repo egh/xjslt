@@ -186,6 +186,14 @@ function compileNextMatchNode(node: slimdom.Element) {
   return compileFuncall("nextMatch", [mkObject(args)]);
 }
 
+function compileApplyImportsNodes(node: slimdom.Element) {
+  const args = {
+    params: compileParams("with-param", node.childNodes),
+    namespaces: mkNamespaceArg(node),
+  };
+  return compileFuncall("applyImports", [mkObject(args)]);
+}
+
 /* Compile a param or variable, which contains either a select
    statement or a SequenceConstructor. */
 function compileVariableLike(node: slimdom.Element) {
@@ -517,6 +525,8 @@ export function compileSequenceConstructorNode(node: slimdom.Element) {
       }
       if (simpleElements.has(node.localName)) {
         return compileSimpleElement(node);
+      } else if (node.localName === "apply-imports") {
+        return compileApplyImportsNodes(node);
       } else if (node.localName === "apply-templates") {
         return compileApplyTemplatesNode(node);
       } else if (node.localName === "attribute") {

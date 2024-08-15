@@ -537,6 +537,29 @@ export function nextMatch(
   }
 }
 
+export function applyImports(
+  context: DynamicContext,
+  data: {
+    params: VariableLike[];
+    namespaces: object;
+  },
+) {
+  const nextMatches = context.nextMatches;
+  let next = nextMatches.next();
+  /* applyImports should only find imports. If importPrecedence is 1,
+     this is the original stylesheet. */
+  while (!next.done && next.value.importPrecedence === 1) {
+    next = nextMatches.next();
+  }
+  if (!next.done) {
+    evaluateTemplate(
+      next.value,
+      { ...context, nextMatches: nextMatches },
+      data.params,
+    );
+  }
+}
+
 function sortNodesHelper(
   context: DynamicContext,
   nodes: any[],
