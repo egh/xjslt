@@ -1118,7 +1118,6 @@ export const KNOWN_SPEC_FAILURES = [
   "namespace-alias-4702",
   "namespace-alias-5801",
   "next-match-006",
-  "next-match-007",
   "next-match-008",
   "next-match-010",
   "next-match-012",
