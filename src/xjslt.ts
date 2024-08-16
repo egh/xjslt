@@ -346,7 +346,7 @@ function mkBuiltInTemplates(namespaces: object): Array<CompiledTemplate> {
       apply: (_context: DynamicContext) => {},
       allowedParams: [],
       modes: ["#all"],
-      importPrecedence: -Number.MAX_VALUE,
+      importPrecedence: Number.MAX_VALUE,
     },
     {
       match: "text()|@*",
@@ -359,7 +359,7 @@ function mkBuiltInTemplates(namespaces: object): Array<CompiledTemplate> {
       },
       allowedParams: [],
       modes: ["#all"],
-      importPrecedence: -Number.MAX_VALUE,
+      importPrecedence: Number.MAX_VALUE,
     },
     {
       match: "*|/",
@@ -374,7 +374,7 @@ function mkBuiltInTemplates(namespaces: object): Array<CompiledTemplate> {
       },
       allowedParams: [],
       modes: ["#all"],
-      importPrecedence: -Number.MAX_VALUE,
+      importPrecedence: Number.MAX_VALUE,
     },
   ];
 }
