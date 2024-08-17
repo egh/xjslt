@@ -58,6 +58,8 @@ import { mkdtemp } from "fs/promises";
 import { transform as preprocessSimplified } from "./preprocess/simplified";
 import { transform as preprocessInclude } from "./preprocess/include";
 import { transform as preprocessImport } from "./preprocess/import";
+import { transform as preprocessStripWhitespace1 } from "./preprocess/stripWhitespace1";
+import { transform as preprocessStripWhitespace2 } from "./preprocess/stripWhitespace2";
 import {
   XSLT1_NSURI,
   XMLNS_NSURI,
@@ -977,6 +979,48 @@ export function stripSpaceStylesheet(doc: any) {
   return stripSpace(doc, ["xsl:text"], nsResolver);
 }
 
+function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
+  if (
+    !evaluateXPathToBoolean(
+      "/xsl:stylesheet|/xsl:transform",
+      doc,
+      undefined,
+      undefined,
+      { namespaceResolver: mkResolver({ xsl: XSLT1_NSURI }) },
+    )
+  ) {
+    doc = preprocessSimplified(doc).get("#default");
+  }
+  let counter = 0;
+  while (
+    evaluateXPathToBoolean(
+      "//xsl:include|//xsl:import",
+      doc,
+      undefined,
+      undefined,
+      {
+        namespaceResolver: mkResolver({ xsl: XSLT1_NSURI }),
+      },
+    )
+  ) {
+    let basePrecedence = 100;
+    doc = preprocessInclude(doc, {
+      inputURL: pathToFileURL(path),
+    }).get("#default").document;
+    doc = preprocessImport(doc, {
+      inputURL: pathToFileURL(path),
+      stylesheetParams: { "base-precedence": basePrecedence },
+    }).get("#default").document;
+    basePrecedence += 100;
+    if (counter > 100) throw new Error("Import level too deep!");
+    counter++;
+  }
+  /* https://www.w3.org/TR/xslt20/#stylesheet-stripping */
+  doc = preprocessStripWhitespace1(doc).get("#default").document;
+  doc = preprocessStripWhitespace2(doc).get("#default").document;
+  return doc;
+}
+
 export async function compileStylesheet(xsltPath: string) {
   let slimdom_path = require.resolve("slimdom").split(path.sep);
   let root_dir = path.join(
@@ -994,44 +1038,10 @@ export async function compileStylesheet(xsltPath: string) {
   );
   symlinkSync(path.join(root_dir, "dist"), path.join(tempdir, "dist"));
   var tempfile = path.join(tempdir, "transform.js");
-  let xsltDoc = stripSpaceStylesheet(
+  let xsltDoc = preprocess(
     slimdom.parseXmlDocument(readFileSync(xsltPath).toString()),
+    xsltPath,
   );
-  if (
-    !evaluateXPathToBoolean(
-      "/xsl:stylesheet|/xsl:transform",
-      xsltDoc,
-      undefined,
-      undefined,
-      { namespaceResolver: mkResolver({ xsl: XSLT1_NSURI }) },
-    )
-  ) {
-    xsltDoc = preprocessSimplified(xsltDoc).get("#default");
-  }
-  let counter = 0;
-  while (
-    evaluateXPathToBoolean(
-      "//xsl:include|//xsl:import",
-      xsltDoc,
-      undefined,
-      undefined,
-      {
-        namespaceResolver: mkResolver({ xsl: XSLT1_NSURI }),
-      },
-    )
-  ) {
-    let basePrecedence = 100;
-    xsltDoc = preprocessInclude(xsltDoc, {
-      inputURL: pathToFileURL(xsltPath),
-    }).get("#default").document;
-    xsltDoc = preprocessImport(xsltDoc, {
-      inputURL: pathToFileURL(xsltPath),
-      stylesheetParams: { "base-precedence": basePrecedence },
-    }).get("#default").document;
-    basePrecedence += 100;
-    if (counter > 100) throw new Error("Import level too deep!");
-    counter++;
-  }
   writeFileSync(
     tempfile,
     generate(compileStylesheetNode(xsltDoc.documentElement)),
