@@ -3,4 +3,4 @@ export default {
   testEnvironment: "node",
   reporters: [["jest-simple-dot-reporter", { color: true }]],
   testPathIgnorePatterns: ["examples"],
-}
+};
