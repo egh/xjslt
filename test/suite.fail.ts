@@ -358,7 +358,6 @@ export const KNOWN_SPEC_FAILURES = [
   "choose-0106",
   "choose-0107",
   "choose-0202",
-  "choose-0604",
   "choose-1502",
   "collations-0101",
   "collations-0102",

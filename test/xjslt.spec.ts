@@ -42,7 +42,6 @@ import {
   compileSequenceConstructorNode,
   compileTopLevelNode,
   getNodeNS,
-  stripSpaceStylesheet,
 } from "../src/compile";
 import * as slimdom from "slimdom";
 import * as path from "path";
@@ -54,6 +53,7 @@ import { readFileSync, mkdtempSync, writeFileSync, unlinkSync } from "fs";
 import { expect } from "@jest/globals";
 import { toBeEquivalentDom } from "./matchers";
 import { OutputDefinition } from "../src/definitions";
+import { transform as preprocessStripWhitespace2 } from "../src/preprocess/stripWhitespace2";
 expect.extend({ toBeEquivalentDom });
 
 declare module "expect" {
@@ -181,13 +181,13 @@ test("compiled", () => {
   expect(str).toEqual(readFileSync("./test/simple.out", "utf8"));
 });
 
-const xsltDoc = slimdom.parseXmlDocument(
-  readFileSync("./test/simple.xslt").toString(),
-);
+const xsltDoc = preprocessStripWhitespace2(
+  slimdom.parseXmlDocument(readFileSync("./test/simple.xslt").toString()),
+).get("#default").document;
 
-const xslt2Doc = stripSpaceStylesheet(
+const xslt2Doc = preprocessStripWhitespace2(
   slimdom.parseXmlDocument(readFileSync("./test/simple2.xslt").toString()),
-);
+).get("#default").document;
 
 function walkTree(node: any, func: (node: any) => void): void {
   func(node);
@@ -204,7 +204,7 @@ test("compileTextNode", () => {
   const nodes = evaluateXPathToNodes("//text()", xsltDoc);
   expect(
     generate(
-      compileSequenceConstructorNode(nodes[2] as slimdom.Element),
+      compileSequenceConstructorNode(nodes[0] as slimdom.Element),
       GENERATE_OPTS,
     ),
   ).toEqual('xjslt.literalText(context, "Article -\\n");');
@@ -320,33 +320,6 @@ test("compileLiteralElementNode with namespace", () => {
   ).toEqual(
     'xjslt.literalElement(context, {"name": "foo:node","attributes": [{"name": "xmlns:foo","value": ["http://example.org/foo"],"namespace": "http://www.w3.org/2000/xmlns/"}],"namespace": "http://example.org/foo","namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform","foo": "http://example.org/foo"}}, context => {xjslt.valueOf(context, {"select": ".","separator": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform","foo": "http://example.org/foo"}}, context => {});});',
   );
-});
-
-test("stripSpaceStylesheet", () => {
-  const document = slimdom.parseXmlDocument("<root> text </root>");
-  const xml = slimdom.serializeToWellFormedString(
-    stripSpaceStylesheet(document),
-  );
-  expect(xml).toEqual("<root> text </root>");
-});
-
-test("stripSpaceStylesheet with space", () => {
-  const document = slimdom.parseXmlDocument(
-    "<root>\n <foo> <bar>text</bar> </foo>\n </root>",
-  );
-  const xml = slimdom.serializeToWellFormedString(
-    stripSpaceStylesheet(document),
-  );
-  expect(xml).toEqual("<root><foo><bar>text</bar></foo></root>");
-});
-
-test("stripSpaceStylesheet with preserved", () => {
-  const raw =
-    '<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match="/"><xsl:text> </xsl:text></xsl:template></xsl:stylesheet>';
-  const document = slimdom.parseXmlDocument(raw);
-  expect(
-    slimdom.serializeToWellFormedString(stripSpaceStylesheet(document)),
-  ).toEqual(raw);
 });
 
 test("compileTemplateNode", () => {

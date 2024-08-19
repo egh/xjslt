@@ -58,16 +58,96 @@ function transform(document, params) {
     importPrecedence: 1,
   });
   templates.push({
-    match: "text()[matches(., '^[\\s\\t\\n\\r]+$') and not(parent::xsl:text)]",
+    match: "text()[matches(., '^[\\s\\t\\n\\r]+$')]",
     matchFunction: undefined,
     name: undefined,
     modes: ["#default"],
     allowedParams: [],
-    apply: (context) => {},
+    apply: (context) => {
+      xjslt.variable(context, {
+        name: "parent-name",
+        content: "local-name(..)",
+        namespaces: {
+          xsl: "http://www.w3.org/1999/XSL/Transform",
+        },
+      });
+      xjslt.variable(context, {
+        name: "ns-correct",
+        content: "namespace-uri(..) = 'http://www.w3.org/1999/XSL/Transform'",
+        namespaces: {
+          xsl: "http://www.w3.org/1999/XSL/Transform",
+        },
+      });
+      xjslt.variable(context, {
+        name: "nearest-preserve",
+        content: "./ancestor::*[@xml:space = 'preserve']",
+        namespaces: {
+          xsl: "http://www.w3.org/1999/XSL/Transform",
+        },
+      });
+      xjslt.variable(context, {
+        name: "nearest-default",
+        content: "./ancestor::*[@xml:space = 'default']",
+        namespaces: {
+          xsl: "http://www.w3.org/1999/XSL/Transform",
+        },
+      });
+      xjslt.choose(context, [
+        {
+          test: "$ns-correct and $parent-name = 'text'",
+          apply: (context) => {
+            xjslt.copy(
+              context,
+              {
+                namespaces: {
+                  xsl: "http://www.w3.org/1999/XSL/Transform",
+                },
+              },
+              (context) => {},
+            );
+          },
+        },
+        {
+          test: "$parent-name = ('analyze-string', 'apply-imports', 'apply-templates', 'attribute-set', 'call-template', 'character-map', 'choose', 'next-match', 'stylesheet', 'transform')",
+          apply: (context) => {},
+        },
+        {
+          test: "$nearest-preserve and not($nearest-default)",
+          apply: (context) => {
+            xjslt.copy(
+              context,
+              {
+                namespaces: {
+                  xsl: "http://www.w3.org/1999/XSL/Transform",
+                },
+              },
+              (context) => {},
+            );
+          },
+        },
+        {
+          test: "$nearest-preserve and $nearest-default and not($nearest-default = $nearest-preserve//*)",
+          apply: (context) => {
+            xjslt.copy(
+              context,
+              {
+                namespaces: {
+                  xsl: "http://www.w3.org/1999/XSL/Transform",
+                },
+              },
+              (context) => {},
+            );
+          },
+        },
+        {
+          apply: (context) => {},
+        },
+      ]);
+    },
     namespaces: {
       xsl: "http://www.w3.org/1999/XSL/Transform",
     },
-    priority: undefined,
+    priority: "1",
     importPrecedence: 1,
   });
   xjslt.sortTemplates(templates);

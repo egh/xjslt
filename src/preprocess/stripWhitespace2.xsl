@@ -25,8 +25,30 @@
      </xsl:copy>
    </xsl:template>
 
-   <!-- TODO: fully implement https://www.w3.org/TR/xslt20/#stylesheet-stripping -->
-   <xsl:template match="text()[matches(., '^[\s\t\n\r]+$') and not(parent::xsl:text)]">
-     <!-- strip -->
+   <!-- https://www.w3.org/TR/xslt20/#stylesheet-stripping -->
+   <xsl:template match="text()[matches(., '^[\s\t\n\r]+$')]" priority="1">
+     <xsl:variable name="parent-name" select="local-name(..)"/>
+     <xsl:variable name="ns-correct" select="namespace-uri(..) = 'http://www.w3.org/1999/XSL/Transform'"/>
+     <xsl:variable name="nearest-preserve" select="./ancestor::*[@xml:space = 'preserve']"/>
+     <xsl:variable name="nearest-default" select="./ancestor::*[@xml:space = 'default']"/>
+     <xsl:choose>
+       <xsl:when test="$ns-correct and $parent-name = 'text'">
+         <xsl:copy/>
+       </xsl:when>
+       <xsl:when test="$parent-name = ('analyze-string', 'apply-imports', 'apply-templates', 'attribute-set', 'call-template', 'character-map', 'choose', 'next-match', 'stylesheet', 'transform')">
+         <!-- always strip -->
+       </xsl:when>
+       <xsl:when test="$nearest-preserve and not($nearest-default)">
+         <!-- there is a parent xml:space="preserve" but no xml:space="default" -->
+         <xsl:copy/>
+       </xsl:when>
+       <xsl:when test="$nearest-preserve and $nearest-default and not($nearest-default = $nearest-preserve//*)">
+         <!-- there is a closer xml:space="preserve" than a xml:space="default" -->
+         <xsl:copy/>
+       </xsl:when>
+       <xsl:otherwise>
+         <!-- strip -->
+       </xsl:otherwise>
+     </xsl:choose>
    </xsl:template>
 </xsl:stylesheet>

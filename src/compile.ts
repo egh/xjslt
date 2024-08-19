@@ -969,16 +969,6 @@ function compileAvt(avt: string) {
   );
 }
 
-/* Strip space for an XSLT stylesheet. */
-export function stripSpaceStylesheet(doc: any) {
-  const nsResolver = (prefix: string): string => {
-    if (prefix === "xsl") {
-      return XSLT1_NSURI;
-    }
-  };
-  return stripSpace(doc, ["xsl:text"], nsResolver);
-}
-
 function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
   if (
     !evaluateXPathToBoolean(
