@@ -713,7 +713,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               inputURL: mkMember("params", "inputURL"),
               keys: mkIdentifier("keys"),
               outputDefinitions: mkIdentifier("outputDefinitions"),
-              nameTestCache: mkNew(mkIdentifier("Map"), []),
+              patternMatchCache: mkNew(mkIdentifier("Map"), []),
               stylesheetParams: mkMember("params", "stylesheetParams"),
             }),
           ),

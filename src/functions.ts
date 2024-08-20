@@ -47,7 +47,7 @@ function fnCurrentOutputUri({ currentContext }) {
 }
 
 function fnKey({ currentContext }, name: string, value: any[]) {
-  const { keys, contextItem, variableScopes, nameTestCache } =
+  const { keys, contextItem, variableScopes, patternMatchCache } =
     currentContext as DynamicContext;
   if (!keys.has(name)) {
     throw new Error("XTDE1260");
@@ -55,7 +55,7 @@ function fnKey({ currentContext }, name: string, value: any[]) {
   const retval = keys
     .get(name)
     .lookup(
-      nameTestCache,
+      patternMatchCache,
       contextItem.ownerDocument,
       variableScopes,
       value.map((s) => s.textContent).join(""),

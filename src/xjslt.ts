@@ -113,7 +113,7 @@ export class Key {
     this.cache = new Map();
   }
   buildDocumentCache(
-    nameTestCache: Map<string, Set<slimdom.Node>>,
+    patternMatchCache: Map<string, Set<slimdom.Node>>,
     document: slimdom.Document,
     variableScopes: VariableScope[],
   ): Map<any, any> {
@@ -121,8 +121,8 @@ export class Key {
     visitNodes(document, (node: any) => {
       if (typeof this.use === "string") {
         if (
-          nameTest(
-            nameTestCache,
+          patternMatch(
+            patternMatchCache,
             this.match,
             undefined,
             node,
@@ -141,7 +141,7 @@ export class Key {
     return docCache;
   }
   lookup(
-    nameTestCache: Map<string, Set<slimdom.Node>>,
+    patternMatchCache: Map<string, Set<slimdom.Node>>,
     document: slimdom.Document,
     variableScopes: VariableScope[],
     value: string,
@@ -149,7 +149,7 @@ export class Key {
     if (!this.cache.has(document)) {
       this.cache.set(
         document,
-        this.buildDocumentCache(nameTestCache, document, variableScopes),
+        this.buildDocumentCache(patternMatchCache, document, variableScopes),
       );
     }
     return this.cache.get(document).get(value);
@@ -173,7 +173,7 @@ export interface DynamicContext {
   currentGroup?: any[];
   currentGroupingKey?: string;
   keys: Map<String, Key>;
-  nameTestCache: Map<string, Set<slimdom.Node>>;
+  patternMatchCache: Map<string, Set<slimdom.Node>>;
   outputDefinitions: Map<string, OutputDefinition>;
   stylesheetParams?: object;
 }
@@ -257,9 +257,9 @@ function fastSuccess(pattern: string, node: slimdom.Node) {
   return false;
 }
 
-/* Implementation of https://www.w3.org/TR/xslt11/#patterns */
-function nameTest(
-  nameTestCache: Map<string, Set<slimdom.Node>> | undefined,
+/* Implementation of https://www.w3.org/TR/xslt20/#pattern-syntax */
+function patternMatch(
+  patternMatchCache: Map<string, Set<slimdom.Node>> | undefined,
   match: string,
   matchFunction: CompiledXPathFunction | undefined,
   node: slimdom.Node,
@@ -274,24 +274,28 @@ function nameTest(
     } else {
       while (checkContext) {
         const nodeId = evaluateXPathToString("generate-id(.)", checkContext);
-        const matches = withCached(nameTestCache, `${match}-${nodeId}`, () => {
-          if (matchFunction) {
+        const matches = withCached(
+          patternMatchCache,
+          `${match}-${nodeId}`,
+          () => {
+            if (matchFunction) {
+              return new Set(
+                executeJavaScriptCompiledXPath(matchFunction, checkContext),
+              );
+            }
             return new Set(
-              executeJavaScriptCompiledXPath(matchFunction, checkContext),
-            );
-          }
-          return new Set(
-            evaluateXPathToNodes(
-              match,
-              checkContext,
-              undefined,
-              /* TODO: Only top level variables are applicable here, so top
+              evaluateXPathToNodes(
+                match,
+                checkContext,
+                undefined,
+                /* TODO: Only top level variables are applicable here, so top
             level variables could be cached. */
-              mergeVariableScopes(variableScopes),
-              { namespaceResolver: nsResolver },
-            ),
-          );
-        });
+                mergeVariableScopes(variableScopes),
+                { namespaceResolver: nsResolver },
+              ),
+            );
+          },
+        );
         /* It counts as a match if the node we were testing against is in the resulting node set. */
         if (matches.has(node)) {
           return true;
@@ -313,7 +317,7 @@ function nameTest(
  * @returns The template, or undefined if none can be found to match this node.
  */
 function* getTemplates(
-  nameTestCache: Map<string, Set<slimdom.Node>>,
+  patternMatchCache: Map<string, Set<slimdom.Node>>,
   node: any,
   templates: Array<CompiledTemplate>,
   variableScopes: Array<VariableScope>,
@@ -324,8 +328,8 @@ function* getTemplates(
     if (
       template.match &&
       (template.modes[0] === "#all" || template.modes.includes(mode)) &&
-      nameTest(
-        nameTestCache,
+      patternMatch(
+        patternMatchCache,
         template.match,
         template.matchFunction,
         node,
@@ -502,7 +506,7 @@ export function processNode(
   namespaces: object,
 ) {
   let templates = getTemplates(
-    context.nameTestCache,
+    context.patternMatchCache,
     context.contextItem,
     context.templates.concat(mkBuiltInTemplates(namespaces)),
     context.variableScopes,
@@ -1453,8 +1457,10 @@ function preserveSpace(
   nsResolver: (prefix: string) => string,
 ) {
   for (let name of preserve) {
-    let nameTestCache: Map<string, Set<slimdom.Node>> = new Map();
-    if (nameTest(nameTestCache, name, undefined, node, [], nsResolver)) {
+    let patternMatchCache: Map<string, Set<slimdom.Node>> = new Map();
+    if (
+      patternMatch(patternMatchCache, name, undefined, node, [], nsResolver)
+    ) {
       return true;
     }
   }

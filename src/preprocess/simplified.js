@@ -21,7 +21,7 @@ function transform(document, params) {
     inputURL: params.inputURL,
     keys: keys,
     outputDefinitions: outputDefinitions,
-    nameTestCache: new Map(),
+    patternMatchCache: new Map(),
     stylesheetParams: params.stylesheetParams,
   };
   templates.push({
