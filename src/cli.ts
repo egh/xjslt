@@ -116,6 +116,7 @@ function paramCollect(value: string, previous: object) {
 
 async function main() {
   const program = new Command();
+  Error.stackTraceLimit = 100;
   program.version("0.0.1");
   program
     .arguments("<xslt> <xml...>")
