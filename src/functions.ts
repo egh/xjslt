@@ -116,7 +116,9 @@ export function registerFunctions() {
   registerCustomXPathFunction(
     { namespaceURI: XPATH_NSURI, localName: "current-grouping-key" },
     [],
-    "xs:anyAtomicType?",
+    /* This should be xs:anyAtomicType? but that makes fontoxpath crap
+       out and xs:string is often correct */
+    "xs:string?",
     fnCurrentGroupingKey as (context: any) => any,
   );
 

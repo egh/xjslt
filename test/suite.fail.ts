@@ -666,7 +666,6 @@ export const KNOWN_SPEC_FAILURES = [
   "for-each-group-084",
   "for-each-group-085",
   "for-each-group-086",
-  "for-each-group-088",
   "for-each-group-091",
   "format-date-001",
   "format-date-004",
