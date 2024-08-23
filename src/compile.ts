@@ -979,7 +979,7 @@ function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
       { namespaceResolver: mkResolver({ xsl: XSLT1_NSURI }) },
     )
   ) {
-    doc = preprocessSimplified(doc).get("#default");
+    doc = preprocessSimplified(doc).get("#default").document;
   }
   let counter = 0;
   while (
