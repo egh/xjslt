@@ -745,7 +745,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             }),
             compileTopLevelNode,
           ),
-          mkCall(mkMember("xjslt", "sortTemplates"), [
+          mkCall(mkMember("xjslt", "sortSortable"), [
             mkIdentifier("templates"),
           ]),
           /* Then everything else */

@@ -65,15 +65,18 @@ interface ChooseAlternative {
   apply: SequenceConstructor;
 }
 
-interface CompiledTemplate {
+interface Sortable {
   match?: string;
+  importPrecedence: number;
+  priority?: number;
+}
+
+interface CompiledTemplate extends Sortable {
   matchFunction?: CompiledXPathFunction;
   name?: string;
   modes: string[];
-  priority?: number;
   apply: SequenceConstructor;
   allowedParams: Array<VariableLike>;
-  importPrecedence: number;
 }
 
 const ELEMENT_NODE = 1;
@@ -486,7 +489,7 @@ export function computeDefaultPriority(match: string): number {
   return 0.5;
 }
 
-export function sortTemplates(templates: Array<CompiledTemplate>) {
+export function sortSortable(templates: Array<Sortable>) {
   /* https://www.w3.org/TR/xslt20/#conflict */
   // Last declared is first priority.
   templates.reverse();

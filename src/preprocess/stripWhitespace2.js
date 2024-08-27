@@ -150,7 +150,7 @@ function transform(document, params) {
     priority: "1",
     importPrecedence: 1,
   });
-  xjslt.sortTemplates(templates);
+  xjslt.sortSortable(templates);
   xjslt.processNode(context, [], {
     xsl: "http://www.w3.org/1999/XSL/Transform",
   });

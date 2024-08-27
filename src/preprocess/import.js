@@ -151,7 +151,7 @@ function transform(document, params) {
     priority: undefined,
     importPrecedence: 1,
   });
-  xjslt.sortTemplates(templates);
+  xjslt.sortSortable(templates);
   xjslt.param(context, {
     name: "base-precedence",
     content: undefined,
