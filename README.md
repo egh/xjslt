@@ -59,7 +59,6 @@ XJSLT can compile XSLT stylesheets into executable JavaScript code, which can th
 - `output` not all options supported
 
 # TODO (not yet implemented)
-- [ ] `strip-space`/`preserve-space`
 - [ ] `attribute-set`
 - [ ] `number`
 - [ ] tunneled parameters

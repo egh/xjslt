@@ -65,7 +65,7 @@ import {
   XMLNS_NSURI,
   mkResolver,
   NamespaceResolver,
-  stripSpace,
+  namespace,
 } from "./xjslt";
 import { OutputDefinition } from "./definitions";
 import { mkOutputDefinition } from "./shared";
@@ -368,6 +368,28 @@ function compileStylesheetParam(node: slimdom.Element) {
   return mkCallWithContext(mkMember("xjslt", "param"), [param]);
 }
 
+function compileWhitespaceDeclarationNode(
+  node: slimdom.Element,
+  preserve: boolean,
+) {
+  return mkCall(
+    mkMember("whitespaceDeclarations", "push"),
+    node
+      .getAttribute("elements")
+      .split(/[\n\r\t ]/)
+      .map((e) => {
+        return mkObject({
+          importPrecedence: mkLiteral(
+            node.getAttribute("import-precedence") || 1,
+          ),
+          match: mkLiteral(e),
+          preserve: mkLiteral(preserve),
+          namespaces: mkNamespaceArg(node),
+        });
+      }),
+  );
+}
+
 function mkResolverForNode(node: slimdom.Element): NamespaceResolver {
   return (prefix: string) => {
     return node.lookupNamespaceURI(prefix);
@@ -462,12 +484,13 @@ export function compileTopLevelNode(node: slimdom.Element) {
         node.localName === "character-map" ||
         node.localName === "decimal-format" ||
         node.localName === "import-schema" ||
-        node.localName === "namespace-alias" ||
-        node.localName === "preserve-space"
+        node.localName === "namespace-alias"
       ) {
         return undefined;
+      } else if (node.localName === "preserve-space") {
+        return compileWhitespaceDeclarationNode(node, true);
       } else if (node.localName === "strip-space") {
-        return undefined;
+        return compileWhitespaceDeclarationNode(node, false);
       } else {
         throw new Error("Found unexpected XSL element: " + node.tagName);
       }
@@ -687,6 +710,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             },
           },
           mkLet(mkIdentifier("templates"), mkArray([])),
+          mkLet(mkIdentifier("whitespaceDeclarations"), mkArray([])),
           mkLet(
             mkIdentifier("resultDocuments"),
             mkNew(mkIdentifier("Map"), []),
@@ -759,6 +783,13 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             ),
             compileTopLevelNode,
           ),
+          mkCall(mkMember("xjslt", "sortSortable"), [
+            mkIdentifier("whitespaceDeclarations"),
+          ]),
+          mkCall(mkMember("xjslt", "stripSpace"), [
+            mkIdentifier("document"),
+            mkIdentifier("whitespaceDeclarations"),
+          ]),
           mkCallWithContext(mkMember("xjslt", "processNode"), [
             mkArray([]),
             mkNamespaceArg(node),

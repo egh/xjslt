@@ -71,6 +71,11 @@ interface Sortable {
   priority?: number;
 }
 
+interface WhitespaceDeclaration extends Sortable {
+  preserve: boolean;
+  namespaces: {};
+}
+
 interface CompiledTemplate extends Sortable {
   matchFunction?: CompiledXPathFunction;
   name?: string;
@@ -1454,27 +1459,31 @@ export function resultDocument(
   }
 }
 
-function preserveSpace(
-  node: any,
-  preserve: Array<string>,
-  nsResolver: (prefix: string) => string,
-) {
-  for (let name of preserve) {
-    let patternMatchCache: Map<string, Set<slimdom.Node>> = new Map();
+/* Check if this node should have space stripped. */
+function shouldStripSpace(
+  node: slimdom.Element,
+  whitespaceDeclarations: WhitespaceDeclaration[],
+): boolean {
+  let patternMatchCache: Map<string, Set<slimdom.Node>> = new Map();
+  for (const decl of whitespaceDeclarations) {
+    const nsResolver = mkResolver(decl.namespaces);
     if (
-      patternMatch(patternMatchCache, name, undefined, node, [], nsResolver)
+      patternMatch(patternMatchCache, decl.match, null, node, [], nsResolver)
     ) {
-      return true;
+      if (decl.preserve) {
+        return false;
+      } else {
+        return true;
+      }
     }
   }
   return false;
 }
 
-/* https://www.w3.org/TR/xslt11/#strip */
+/* https://www.w3.org/TR/xslt20/#strip */
 export function stripSpace(
   doc: any,
-  preserve: Array<string>,
-  nsResolver: (prefix: string) => string,
+  whitespaceDeclarations: WhitespaceDeclaration[],
 ) {
   const ONLY_WHITESPACE = RegExp("^[ \n\r\t]+$");
   let toRemove = [];
@@ -1482,12 +1491,12 @@ export function stripSpace(
     if (node.nodeType === TEXT_NODE) {
       if (
         ONLY_WHITESPACE.test(node.textContent) &&
-        !preserveSpace(node.parentNode, preserve, nsResolver)
+        shouldStripSpace(node.parentNode, whitespaceDeclarations)
       ) {
         toRemove.push(node);
       }
     } else {
-      if (node.hasChildNodes()) {
+      if (node.hasChildNodes && node.hasChildNodes()) {
         for (let child of node.childNodes) {
           walkTree(child);
         }

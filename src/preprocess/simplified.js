@@ -4,6 +4,7 @@ let xjslt = require("xjslt");
 function transform(document, params) {
   params = xjslt.setParamDefaults(document, params);
   let templates = [];
+  let whitespaceDeclarations = [];
   let resultDocuments = new Map();
   resultDocuments.set("#default", {
     document: params.outputDocument,
@@ -24,6 +25,8 @@ function transform(document, params) {
     patternMatchCache: new Map(),
     stylesheetParams: params.stylesheetParams,
   };
+  xjslt.sortSortable(whitespaceDeclarations);
+  xjslt.stripSpace(document, whitespaceDeclarations);
   templates.push({
     match: "/",
     matchFunction: xjslt.compileMatchFunction(
