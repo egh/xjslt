@@ -26,7 +26,7 @@
   "devDependencies": {
     "@types/jest": "*",
     "jest": "*",
-    "jest-simple-dot-reporter": "^1.0.5",
+    "jest-simple-dot-reporter": "*",
     "ts-jest": "*",
     "ts-node": "*",
     "typescript": "*"
@@ -39,6 +39,6 @@
     "commander": "*",
     "fontoxpath": "*",
     "slimdom": "*",
-    "webpack": "^5.92.1"
+    "webpack": "*"
   }
 }
