@@ -31,7 +31,7 @@ import * as path from "path";
 import * as fs from "fs";
 import * as process from "process";
 
-async function run(xslt: string, xmls: Array<string>, options) {
+async function run(xslt: string, xmls: Array<string>, options: object) {
   let transform;
   if (xslt.endsWith(".xsl") || xslt.endsWith(".xslt")) {
     transform = await buildStylesheet(xslt);
@@ -46,7 +46,7 @@ async function run(xslt: string, xmls: Array<string>, options) {
     const results = transform(xmlDom, {
       outputDocument: outputDocument,
       inputURL: baseUrl,
-      stylesheetParams: options.param,
+      stylesheetParams: options["param"],
     });
     for (const [uri, result] of results) {
       const serialized = serialize(result);
@@ -66,14 +66,14 @@ async function run(xslt: string, xmls: Array<string>, options) {
   }
 }
 
-async function compile(xslt: string, destination: string, options) {
+async function compile(xslt: string, destination: string, options: object) {
   const destinationAbs = path.resolve(destination);
   if (fs.existsSync(destinationAbs)) {
     throw new Error(`${destinationAbs} exists!`);
   }
   const src = await compileStylesheet(xslt);
   try {
-    if (options.web) {
+    if (options["web"]) {
       const config = {
         entry: [src],
         output: {

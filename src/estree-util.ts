@@ -26,12 +26,12 @@ import {
   ExpressionStatement,
   FunctionDeclaration,
   Identifier,
-  Literal,
   MemberExpression,
   ModuleDeclaration,
   NewExpression,
   ObjectExpression,
   ReturnStatement,
+  SimpleLiteral,
   SpreadElement,
   Statement,
   Super,
@@ -136,8 +136,8 @@ export function mkImportsNode(): Array<Statement> {
 }
 
 export function mkLiteral(
-  value: string | boolean | number | undefined,
-): Literal {
+  value: string | boolean | number | undefined | null,
+): SimpleLiteral {
   value = value === null || value === undefined ? undefined : value;
   return {
     type: "Literal",

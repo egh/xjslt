@@ -25,7 +25,6 @@ import {
   mkBlock,
   mkCall,
   mkCallWithContext,
-  mkConst,
   mkFun,
   mkIdentifier,
   mkImportsNode,
@@ -49,8 +48,9 @@ import {
   evaluateXPath,
   evaluateXPathToBoolean,
   evaluateXPathToNodes,
+  NamespaceResolver
 } from "fontoxpath";
-import { readFileSync, writeFileSync, symlinkSync, rmSync } from "fs";
+import { readFileSync, writeFileSync, symlinkSync } from "fs";
 import { pathToFileURL } from "url";
 import * as path from "path";
 import { tmpdir } from "os";
@@ -64,8 +64,6 @@ import {
   XSLT1_NSURI,
   XMLNS_NSURI,
   mkResolver,
-  NamespaceResolver,
-  namespace,
 } from "./xjslt";
 import { OutputDefinition } from "./definitions";
 import { mkOutputDefinition } from "./shared";
@@ -87,11 +85,11 @@ export interface xpathstring {
 
 export type AttributeValueTemplate = Array<string | xpathstring>;
 
-function buildInResolver(prefix: string) {
+function buildInResolver(prefix: string): string | null {
   if (prefix === "xsl") {
     return XSLT1_NSURI;
   }
-  return undefined;
+  return null;
 }
 
 const simpleElements = new Map<string, SimpleElement>([
@@ -414,7 +412,7 @@ function compileLiteralElementNode(node: slimdom.Element) {
       mkObject({
         name: mkLiteral(attr.name),
         value: compileAvt(attr.value),
-        namespace: mkLiteral(attr.namespaceURI),
+        namespace: mkLiteral(attr.namespaceURI || undefined),
       }),
     );
   }
@@ -831,7 +829,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
   };
 }
 
-function expandQname(name: string, namespaces: object) {
+function expandQname(name: string | null, namespaces: object) {
   if (!name) {
     return name;
   }
@@ -842,7 +840,7 @@ function expandQname(name: string, namespaces: object) {
   return name;
 }
 
-function resolveQname(name: string, namespaces: object) {
+function resolveQname(name: string | null, namespaces: object) {
   if (!name) {
     return [undefined, name];
   }
@@ -919,7 +917,7 @@ function compileLiteralTextNode(node: slimdom.Element): ExpressionStatement {
   ]);
 }
 
-export function compileAvtRaw(avt: string | undefined): any {
+export function compileAvtRaw(avt: string | undefined | null): any {
   if (avt === undefined || avt === null) {
     return undefined;
   }
@@ -984,9 +982,9 @@ export function compileAvtRaw(avt: string | undefined): any {
   return retval;
 }
 
-function compileAvt(avt: string) {
+function compileAvt(avt: string | null) {
   const avtRaw = compileAvtRaw(avt);
-  if (avtRaw === undefined) {
+  if (avtRaw === undefined || avtRaw === null) {
     return mkLiteral(undefined);
   }
   return mkArray(

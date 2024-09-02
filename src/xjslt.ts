@@ -28,6 +28,7 @@ import {
   EvaluateXPath,
   evaluateXPathToNumber,
   executeJavaScriptCompiledXPath,
+  NamespaceResolver,
   registerCustomXPathFunction,
 } from "fontoxpath";
 import * as slimdom from "slimdom";
@@ -43,8 +44,6 @@ export const XPATH_NSURI = "http://www.w3.org/2005/xpath-functions";
 export type SequenceConstructor = (context: DynamicContext) => void;
 
 export type VariableScope = Map<string, any>;
-
-export type NamespaceResolver = (prefix: string) => string;
 
 interface TransformParams {
   outputDocument?: slimdom.Document;
@@ -539,13 +538,15 @@ export function nextMatch(
   },
 ) {
   const nextMatches = context.nextMatches;
-  const next = nextMatches.next();
-  if (!next.done) {
-    evaluateTemplate(
-      next.value,
-      { ...context, nextMatches: nextMatches },
-      data.params,
-    );
+  if (nextMatches) {
+    const next = nextMatches.next();
+    if (!next.done) {
+      evaluateTemplate(
+        next.value,
+        { ...context, nextMatches: nextMatches },
+        data.params,
+      );
+    }
   }
 }
 
@@ -557,18 +558,20 @@ export function applyImports(
   },
 ) {
   const nextMatches = context.nextMatches;
-  let next = nextMatches.next();
-  /* applyImports should only find imports. If importPrecedence is 1,
-     this is the original stylesheet. */
-  while (!next.done && next.value.importPrecedence === 1) {
-    next = nextMatches.next();
-  }
-  if (!next.done) {
-    evaluateTemplate(
-      next.value,
-      { ...context, nextMatches: nextMatches },
-      data.params,
-    );
+  if (nextMatches) {
+    let next = nextMatches.next();
+    /* applyImports should only find imports. If importPrecedence is 1,
+    this is the original stylesheet. */
+    while (!next.done && next.value.importPrecedence === 1) {
+      next = nextMatches.next();
+    }
+    if (!next.done) {
+      evaluateTemplate(
+        next.value,
+        { ...context, nextMatches: nextMatches },
+        data.params,
+      );
+    }
   }
 }
 
@@ -1624,7 +1627,7 @@ function evaluateSequenceConstructorInTemporaryTree(
  * Extract text content of a document.
  */
 function extractText(document: any): string[] {
-  let strs = [];
+  let strs: string[] = [];
   /* https://www.w3.org/TR/xslt20/#creating-text-nodes */
   function walkTree(node: any): void {
     if (node.nodeType === TEXT_NODE && node.data !== "") {
