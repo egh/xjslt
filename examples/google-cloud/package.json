@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@google-cloud/functions-framework": "^3.4.2",
-    "slimdom": "^4.3.5",
-    "xjslt": "github:egh/xjslt"
+    "fontoxpath": "^3.33.0",
+    "slimdom": "^4.3.5"
   }
 }

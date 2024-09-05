@@ -15,8 +15,7 @@ functions.http("transform", async (req, res) => {
   if (!response.ok) {
     throw new Error(`Response status: ${response.status}`);
   }
-  const transformed = transform
-    .transform(slimdom.parseXmlDocument(await response.text()), {})
+  const transformed = transform(slimdom.parseXmlDocument(await response.text()), {})
     .get("#default").document;
   const html = `<!DOCTYPE html>
   <html lang="en">

@@ -66,6 +66,60 @@ async function run(xslt: string, xmls: Array<string>, options: object) {
   }
 }
 
+function mkWebConfig(src, destinationAbs) {
+  return {
+    entry: [src],
+    output: {
+      path: path.dirname(destinationAbs),
+      filename: path.basename(destinationAbs),
+    },
+    module: {
+      rules: [
+        {
+          test: /\.ts(x)?$/,
+          loader: "ts-loader",
+          exclude: /node_modules/,
+        },
+      ],
+    },
+    resolve: {
+      extensions: [".web.ts", ".web.js", ".ts", ".js"],
+    },
+  };
+}
+
+function mkStandaloneConfig(src, destinationAbs) {
+  return {
+    target: "node",
+    entry: [src],
+    output: {
+      path: path.dirname(destinationAbs),
+      filename: path.basename(destinationAbs),
+      chunkFormat: "commonjs",
+      library: {
+        type: "commonjs-module",
+        export: "transform",
+      },
+    },
+    module: {
+      rules: [
+        {
+          test: /\.ts(x)?$/,
+          loader: "ts-loader",
+          exclude: /node_modules/,
+        },
+      ],
+    },
+    // experiments: {
+    //   outputModule: true,
+    // },
+    externals: {
+      slimdom: "slimdom",
+      fontoxpath: "fontoxpath",
+    },
+  };
+}
+
 async function compile(xslt: string, destination: string, options: object) {
   const destinationAbs = path.resolve(destination);
   if (fs.existsSync(destinationAbs)) {
@@ -73,27 +127,12 @@ async function compile(xslt: string, destination: string, options: object) {
   }
   const src = await compileStylesheet(xslt);
   try {
-    if (options["web"]) {
-      const config = {
-        entry: [src],
-        output: {
-          path: path.dirname(destinationAbs),
-          filename: path.basename(destinationAbs),
-        },
-        module: {
-          rules: [
-            {
-              test: /\.ts(x)?$/,
-              loader: "ts-loader",
-              exclude: /node_modules/,
-            },
-          ],
-        },
-        resolve: {
-          extensions: [".web.ts", ".web.js", ".ts", ".js"],
-        },
-      };
-      const compiler = webpack(config);
+    if (options["web"] || options["standalone"]) {
+      const compiler = webpack(
+        options["web"]
+          ? mkWebConfig(src, destinationAbs)
+          : mkStandaloneConfig(src, destinationAbs),
+      );
       let err,
         stats = await new Promise((resolve, reject) => {
           compiler.run((err, stats) => {
@@ -136,6 +175,9 @@ async function main() {
     .argument("[destination]", "destination file to compile to", "transform.js")
     .addOption(
       new Option("-w, --web", "build a standalone js file for the web"),
+    )
+    .addOption(
+      new Option("-s, --standalone", "build a standalone js file for nodejs"),
     )
     .description("Compile an XSLT stylesheet to JavaScript", {
       xslt: "XSLT stylesheet",

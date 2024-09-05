@@ -53,7 +53,7 @@ import { readFileSync, mkdtempSync, writeFileSync, unlinkSync } from "fs";
 import { expect } from "@jest/globals";
 import { toBeEquivalentDom } from "./matchers";
 import { OutputDefinition } from "../src/definitions";
-import { transform as preprocessStripWhitespace2 } from "../src/preprocess/stripWhitespace2";
+import preprocessStripWhitespace2 from "../src/preprocess/stripWhitespace2";
 expect.extend({ toBeEquivalentDom });
 
 declare module "expect" {

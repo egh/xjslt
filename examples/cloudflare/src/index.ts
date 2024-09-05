@@ -1,4 +1,4 @@
-import { transform } from "./transform";
+import transform from "./transform";
 import * as slimdom from "slimdom";
 export default {
   async fetch(request, env, ctx): Promise<Response> {

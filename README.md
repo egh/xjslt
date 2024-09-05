@@ -27,14 +27,14 @@ XJSLT can compile XSLT stylesheets into executable JavaScript code, which can th
 - `xjslt transform.js <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)`
 
 ## In a google cloud function
-- `xjslt compile jats-html.xsl examples/google-cloud/transform.js`
+- `xjslt compile --standalone jats-html.xsl examples/google-cloud/transform.js`
 - `cd examples/google-cloud`
 - `npm install`
 - `npx @google-cloud/functions-framework --target=transform`
 - Visit http://localhost:8080/?url=https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml
 
 ## In a cloudflare edge function
-- `xjslt compile jats-html.xsl examples/cloudflare/transform.js`
+- `xjslt compile --standalone jats-html.xsl examples/cloudflare/src/transform.js`
 - `cd examples/cloudflare`
 - `npm install`
 - `npm run start`

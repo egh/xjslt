@@ -48,23 +48,19 @@ import {
   evaluateXPath,
   evaluateXPathToBoolean,
   evaluateXPathToNodes,
-  NamespaceResolver
+  NamespaceResolver,
 } from "fontoxpath";
 import { readFileSync, writeFileSync, symlinkSync } from "fs";
 import { pathToFileURL } from "url";
 import * as path from "path";
 import { tmpdir } from "os";
 import { mkdtemp } from "fs/promises";
-import { transform as preprocessSimplified } from "./preprocess/simplified";
-import { transform as preprocessInclude } from "./preprocess/include";
-import { transform as preprocessImport } from "./preprocess/import";
-import { transform as preprocessStripWhitespace1 } from "./preprocess/stripWhitespace1";
-import { transform as preprocessStripWhitespace2 } from "./preprocess/stripWhitespace2";
-import {
-  XSLT1_NSURI,
-  XMLNS_NSURI,
-  mkResolver,
-} from "./xjslt";
+import preprocessSimplified from "./preprocess/simplified";
+import preprocessInclude from "./preprocess/include";
+import preprocessImport from "./preprocess/import";
+import preprocessStripWhitespace1 from "./preprocess/stripWhitespace1";
+import preprocessStripWhitespace2 from "./preprocess/stripWhitespace2";
+import { XSLT1_NSURI, XMLNS_NSURI, mkResolver } from "./xjslt";
 import { OutputDefinition } from "./definitions";
 import { mkOutputDefinition } from "./shared";
 
