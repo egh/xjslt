@@ -167,10 +167,12 @@ export type OutputResult = OutputDefinition & {
   document: slimdom.Document;
 };
 
+export type Appender = (content: any) => Appender | undefined;
+
 export interface DynamicContext {
   outputDocument: slimdom.Document;
   resultDocuments: Map<string, OutputResult>;
-  outputNode: slimdom.Element | slimdom.Document | slimdom.DocumentFragment;
+  append: Appender;
   contextItem: any;
   mode: string;
   templates: Array<CompiledTemplate>;
@@ -797,7 +799,7 @@ export function copy(
   func: SequenceConstructor,
 ) {
   const node = context.contextItem;
-  let newNode;
+  let newNode: slimdom.Node;
   if (node.nodeType === ELEMENT_NODE) {
     newNode = context.outputDocument.createElementNS(
       node.namespaceURI,
@@ -812,7 +814,7 @@ export function copy(
     for (let attribute of node.attributes) {
       if (attribute.namespaceURI === XMLNS_NSURI) {
         const name = attribute.localName;
-        newNode.setAttributeNode(
+        (newNode as slimdom.Element).setAttributeNode(
           context.outputDocument.importNode(
             node.getAttributeNodeNS(XMLNS_NSURI, name),
           ),
@@ -824,18 +826,15 @@ export function copy(
   } else {
     newNode = context.outputDocument.importNode(node);
   }
+  let newAppender: Appender | undefined = undefined;
   if (!newNode) {
     // ...
-  } else if (newNode.nodeType === ATTRIBUTE_NODE) {
-    (context.outputNode as slimdom.Element).setAttributeNode(newNode);
   } else {
-    context.outputNode.append(newNode);
+    newAppender = context.append(newNode);
   }
+
   if (func) {
-    func({
-      ...context,
-      outputNode: newNode || context.outputNode,
-    });
+    func({ ...context, append: newAppender || context.append });
   }
 }
 
@@ -856,7 +855,7 @@ export function copyOf(
     },
   );
   for (let thing of things) {
-    appendToTree(thing, context);
+    context.append(thing);
   }
 }
 
@@ -870,14 +869,13 @@ export function valueOf(
   },
   func: SequenceConstructor,
 ) {
-  appendToTree(
+  context.append(
     constructSimpleContent(
       context,
       data.select || func,
       mkResolver(data.namespaces),
       data.separator,
     ),
-    context,
   );
 }
 
@@ -910,9 +908,8 @@ export function text(
   },
   func: SequenceConstructor,
 ) {
-  appendToTree(
+  context.append(
     constructSimpleContent(context, func, mkResolver(data.namespaces), [""]),
-    context,
   );
 }
 
@@ -974,63 +971,9 @@ export function mergeVariableScopes(variableScopes: Array<VariableScope>) {
   return retval;
 }
 
-function appendText(context: DynamicContext, text: string) {
-  if (context.outputNode.nodeType !== DOCUMENT_NODE) {
-    if (
-      context.outputNode.lastChild &&
-      context.outputNode.lastChild.nodeType === TEXT_NODE
-    ) {
-      (context.outputNode.lastChild as slimdom.Text).appendData(text);
-    } else {
-      const newNode = context.outputDocument.createTextNode(text);
-      if (newNode) {
-        context.outputNode.append(newNode);
-      }
-    }
-  }
-}
-
 export function literalText(context: DynamicContext, text: string) {
-  appendText(context, text);
+  context.append(text);
 }
-
-/* Return true if we output a string. */
-function appendToTree(thing: any, context: DynamicContext) {
-  if (thing.nodeType === ATTRIBUTE_NODE) {
-    let newNode = context.outputDocument.importNode(thing, true);
-    (context.outputNode as slimdom.Element).setAttributeNode(newNode);
-  } else if (thing.nodeType === DOCUMENT_NODE) {
-    thing = (thing as slimdom.Document).documentElement;
-    if ((thing as slimdom.Element).localName === "xsl:document") {
-      appendToTreeArray(thing.childNodes, context);
-    } else {
-      appendToTree(thing, context);
-    }
-  } else if (thing.nodeType === TEXT_NODE) {
-    appendText(context, (thing as slimdom.Text).data);
-  } else if (thing.nodeType) {
-    let newNode = context.outputDocument.importNode(thing, true);
-    context.outputNode.append(newNode);
-  } else {
-    let str = `${thing}`;
-    if (str !== "") {
-      appendText(context, str);
-      return true;
-    }
-  }
-  return false;
-}
-
-function appendToTreeArray(things: any[], context: DynamicContext) {
-  let lastWasString = false;
-  for (let thing of things) {
-    if (lastWasString) {
-      appendText(context, " ");
-    }
-    lastWasString = appendToTree(thing, context);
-  }
-}
-
 export function sequence(
   context: DynamicContext,
   data: { select: string; namespaces: object },
@@ -1046,7 +989,7 @@ export function sequence(
       namespaceResolver: mkResolver(data.namespaces),
     },
   );
-  appendToTreeArray(things, context);
+  context.append(things);
 }
 
 export function buildNode(
@@ -1103,11 +1046,11 @@ export function literalElement(
     });
     newNode.setAttributeNode(attrNode);
   }
-  context.outputNode.append(newNode);
+  const newAppender = context.append(newNode);
   func({
     ...context,
-    outputNode: newNode,
     variableScopes: extendScope(context.variableScopes),
+    append: newAppender || context.append,
   });
 }
 
@@ -1140,7 +1083,7 @@ export function attribute(
     namespace: ns,
     value: value,
   });
-  (context.outputNode as slimdom.Element).setAttributeNode(attrNode);
+  context.append(attrNode);
 }
 
 export function processingInstruction(
@@ -1159,7 +1102,7 @@ export function processingInstruction(
     mkResolver(data.namespaces),
     [""],
   ).trimStart();
-  context.outputNode.append(
+  context.append(
     context.outputDocument.createProcessingInstruction(name, value),
   );
 }
@@ -1175,7 +1118,7 @@ export function comment(
     mkResolver(data.namespaces),
     [""],
   );
-  context.outputNode.append(context.outputDocument.createComment(value));
+  context.append(context.outputDocument.createComment(value));
 }
 
 export function namespace(
@@ -1193,7 +1136,7 @@ export function namespace(
     namespace: XMLNS_NSURI,
     value: value,
   });
-  (context.outputNode as slimdom.Element).setAttributeNode(attrNode);
+  context.append(attrNode);
 }
 
 export function element(
@@ -1216,11 +1159,11 @@ export function element(
     name: name,
     namespace: determineNamespace(name, mkResolver(data.namespaces), namespace),
   });
-  context.outputNode.append(newNode);
+  const newAppender = context.append(newNode);
   func({
     ...context,
-    outputNode: newNode,
     variableScopes: extendScope(context.variableScopes),
+    append: newAppender || context.append,
   });
 }
 
@@ -1280,7 +1223,7 @@ export function document(
   func({
     ...context,
     outputDocument: doc,
-    outputNode: doc,
+    append: mkNodeAppender(doc),
     mode: "#default",
     variableScopes: extendScope(context.variableScopes),
   });
@@ -1375,6 +1318,68 @@ export function forEachGroup(
   }
 }
 
+export function mkNodeAppender(
+  outputNode: slimdom.Element | slimdom.Document | slimdom.DocumentFragment,
+): Appender {
+  /* If ownerDocument returns null, the node is a document itself. */
+  const outputDocument: slimdom.Document =
+    outputNode.ownerDocument || (outputNode as slimdom.Document);
+  return function append(thing: any): Appender | undefined {
+    if (Array.isArray(thing)) {
+      let first = true;
+      const shouldSeparate = thing.length > 0 && !thing[0].nodeType;
+      for (let piece of thing) {
+        if (first) {
+          first = false;
+        } else {
+          if (shouldSeparate) append(" ");
+        }
+        append(piece);
+      }
+    } else {
+      if (typeof thing === "string") {
+        if (outputNode.nodeType !== DOCUMENT_NODE) {
+          if (
+            outputNode.lastChild &&
+            outputNode.lastChild.nodeType === TEXT_NODE
+          ) {
+            (outputNode.lastChild as slimdom.Text).appendData(thing);
+          } else {
+            if (thing !== "") {
+              const newNode = outputDocument.createTextNode(thing);
+              if (newNode) {
+                outputNode.append(newNode);
+              }
+            }
+          }
+        }
+      } else {
+        if (thing.nodeType === ATTRIBUTE_NODE) {
+          let newNode = outputDocument.importNode(thing, true);
+          (outputNode as slimdom.Element).setAttributeNode(newNode);
+        } else if (thing.nodeType === DOCUMENT_NODE) {
+          thing = (thing as slimdom.Document).documentElement;
+          if ((thing as slimdom.Element).localName === "xsl:document") {
+            append(thing.childNodes);
+          } else {
+            append(thing);
+          }
+          return mkNodeAppender(thing);
+        } else if (thing.nodeType === TEXT_NODE) {
+          append((thing as slimdom.Text).data);
+        } else if (thing.nodeType) {
+          let newNode = outputDocument.importNode(thing, true);
+          outputNode.append(newNode);
+          return mkNodeAppender(newNode);
+        } else {
+          append(`${thing}`);
+        }
+      }
+    }
+    return undefined;
+  };
+}
+
 export function resultDocument(
   context: DynamicContext,
   data: {
@@ -1434,7 +1439,7 @@ export function resultDocument(
         doctype,
       );
       context.outputDocument = outputDocument;
-      context.outputNode = outputDocument;
+      context.append = mkNodeAppender(outputDocument);
     }
     context.resultDocuments.set("#default", {
       ...od,
@@ -1457,7 +1462,7 @@ export function resultDocument(
     func({
       ...context,
       outputDocument: resultDocument,
-      outputNode: resultDocument,
+      append: mkNodeAppender(resultDocument),
     });
   }
 }
@@ -1616,7 +1621,7 @@ function evaluateSequenceConstructorInTemporaryTree(
   func({
     ...context,
     outputDocument: doc,
-    outputNode: doc.documentElement,
+    append: mkNodeAppender(doc.documentElement),
     mode: "#default",
     variableScopes: extendScope(context.variableScopes),
   });

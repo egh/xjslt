@@ -722,7 +722,12 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             mkIdentifier("context"),
             mkObject({
               outputDocument: mkMember("params", "outputDocument"),
-              outputNode: mkMember("params", "outputNode"),
+              append: {
+                type: "CallExpression",
+                callee: mkMember("xjslt", "mkNodeAppender"),
+                arguments: [mkMember("params", "outputNode")],
+                optional: false,
+              },
               resultDocuments: mkIdentifier("resultDocuments"),
               contextItem: mkIdentifier("document"),
               mode: mkMember("params", "initialMode"),

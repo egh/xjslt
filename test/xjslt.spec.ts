@@ -35,6 +35,7 @@ import {
   VariableScope,
   Key,
   OutputResult,
+  mkNodeAppender,
 } from "../src/xjslt";
 import {
   buildStylesheet,
@@ -110,76 +111,9 @@ test("astring", () => {
   expect(generate(parsed)).toEqual("my('code');\n");
 });
 
-/* Goal: generate a function that looks like this.*/
-function transform(document: slimdom.Document, output: (str: string) => void) {
-  let templates = [];
-  templates.push({
-    match: "/",
-    allowedParams: [],
-    modes: ["#default"],
-    importPrecedence: 1,
-    apply: function (context) {
-      literalText(context, "Article -\n");
-      valueOf(
-        context,
-        { select: "/Article/Title", namespaces: {} },
-        () => undefined,
-      );
-      literalText(context, "\nAuthors:");
-      applyTemplates(context, {
-        select: "/Article/Authors/Author",
-        params: [],
-        mode: "#default",
-        namespaces: {},
-        sortKeyComponents: [],
-      });
-    },
-  });
-  templates.push({
-    match: "Author",
-    allowedParams: [],
-    modes: ["#default"],
-    importPrecedence: 1,
-    apply: function (context) {
-      literalText(context, "\n- ");
-      valueOf(context, { select: ".", namespaces: {} }, () => undefined);
-    },
-  });
-
-  const doc = new slimdom.Document();
-  doc.append(doc.createElement("root"));
-  let context: DynamicContext = {
-    outputDocument: doc,
-    resultDocuments: new Map<string, OutputResult>(),
-    outputDefinitions: new Map<string, OutputDefinition>(),
-    outputNode: doc.documentElement,
-    contextItem: document,
-    mode: "#default",
-    templates: templates,
-    variableScopes: [new Map<string, any>()],
-    inputURL: new URL("file:///fake.xml"),
-    keys: new Map(),
-    patternMatchCache: new Map<string, Set<slimdom.Node>>(),
-  };
-  processNode(context, [], {});
-  walkTree(doc, (node) => {
-    if (node.nodeType == slimdom.Node.TEXT_NODE) {
-      output(node.data);
-    }
-  });
-}
-
 const document = slimdom.parseXmlDocument(
   readFileSync("./test/simple.xml").toString(),
 );
-
-test("compiled", () => {
-  let str = "";
-  transform(document, (s: string) => {
-    str += s;
-  });
-  expect(str).toEqual(readFileSync("./test/simple.out", "utf8"));
-});
 
 const xsltDoc = preprocessStripWhitespace2(
   slimdom.parseXmlDocument(readFileSync("./test/simple.xslt").toString()),
@@ -349,7 +283,7 @@ test("evaluateAttributeValueTemplate", () => {
     outputDocument: undefined,
     resultDocuments: new Map<string, OutputResult>(),
     outputDefinitions: new Map<string, OutputDefinition>(),
-    outputNode: undefined,
+    append: undefined,
     contextItem: nodes[0],
     templates: [],
     mode: "#default",
@@ -615,7 +549,7 @@ test("buildNode", () => {
     outputDocument: doc,
     resultDocuments: new Map<string, OutputResult>(),
     outputDefinitions: new Map<string, OutputDefinition>(),
-    outputNode: doc.documentElement,
+    append: mkNodeAppender(doc),
     contextItem: undefined,
     mode: "#default",
     templates: [],
@@ -651,7 +585,7 @@ test("buildAttributeNode", () => {
     outputDocument: doc,
     resultDocuments: new Map<string, OutputResult>(),
     outputDefinitions: new Map<string, OutputDefinition>(),
-    outputNode: doc.documentElement,
+    append: mkNodeAppender(doc),
     contextItem: undefined,
     mode: "#default",
     templates: [],
