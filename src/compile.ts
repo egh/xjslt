@@ -199,18 +199,21 @@ function compileVariableLike(node: slimdom.Element) {
       name: name,
       content: mkLiteral(node.getAttribute("select")),
       namespaces: mkNamespaceArg(node),
+      as: mkLiteral(node.getAttribute("as")),
     });
   } else if (node.hasChildNodes()) {
     return mkObject({
       name: name,
       content: mkArrowFun(compileSequenceConstructor(node.childNodes)),
       namespaces: mkNamespaceArg(node),
+      as: mkLiteral(node.getAttribute("as")),
     });
   } else {
     return mkObject({
       name: name,
       content: mkLiteral(undefined),
       namespaces: mkObject({}),
+      as: mkLiteral(node.getAttribute("as")),
     });
   }
 }

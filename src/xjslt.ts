@@ -200,6 +200,7 @@ interface VariableLike {
   name: string;
   content: undefined | Constructor;
   namespaces: object;
+  as?: string;
 }
 
 export function mkResolver(namespaces: object) {

@@ -164,7 +164,7 @@ test("compileVariableNode", () => {
       GENERATE_OPTS,
     ),
   ).toEqual(
-    'xjslt.variable(context, {"name": "author","content": ".","namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}});',
+    'xjslt.variable(context, {"name": "author","content": ".","namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"},"as": undefined});',
   );
 });
 
