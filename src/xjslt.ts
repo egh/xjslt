@@ -1221,10 +1221,11 @@ export function document(
     null,
     null,
   );
+  const newAppender = context.append(doc);
   func({
     ...context,
     outputDocument: doc,
-    append: mkNodeAppender(doc),
+    append: newAppender,
     mode: "#default",
     variableScopes: extendScope(context.variableScopes),
   });
@@ -1359,7 +1360,11 @@ export function mkNodeAppender(
           let newNode = outputDocument.importNode(thing, true);
           (outputNode as slimdom.Element).setAttributeNode(newNode);
         } else if (thing.nodeType === DOCUMENT_NODE) {
+          const oldThing = thing;
           thing = (thing as slimdom.Document).documentElement;
+          if (!thing) {
+            return mkNodeAppender(oldThing);
+          }
           if ((thing as slimdom.Element).localName === "xsl:document") {
             append(thing.childNodes);
           } else {
