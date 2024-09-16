@@ -51,7 +51,7 @@ XJSLT can compile XSLT stylesheets into executable JavaScript code, which can th
 - `sort`
 - `include`/`import`
 - `result-document`
-- 2108 passing tests in the XSLT test suite (https://github.com/w3c/xslt30-test) (2528 not passing)
+- 2212 passing tests in the XSLT test suite (https://github.com/w3c/xslt30-test) (2424 not passing)
 
 # Incompletely supported features
 - `for-each-group` (only `group-by` supported)
