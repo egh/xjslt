@@ -1386,6 +1386,19 @@ export function mkNodeAppender(
   };
 }
 
+export function mkArrayAppender(output: any[]): Appender {
+  return function append(thing: any): Appender | undefined {
+    output.push(thing);
+    if (
+      thing.nodeType &&
+      (thing.nodeType === DOCUMENT_NODE || thing.nodeType === ELEMENT_NODE)
+    ) {
+      return mkNodeAppender(thing);
+    }
+    return undefined;
+  };
+}
+
 export function resultDocument(
   context: DynamicContext,
   data: {
@@ -1601,12 +1614,31 @@ function evaluateVariableLike(
     );
   } else if (variable.content == undefined) {
     return "";
+  } else if (variable.as) {
+    return evaluateSequenceConstructorToArray(context, variable.content);
   } else {
     return evaluateSequenceConstructorInTemporaryTree(
       context,
       variable.content,
     );
   }
+}
+
+function evaluateSequenceConstructorToArray(
+  context: DynamicContext,
+  func: SequenceConstructor,
+) {
+  let output = [];
+  func({
+    ...context,
+    append: mkArrayAppender(output),
+    mode: "#default",
+    variableScopes: extendScope(context.variableScopes),
+  });
+  if (output.length === 1) {
+    return output[0];
+  }
+  return output;
 }
 
 /**
