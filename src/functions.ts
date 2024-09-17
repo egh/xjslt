@@ -46,7 +46,7 @@ function fnCurrentOutputUri({ currentContext }) {
   return "#default";
 }
 
-function fnKey({ currentContext }, name: string, value: any[]) {
+function fnKey({ currentContext }, name: string, value: any) {
   const { keys, contextItem, variableScopes, patternMatchCache } =
     currentContext as DynamicContext;
   if (!keys.has(name)) {
@@ -58,7 +58,7 @@ function fnKey({ currentContext }, name: string, value: any[]) {
       patternMatchCache,
       contextItem.ownerDocument,
       variableScopes,
-      value.map((s) => s.textContent).join(""),
+      value,
     );
   if (!retval) {
     return [];
@@ -127,13 +127,6 @@ export function registerFunctions() {
     [],
     "item()*",
     fnCurrentGroup as (context: any) => any,
-  );
-
-  registerCustomXPathFunction(
-    { namespaceURI: XPATH_NSURI, localName: "key" },
-    ["xs:string", "item()*"],
-    "node()*",
-    fnKey as (context: any, name: string, value: any) => any,
   );
 
   registerCustomXPathFunction(

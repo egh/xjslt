@@ -104,6 +104,16 @@ export function visitNodes(node: any, visit: (node: any) => void) {
   visit(node);
 }
 
+function coerceToString(value: any): string {
+  if (Array.isArray(value)) {
+    return value.map((s) => coerceToString(s)).join("");
+  } else if (value.nodeType) {
+    return value.textContent;
+  } else {
+    return value.toString();
+  }
+}
+
 export class Key {
   match: string;
   use: string | SequenceConstructor;
@@ -151,7 +161,7 @@ export class Key {
     patternMatchCache: Map<string, Set<slimdom.Node>>,
     document: slimdom.Document,
     variableScopes: VariableScope[],
-    value: string,
+    value: any,
   ) {
     if (!this.cache.has(document)) {
       this.cache.set(
@@ -159,7 +169,7 @@ export class Key {
         this.buildDocumentCache(patternMatchCache, document, variableScopes),
       );
     }
-    return this.cache.get(document).get(value);
+    return this.cache.get(document).get(coerceToString(value));
   }
 }
 
