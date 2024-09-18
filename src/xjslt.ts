@@ -1375,12 +1375,10 @@ export function mkNodeAppender(
           if (!thing) {
             return mkNodeAppender(oldThing);
           }
-          if ((thing as slimdom.Element).localName === "xsl:document") {
-            append(thing.childNodes);
-          } else {
-            append(thing);
-          }
+          append(thing);
           return mkNodeAppender(thing);
+        } else if (thing.nodeType === DOCUMENT_FRAGMENT_NODE) {
+          append(thing.childNodes);
         } else if (thing.nodeType === TEXT_NODE) {
           append((thing as slimdom.Text).data);
         } else if (thing.nodeType) {
@@ -1609,7 +1607,7 @@ function constructSimpleContent(
 function evaluateVariableLike(
   context: DynamicContext,
   variable: VariableLike,
-): string | EvaluateXPath | slimdom.Document {
+): string | EvaluateXPath | slimdom.Document | slimdom.DocumentFragment {
   if (typeof variable.content === "string") {
     return evaluateXPath(
       variable.content,
@@ -1659,21 +1657,26 @@ function evaluateSequenceConstructorToArray(
 function evaluateSequenceConstructorInTemporaryTree(
   context: DynamicContext,
   func: SequenceConstructor,
-) {
-  const doc = context.outputDocument.implementation.createDocument(
-    null,
-    null,
-    null,
-  );
-  doc.appendChild(doc.createElement("xsl:document"));
+): any {
+  const fragment = context.outputDocument.createDocumentFragment();
   func({
     ...context,
-    outputDocument: doc,
-    append: mkNodeAppender(doc.documentElement),
+    append: mkNodeAppender(fragment),
+    outputDocument: context.outputDocument,
     mode: "#default",
     variableScopes: extendScope(context.variableScopes),
   });
-  return doc;
+  /* If there is a single element child, return a document, which is more versatile. */
+  if (fragment.childNodes.length === 1 && fragment.childElementCount === 1) {
+    const doc = context.outputDocument.implementation.createDocument(
+      null,
+      null,
+      null,
+    );
+    doc.appendChild(fragment.firstChild);
+    return doc;
+  }
+  return fragment;
 }
 
 /**
