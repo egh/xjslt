@@ -476,7 +476,6 @@ export function compileTopLevelNode(node: slimdom.Element) {
       } else if (node.localName === "output") {
         return compileOutputNode(node);
       } else if (
-        node.localName === "preserve-space" ||
         node.localName === "attribute-set" ||
         node.localName === "character-map" ||
         node.localName === "decimal-format" ||
