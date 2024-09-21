@@ -98,10 +98,12 @@ const NOTATION_NODE = 12;
 
 /* Depth first node visit */
 export function visitNodes(node: any, visit: (node: any) => void) {
-  for (let childNode of node.childNodes) {
-    visitNodes(childNode, visit);
-  }
   visit(node);
+  if (node.childNodes) {
+    for (let childNode of node.childNodes) {
+      visitNodes(childNode, visit);
+    }
+  }
 }
 
 function coerceToString(value: any): string {
@@ -1685,17 +1687,11 @@ function evaluateSequenceConstructorInTemporaryTree(
 function extractText(document: any): string[] {
   let strs: string[] = [];
   /* https://www.w3.org/TR/xslt20/#creating-text-nodes */
-  function walkTree(node: any): void {
+  visitNodes(document, (node)=>{
     if (node.nodeType === TEXT_NODE && node.data !== "") {
       strs = strs.concat(node.data);
     }
-    if (node.childNodes) {
-      for (let child of node.childNodes) {
-        walkTree(child);
-      }
-    }
-  }
-  walkTree(document);
+  });
   return strs;
 }
 
