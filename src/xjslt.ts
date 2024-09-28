@@ -909,7 +909,7 @@ export function message(
     ),
   );
   if (data.terminate === "yes") {
-    process.exit();
+    throw new Error();
   }
 }
 

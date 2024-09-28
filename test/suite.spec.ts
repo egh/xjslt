@@ -211,7 +211,6 @@ function checkResult(rootDir, node, thunk: () => Map<string, OutputResult>) {
     return () => {
       expect(thunk).toThrow(evaluateXPathToString("@code", node));
     };
-    // TODO: depends on error reporting
   } else if (node.localName === "assert-result-document") {
     // Just map #default to this one
     const newResults = new Map<string, OutputResult>([
@@ -264,8 +263,7 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
       )) {
         const resultNode = evaluateXPathToNodes("result", testCase)[0];
         if (
-          applicableTest(testCase) &&
-          !evaluateXPathToString("result/error/@code", testCase)
+          applicableTest(testCase)
         ) {
           const stylesheetFile = path.join(
             rootDir,
