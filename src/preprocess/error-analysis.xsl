@@ -32,4 +32,14 @@
      </xsl:if>
      <xsl:next-match/>
    </xsl:template>
+
+   <xsl:template match="xsl:template">
+     <xsl:if test="not(@match) and (@mode or @priority)">
+       <xsl:message terminate="yes">XTSE0500: An xsl:template element that has no match attribute must have no mode attribute and no priority attribute.</xsl:message>
+     </xsl:if>
+     <xsl:if test="not(@match) and not(@name)">
+       <xsl:message terminate="yes">XTSE0500: An xsl:template element must have either a match attribute or a name attribute, or both.</xsl:message>
+     </xsl:if>
+     <xsl:next-match/>
+   </xsl:template>
 </xsl:stylesheet>
