@@ -1687,7 +1687,7 @@ function evaluateSequenceConstructorInTemporaryTree(
 function extractText(document: any): string[] {
   let strs: string[] = [];
   /* https://www.w3.org/TR/xslt20/#creating-text-nodes */
-  visitNodes(document, (node)=>{
+  visitNodes(document, (node) => {
     if (node.nodeType === TEXT_NODE && node.data !== "") {
       strs = strs.concat(node.data);
     }

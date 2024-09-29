@@ -54,7 +54,7 @@ import { readFileSync, writeFileSync, symlinkSync } from "fs";
 import { pathToFileURL } from "url";
 import * as path from "path";
 import { tmpdir } from "os";
-import { mkdtemp } from "fs/promises";
+import { mkdtempSync } from "fs";
 import preprocessSimplified from "./preprocess/simplified";
 import preprocessInclude from "./preprocess/include";
 import preprocessImport from "./preprocess/import";
@@ -1043,13 +1043,13 @@ function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
   return doc;
 }
 
-export async function compileStylesheet(xsltPath: string) {
+export function compileStylesheet(xsltPath: string) {
   let slimdom_path = require.resolve("slimdom").split(path.sep);
   let root_dir = path.join(
     "/",
     ...slimdom_path.slice(0, slimdom_path.indexOf("node_modules")),
   );
-  var tempdir = await mkdtemp(path.join(tmpdir(), "xjslt-"));
+  var tempdir = mkdtempSync(path.join(tmpdir(), "xjslt-"));
   symlinkSync(
     path.join(root_dir, "node_modules"),
     path.join(tempdir, "node_modules"),
@@ -1076,9 +1076,9 @@ export async function compileStylesheet(xsltPath: string) {
  * Build a stylesheet. Returns a function that will take an input DOM
  * document and return an output DOM document.
  */
-export async function buildStylesheet(xsltPath: string) {
-  const tempfile = await compileStylesheet(xsltPath);
-  let transform = await import(tempfile);
+export function buildStylesheet(xsltPath: string) {
+  const tempfile = compileStylesheet(xsltPath);
+  let transform = require(tempfile);
   // console.log(readFileSync(tempfile).toString());
   return transform.transform;
 }

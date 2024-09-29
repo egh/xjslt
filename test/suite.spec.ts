@@ -262,9 +262,7 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
         testSetDom,
       )) {
         const resultNode = evaluateXPathToNodes("result", testCase)[0];
-        if (
-          applicableTest(testCase)
-        ) {
+        if (applicableTest(testCase)) {
           const stylesheetFile = path.join(
             rootDir,
             evaluateXPathToString("test/stylesheet[1]/@file", testCase),
@@ -310,8 +308,8 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
           if (filepath) {
             inputURL = pathToFileURL(filepath).toString();
           }
-          const tester = async () => {
-            const transform = await buildStylesheet(stylesheetFile);
+          const tester = () => {
+            const transform = buildStylesheet(stylesheetFile);
             expect(
               evaluateXPathToBoolean("count(./*) = 1 ", resultNode),
             ).toBeTruthy();

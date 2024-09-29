@@ -31,12 +31,12 @@ import * as path from "path";
 import * as fs from "fs";
 import * as process from "process";
 
-async function run(xslt: string, xmls: Array<string>, options: object) {
+function run(xslt: string, xmls: Array<string>, options: object) {
   let transform;
   if (xslt.endsWith(".xsl") || xslt.endsWith(".xslt")) {
-    transform = await buildStylesheet(xslt);
+    transform = buildStylesheet(xslt);
   } else {
-    let tmp = await import(path.resolve(xslt));
+    let tmp = require(path.resolve(xslt));
     transform = tmp.transform;
   }
   for (let xml of xmls) {
@@ -125,7 +125,7 @@ async function compile(xslt: string, destination: string, options: object) {
   if (fs.existsSync(destinationAbs)) {
     throw new Error(`${destinationAbs} exists!`);
   }
-  const src = await compileStylesheet(xslt);
+  const src = compileStylesheet(xslt);
   try {
     if (options["web"] || options["standalone"]) {
       const compiler = webpack(

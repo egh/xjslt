@@ -76,7 +76,7 @@ ${template}
 </xsl:template>`);
 }
 
-async function makeTransform(body: string) {
+function makeTransform(body: string) {
   const tempfile = path.join(tmpdir(), "temp.xsl");
   writeFileSync(
     tempfile,
@@ -89,7 +89,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 ${body}
 </xsl:stylesheet>`,
   );
-  const transform = await buildStylesheet(tempfile);
+  const transform = buildStylesheet(tempfile);
   unlinkSync(tempfile);
   return transform;
 }
@@ -265,8 +265,8 @@ test("compileTemplateNode", () => {
   );
 });
 
-test("compileStylesheetNode", async () => {
-  const transform = await buildStylesheet("./test/simple2.xslt");
+test("compileStylesheetNode", () => {
+  const transform = buildStylesheet("./test/simple2.xslt");
   expect(
     slimdom.serializeToWellFormedString(
       transform(
@@ -308,8 +308,8 @@ test("evaluateAttributeValueTemplate", () => {
   ).toEqual("");
 });
 
-test("elementNode", async () => {
-  const transform = await makeSimpleTransform(
+test("elementNode", () => {
+  const transform = makeSimpleTransform(
     "//Author",
     "<xsl:element name='test-{local-name()}'>Hi!</xsl:element>",
   );
@@ -321,8 +321,8 @@ test("elementNode", async () => {
   );
 });
 
-test("attributeNode", async () => {
-  const transform = await makeSimpleTransform(
+test("attributeNode", () => {
+  const transform = makeSimpleTransform(
     "//Author",
     "<test><xsl:attribute name='test-{local-name()}'><xsl:value-of select='text()'/></xsl:attribute></test>",
   );
@@ -334,8 +334,8 @@ test("attributeNode", async () => {
   );
 });
 
-test("literalElementAttributeEvaluation", async () => {
-  const transform = await makeSimpleTransform(
+test("literalElementAttributeEvaluation", () => {
+  const transform = makeSimpleTransform(
     "//Author",
     "<test name='test-{local-name()}'><xsl:value-of select='text()'/></test>",
   );
@@ -347,8 +347,8 @@ test("literalElementAttributeEvaluation", async () => {
   ).toEqual("Mr. Foo");
 });
 
-test("variableShadowing", async () => {
-  const transform = await makeSimpleTransform(
+test("variableShadowing", () => {
+  const transform = makeSimpleTransform(
     "//Author",
     "<test><xsl:variable name='test' select='text()'/><xsl:value-of select='$test'/></test>",
   );
@@ -360,8 +360,8 @@ test("variableShadowing", async () => {
   );
 });
 
-test("call with param", async () => {
-  const transform = await makeTransform(
+test("call with param", () => {
+  const transform = makeTransform(
     `
   <xsl:template name="temp">
     <xsl:param name="foo">default</xsl:param>
@@ -380,8 +380,8 @@ test("call with param", async () => {
   );
 });
 
-test("param shadowed by variable", async () => {
-  const transform = await makeTransform(
+test("param shadowed by variable", () => {
+  const transform = makeTransform(
     `
   <xsl:template name="temp">
     <xsl:param name="foo">default</xsl:param>
@@ -401,8 +401,8 @@ test("param shadowed by variable", async () => {
   );
 });
 
-test("toplevel param", async () => {
-  const transform = await makeTransform(
+test("toplevel param", () => {
+  const transform = makeTransform(
     `
     <xsl:param name="foo">toplevel</xsl:param>
   <xsl:template name="temp">
@@ -419,8 +419,8 @@ test("toplevel param", async () => {
   );
 });
 
-test("call with param defaults", async () => {
-  const transform = await makeTransform(
+test("call with param defaults", () => {
+  const transform = makeTransform(
     `
   <xsl:template name="temp">
     <xsl:param name="foo">default</xsl:param>
@@ -438,8 +438,8 @@ test("call with param defaults", async () => {
   );
 });
 
-test("template mode", async () => {
-  const transform = await makeTransform(
+test("template mode", () => {
+  const transform = makeTransform(
     `
   <xsl:template match="Author" mode="foo">
     FOO <xsl:value-of select="."/>
@@ -458,8 +458,8 @@ test("template mode", async () => {
   expect(str).toMatch(/.*FOO Mr. Bar/);
 });
 
-test("text node", async () => {
-  const transform = await makeSimpleTransform(
+test("text node", () => {
+  const transform = makeSimpleTransform(
     "//Author",
     `<li><xsl:text>
 -</xsl:text><xsl:value-of select="."/></li>`,
