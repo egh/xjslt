@@ -60,6 +60,7 @@ import preprocessInclude from "./preprocess/include";
 import preprocessImport from "./preprocess/import";
 import preprocessStripWhitespace1 from "./preprocess/stripWhitespace1";
 import preprocessStripWhitespace2 from "./preprocess/stripWhitespace2";
+import preprocessErrorAnalysis from "./preprocess/error-analysis";
 import { XSLT1_NSURI, XMLNS_NSURI, mkResolver } from "./xjslt";
 import { OutputDefinition } from "./definitions";
 import { mkOutputDefinition } from "./shared";
@@ -1037,6 +1038,7 @@ function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
     if (counter > 100) throw new Error("Import level too deep!");
     counter++;
   }
+  doc = preprocessErrorAnalysis(doc).get("#default").document;
   /* https://www.w3.org/TR/xslt20/#stylesheet-stripping */
   doc = preprocessStripWhitespace1(doc).get("#default").document;
   doc = preprocessStripWhitespace2(doc).get("#default").document;

@@ -901,15 +901,16 @@ export function message(
   },
   func: SequenceConstructor,
 ) {
-  console.log(
-    constructSimpleContent(
+  const msg = constructSimpleContent(
       context,
       data.select || func,
       mkResolver(data.namespaces),
-    ),
   );
+
   if (data.terminate === "yes") {
-    throw new Error();
+    throw new Error(msg);
+  } else {
+    console.log(msg);
   }
 }
 

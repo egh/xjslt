@@ -791,8 +791,6 @@ export const KNOWN_SPEC_FAILURES = [
   "error-0600a",
   "error-0610a",
   "error-0610c",
-  "error-0620a",
-  "error-0620b",
   "error-0630a",
   "error-0630b",
   "error-0630c",
