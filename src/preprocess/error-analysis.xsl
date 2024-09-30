@@ -42,4 +42,16 @@
      </xsl:if>
      <xsl:next-match/>
    </xsl:template>
+
+   <!-- XTSE0010 -->
+   <xsl:template match="xsl:template/xsl:template">
+     <xsl:message terminate="yes">XTSE0010: xsl:template only allowed at the top level.</xsl:message>
+   </xsl:template>
+
+   <xsl:template match="xsl:template/xsl:param">
+     <xsl:if test="preceding-sibling::*[not(self::xsl:param)]">
+       <xsl:message terminate="yes">XTSE0010: xsl:params must not be preceded by other elements</xsl:message>
+     </xsl:if>
+     <xsl:next-match/>
+   </xsl:template>
 </xsl:stylesheet>
