@@ -89,3 +89,18 @@ export interface OutputDefinition {
   doctypePublic?: string;
   standalone?: boolean | undefined;
 }
+
+export enum NodeType {
+  ELEMENT = 1,
+  ATTRIBUTE,
+  TEXT,
+  CDATA_SECTION,
+  ENTITY_REFERENCE,
+  ENTITY,
+  PROCESSING_INSTRUCTION,
+  COMMENT,
+  DOCUMENT,
+  DOCUMENT_TYPE,
+  DOCUMENT_FRAGMENT,
+  NOTATION,
+}

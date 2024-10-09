@@ -321,8 +321,8 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
                   inputURL: inputURL,
                   initialMode: initialMode,
                   stylesheetParams: stylesheetParams,
-                })
-              }
+                });
+              },
             )();
           };
 

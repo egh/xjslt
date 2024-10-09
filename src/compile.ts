@@ -62,7 +62,7 @@ import preprocessStripWhitespace1 from "./preprocess/stripWhitespace1";
 import preprocessStripWhitespace2 from "./preprocess/stripWhitespace2";
 import preprocessErrorAnalysis from "./preprocess/error-analysis";
 import { XSLT1_NSURI, XMLNS_NSURI, mkResolver } from "./xjslt";
-import { OutputDefinition } from "./definitions";
+import { NodeType, OutputDefinition } from "./definitions";
 import { mkOutputDefinition } from "./shared";
 
 /**
@@ -456,7 +456,7 @@ export function getNodeNS(node: slimdom.Element, retval: object = undefined) {
 
 /* todo - separate into top-level & sequence-generator versions */
 export function compileTopLevelNode(node: slimdom.Element) {
-  if (node.nodeType === slimdom.Node.ELEMENT_NODE) {
+  if (node.nodeType === NodeType.ELEMENT) {
     if (node.namespaceURI === XSLT1_NSURI) {
       if (
         node.hasAttribute("use-when") &&
@@ -534,9 +534,9 @@ export function compileOutputNode(node: slimdom.Element) {
 }
 
 export function compileSequenceConstructorNode(node: slimdom.Element) {
-  if (node.nodeType === slimdom.Node.TEXT_NODE) {
+  if (node.nodeType === NodeType.TEXT) {
     return compileLiteralTextNode(node);
-  } else if (node.nodeType === slimdom.Node.ELEMENT_NODE) {
+  } else if (node.nodeType === NodeType.ELEMENT) {
     if (node.namespaceURI === XSLT1_NSURI) {
       if (
         node.hasAttribute("use-when") &&

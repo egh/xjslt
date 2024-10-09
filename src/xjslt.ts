@@ -34,7 +34,7 @@ import {
 import * as slimdom from "slimdom";
 import { AttributeValueTemplate } from "./compile";
 import { registerFunctions } from "./functions";
-import { OutputDefinition } from "./definitions";
+import { NodeType, OutputDefinition } from "./definitions";
 import { mkOutputDefinition } from "./shared";
 
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
@@ -82,19 +82,6 @@ interface CompiledTemplate extends Sortable {
   apply: SequenceConstructor;
   allowedParams: Array<VariableLike>;
 }
-
-const ELEMENT_NODE = 1;
-const ATTRIBUTE_NODE = 2;
-const TEXT_NODE = 3;
-const CDATA_SECTION_NODE = 4;
-const ENTITY_REFERENCE_NODE = 5;
-const ENTITY_NODE = 6;
-const PROCESSING_INSTRUCTION_NODE = 7;
-const COMMENT_NODE = 8;
-const DOCUMENT_NODE = 9;
-const DOCUMENT_TYPE_NODE = 10;
-const DOCUMENT_FRAGMENT_NODE = 11;
-const NOTATION_NODE = 12;
 
 /* Depth first node visit */
 export function visitNodes(node: any, visit: (node: any) => void) {
@@ -242,19 +229,25 @@ function failFast(pattern: string, node: slimdom.Node) {
   // if (bucket && !getBucketsForNode(node).includes(bucket)) {
   //   return true;
   // }
-  if (node.nodeType === ATTRIBUTE_NODE && !ATTR_PATTERN.exec(pattern)) {
+  if (node.nodeType === NodeType.ATTRIBUTE && !ATTR_PATTERN.exec(pattern)) {
     return true;
   }
-  if (node.nodeType === TEXT_NODE && !TEXT_PATTERN.exec(pattern)) {
+  if (node.nodeType === NodeType.TEXT && !TEXT_PATTERN.exec(pattern)) {
     return true;
   }
   // if (node.nodeType === DOCUMENT_NODE && !(DOCUMENT_PATTERN.exec(pattern))) {
   //   return true;
   // }
-  if (ELEMENT_ONLY_PATTERN.exec(pattern) && !(node.nodeType === ELEMENT_NODE)) {
+  if (
+    ELEMENT_ONLY_PATTERN.exec(pattern) &&
+    !(node.nodeType === NodeType.ELEMENT)
+  ) {
     return true;
   }
-  if (ATTR_ONLY_PATTERN.exec(pattern) && !(node.nodeType === ATTRIBUTE_NODE)) {
+  if (
+    ATTR_ONLY_PATTERN.exec(pattern) &&
+    !(node.nodeType === NodeType.ATTRIBUTE)
+  ) {
     return true;
   }
   return false;
@@ -263,18 +256,22 @@ function failFast(pattern: string, node: slimdom.Node) {
 /* Fast check for success */
 function fastSuccess(pattern: string, node: slimdom.Node) {
   if (pattern === "text()|@*") {
-    return node.nodeType === TEXT_NODE || node.nodeType === ATTRIBUTE_NODE;
+    return (
+      node.nodeType === NodeType.TEXT || node.nodeType === NodeType.ATTRIBUTE
+    );
   } else if (pattern === "processing-instruction()|comment()") {
     return (
-      node.nodeType === PROCESSING_INSTRUCTION_NODE ||
-      node.nodeType === COMMENT_NODE
+      node.nodeType === NodeType.PROCESSING_INSTRUCTION ||
+      node.nodeType === NodeType.COMMENT
     );
   } else if (pattern === "*|/") {
-    return node.nodeType === ELEMENT_NODE || node.nodeType === DOCUMENT_NODE;
+    return (
+      node.nodeType === NodeType.ELEMENT || node.nodeType === NodeType.DOCUMENT
+    );
   } else if (pattern === "text()") {
-    return node.nodeType === TEXT_NODE;
+    return node.nodeType === NodeType.TEXT;
   } else if (pattern === "/") {
-    return node.nodeType === DOCUMENT_NODE;
+    return node.nodeType === NodeType.DOCUMENT;
   }
   return false;
 }
@@ -325,7 +322,7 @@ function patternMatch(
         /* Match not found, continue up the tree */
         checkContext =
           checkContext.parentNode ||
-          (checkContext.nodeType === ATTRIBUTE_NODE &&
+          (checkContext.nodeType === NodeType.ATTRIBUTE &&
             (checkContext as slimdom.Attr).ownerElement);
       }
     }
@@ -813,7 +810,7 @@ export function copy(
 ) {
   const node = context.contextItem;
   let newNode: slimdom.Node;
-  if (node.nodeType === ELEMENT_NODE) {
+  if (node.nodeType === NodeType.ELEMENT) {
     newNode = context.outputDocument.createElementNS(
       node.namespaceURI,
       node.prefix ? `${node.prefix}:${node.localName}` : node.localName,
@@ -834,7 +831,7 @@ export function copy(
         );
       }
     }
-  } else if (node.nodeType === DOCUMENT_NODE) {
+  } else if (node.nodeType === NodeType.DOCUMENT) {
     newNode = undefined;
   } else {
     newNode = context.outputDocument.importNode(node);
@@ -902,9 +899,9 @@ export function message(
   func: SequenceConstructor,
 ) {
   const msg = constructSimpleContent(
-      context,
-      data.select || func,
-      mkResolver(data.namespaces),
+    context,
+    data.select || func,
+    mkResolver(data.namespaces),
   );
 
   if (data.terminate === "yes") {
@@ -1353,10 +1350,10 @@ export function mkNodeAppender(
       }
     } else {
       if (typeof thing === "string") {
-        if (outputNode.nodeType !== DOCUMENT_NODE) {
+        if (outputNode.nodeType !== NodeType.DOCUMENT) {
           if (
             outputNode.lastChild &&
-            outputNode.lastChild.nodeType === TEXT_NODE
+            outputNode.lastChild.nodeType === NodeType.TEXT
           ) {
             (outputNode.lastChild as slimdom.Text).appendData(thing);
           } else {
@@ -1369,10 +1366,10 @@ export function mkNodeAppender(
           }
         }
       } else {
-        if (thing.nodeType === ATTRIBUTE_NODE) {
+        if (thing.nodeType === NodeType.ATTRIBUTE) {
           let newNode = outputDocument.importNode(thing, true);
           (outputNode as slimdom.Element).setAttributeNode(newNode);
-        } else if (thing.nodeType === DOCUMENT_NODE) {
+        } else if (thing.nodeType === NodeType.DOCUMENT) {
           const oldThing = thing;
           thing = (thing as slimdom.Document).documentElement;
           if (!thing) {
@@ -1380,9 +1377,9 @@ export function mkNodeAppender(
           }
           append(thing);
           return mkNodeAppender(thing);
-        } else if (thing.nodeType === DOCUMENT_FRAGMENT_NODE) {
+        } else if (thing.nodeType === NodeType.DOCUMENT_FRAGMENT) {
           append(thing.childNodes);
-        } else if (thing.nodeType === TEXT_NODE) {
+        } else if (thing.nodeType === NodeType.TEXT) {
           append((thing as slimdom.Text).data);
         } else if (thing.nodeType) {
           let newNode = outputDocument.importNode(thing, true);
@@ -1402,7 +1399,8 @@ export function mkArrayAppender(output: any[]): Appender {
     output.push(thing);
     if (
       thing.nodeType &&
-      (thing.nodeType === DOCUMENT_NODE || thing.nodeType === ELEMENT_NODE)
+      (thing.nodeType === NodeType.DOCUMENT ||
+        thing.nodeType === NodeType.ELEMENT)
     ) {
       return mkNodeAppender(thing);
     }
@@ -1526,7 +1524,7 @@ export function stripSpace(
   const ONLY_WHITESPACE = RegExp("^[ \n\r\t]+$");
   let toRemove = [];
   function walkTree(node: any) {
-    if (node.nodeType === TEXT_NODE) {
+    if (node.nodeType === NodeType.TEXT) {
       if (
         ONLY_WHITESPACE.test(node.textContent) &&
         shouldStripSpace(node.parentNode, whitespaceDeclarations)
@@ -1689,7 +1687,7 @@ function extractText(document: any): string[] {
   let strs: string[] = [];
   /* https://www.w3.org/TR/xslt20/#creating-text-nodes */
   visitNodes(document, (node) => {
-    if (node.nodeType === TEXT_NODE && node.data !== "") {
+    if (node.nodeType === NodeType.TEXT && node.data !== "") {
       strs = strs.concat(node.data);
     }
   });
