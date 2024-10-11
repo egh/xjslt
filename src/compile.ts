@@ -61,8 +61,14 @@ import preprocessImport from "./preprocess/import";
 import preprocessStripWhitespace1 from "./preprocess/stripWhitespace1";
 import preprocessStripWhitespace2 from "./preprocess/stripWhitespace2";
 import preprocessErrorAnalysis from "./preprocess/error-analysis";
-import { XSLT1_NSURI, XMLNS_NSURI, mkResolver } from "./xjslt";
-import { NodeType, OutputDefinition } from "./definitions";
+import { mkResolver } from "./xjslt";
+import {
+  XSLT1_NSURI,
+  XMLNS_NSURI,
+  NodeType,
+  OutputDefinition,
+  xpathstring,
+} from "./definitions";
 import { mkOutputDefinition } from "./shared";
 
 /**
@@ -75,12 +81,6 @@ interface SimpleElement {
   hasChildren: boolean;
   arguments: Map<string, string | undefined>;
 }
-
-export interface xpathstring {
-  xpath: string;
-}
-
-export type AttributeValueTemplate = Array<string | xpathstring>;
 
 function buildInResolver(prefix: string): string | null {
   if (prefix === "xsl") {
@@ -903,7 +903,7 @@ function compileKeyNode(node: slimdom.Element): ExpressionStatement {
 
   return mkCall(mkMember("keys", "set"), [
     mkLiteral(expandQname(node.getAttribute("name"), namespaces)),
-    mkNew(mkMember("xjslt", "Key"), [
+    mkNew(mkMember("xjslt", "KeyImpl"), [
       mkLiteral(node.getAttribute("match")),
       node.getAttribute("use")
         ? mkLiteral(node.getAttribute("use"))

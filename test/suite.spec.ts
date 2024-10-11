@@ -34,7 +34,8 @@ import { pathToFileURL } from "url";
 import { KNOWN_SPEC_FAILURES } from "./suite.fail";
 import { expect } from "@jest/globals";
 import { toBeEquivalentDom, toXSMatch } from "./matchers";
-import { OutputResult, serialize } from "../src/xjslt";
+import { serialize } from "../src/xjslt";
+import { OutputResult } from "../src/definitions";
 expect.extend({ toBeEquivalentDom, toXSMatch });
 
 declare module "expect" {

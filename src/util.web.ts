@@ -18,7 +18,7 @@
  * <https://www.gnu.org/licenses/>.
  */
 
-import { DynamicContext } from "./xjslt";
+import { DynamicContext } from "./definitions";
 
 export function urlToDom(context: DynamicContext, url: string) {
   // TODO

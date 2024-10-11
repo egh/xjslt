@@ -20,7 +20,7 @@
 
 import { fileURLToPath, resolve } from "url";
 import { readFileSync } from "fs";
-import { DynamicContext } from "./xjslt";
+import { DynamicContext } from "./definitions";
 import * as slimdom from "slimdom";
 
 export function urlToDom(context: DynamicContext, url: string) {

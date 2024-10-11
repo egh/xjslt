@@ -19,23 +19,16 @@
  */
 
 import {
-  applyTemplates,
   buildAttributeNode,
   buildNode,
   computeDefaultPriority,
   determineNamespace,
-  DynamicContext,
   evaluateAttributeValueTemplate,
   extendScope,
-  literalText,
   mergeVariableScopes,
-  processNode,
   setVariable,
-  valueOf,
-  VariableScope,
-  Key,
-  OutputResult,
   mkNodeAppender,
+  KeyImpl,
 } from "../src/xjslt";
 import {
   buildStylesheet,
@@ -44,13 +37,14 @@ import {
   compileTopLevelNode,
   getNodeNS,
 } from "../src/compile";
+import { VariableScope, OutputResult } from "../src/definitions";
 import * as slimdom from "slimdom";
 import * as path from "path";
 import { evaluateXPathToString, evaluateXPathToNodes } from "fontoxpath";
 import { generate } from "astring";
 import { Parser } from "acorn";
 import { tmpdir } from "os";
-import { readFileSync, mkdtempSync, writeFileSync, unlinkSync } from "fs";
+import { readFileSync, writeFileSync, unlinkSync } from "fs";
 import { expect } from "@jest/globals";
 import { toBeEquivalentDom } from "./matchers";
 import { OutputDefinition } from "../src/definitions";
@@ -709,7 +703,7 @@ test("compileAvtRaw", () => {
 });
 
 test("key class", () => {
-  let key = new Key("foo", "@bar", {});
+  let key = new KeyImpl("foo", "@bar", {});
   const dom = slimdom.parseXmlDocument(`
 <doc>
 <foo bar="1">one</foo>

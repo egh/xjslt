@@ -19,7 +19,7 @@
  */
 
 import { registerCustomXPathFunction } from "fontoxpath";
-import { DynamicContext, XPATH_NSURI } from "./xjslt";
+import { DynamicContext, XPATH_NSURI } from "./definitions";
 import { urlToDom } from "./util";
 function fnCurrent({ currentContext }) {
   return currentContext.contextItem;
