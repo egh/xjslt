@@ -1011,7 +1011,7 @@ export function attribute(
 ) {
   const resolver = mkResolver(data.namespaces);
   const name = evaluateAttributeValueTemplate(context, data.name, resolver);
-  const ns = determineNamespace(
+  const [ns, _] = determineNamespace(
     name,
     resolver,
     evaluateAttributeValueTemplate(context, data.namespace, resolver),
@@ -1093,15 +1093,19 @@ export function element(
   func: SequenceConstructor,
 ) {
   const resolver = mkResolver(data.namespaces);
-  const name = evaluateAttributeValueTemplate(context, data.name, resolver);
-  const namespace = evaluateAttributeValueTemplate(
+  let name = evaluateAttributeValueTemplate(context, data.name, resolver);
+  let namespace = evaluateAttributeValueTemplate(
     context,
     data.namespace,
     resolver,
   );
   let newNode = buildNode(context, {
     name: name,
-    namespace: determineNamespace(name, mkResolver(data.namespaces), namespace),
+    namespace: determineNamespace(
+      name,
+      mkResolver(data.namespaces),
+      namespace,
+    )[0],
   });
   const newAppender = context.append(newNode);
   func({
@@ -1634,17 +1638,17 @@ export function determineNamespace(
   name: string,
   nsResolver: NamespaceResolver,
   passedNamespace?: string,
-): string | undefined {
+): [string | undefined, string] {
   let namespace: string | undefined = passedNamespace;
   if (namespace !== undefined) {
-    return namespace;
+    return [namespace, name];
   }
   let prefix: string = "";
   if (name.includes(":")) {
-    prefix = name.split(":")[0];
+    [prefix, name] = name.split(":");
   }
   namespace = nsResolver(prefix);
-  return namespace;
+  return [namespace, name];
 }
 
 export function serialize(result: OutputResult): string {

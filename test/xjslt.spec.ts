@@ -525,16 +525,17 @@ test("determineNamespace", () => {
   };
   expect(
     determineNamespace("foo", nsResolver, "http://example.org/baz"),
-  ).toEqual("http://example.org/baz");
+  ).toEqual(["http://example.org/baz", "foo"]);
   expect(
     determineNamespace("foo:bar", nsResolver, "http://example.org/baz"),
-  ).toEqual("http://example.org/baz");
-  expect(determineNamespace("foo:bar", nsResolver, undefined)).toEqual(
+  ).toEqual(["http://example.org/baz", "foo:bar"]);
+  expect(determineNamespace("foo:bar", nsResolver, undefined)).toEqual([
     "http://example.org/foo",
-  );
+    "bar",
+  ]);
   expect(
     determineNamespace("foo:bar", nsResolver, "http://example.org/override"),
-  ).toEqual("http://example.org/override");
+  ).toEqual(["http://example.org/override", "foo:bar"]);
 });
 
 test("buildNode", () => {
