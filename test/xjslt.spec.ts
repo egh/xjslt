@@ -22,7 +22,6 @@ import {
   buildAttributeNode,
   buildNode,
   computeDefaultPriority,
-  determineNamespace,
   evaluateAttributeValueTemplate,
   extendScope,
   mergeVariableScopes,
@@ -38,6 +37,7 @@ import {
   getNodeNS,
 } from "../src/compile";
 import { VariableScope, OutputResult } from "../src/definitions";
+import { determineNamespace } from "../src/shared";
 import * as slimdom from "slimdom";
 import * as path from "path";
 import { evaluateXPathToString, evaluateXPathToNodes } from "fontoxpath";

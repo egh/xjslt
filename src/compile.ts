@@ -61,7 +61,6 @@ import preprocessImport from "./preprocess/import";
 import preprocessStripWhitespace1 from "./preprocess/stripWhitespace1";
 import preprocessStripWhitespace2 from "./preprocess/stripWhitespace2";
 import preprocessErrorAnalysis from "./preprocess/error-analysis";
-import { mkResolver } from "./xjslt";
 import {
   XSLT1_NSURI,
   XMLNS_NSURI,
@@ -69,7 +68,7 @@ import {
   OutputDefinition,
   xpathstring,
 } from "./definitions";
-import { mkOutputDefinition } from "./shared";
+import { mkOutputDefinition, mkResolver } from "./shared";
 
 /**
  * Functions to walk a DOM tree of an XSLT stylesheet and generate an

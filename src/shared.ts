@@ -1,3 +1,4 @@
+import { NamespaceResolver } from "fontoxpath";
 import { OutputDefinition } from "./definitions";
 
 export function parseYesNo(input: string): boolean {
@@ -25,4 +26,30 @@ export function mkOutputDefinition(data: {
     doctypeSystem: data.doctypeSystem,
     doctypePublic: data.doctypePublic,
   };
+}
+
+export function mkResolver(namespaces: object) {
+  return (prefix: string): string | null => {
+    return namespaces[prefix];
+  };
+}
+
+/* Implement algorithm to determine a namespace for a name. Takes a
+   qname and resolver and an optional namespace and returns a
+   namespace, or undefined if it's unqualified. */
+export function determineNamespace(
+  name: string,
+  nsResolver: NamespaceResolver,
+  passedNamespace?: string,
+): [string | undefined, string] {
+  let namespace: string | undefined = passedNamespace;
+  if (namespace !== undefined) {
+    return [namespace, name];
+  }
+  let prefix: string = "";
+  if (name.includes(":")) {
+    [prefix, name] = name.split(":");
+  }
+  namespace = nsResolver(prefix);
+  return [namespace, name];
 }
