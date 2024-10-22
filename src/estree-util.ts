@@ -284,7 +284,8 @@ export function toEstree(thing: any) {
     thing === undefined ||
     thing === null ||
     thingtype === "string" ||
-    thingtype === "number"
+    thingtype === "number" ||
+    thingtype === "boolean"
   ) {
     return mkLiteral(thing);
   }
@@ -292,6 +293,10 @@ export function toEstree(thing: any) {
     return mkArray(thing.map((item) => toEstree(item)));
   }
   if (thingtype === "object") {
+    if ("type" in thing) {
+      // It's already in estree format (most likely)
+      return thing;
+    }
     return mkObject2(thing);
   }
 }

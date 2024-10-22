@@ -32,7 +32,6 @@ import {
   mkLiteral,
   mkMember,
   mkNew,
-  mkObject,
   mkReturn,
   toEstree,
 } from "./estree-util";
@@ -132,13 +131,13 @@ const simpleElements = new Map<string, SimpleElement>([
 function compileApplyTemplatesNode(node: slimdom.Element) {
   const mode = expandQname(node.getAttribute("mode"), getNodeNS(node));
   const args = {
-    select: mkLiteral(node.getAttribute("select") || "child::node()"),
-    mode: mkLiteral(mode || "#default"),
+    select: node.getAttribute("select") || "child::node()",
+    mode: mode || "#default",
     params: compileParams("with-param", node.childNodes),
     sortKeyComponents: compileSortKeyComponents(node.childNodes),
-    namespaces: mkNamespaceArg(node),
+    namespaces: getNodeNS(node),
   };
-  return compileFuncall("applyTemplates", [mkObject(args)]);
+  return compileFuncall("applyTemplates", [toEstree(args)]);
 }
 
 function compileFunctionNode(node: slimdom.Element) {
@@ -147,74 +146,80 @@ function compileFunctionNode(node: slimdom.Element) {
     getNodeNS(node),
   );
   const args = {
-    name: mkLiteral(name),
-    namespace: mkLiteral(namespace),
-    as: mkLiteral(node.getAttribute("as")),
+    name: name,
+    namespace: namespace,
+    as: node.getAttribute("as"),
     params: compileParams("param", node.childNodes),
-    namespaces: mkNamespaceArg(node),
+    namespaces: getNodeNS(node),
   };
-  return compileFuncallWithChildren(node, "functionX", mkObject(args));
+  return compileFuncallWithChildren(node, "functionX", toEstree(args));
 }
 
 function compileForEachNode(node: slimdom.Element) {
   const args = {
-    select: mkLiteral(node.getAttribute("select")),
+    select: node.getAttribute("select"),
     sortKeyComponents: compileSortKeyComponents(node.childNodes),
-    namespaces: mkNamespaceArg(node),
+    namespaces: getNodeNS(node),
   };
-  return compileFuncallWithChildren(node, "forEach", mkObject(args));
+  return compileFuncallWithChildren(node, "forEach", toEstree(args));
 }
 
 function compileForEachGroupNode(node: slimdom.Element) {
-  const args = {
-    select: mkLiteral(node.getAttribute("select")),
-    groupBy: mkLiteral(node.getAttribute("group-by")),
-    sortKeyComponents: compileSortKeyComponents(node.childNodes),
-    namespaces: mkNamespaceArg(node),
-  };
-  return compileFuncallWithChildren(node, "forEachGroup", mkObject(args));
+  return compileFuncallWithChildren(
+    node,
+    "forEachGroup",
+    toEstree({
+      select: node.getAttribute("select"),
+      groupBy: node.getAttribute("group-by"),
+      sortKeyComponents: compileSortKeyComponents(node.childNodes),
+      namespaces: getNodeNS(node),
+    }),
+  );
 }
 
 function compileNextMatchNode(node: slimdom.Element) {
-  const args = {
-    params: compileParams("with-param", node.childNodes),
-    namespaces: mkNamespaceArg(node),
-  };
-  return compileFuncall("nextMatch", [mkObject(args)]);
+  return compileFuncall("nextMatch", [
+    toEstree({
+      params: compileParams("with-param", node.childNodes),
+      namespaces: getNodeNS(node),
+    }),
+  ]);
 }
 
 function compileApplyImportsNodes(node: slimdom.Element) {
-  const args = {
-    params: compileParams("with-param", node.childNodes),
-    namespaces: mkNamespaceArg(node),
-  };
-  return compileFuncall("applyImports", [mkObject(args)]);
+  return compileFuncall("applyImports", [
+    toEstree({
+      params: compileParams("with-param", node.childNodes),
+      namespaces: getNodeNS(node),
+    }),
+  ]);
 }
 
 /* Compile a param or variable, which contains either a select
    statement or a SequenceConstructor. */
 function compileVariableLike(node: slimdom.Element) {
-  let name = mkLiteral(node.getAttribute("name"));
+  const name = node.getAttribute("name");
+  const as = node.getAttribute("as");
   if (node.hasAttribute("select")) {
-    return mkObject({
+    return toEstree({
       name: name,
-      content: mkLiteral(node.getAttribute("select")),
-      namespaces: mkNamespaceArg(node),
-      as: mkLiteral(node.getAttribute("as")),
+      content: node.getAttribute("select"),
+      namespaces: getNodeNS(node),
+      as: as,
     });
   } else if (node.hasChildNodes()) {
-    return mkObject({
+    return toEstree({
       name: name,
       content: mkArrowFun(compileSequenceConstructor(node.childNodes)),
-      namespaces: mkNamespaceArg(node),
-      as: mkLiteral(node.getAttribute("as")),
+      namespaces: getNodeNS(node),
+      as: as,
     });
   } else {
-    return mkObject({
+    return toEstree({
       name: name,
-      content: mkLiteral(undefined),
-      namespaces: mkObject({}),
-      as: mkLiteral(node.getAttribute("as")),
+      content: undefined,
+      namespaces: {},
+      as: as,
     });
   }
 }
@@ -224,29 +229,29 @@ function compileSortKeyComponents(nodes: any[]) {
   for (let node of nodes) {
     if (node.localName === "sort") {
       const args = {
-        namespaces: mkNamespaceArg(node),
+        namespaces: getNodeNS(node),
         order: compileAvt(node.getAttribute("order")),
         lang: compileAvt(node.getAttribute("lang")),
-        dataType: mkLiteral(node.getAttribute("data-type")),
+        dataType: node.getAttribute("data-type"),
       };
       if (node.hasChildNodes()) {
         sortKeyComponents.push(
-          mkObject({
+          toEstree({
             ...args,
             sortKey: mkArrowFun(compileSequenceConstructor(node.childNodes)),
           }),
         );
       } else {
         sortKeyComponents.push(
-          mkObject({
+          toEstree({
             ...args,
-            sortKey: mkLiteral(node.getAttribute("select") || "."),
+            sortKey: node.getAttribute("select") || ".",
           }),
         );
       }
     }
   }
-  return mkArray(sortKeyComponents);
+  return toEstree(sortKeyComponents);
 }
 
 function compileVariable(node: slimdom.Element) {
@@ -260,18 +265,18 @@ function compileParams(nodename: string, nodes: any[]) {
       params.push(compileVariableLike(node));
     }
   }
-  return mkArray(params);
+  return toEstree(params);
 }
 
 function compileCallTemplate(node: slimdom.Element) {
   let args = {};
   let name = expandQname(node.getAttribute("name"), getNodeNS(node));
-  args["name"] = mkLiteral(name);
+  args["name"] = name;
   if (!args["name"]) {
     throw new Error("");
   }
   args["params"] = compileParams("with-param", node.childNodes);
-  return compileFuncall("callTemplate", [mkObject(args)]);
+  return compileFuncall("callTemplate", [toEstree(args)]);
 }
 
 function compileResultDocument(node: slimdom.Element) {
@@ -282,9 +287,9 @@ function compileResultDocument(node: slimdom.Element) {
     doctypeSystem: compileAvt(node.getAttribute("doctype-system")),
     doctypePublic: compileAvt(node.getAttribute("doctype-public")),
     standalone: compileAvt(node.getAttribute("standalone")),
-    namespaces: mkNamespaceArg(node),
+    namespaces: getNodeNS(node),
   };
-  return compileFuncallWithChildren(node, "resultDocument", mkObject(args));
+  return compileFuncallWithChildren(node, "resultDocument", toEstree(args));
 }
 
 function compileFuncall(name: string, args: Expression[]) {
@@ -302,14 +307,6 @@ function compileFuncallWithChildren(
   ]);
 }
 
-function mkNamespaceArg(node: slimdom.Element) {
-  let namespaces = getNodeNS(node);
-  for (let key in namespaces) {
-    namespaces[key] = mkLiteral(namespaces[key]);
-  }
-  return mkObject(namespaces);
-}
-
 function compileArgs(
   node: slimdom.Element,
   keyList: Map<string, string | undefined>,
@@ -320,10 +317,10 @@ function compileArgs(
     if (value === null) {
       value = fallback;
     }
-    args[key] = mkLiteral(value);
+    args[key] = value;
   }
-  args["namespaces"] = mkNamespaceArg(node);
-  return mkObject(args);
+  args["namespaces"] = getNodeNS(node);
+  return toEstree(args);
 }
 
 function compileSimpleElement(node: slimdom.Element) {
@@ -342,14 +339,14 @@ function compileChooseNode(node: slimdom.Element) {
     if (childNode instanceof slimdom.Element) {
       if (childNode.localName === "when") {
         alternatives.push(
-          mkObject({
-            test: mkLiteral(childNode.getAttribute("test")),
+          toEstree({
+            test: childNode.getAttribute("test"),
             apply: mkArrowFun(compileSequenceConstructor(childNode.childNodes)),
           }),
         );
       } else if (childNode.localName === "otherwise") {
         alternatives.push(
-          mkObject({
+          toEstree({
             apply: mkArrowFun(compileSequenceConstructor(childNode.childNodes)),
           }),
         );
@@ -376,13 +373,11 @@ function compileWhitespaceDeclarationNode(
       .getAttribute("elements")
       .split(/[\n\r\t ]/)
       .map((e) => {
-        return mkObject({
-          importPrecedence: mkLiteral(
-            node.getAttribute("import-precedence") || 1,
-          ),
-          match: mkLiteral(e),
-          preserve: mkLiteral(preserve),
-          namespaces: mkNamespaceArg(node),
+        return toEstree({
+          importPrecedence: node.getAttribute("import-precedence") || 1,
+          match: e,
+          preserve: preserve,
+          namespaces: getNodeNS(node),
         });
       }),
   );
@@ -409,10 +404,10 @@ function compileLiteralElementNode(node: slimdom.Element) {
       continue;
     }
     attributes.push(
-      mkObject({
-        name: mkLiteral(attr.name),
+      toEstree({
+        name: attr.name,
         value: compileAvt(attr.value),
-        namespace: mkLiteral(attr.namespaceURI || undefined),
+        namespace: attr.namespaceURI || undefined,
       }),
     );
   }
@@ -423,11 +418,11 @@ function compileLiteralElementNode(node: slimdom.Element) {
     name = `${node.prefix}:${name}`;
   }
   return mkCallWithContext(mkMember("xjslt", "literalElement"), [
-    mkObject({
-      name: mkLiteral(name),
-      attributes: mkArray(attributes),
-      namespace: mkLiteral(node.namespaceURI),
-      namespaces: mkNamespaceArg(node),
+    toEstree({
+      name: name,
+      attributes: attributes,
+      namespace: node.namespaceURI,
+      namespaces: getNodeNS(node),
     }),
     mkArrowFun(compileSequenceConstructor(node.childNodes)),
   ]);
@@ -505,14 +500,14 @@ export function compileOutputNode(node: slimdom.Element) {
   });
   let tmp = {};
   for (const key in outputDefinition) {
-    tmp[key] = mkLiteral(outputDefinition[key]);
+    tmp[key] = outputDefinition[key];
   }
   if (!name) {
     mkCall(mkMember("outputDefinitions", "set"), [
       {
         type: "ObjectExpression",
         properties: [
-          { type: "SpreadElement", argument: mkObject(tmp) },
+          { type: "SpreadElement", argument: toEstree(tmp) },
           {
             type: "SpreadElement",
             argument: {
@@ -526,10 +521,7 @@ export function compileOutputNode(node: slimdom.Element) {
       },
     ]);
   } else {
-    return mkCall(mkMember("outputDefinitions", "set"), [
-      mkLiteral(name),
-      mkObject(tmp),
-    ]);
+    return mkCall(mkMember("outputDefinitions", "set"), toEstree([name, tmp]));
   }
 }
 
@@ -596,62 +588,76 @@ export function compileSequenceConstructorNode(node: slimdom.Element) {
 }
 
 function compileElementNode(node: slimdom.Element) {
-  const args = {
-    name: compileAvt(node.getAttribute("name")),
-    namespace: compileAvt(node.getAttribute("namespace")),
-    namespaces: mkNamespaceArg(node),
-  };
-  return compileFuncallWithChildren(node, "element", mkObject(args));
+  return compileFuncallWithChildren(
+    node,
+    "element",
+    toEstree({
+      name: compileAvt(node.getAttribute("name")),
+      namespace: compileAvt(node.getAttribute("namespace")),
+      namespaces: getNodeNS(node),
+    }),
+  );
 }
 
 function compileAttributeNode(node: slimdom.Element) {
-  const args = {
-    name: compileAvt(node.getAttribute("name")),
-    separator: compileAvt(node.getAttribute("separator")),
-    select: mkLiteral(node.getAttribute("select")),
-    namespace: compileAvt(node.getAttribute("namespace")),
-    namespaces: mkNamespaceArg(node),
-  };
-  return compileFuncallWithChildren(node, "attribute", mkObject(args));
+  return compileFuncallWithChildren(
+    node,
+    "attribute",
+    toEstree({
+      name: compileAvt(node.getAttribute("name")),
+      separator: compileAvt(node.getAttribute("separator")),
+      select: node.getAttribute("select"),
+      namespace: compileAvt(node.getAttribute("namespace")),
+      namespaces: getNodeNS(node),
+    }),
+  );
 }
 
 function compileProcessingInstruction(node: slimdom.Element) {
-  const args = {
-    select: mkLiteral(node.getAttribute("select")),
-    name: compileAvt(node.getAttribute("name")),
-    namespaces: mkNamespaceArg(node),
-  };
   return compileFuncallWithChildren(
     node,
     "processingInstruction",
-    mkObject(args),
+    toEstree({
+      select: node.getAttribute("select"),
+      name: compileAvt(node.getAttribute("name")),
+      namespaces: getNodeNS(node),
+    }),
   );
 }
 
 function compileNamespaceNode(node: slimdom.Element) {
-  const args = {
-    select: mkLiteral(node.getAttribute("select")),
-    name: compileAvt(node.getAttribute("name")),
-    namespaces: mkNamespaceArg(node),
-  };
-  return compileFuncallWithChildren(node, "namespace", mkObject(args));
+  return compileFuncallWithChildren(
+    node,
+    "namespace",
+    toEstree({
+      select: node.getAttribute("select"),
+      name: compileAvt(node.getAttribute("name")),
+      namespaces: getNodeNS(node),
+    }),
+  );
 }
 
 function compileCommentNode(node: slimdom.Element) {
-  const args = {
-    select: mkLiteral(node.getAttribute("select")),
-    namespaces: mkNamespaceArg(node),
-  };
-  return compileFuncallWithChildren(node, "comment", mkObject(args));
+  return compileFuncallWithChildren(
+    node,
+    "comment",
+    toEstree({
+      select: node.getAttribute("select"),
+      namespaces: getNodeNS(node),
+    }),
+  );
 }
 
 function compileValueOf(node: slimdom.Element) {
-  const args = {
-    select: mkLiteral(node.getAttribute("select")),
-    separator: compileAvt(node.getAttribute("separator")),
-    namespaces: mkNamespaceArg(node),
-  };
-  return compileFuncallWithChildren(node, "valueOf", mkObject(args));
+  return compileFuncallWithChildren(
+    node,
+    "valueOf",
+    toEstree({
+      select: node.getAttribute("select"),
+      separator: compileAvt(node.getAttribute("separator")),
+      namespaces: getNodeNS(node),
+    }),
+  );
 }
 
 function compileTextNode(node: slimdom.Element) {
@@ -659,8 +665,8 @@ function compileTextNode(node: slimdom.Element) {
     throw new Error("XTSE0010 element found as child of xsl:text");
   }
   return mkCallWithContext(mkMember("xjslt", "text"), [
-    mkObject({
-      disableOutputEscaping: mkLiteral(false), // TODO
+    toEstree({
+      disableOutputEscaping: false, // TODO
     }),
     mkArrowFun([compileLiteralTextNode(node)]),
   ]);
@@ -706,15 +712,15 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               },
             },
           },
-          mkLet(mkIdentifier("templates"), mkArray([])),
-          mkLet(mkIdentifier("whitespaceDeclarations"), mkArray([])),
+          mkLet(mkIdentifier("templates"), toEstree([])),
+          mkLet(mkIdentifier("whitespaceDeclarations"), toEstree([])),
           mkLet(
             mkIdentifier("resultDocuments"),
             mkNew(mkIdentifier("Map"), []),
           ),
           mkCall(mkMember("resultDocuments", "set"), [
             mkLiteral("#default"),
-            mkObject({ document: mkMember("params", "outputDocument") }),
+            toEstree({ document: mkMember("params", "outputDocument") }),
           ]),
           mkLet(mkIdentifier("keys"), mkNew(mkIdentifier("Map"), [])),
           mkLet(
@@ -723,7 +729,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
           ),
           mkLet(
             mkIdentifier("context"),
-            mkObject({
+            toEstree({
               outputDocument: mkMember("params", "outputDocument"),
               append: {
                 type: "CallExpression",
@@ -735,7 +741,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               contextItem: mkIdentifier("document"),
               mode: mkMember("params", "initialMode"),
               templates: mkIdentifier("templates"),
-              variableScopes: mkArray([mkNew(mkIdentifier("Map"), [])]),
+              variableScopes: toEstree([mkNew(mkIdentifier("Map"), [])]),
               inputURL: mkMember("params", "inputURL"),
               keys: mkIdentifier("keys"),
               outputDefinitions: mkIdentifier("outputDefinitions"),
@@ -793,8 +799,8 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             mkIdentifier("whitespaceDeclarations"),
           ]),
           mkCallWithContext(mkMember("xjslt", "processNode"), [
-            mkArray([]),
-            mkNamespaceArg(node),
+            toEstree([]),
+            toEstree(getNodeNS(node)),
           ]),
           mkReturn(mkIdentifier("resultDocuments")),
         ]),
@@ -874,26 +880,21 @@ function compileTemplateNode(node: slimdom.Element): ExpressionStatement {
     }
   }
   return mkCall(mkMember("templates", "push"), [
-    mkObject({
-      match: mkLiteral(match),
+    toEstree({
+      match: match,
       matchFunction: matchFunction,
-      name: mkLiteral(
-        expandQname(node.getAttribute("name"), namespaces) || undefined,
-      ),
-      modes: mkArray(
-        (node.getAttribute("mode") || "#default")
-          .split(" ")
-          .filter((s) => s !== "")
-          .map((m) => expandQname(m.trim(), namespaces))
-          .map(mkLiteral),
-      ),
+      name: expandQname(node.getAttribute("name"), namespaces) || undefined,
+      modes: (node.getAttribute("mode") || "#default")
+        .split(" ")
+        .filter((s) => s !== "")
+        .map((m) => expandQname(m.trim(), namespaces)),
       allowedParams: allowedParams,
       apply: mkArrowFun(
         compileNodeArray(node.childNodes, compileSequenceConstructorNode),
       ),
-      namespaces: mkNamespaceArg(node),
-      priority: mkLiteral(node.getAttribute("priority")),
-      importPrecedence: mkLiteral(node.getAttribute("import-precedence") || 1),
+      namespaces: getNodeNS(node),
+      priority: node.getAttribute("priority"),
+      importPrecedence: node.getAttribute("import-precedence") || 1,
     }),
   ]);
 }
@@ -910,7 +911,7 @@ function compileKeyNode(node: slimdom.Element): ExpressionStatement {
         : mkArrowFun(
             compileNodeArray(node.childNodes, compileSequenceConstructorNode),
           ),
-      mkNamespaceArg(node),
+      toEstree(getNodeNS(node)),
     ]),
   ]);
 }
