@@ -257,3 +257,41 @@ export function mkNew(
     arguments: args,
   };
 }
+
+function mkObject2(obj: any): ObjectExpression {
+  let properties = [];
+  for (let key in obj) {
+    properties.push({
+      type: "Property",
+      method: false,
+      shorthand: false,
+      computed: false,
+      key: toEstree(key),
+      value: toEstree(obj[key]),
+      kind: "init",
+    });
+  }
+
+  return {
+    type: "ObjectExpression",
+    properties: properties,
+  };
+}
+
+export function toEstree(thing: any) {
+  const thingtype = typeof thing;
+  if (
+    thing === undefined ||
+    thing === null ||
+    thingtype === "string" ||
+    thingtype === "number"
+  ) {
+    return mkLiteral(thing);
+  }
+  if (Array.isArray(thing)) {
+    return mkArray(thing.map((item) => toEstree(item)));
+  }
+  if (thingtype === "object") {
+    return mkObject2(thing);
+  }
+}

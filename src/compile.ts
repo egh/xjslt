@@ -34,6 +34,7 @@ import {
   mkNew,
   mkObject,
   mkReturn,
+  toEstree,
 } from "./estree-util";
 import {
   Expression,
@@ -987,18 +988,19 @@ export function compileAvtRaw(avt: string | undefined | null): any {
 
 function compileAvt(avt: string | null) {
   const avtRaw = compileAvtRaw(avt);
-  if (avtRaw === undefined || avtRaw === null) {
-    return mkLiteral(undefined);
+  if (Array.isArray(avtRaw)) {
+    return toEstree(
+      avtRaw.map((comp) => {
+        if (typeof comp === "string") {
+          return comp;
+        } else {
+          return { xpath: comp.xpath };
+        }
+      }),
+    );
+  } else {
+    return toEstree(avtRaw);
   }
-  return mkArray(
-    avtRaw.map((comp) => {
-      if (typeof comp === "string") {
-        return mkLiteral(comp);
-      } else {
-        return mkObject({ xpath: mkLiteral(comp.xpath) });
-      }
-    }),
-  );
 }
 
 function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
