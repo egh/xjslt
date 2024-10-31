@@ -371,7 +371,7 @@ function compileWhitespaceDeclarationNode(
     mkMember("whitespaceDeclarations", "push"),
     node
       .getAttribute("elements")
-      .split(/[\n\r\t ]/)
+      .split(/[\n\r\t ]+/)
       .map((e) => {
         return toEstree({
           importPrecedence: node.getAttribute("import-precedence") || 1,
