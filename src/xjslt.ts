@@ -1268,7 +1268,7 @@ export function mkNodeAppender(
   const outputDocument: slimdom.Document =
     outputNode.ownerDocument || (outputNode as slimdom.Document);
   return function append(thing: any): Appender | undefined {
-    if (Array.isArray(thing)) {
+    if (thing.length && thing.values) {
       let first = true;
       const shouldSeparate = thing.length > 0 && !thing[0].nodeType;
       for (let piece of thing) {
