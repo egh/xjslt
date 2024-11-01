@@ -62,6 +62,7 @@ import preprocessStripWhitespace1 from "./preprocess/stripWhitespace1";
 import preprocessStripWhitespace2 from "./preprocess/stripWhitespace2";
 import preprocessErrorAnalysis from "./preprocess/error-analysis";
 import {
+  CompileContext,
   XSLT1_NSURI,
   XMLNS_NSURI,
   NodeType,
@@ -128,19 +129,22 @@ const simpleElements = new Map<string, SimpleElement>([
   ],
 ]);
 
-function compileApplyTemplatesNode(node: slimdom.Element) {
+function compileApplyTemplatesNode(
+  node: slimdom.Element,
+  context: CompileContext,
+) {
   const mode = expandQname(node.getAttribute("mode"), getNodeNS(node));
   const args = {
     select: node.getAttribute("select") || "child::node()",
     mode: mode || "#default",
-    params: compileParams("with-param", node.childNodes),
-    sortKeyComponents: compileSortKeyComponents(node.childNodes),
+    params: compileParams("with-param", node.childNodes, context),
+    sortKeyComponents: compileSortKeyComponents(node.childNodes, context),
     namespaces: getNodeNS(node),
   };
   return compileFuncall("applyTemplates", [toEstree(args)]);
 }
 
-function compileFunctionNode(node: slimdom.Element) {
+function compileFunctionNode(node: slimdom.Element, context: CompileContext) {
   const [namespace, name] = resolveQname(
     node.getAttribute("name"),
     getNodeNS(node),
@@ -149,47 +153,54 @@ function compileFunctionNode(node: slimdom.Element) {
     name: name,
     namespace: namespace,
     as: node.getAttribute("as"),
-    params: compileParams("param", node.childNodes),
+    params: compileParams("param", node.childNodes, context),
     namespaces: getNodeNS(node),
   };
-  return compileFuncallWithChildren(node, "functionX", toEstree(args));
+  return compileFuncallWithChildren(node, "functionX", toEstree(args), context);
 }
 
-function compileForEachNode(node: slimdom.Element) {
+function compileForEachNode(node: slimdom.Element, context: CompileContext) {
   const args = {
     select: node.getAttribute("select"),
-    sortKeyComponents: compileSortKeyComponents(node.childNodes),
+    sortKeyComponents: compileSortKeyComponents(node.childNodes, context),
     namespaces: getNodeNS(node),
   };
-  return compileFuncallWithChildren(node, "forEach", toEstree(args));
+  return compileFuncallWithChildren(node, "forEach", toEstree(args), context);
 }
 
-function compileForEachGroupNode(node: slimdom.Element) {
+function compileForEachGroupNode(
+  node: slimdom.Element,
+  context: CompileContext,
+) {
   return compileFuncallWithChildren(
     node,
     "forEachGroup",
     toEstree({
       select: node.getAttribute("select"),
       groupBy: node.getAttribute("group-by"),
-      sortKeyComponents: compileSortKeyComponents(node.childNodes),
+      sortKeyComponents: compileSortKeyComponents(node.childNodes, context),
       namespaces: getNodeNS(node),
     }),
+    context,
   );
 }
 
-function compileNextMatchNode(node: slimdom.Element) {
+function compileNextMatchNode(node: slimdom.Element, context: CompileContext) {
   return compileFuncall("nextMatch", [
     toEstree({
-      params: compileParams("with-param", node.childNodes),
+      params: compileParams("with-param", node.childNodes, context),
       namespaces: getNodeNS(node),
     }),
   ]);
 }
 
-function compileApplyImportsNodes(node: slimdom.Element) {
+function compileApplyImportsNodes(
+  node: slimdom.Element,
+  context: CompileContext,
+) {
   return compileFuncall("applyImports", [
     toEstree({
-      params: compileParams("with-param", node.childNodes),
+      params: compileParams("with-param", node.childNodes, context),
       namespaces: getNodeNS(node),
     }),
   ]);
@@ -197,7 +208,7 @@ function compileApplyImportsNodes(node: slimdom.Element) {
 
 /* Compile a param or variable, which contains either a select
    statement or a SequenceConstructor. */
-function compileVariableLike(node: slimdom.Element) {
+function compileVariableLike(node: slimdom.Element, context: CompileContext) {
   const name = node.getAttribute("name");
   const as = node.getAttribute("as");
   if (node.hasAttribute("select")) {
@@ -210,7 +221,7 @@ function compileVariableLike(node: slimdom.Element) {
   } else if (node.hasChildNodes()) {
     return toEstree({
       name: name,
-      content: mkArrowFun(compileSequenceConstructor(node.childNodes)),
+      content: mkArrowFun(compileSequenceConstructor(node.childNodes, context)),
       namespaces: getNodeNS(node),
       as: as,
     });
@@ -224,7 +235,7 @@ function compileVariableLike(node: slimdom.Element) {
   }
 }
 
-function compileSortKeyComponents(nodes: any[]) {
+function compileSortKeyComponents(nodes: any[], context: CompileContext) {
   let sortKeyComponents = [];
   for (let node of nodes) {
     if (node.localName === "sort") {
@@ -238,7 +249,9 @@ function compileSortKeyComponents(nodes: any[]) {
         sortKeyComponents.push(
           toEstree({
             ...args,
-            sortKey: mkArrowFun(compileSequenceConstructor(node.childNodes)),
+            sortKey: mkArrowFun(
+              compileSequenceConstructor(node.childNodes, context),
+            ),
           }),
         );
       } else {
@@ -254,32 +267,36 @@ function compileSortKeyComponents(nodes: any[]) {
   return toEstree(sortKeyComponents);
 }
 
-function compileVariable(node: slimdom.Element) {
-  return compileFuncall("variable", [compileVariableLike(node)]);
+function compileVariable(node: slimdom.Element, context: CompileContext) {
+  return compileFuncall("variable", [compileVariableLike(node, context)]);
 }
 
-function compileParams(nodename: string, nodes: any[]) {
+function compileParams(
+  nodename: string,
+  nodes: any[],
+  context: CompileContext,
+) {
   let params = [];
   for (let node of nodes) {
     if (node.localName === nodename) {
-      params.push(compileVariableLike(node));
+      params.push(compileVariableLike(node, context));
     }
   }
   return toEstree(params);
 }
 
-function compileCallTemplate(node: slimdom.Element) {
+function compileCallTemplate(node: slimdom.Element, context: CompileContext) {
   let args = {};
   let name = expandQname(node.getAttribute("name"), getNodeNS(node));
   args["name"] = name;
   if (!args["name"]) {
     throw new Error("");
   }
-  args["params"] = compileParams("with-param", node.childNodes);
+  args["params"] = compileParams("with-param", node.childNodes, context);
   return compileFuncall("callTemplate", [toEstree(args)]);
 }
 
-function compileResultDocument(node: slimdom.Element) {
+function compileResultDocument(node: slimdom.Element, context: CompileContext) {
   const args = {
     format: compileAvt(node.getAttribute("format")),
     href: compileAvt(node.getAttribute("href")),
@@ -289,7 +306,12 @@ function compileResultDocument(node: slimdom.Element) {
     standalone: compileAvt(node.getAttribute("standalone")),
     namespaces: getNodeNS(node),
   };
-  return compileFuncallWithChildren(node, "resultDocument", toEstree(args));
+  return compileFuncallWithChildren(
+    node,
+    "resultDocument",
+    toEstree(args),
+    context,
+  );
 }
 
 function compileFuncall(name: string, args: Expression[]) {
@@ -300,10 +322,11 @@ function compileFuncallWithChildren(
   node: slimdom.Element,
   name: string,
   args: ObjectExpression,
+  context: CompileContext,
 ): ExpressionStatement {
   return mkCallWithContext(mkMember("xjslt", name), [
     args,
-    mkArrowFun(compileSequenceConstructor(node.childNodes)),
+    mkArrowFun(compileSequenceConstructor(node.childNodes, context)),
   ]);
 }
 
@@ -323,17 +346,17 @@ function compileArgs(
   return toEstree(args);
 }
 
-function compileSimpleElement(node: slimdom.Element) {
+function compileSimpleElement(node: slimdom.Element, context: CompileContext) {
   const what = simpleElements.get(node.localName);
   const args = compileArgs(node, what.arguments);
   if (what.hasChildren) {
-    return compileFuncallWithChildren(node, what.name, args);
+    return compileFuncallWithChildren(node, what.name, args, context);
   } else {
     return compileFuncall(what.name, [args]);
   }
 }
 
-function compileChooseNode(node: slimdom.Element) {
+function compileChooseNode(node: slimdom.Element, context: CompileContext) {
   let alternatives = [];
   for (let childNode of node.childNodes) {
     if (childNode instanceof slimdom.Element) {
@@ -341,13 +364,17 @@ function compileChooseNode(node: slimdom.Element) {
         alternatives.push(
           toEstree({
             test: childNode.getAttribute("test"),
-            apply: mkArrowFun(compileSequenceConstructor(childNode.childNodes)),
+            apply: mkArrowFun(
+              compileSequenceConstructor(childNode.childNodes, context),
+            ),
           }),
         );
       } else if (childNode.localName === "otherwise") {
         alternatives.push(
           toEstree({
-            apply: mkArrowFun(compileSequenceConstructor(childNode.childNodes)),
+            apply: mkArrowFun(
+              compileSequenceConstructor(childNode.childNodes, context),
+            ),
           }),
         );
       }
@@ -358,8 +385,11 @@ function compileChooseNode(node: slimdom.Element) {
   ]);
 }
 
-function compileStylesheetParam(node: slimdom.Element) {
-  let param = compileVariableLike(node);
+function compileStylesheetParam(
+  node: slimdom.Element,
+  context: CompileContext,
+) {
+  let param = compileVariableLike(node, context);
   return mkCallWithContext(mkMember("xjslt", "param"), [param]);
 }
 
@@ -396,7 +426,10 @@ function skipAttribute(attr: slimdom.Attr): boolean {
   return false;
 }
 
-function compileLiteralElementNode(node: slimdom.Element) {
+function compileLiteralElementNode(
+  node: slimdom.Element,
+  context: CompileContext,
+) {
   let attributes = [];
   for (let n in node.attributes) {
     let attr = node.attributes[n];
@@ -424,7 +457,7 @@ function compileLiteralElementNode(node: slimdom.Element) {
       namespace: node.namespaceURI,
       namespaces: getNodeNS(node),
     }),
-    mkArrowFun(compileSequenceConstructor(node.childNodes)),
+    mkArrowFun(compileSequenceConstructor(node.childNodes, context)),
   ]);
 }
 
@@ -450,7 +483,10 @@ export function getNodeNS(node: slimdom.Element, retval: object = undefined) {
 }
 
 /* todo - separate into top-level & sequence-generator versions */
-export function compileTopLevelNode(node: slimdom.Element) {
+export function compileTopLevelNode(
+  node: slimdom.Element,
+  context: CompileContext,
+) {
   if (node.nodeType === NodeType.ELEMENT) {
     if (node.namespaceURI === XSLT1_NSURI) {
       if (
@@ -460,15 +496,15 @@ export function compileTopLevelNode(node: slimdom.Element) {
         return undefined;
       }
       if (node.localName === "template") {
-        return compileTemplateNode(node);
+        return compileTemplateNode(node, context);
       } else if (node.localName === "variable") {
-        return compileVariable(node);
+        return compileVariable(node, context);
       } else if (node.localName === "param") {
-        return compileStylesheetParam(node);
+        return compileStylesheetParam(node, context);
       } else if (node.localName === "key") {
-        return compileKeyNode(node);
+        return compileKeyNode(node, context);
       } else if (node.localName === "function") {
-        return compileFunctionNode(node);
+        return compileFunctionNode(node, context);
       } else if (node.localName === "output") {
         return compileOutputNode(node);
       } else if (
@@ -525,7 +561,10 @@ export function compileOutputNode(node: slimdom.Element) {
   }
 }
 
-export function compileSequenceConstructorNode(node: slimdom.Element) {
+export function compileSequenceConstructorNode(
+  node: slimdom.Element,
+  context: CompileContext,
+) {
   if (node.nodeType === NodeType.TEXT) {
     return compileLiteralTextNode(node);
   } else if (node.nodeType === NodeType.ELEMENT) {
@@ -537,57 +576,57 @@ export function compileSequenceConstructorNode(node: slimdom.Element) {
         return undefined;
       }
       if (simpleElements.has(node.localName)) {
-        return compileSimpleElement(node);
+        return compileSimpleElement(node, context);
       } else if (node.localName === "apply-imports") {
-        return compileApplyImportsNodes(node);
+        return compileApplyImportsNodes(node, context);
       } else if (node.localName === "apply-templates") {
-        return compileApplyTemplatesNode(node);
+        return compileApplyTemplatesNode(node, context);
       } else if (node.localName === "attribute") {
-        return compileAttributeNode(node);
+        return compileAttributeNode(node, context);
       } else if (node.localName === "choose") {
-        return compileChooseNode(node);
+        return compileChooseNode(node, context);
       } else if (node.localName === "call-template") {
-        return compileCallTemplate(node);
+        return compileCallTemplate(node, context);
       } else if (node.localName === "comment") {
-        return compileCommentNode(node);
+        return compileCommentNode(node, context);
       } else if (node.localName === "element") {
-        return compileElementNode(node);
+        return compileElementNode(node, context);
       } else if (node.localName === "for-each") {
-        return compileForEachNode(node);
+        return compileForEachNode(node, context);
       } else if (node.localName === "for-each-group") {
-        return compileForEachGroupNode(node);
+        return compileForEachGroupNode(node, context);
       } else if (node.localName === "namespace") {
-        return compileNamespaceNode(node);
+        return compileNamespaceNode(node, context);
       } else if (node.localName === "next-match") {
-        return compileNextMatchNode(node);
+        return compileNextMatchNode(node, context);
       } else if (node.localName === "number") {
         // TODO
       } else if (node.localName === "param") {
         // Handled by special case.
       } else if (node.localName === "processing-instruction") {
-        return compileProcessingInstruction(node);
+        return compileProcessingInstruction(node, context);
       } else if (node.localName === "result-document") {
-        return compileResultDocument(node);
+        return compileResultDocument(node, context);
       } else if (node.localName === "sort") {
         // Handled by special case.
       } else if (node.localName === "text") {
         return compileTextNode(node);
       } else if (node.localName === "variable") {
-        return compileVariable(node);
+        return compileVariable(node, context);
       } else if (node.localName === "strip-space") {
         return undefined;
       } else if (node.localName === "value-of") {
-        return compileValueOf(node);
+        return compileValueOf(node, context);
       } else {
         throw new Error("Found unexpected XSL element: " + node.tagName);
       }
     } else {
-      return compileLiteralElementNode(node);
+      return compileLiteralElementNode(node, context);
     }
   }
 }
 
-function compileElementNode(node: slimdom.Element) {
+function compileElementNode(node: slimdom.Element, context: CompileContext) {
   return compileFuncallWithChildren(
     node,
     "element",
@@ -596,10 +635,11 @@ function compileElementNode(node: slimdom.Element) {
       namespace: compileAvt(node.getAttribute("namespace")),
       namespaces: getNodeNS(node),
     }),
+    context,
   );
 }
 
-function compileAttributeNode(node: slimdom.Element) {
+function compileAttributeNode(node: slimdom.Element, context: CompileContext) {
   return compileFuncallWithChildren(
     node,
     "attribute",
@@ -610,10 +650,14 @@ function compileAttributeNode(node: slimdom.Element) {
       namespace: compileAvt(node.getAttribute("namespace")),
       namespaces: getNodeNS(node),
     }),
+    context,
   );
 }
 
-function compileProcessingInstruction(node: slimdom.Element) {
+function compileProcessingInstruction(
+  node: slimdom.Element,
+  context: CompileContext,
+) {
   return compileFuncallWithChildren(
     node,
     "processingInstruction",
@@ -622,10 +666,11 @@ function compileProcessingInstruction(node: slimdom.Element) {
       name: compileAvt(node.getAttribute("name")),
       namespaces: getNodeNS(node),
     }),
+    context,
   );
 }
 
-function compileNamespaceNode(node: slimdom.Element) {
+function compileNamespaceNode(node: slimdom.Element, context: CompileContext) {
   return compileFuncallWithChildren(
     node,
     "namespace",
@@ -634,10 +679,11 @@ function compileNamespaceNode(node: slimdom.Element) {
       name: compileAvt(node.getAttribute("name")),
       namespaces: getNodeNS(node),
     }),
+    context,
   );
 }
 
-function compileCommentNode(node: slimdom.Element) {
+function compileCommentNode(node: slimdom.Element, context: CompileContext) {
   return compileFuncallWithChildren(
     node,
     "comment",
@@ -645,10 +691,11 @@ function compileCommentNode(node: slimdom.Element) {
       select: node.getAttribute("select"),
       namespaces: getNodeNS(node),
     }),
+    context,
   );
 }
 
-function compileValueOf(node: slimdom.Element) {
+function compileValueOf(node: slimdom.Element, context: CompileContext) {
   return compileFuncallWithChildren(
     node,
     "valueOf",
@@ -657,6 +704,7 @@ function compileValueOf(node: slimdom.Element) {
       separator: compileAvt(node.getAttribute("separator")),
       namespaces: getNodeNS(node),
     }),
+    context,
   );
 }
 
@@ -674,21 +722,26 @@ function compileTextNode(node: slimdom.Element) {
 
 function compileNodeArray(
   nodes: Array<any>,
-  compilerFunc: (any) => Statement,
+  context: CompileContext,
+  compilerFunc: (node: any, context: CompileContext) => Statement,
 ): Array<Statement> {
   let body = [];
   for (let n in nodes) {
-    let compiled = compilerFunc(nodes[n]);
+    let compiled = compilerFunc(nodes[n], context);
     if (compiled) body.push(compiled);
   }
   return body;
 }
 
-function compileSequenceConstructor(nodes: Array<any>): Array<Statement> {
-  return compileNodeArray(nodes, compileSequenceConstructorNode);
+function compileSequenceConstructor(
+  nodes: Array<any>,
+  context: CompileContext,
+): Array<Statement> {
+  return compileNodeArray(nodes, context, compileSequenceConstructorNode);
 }
 
 export function compileStylesheetNode(node: slimdom.Element): Program {
+  let context: CompileContext = { templates: [], whitespaceDeclarations: [] };
   return {
     type: "Program",
     sourceType: "module",
@@ -754,6 +807,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             evaluateXPathToNodes("./xsl:key", node, undefined, undefined, {
               namespaceResolver: buildInResolver,
             }),
+            context,
             compileTopLevelNode,
           ),
           /* Then the functions */
@@ -761,6 +815,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             evaluateXPathToNodes("./xsl:function", node, undefined, undefined, {
               namespaceResolver: buildInResolver,
             }),
+            context,
             compileTopLevelNode,
           ),
           /* Then the output definitions */
@@ -768,6 +823,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             evaluateXPathToNodes("./xsl:output", node, undefined, undefined, {
               namespaceResolver: buildInResolver,
             }),
+            context,
             compileTopLevelNode,
           ),
           /* Then compile the templates */
@@ -775,6 +831,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             evaluateXPathToNodes("./xsl:template", node, undefined, undefined, {
               namespaceResolver: buildInResolver,
             }),
+            context,
             compileTopLevelNode,
           ),
           mkCall(mkMember("xjslt", "sortSortable"), [
@@ -789,6 +846,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               undefined,
               { namespaceResolver: buildInResolver },
             ),
+            context,
             compileTopLevelNode,
           ),
           mkCall(mkMember("xjslt", "sortSortable"), [
@@ -861,8 +919,11 @@ function resolveQname(name: string | null, namespaces: object) {
   return [undefined, name];
 }
 
-function compileTemplateNode(node: slimdom.Element): ExpressionStatement {
-  let allowedParams = compileParams("param", node.childNodes);
+function compileTemplateNode(
+  node: slimdom.Element,
+  context: CompileContext,
+): ExpressionStatement {
+  let allowedParams = compileParams("param", node.childNodes, context);
   let namespaces = getNodeNS(node);
   const match: string | undefined = node.getAttribute("match") || undefined;
   let matchFunction: any = mkLiteral(undefined);
@@ -890,7 +951,11 @@ function compileTemplateNode(node: slimdom.Element): ExpressionStatement {
         .map((m) => expandQname(m.trim(), namespaces)),
       allowedParams: allowedParams,
       apply: mkArrowFun(
-        compileNodeArray(node.childNodes, compileSequenceConstructorNode),
+        compileNodeArray(
+          node.childNodes,
+          context,
+          compileSequenceConstructorNode,
+        ),
       ),
       namespaces: getNodeNS(node),
       priority: node.getAttribute("priority"),
@@ -899,7 +964,10 @@ function compileTemplateNode(node: slimdom.Element): ExpressionStatement {
   ]);
 }
 
-function compileKeyNode(node: slimdom.Element): ExpressionStatement {
+function compileKeyNode(
+  node: slimdom.Element,
+  context: CompileContext,
+): ExpressionStatement {
   let namespaces = getNodeNS(node);
 
   return mkCall(mkMember("keys", "set"), [
@@ -909,7 +977,11 @@ function compileKeyNode(node: slimdom.Element): ExpressionStatement {
       node.getAttribute("use")
         ? mkLiteral(node.getAttribute("use"))
         : mkArrowFun(
-            compileNodeArray(node.childNodes, compileSequenceConstructorNode),
+            compileNodeArray(
+              node.childNodes,
+              context,
+              compileSequenceConstructorNode,
+            ),
           ),
       toEstree(getNodeNS(node)),
     ]),

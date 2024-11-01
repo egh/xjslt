@@ -184,6 +184,11 @@ export interface DynamicContext {
   stylesheetParams?: object;
 }
 
+export interface CompileContext {
+  templates: Array<Sortable>;
+  whitespaceDeclarations: Array<Sortable>;
+}
+
 export type Constructor = string | SequenceConstructor;
 
 export interface SortKeyComponent {
