@@ -47,7 +47,6 @@ import {
   OutputDefinition,
   OutputResult,
   SequenceConstructor,
-  Sortable,
   SortKeyComponent,
   TransformParams,
   VariableLike,
@@ -55,6 +54,7 @@ import {
   WhitespaceDeclaration,
 } from "./definitions";
 import { determineNamespace, mkOutputDefinition, mkResolver } from "./shared";
+export { sortSortable } from "./shared";
 
 /* Depth first node visit */
 export function visitNodes(node: any, visit: (node: any) => void) {
@@ -327,123 +327,6 @@ function mkBuiltInTemplates(namespaces: object): Array<CompiledTemplate> {
       importPrecedence: Number.MAX_VALUE,
     },
   ];
-}
-
-const NC = String.raw`[^,:\(\)\*\[\]/]`; // Pretty much anything is a NCName
-const PATTERN_AXIS = String.raw`(child::|attribute::|@)?`;
-const DOC_NODE_OPT = String.raw`(document-node\()?`;
-
-const DEFAULT_PRIORITIES = new Map<RegExp, number>([
-  [new RegExp(String.raw`^\s*/\s*$`), -0.5],
-  [new RegExp(String.raw`^\s*\*\s*$`), -0.5],
-  [
-    new RegExp(
-      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}processing-instruction`,
-    ),
-    0,
-  ],
-  [
-    new RegExp(
-      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}element\(\*?\)\)?\s*$`,
-    ),
-    -0.5,
-  ],
-  [
-    new RegExp(
-      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}attribute\(\*?\)\)?\s*$`,
-    ),
-    -0.5,
-  ],
-  [
-    new RegExp(
-      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}element\(${NC}+\)\)?\s*$`,
-    ),
-    0,
-  ],
-  [
-    new RegExp(
-      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}element\(\*,\s*${NC}+\)\)?\s*$`,
-    ),
-    0,
-  ],
-  [
-    new RegExp(
-      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}attribute\(${NC}+\)\)?\s*$`,
-    ),
-    0,
-  ],
-  [
-    new RegExp(
-      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}attribute\(\*,\s*${NC}+\)\)?\s*$`,
-    ),
-    0,
-  ],
-  [
-    new RegExp(
-      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}element\(${NC}+,\s*${NC}+\)\)?\s*$`,
-    ),
-    0.25,
-  ],
-  [
-    new RegExp(
-      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}attribute\(${NC}+,\s*${NC}+\)\)?\s*$`,
-    ),
-    0.25,
-  ],
-  [
-    new RegExp(
-      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}schema-element\(${NC}+\)\)?\s*$`,
-    ),
-    0.25,
-  ],
-  [
-    new RegExp(
-      String.raw`^\s*${DOC_NODE_OPT}${PATTERN_AXIS}schema-attribute\(${NC}+\)\)?\s*$`,
-    ),
-    0.25,
-  ],
-  [new RegExp(String.raw`^\s*document-node\(\)\s*$`), -0.5],
-  [
-    new RegExp(
-      String.raw`^\s*${PATTERN_AXIS}(node\(\)|text\(\)|comment\(\))\s*$`,
-    ),
-    -0.5,
-  ],
-  [new RegExp(String.raw`^\s*${PATTERN_AXIS}(${NC}:)?\*\s*$`), -0.25],
-  [new RegExp(String.raw`^\s*${PATTERN_AXIS}\*:${NC}+\s*$`), -0.25],
-  [new RegExp(String.raw`^\s*${PATTERN_AXIS}${NC}+\s*$`), 0],
-]);
-
-export function computeDefaultPriority(match: string): number {
-  /* https://www.w3.org/TR/xslt20/#conflict */
-  if (match && match.includes("|")) {
-    return Math.max(
-      ...match
-        .split("|")
-        .filter((s) => s !== "")
-        .map((s) => computeDefaultPriority(s)),
-    );
-  }
-  for (let [regexp, priority] of DEFAULT_PRIORITIES) {
-    if (regexp.test(match)) {
-      return priority;
-    }
-  }
-  return 0.5;
-}
-
-export function sortSortable(templates: Array<Sortable>) {
-  /* https://www.w3.org/TR/xslt20/#conflict */
-  // Last declared is first priority.
-  templates.reverse();
-  // Higher priority comes first
-  templates.sort(
-    (a, b) =>
-      (b.priority || computeDefaultPriority(b.match)) -
-      (a.priority || computeDefaultPriority(a.match)),
-  );
-  // "Higher" (lower number) import precedence comes first
-  templates.sort((a, b) => a.importPrecedence - b.importPrecedence);
 }
 
 export function processNode(
