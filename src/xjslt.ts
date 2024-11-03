@@ -54,7 +54,6 @@ import {
   WhitespaceDeclaration,
 } from "./definitions";
 import { determineNamespace, mkOutputDefinition, mkResolver } from "./shared";
-export { sortSortable } from "./shared";
 
 /* Depth first node visit */
 export function visitNodes(node: any, visit: (node: any) => void) {

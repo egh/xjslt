@@ -122,6 +122,7 @@ export interface Sortable {
   match?: string;
   importPrecedence: number;
   priority?: number;
+  [propName: string]: unknown;
 }
 
 export interface CompiledTemplate extends Sortable {

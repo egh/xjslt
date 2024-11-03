@@ -768,7 +768,6 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               },
             },
           },
-          mkLet(mkIdentifier("templates"), toEstree([])),
           mkLet(
             mkIdentifier("resultDocuments"),
             mkNew(mkIdentifier("Map"), []),
@@ -781,28 +780,6 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
           mkLet(
             mkIdentifier("outputDefinitions"),
             mkNew(mkIdentifier("Map"), []),
-          ),
-          mkLet(
-            mkIdentifier("context"),
-            toEstree({
-              outputDocument: mkMember("params", "outputDocument"),
-              append: {
-                type: "CallExpression",
-                callee: mkMember("xjslt", "mkNodeAppender"),
-                arguments: [mkMember("params", "outputNode")],
-                optional: false,
-              },
-              resultDocuments: mkIdentifier("resultDocuments"),
-              contextItem: mkIdentifier("document"),
-              mode: mkMember("params", "initialMode"),
-              templates: mkIdentifier("templates"),
-              variableScopes: toEstree([mkNew(mkIdentifier("Map"), [])]),
-              inputURL: mkMember("params", "inputURL"),
-              keys: mkIdentifier("keys"),
-              outputDefinitions: mkIdentifier("outputDefinitions"),
-              patternMatchCache: mkNew(mkIdentifier("Map"), []),
-              stylesheetParams: mkMember("params", "stylesheetParams"),
-            }),
           ),
           /* First compile the keys */
           ...compileNodeArray(
@@ -836,9 +813,28 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             context,
             compileTopLevelNode,
           ),
-          mkCall(mkMember("xjslt", "sortSortable"), [
-            mkIdentifier("templates"),
-          ]),
+          mkLet(
+            mkIdentifier("context"),
+            toEstree({
+              outputDocument: mkMember("params", "outputDocument"),
+              append: {
+                type: "CallExpression",
+                callee: mkMember("xjslt", "mkNodeAppender"),
+                arguments: [mkMember("params", "outputNode")],
+                optional: false,
+              },
+              resultDocuments: mkIdentifier("resultDocuments"),
+              contextItem: mkIdentifier("document"),
+              mode: mkMember("params", "initialMode"),
+              templates: sortSortable(context.templates),
+              variableScopes: [mkNew(mkIdentifier("Map"), [])],
+              inputURL: mkMember("params", "inputURL"),
+              keys: mkIdentifier("keys"),
+              outputDefinitions: mkIdentifier("outputDefinitions"),
+              patternMatchCache: mkNew(mkIdentifier("Map"), []),
+              stylesheetParams: mkMember("params", "stylesheetParams"),
+            }),
+          ),
           /* Then everything else */
           ...compileNodeArray(
             evaluateXPathToNodes(
@@ -918,10 +914,7 @@ function resolveQname(name: string | null, namespaces: object) {
   return [undefined, name];
 }
 
-function compileTemplateNode(
-  node: slimdom.Element,
-  context: CompileContext,
-): ExpressionStatement {
+function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
   let allowedParams = compileParams("param", node.childNodes, context);
   let namespaces = getNodeNS(node);
   const match: string | undefined = node.getAttribute("match") || undefined;
@@ -939,28 +932,26 @@ function compileTemplateNode(
       };
     }
   }
-  return mkCall(mkMember("templates", "push"), [
-    toEstree({
-      match: match,
-      matchFunction: matchFunction,
-      name: expandQname(node.getAttribute("name"), namespaces) || undefined,
-      modes: (node.getAttribute("mode") || "#default")
-        .split(" ")
-        .filter((s) => s !== "")
-        .map((m) => expandQname(m.trim(), namespaces)),
-      allowedParams: allowedParams,
-      apply: mkArrowFun(
-        compileNodeArray(
-          node.childNodes,
-          context,
-          compileSequenceConstructorNode,
-        ),
+  context.templates.push({
+    match: match,
+    matchFunction: matchFunction,
+    name: expandQname(node.getAttribute("name"), namespaces) || undefined,
+    modes: (node.getAttribute("mode") || "#default")
+      .split(" ")
+      .filter((s) => s !== "")
+      .map((m) => expandQname(m.trim(), namespaces)),
+    allowedParams: allowedParams,
+    apply: mkArrowFun(
+      compileNodeArray(
+        node.childNodes,
+        context,
+        compileSequenceConstructorNode,
       ),
-      namespaces: getNodeNS(node),
-      priority: node.getAttribute("priority"),
-      importPrecedence: node.getAttribute("import-precedence") || 1,
-    }),
-  ]);
+    ),
+    namespaces: getNodeNS(node),
+    priority: parseFloat(node.getAttribute("priority")) || undefined,
+    importPrecedence: parseInt(node.getAttribute("import-precedence")) || 1,
+  });
 }
 
 function compileKeyNode(
