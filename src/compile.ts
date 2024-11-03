@@ -69,7 +69,7 @@ import {
   OutputDefinition,
   xpathstring,
 } from "./definitions";
-import { mkOutputDefinition, mkResolver } from "./shared";
+import { mkOutputDefinition, mkResolver, sortSortable } from "./shared";
 
 /**
  * Functions to walk a DOM tree of an XSLT stylesheet and generate an
@@ -399,10 +399,10 @@ function compileStylesheetParam(
 function compileWhitespaceDeclarationNode(
   node: slimdom.Element,
   preserve: boolean,
+  context: CompileContext,
 ) {
-  return mkCall(
-    mkMember("whitespaceDeclarations", "push"),
-    node
+  context.whitespaceDeclarations.push(
+    ...node
       .getAttribute("elements")
       .split(/[\n\r\t ]+/)
       .map((e) => {
@@ -519,9 +519,9 @@ export function compileTopLevelNode(
       ) {
         return undefined;
       } else if (node.localName === "preserve-space") {
-        return compileWhitespaceDeclarationNode(node, true);
+        return compileWhitespaceDeclarationNode(node, true, context);
       } else if (node.localName === "strip-space") {
-        return compileWhitespaceDeclarationNode(node, false);
+        return compileWhitespaceDeclarationNode(node, false, context);
       } else {
         throw new Error("Found unexpected XSL element: " + node.tagName);
       }
@@ -726,7 +726,7 @@ function compileTextNode(node: slimdom.Element) {
 function compileNodeArray(
   nodes: Array<any>,
   context: CompileContext,
-  compilerFunc: (node: any, context: CompileContext) => Statement,
+  compilerFunc: (node: any, context: CompileContext) => Statement | void,
 ): Array<Statement> {
   let body = [];
   for (let n in nodes) {
@@ -769,7 +769,6 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             },
           },
           mkLet(mkIdentifier("templates"), toEstree([])),
-          mkLet(mkIdentifier("whitespaceDeclarations"), toEstree([])),
           mkLet(
             mkIdentifier("resultDocuments"),
             mkNew(mkIdentifier("Map"), []),
@@ -852,12 +851,9 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             context,
             compileTopLevelNode,
           ),
-          mkCall(mkMember("xjslt", "sortSortable"), [
-            mkIdentifier("whitespaceDeclarations"),
-          ]),
           mkCall(mkMember("xjslt", "stripSpace"), [
             mkIdentifier("document"),
-            mkIdentifier("whitespaceDeclarations"),
+            toEstree(sortSortable(context.whitespaceDeclarations)),
           ]),
           mkCallWithContext(mkMember("xjslt", "processNode"), [
             toEstree([]),

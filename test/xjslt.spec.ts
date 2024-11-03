@@ -18,6 +18,7 @@
  * <https://www.gnu.org/licenses/>.
  */
 
+import { ExpressionStatement } from "estree";
 import {
   buildAttributeNode,
   buildNode,
@@ -277,13 +278,16 @@ test("compileLiteralElementNode with namespace", () => {
 });
 
 test("compileTemplateNode", () => {
-  const nodes = evaluateXPathToNodes("//xsl:template", xslt2Doc);
+  const nodes: slimdom.Element[] = evaluateXPathToNodes<slimdom.Element>(
+    "//xsl:template",
+    xslt2Doc,
+  );
   expect(
     generate(
-      compileTopLevelNode(nodes[0] as slimdom.Element, {
+      compileTopLevelNode(nodes[0], {
         templates: [],
         whitespaceDeclarations: [],
-      }),
+      }) as ExpressionStatement,
       GENERATE_OPTS,
     ),
   ).toEqual(
