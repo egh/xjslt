@@ -700,7 +700,6 @@ export function callTemplate(
 }
 
 export function functionX(
-  context: DynamicContext,
   data: {
     name: string;
     as?: string;

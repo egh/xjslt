@@ -156,7 +156,10 @@ function compileFunctionNode(node: slimdom.Element, context: CompileContext) {
     params: compileParams("param", node.childNodes, context),
     namespaces: getNodeNS(node),
   };
-  return compileFuncallWithChildren(node, "functionX", toEstree(args), context);
+  return mkCall(mkMember("xjslt", "functionX"), [
+    toEstree(args),
+    mkArrowFun(compileSequenceConstructor(node.childNodes, context)),
+  ]);
 }
 
 function compileForEachNode(node: slimdom.Element, context: CompileContext) {
