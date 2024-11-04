@@ -39,7 +39,7 @@ import {
   AttributeOutputData,
   AttributeValueTemplate,
   ChooseAlternative,
-  CompiledTemplate,
+  Template,
   Constructor,
   DynamicContext,
   Key,
@@ -264,11 +264,11 @@ function patternMatch(
 function* getTemplates(
   patternMatchCache: Map<string, Set<slimdom.Node>>,
   node: any,
-  templates: Array<CompiledTemplate>,
+  templates: Array<Template>,
   variableScopes: Array<VariableScope>,
   mode: string,
   namespaces: object,
-): Generator<CompiledTemplate> {
+): Generator<Template> {
   for (let template of templates) {
     if (
       template.match &&
@@ -287,7 +287,7 @@ function* getTemplates(
   }
 }
 
-function mkBuiltInTemplates(namespaces: object): Array<CompiledTemplate> {
+function mkBuiltInTemplates(namespaces: object): Array<Template> {
   /* Pre-sorted in order of default priority */
   return [
     {
@@ -492,7 +492,7 @@ function getParam(
 }
 
 function evaluateTemplate(
-  template: CompiledTemplate,
+  template: Template,
   context: DynamicContext,
   passedParams: VariableLike[],
 ) {

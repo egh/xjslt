@@ -125,7 +125,7 @@ export interface Sortable {
   [propName: string]: unknown;
 }
 
-export interface CompiledTemplate extends Sortable {
+export interface Template extends Sortable {
   matchFunction?: CompiledXPathFunction;
   name?: string;
   modes: string[];
@@ -173,9 +173,9 @@ export interface DynamicContext {
   append: Appender;
   contextItem: any;
   mode: string;
-  templates: Array<CompiledTemplate>;
+  templates: Array<Template>;
   variableScopes: Array<VariableScope>;
-  nextMatches?: Generator<CompiledTemplate>;
+  nextMatches?: Generator<Template>;
   inputURL: URL;
   currentGroup?: any[];
   currentGroupingKey?: string;
