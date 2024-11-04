@@ -1,3 +1,4 @@
+import { ArrowFunctionExpression } from "estree";
 import { CompiledXPathFunction } from "fontoxpath";
 import * as slimdom from "slimdom";
 
@@ -125,12 +126,19 @@ export interface Sortable {
   [propName: string]: unknown;
 }
 
-export interface Template extends Sortable {
+interface GenericTemplate extends Sortable {
   matchFunction?: CompiledXPathFunction;
   name?: string;
   modes: string[];
-  apply: SequenceConstructor;
   allowedParams: Array<VariableLike>;
+}
+
+export interface Template extends GenericTemplate {
+  apply: SequenceConstructor;
+}
+
+export interface TemplateForCompilation extends GenericTemplate {
+  apply: ArrowFunctionExpression;
 }
 
 export type SequenceConstructor = (context: DynamicContext) => void;
@@ -186,7 +194,7 @@ export interface DynamicContext {
 }
 
 export interface CompileContext {
-  templates: Array<Sortable>;
+  templates: Array<TemplateForCompilation>;
   whitespaceDeclarations: Array<Sortable>;
 }
 
