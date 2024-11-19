@@ -314,7 +314,7 @@ test("evaluateAttributeValueTemplate", () => {
     variableScopes: [new Map<string, any>()],
     inputURL: new URL("file:///fake.xml"),
     keys: new Map(),
-    patternMatchCache: new Map<string, Set<slimdom.Node>>(),
+    patternMatchCache: new Map(),
   };
   expect(
     evaluateAttributeValueTemplate(

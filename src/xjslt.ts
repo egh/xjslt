@@ -52,6 +52,7 @@ import {
   VariableLike,
   VariableScope,
   WhitespaceDeclaration,
+  PatternMatchCache,
 } from "./definitions";
 import { determineNamespace, mkOutputDefinition, mkResolver } from "./shared";
 
@@ -91,7 +92,7 @@ export class KeyImpl implements Key {
     this.cache = new Map();
   }
   buildDocumentCache(
-    patternMatchCache: Map<string, Set<slimdom.Node>>,
+    patternMatchCache: PatternMatchCache,
     document: slimdom.Document,
     variableScopes: VariableScope[],
   ): Map<any, any> {
@@ -119,7 +120,7 @@ export class KeyImpl implements Key {
     return docCache;
   }
   lookup(
-    patternMatchCache: Map<string, Set<slimdom.Node>>,
+    patternMatchCache: PatternMatchCache,
     document: slimdom.Document,
     variableScopes: VariableScope[],
     value: any,
@@ -134,11 +135,15 @@ export class KeyImpl implements Key {
   }
 }
 
-function withCached<T>(cache: Map<string, T>, key: string, thunk: () => T): T {
-  if (!cache.has(key)) {
-    cache.set(key, thunk());
+function withCached<T>(cache: Map<string, Map<slimdom.Node, T>>, pattern: string, node: slimdom.Node, thunk: () => T): T {
+  if (!cache.has(pattern)) {
+      cache.set(pattern, new Map());
   }
-  return cache.get(key);
+  const cacheForPattern = cache.get(pattern);
+  if (!cacheForPattern.has(node)) {
+    cacheForPattern.set(node, thunk());
+  }
+  return cacheForPattern.get(node);
 }
 
 const ELEMENT_ONLY_PATTERN = new RegExp(/^[a-z |-]+$/);
@@ -204,7 +209,7 @@ function fastSuccess(pattern: string, node: slimdom.Node) {
 
 /* Implementation of https://www.w3.org/TR/xslt20/#pattern-syntax */
 function patternMatch(
-  patternMatchCache: Map<string, Set<slimdom.Node>> | undefined,
+  patternMatchCache: PatternMatchCache | undefined,
   match: string,
   matchFunction: CompiledXPathFunction | undefined,
   node: slimdom.Node,
@@ -218,10 +223,10 @@ function patternMatch(
       return true;
     } else {
       while (checkContext) {
-        const nodeId = evaluateXPathToString("generate-id(.)", checkContext);
         const matches = withCached(
           patternMatchCache,
-          `${match}-${nodeId}`,
+          match,
+          checkContext,
           () => {
             if (matchFunction) {
               return new Set(
@@ -262,7 +267,7 @@ function patternMatch(
  * @returns The template, or undefined if none can be found to match this node.
  */
 function* getTemplates(
-  patternMatchCache: Map<string, Set<slimdom.Node>>,
+  patternMatchCache: PatternMatchCache,
   node: any,
   templates: Array<Template>,
   variableScopes: Array<VariableScope>,
@@ -1312,7 +1317,7 @@ function shouldStripSpace(
   node: slimdom.Element,
   whitespaceDeclarations: WhitespaceDeclaration[],
 ): boolean {
-  let patternMatchCache: Map<string, Set<slimdom.Node>> = new Map();
+  let patternMatchCache: PatternMatchCache = new Map();
   for (const decl of whitespaceDeclarations) {
     const nsResolver = mkResolver(decl.namespaces);
     if (
