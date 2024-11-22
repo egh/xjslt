@@ -135,9 +135,14 @@ export class KeyImpl implements Key {
   }
 }
 
-function withCached<T>(cache: Map<string, Map<slimdom.Node, T>>, pattern: string, node: slimdom.Node, thunk: () => T): T {
+function withCached<T>(
+  cache: Map<string, Map<slimdom.Node, T>>,
+  pattern: string,
+  node: slimdom.Node,
+  thunk: () => T,
+): T {
   if (!cache.has(pattern)) {
-      cache.set(pattern, new Map());
+    cache.set(pattern, new Map());
   }
   const cacheForPattern = cache.get(pattern);
   if (!cacheForPattern.has(node)) {

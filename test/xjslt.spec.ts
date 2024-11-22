@@ -581,7 +581,7 @@ test("buildNode", () => {
     variableScopes: [new Map<string, any>()],
     inputURL: new URL("file:///fake.xml"),
     keys: new Map(),
-    patternMatchCache: new Map<string, Set<slimdom.Node>>(),
+    patternMatchCache: new Map(),
   };
   let nodeA = buildNode(context, {
     name: "baz:foo",
@@ -617,7 +617,7 @@ test("buildAttributeNode", () => {
     variableScopes: [new Map<string, any>()],
     inputURL: new URL("file:///fake.xml"),
     keys: new Map(),
-    patternMatchCache: new Map<string, Set<slimdom.Node>>(),
+    patternMatchCache: new Map(),
   };
   let nodeA = buildAttributeNode(context, {
     name: "baz:foo",
@@ -739,7 +739,7 @@ test("key class", () => {
 <doc>
 <foo bar="1">one</foo>
   </doc>`);
-  expect(
-    key.lookup(new Map<string, Set<slimdom.Node>>(), dom, [], "1"),
-  ).toEqual(evaluateXPathToNodes("/doc/foo[@bar='1']", dom));
+  expect(key.lookup(new Map(), dom, [], "1")).toEqual(
+    evaluateXPathToNodes("/doc/foo[@bar='1']", dom),
+  );
 });

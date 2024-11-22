@@ -213,7 +213,10 @@ export interface xpathstring {
 
 export type AttributeValueTemplate = Array<string | xpathstring>;
 
-export type PatternMatchCache =  Map<string, Map<slimdom.Node, Set<slimdom.Node>>>;
+export type PatternMatchCache = Map<
+  string,
+  Map<slimdom.Node, Set<slimdom.Node>>
+>;
 
 export interface Key {
   match: string;
