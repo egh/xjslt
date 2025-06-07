@@ -105,6 +105,7 @@ export function mkImports(): Array<ModuleDeclaration> {
   return [
     {
       type: "ImportDeclaration",
+      attributes: [],
       specifiers: [
         {
           type: "ImportNamespaceSpecifier",
@@ -115,6 +116,7 @@ export function mkImports(): Array<ModuleDeclaration> {
     },
     {
       type: "ImportDeclaration",
+      attributes: [],
       specifiers: [
         {
           type: "ImportSpecifier",
