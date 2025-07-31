@@ -1,6 +1,7 @@
 import { ArrowFunctionExpression } from "estree";
 import { CompiledXPathFunction } from "fontoxpath";
 import * as slimdom from "slimdom";
+import { buildDecisionTree, DecisionTreeNode, Rule, XMLFeature } from "./dt";
 
 const NC = String.raw`[^,:\(\)\*\[\]/]`; // Pretty much anything is a NCName
 const PATTERN_AXIS = String.raw`(child::|attribute::|@)?`;
@@ -141,6 +142,13 @@ export interface TemplateForCompilation extends GenericTemplate {
   apply: ArrowFunctionExpression;
 }
 
+export class TemplateRule extends Rule<XMLFeature, TemplateForCompilation> {}
+
+export class TemplateDecisionTree extends DecisionTreeNode<
+  XMLFeature,
+  Template
+> {}
+
 export type SequenceConstructor = (context: DynamicContext) => void;
 
 export type VariableScope = Map<string, any>;
@@ -182,6 +190,7 @@ export interface DynamicContext {
   contextItem: any;
   mode: string;
   templates: Array<Template>;
+  templateTree: TemplateDecisionTree;
   variableScopes: Array<VariableScope>;
   nextMatches?: Generator<Template>;
   inputURL: URL;
@@ -195,6 +204,7 @@ export interface DynamicContext {
 
 export interface CompileContext {
   templates: Array<TemplateForCompilation>;
+  dtTemplates: Array<TemplateRule>;
   whitespaceDeclarations: Array<Sortable>;
 }
 

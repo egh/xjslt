@@ -67,9 +67,11 @@ import {
   XMLNS_NSURI,
   NodeType,
   OutputDefinition,
+  TemplateRule,
   xpathstring,
 } from "./definitions";
 import { mkOutputDefinition, mkResolver, sortSortable } from "./shared";
+import { buildDecisionTree, parseXPathToFeatures } from "./dt";
 
 /**
  * Functions to walk a DOM tree of an XSLT stylesheet and generate an
@@ -744,7 +746,11 @@ function compileSequenceConstructor(
 }
 
 export function compileStylesheetNode(node: slimdom.Element): Program {
-  let context: CompileContext = { templates: [], whitespaceDeclarations: [] };
+  let context: CompileContext = {
+    templates: [],
+    dtTemplates: [],
+    whitespaceDeclarations: [],
+  };
   return {
     type: "Program",
     sourceType: "module",
@@ -827,6 +833,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               contextItem: mkIdentifier("document"),
               mode: mkMember("params", "initialMode"),
               templates: sortSortable(context.templates),
+              templateTree: buildDecisionTree(context.dtTemplates),
               variableScopes: [mkNew(mkIdentifier("Map"), [])],
               inputURL: mkMember("params", "inputURL"),
               keys: mkIdentifier("keys"),
@@ -932,7 +939,8 @@ function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
       };
     }
   }
-  context.templates.push({
+  const features = parseXPathToFeatures(match, mkResolver(namespaces));
+  const template = {
     match: match,
     matchFunction: matchFunction,
     name: expandQname(node.getAttribute("name"), namespaces) || undefined,
@@ -951,7 +959,12 @@ function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
     namespaces: getNodeNS(node),
     priority: parseFloat(node.getAttribute("priority")) || undefined,
     importPrecedence: parseInt(node.getAttribute("import-precedence")) || 1,
-  });
+  };
+  if (features) {
+    context.dtTemplates.push(new TemplateRule(match, features, template));
+  } else {
+    context.templates.push();
+  }
 }
 
 function compileKeyNode(
