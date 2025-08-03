@@ -38,6 +38,7 @@
     "astring": "*",
     "commander": "*",
     "fontoxpath": "*",
+    "js-xpath": "^0.0.4",
     "slimdom": "*",
     "webpack": "*"
   }
