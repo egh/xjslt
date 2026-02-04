@@ -54,7 +54,14 @@ import {
   WhitespaceDeclaration,
   PatternMatchCache,
 } from "./definitions";
-import { determineNamespace, mkOutputDefinition, mkResolver } from "./shared";
+import {
+  compareSortable,
+  computeDefaultPriority,
+  determineNamespace,
+  mkOutputDefinition,
+  mkResolver,
+  sortSortable,
+} from "./shared";
 
 /* Depth first node visit */
 export function visitNodes(node: any, visit: (node: any) => void) {
@@ -293,6 +300,33 @@ function* getTemplates(
       )
     ) {
       yield template;
+    }
+  }
+}
+
+export function* mergeTemplateGenerators(
+  gena: Generator<Template>,
+  genb: Generator<Template>,
+) {
+  let items = [gena.next(), genb.next()];
+  while (!items[0].done || !items[1].done) {
+    if (items[0].done) {
+      /* a is finished, just serve b*/
+      yield items[1].value;
+      items[1] = genb.next();
+    } else if (items[1].done) {
+      /* b is finished, just serve a*/
+      yield items[0].value;
+      items[0] = gena.next();
+    } else {
+      /* If a comes first, yield it, otherwise yield b. */
+      if (compareSortable(items[0].value, items[1].value) < 0) {
+        yield items[0].value;
+        items[0] = gena.next();
+      } else {
+        yield items[1].value;
+        items[1] = genb.next();
+      }
     }
   }
 }

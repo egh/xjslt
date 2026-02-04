@@ -157,17 +157,26 @@ export function computeDefaultPriority(match: string): number {
   return 0.5;
 }
 
-export function sortSortable(templates: Array<Sortable>): Array<Sortable> {
+export function compareSortable<T extends Sortable>(a: T, b: T): number {
+  // "Higher" (lower number) import precedence comes first
+  const importResult = a.importPrecedence - b.importPrecedence;
+  if (importResult !== 0) {
+    return importResult;
+  } else {
+    // Higher priority comes first
+    return (
+      (b.priority || computeDefaultPriority(b.match)) -
+      (a.priority || computeDefaultPriority(a.match))
+    );
+  }
+}
+
+export function sortSortable<T extends Sortable>(
+  templates: Array<T>,
+): Array<T> {
   /* https://www.w3.org/TR/xslt20/#conflict */
   // Last declared is first priority.
   templates.reverse();
-  // Higher priority comes first
-  templates.sort(
-    (a, b) =>
-      (b.priority || computeDefaultPriority(b.match)) -
-      (a.priority || computeDefaultPriority(a.match)),
-  );
-  // "Higher" (lower number) import precedence comes first
-  templates.sort((a, b) => a.importPrecedence - b.importPrecedence);
+  templates.sort(compareSortable);
   return templates;
 }

@@ -28,6 +28,7 @@ import {
   setVariable,
   mkNodeAppender,
   KeyImpl,
+  mergeTemplateGenerators,
 } from "../src/xjslt";
 import {
   buildStylesheet,
@@ -36,7 +37,12 @@ import {
   compileTopLevelNode,
   getNodeNS,
 } from "../src/compile";
-import { VariableScope, OutputResult } from "../src/definitions";
+import {
+  DynamicContext,
+  Template,
+  VariableScope,
+  OutputResult,
+} from "../src/definitions";
 import { computeDefaultPriority, determineNamespace } from "../src/shared";
 import * as slimdom from "slimdom";
 import * as path from "path";
@@ -742,4 +748,61 @@ test("key class", () => {
   expect(key.lookup(new Map(), dom, [], "1")).toEqual(
     evaluateXPathToNodes("/doc/foo[@bar='1']", dom),
   );
+});
+
+const generic = {
+  apply: (context: DynamicContext) => {},
+  modes: ["#all"],
+  allowedParams: [],
+};
+
+const first = { ...generic, name: "foo", importPrecedence: 1 };
+const second = { ...generic, name: "foo", importPrecedence: 2 };
+const third = { ...generic, name: "foo", importPrecedence: 3 };
+
+test("mergeTemplateGenerators 1", () => {
+  const a = function* (): Generator<Template> {
+    yield second;
+    yield third;
+  };
+  const b = function* (): Generator<Template> {
+    yield first;
+  };
+
+  expect(Array.from(mergeTemplateGenerators(a(), b()))).toEqual([
+    first,
+    second,
+    third,
+  ]);
+});
+
+test("mergeTemplateGenerators 2", () => {
+  const a = function* (): Generator<Template> {
+    yield first;
+    yield second;
+    yield third;
+  };
+  const b = function* (): Generator<Template> {};
+
+  expect(Array.from(mergeTemplateGenerators(a(), b()))).toEqual([
+    first,
+    second,
+    third,
+  ]);
+});
+
+test("mergeTemplateGenerators 3", () => {
+  const a = function* (): Generator<Template> {
+    yield first;
+    yield second;
+  };
+  const b = function* (): Generator<Template> {
+    yield third;
+  };
+
+  expect(Array.from(mergeTemplateGenerators(a(), b()))).toEqual([
+    first,
+    second,
+    third,
+  ]);
 });
