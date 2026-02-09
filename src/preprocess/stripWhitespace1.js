@@ -1,10 +1,166 @@
 (() => {
   var e = {
-      16: (e) => {
-        "use strict";
-        e.exports = require("url");
+      312(e, t, n) {
+        (n(898), n(594));
+        let o = n(821);
+        function a(e, t) {
+          t = o.setParamDefaults(e, t);
+          let n = new Map();
+          n.set("#default", { document: t.outputDocument });
+          let a = new Map(),
+            r = new Map(),
+            s = {
+              outputDocument: t.outputDocument,
+              append: o.mkNodeAppender(t.outputNode),
+              resultDocuments: n,
+              contextItem: e,
+              mode: t.initialMode,
+              templates: [
+                {
+                  match: "comment() | processing-instruction()",
+                  matchFunction: void 0,
+                  name: void 0,
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (e) => {},
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: void 0,
+                  importPrecedence: 1,
+                },
+                {
+                  match: "/ | @* | node()",
+                  matchFunction: void 0,
+                  name: void 0,
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (e) => {
+                    o.copy(
+                      e,
+                      {
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (e) => {
+                        o.applyTemplates(e, {
+                          select: "@* | node()",
+                          mode: "#default",
+                          params: [],
+                          sortKeyComponents: [],
+                          namespaces: {
+                            xsl: "http://www.w3.org/1999/XSL/Transform",
+                          },
+                        });
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: void 0,
+                  importPrecedence: 1,
+                },
+              ],
+              variableScopes: [new Map()],
+              inputURL: t.inputURL,
+              keys: a,
+              outputDefinitions: r,
+              patternMatchCache: new Map(),
+              stylesheetParams: t.stylesheetParams,
+            };
+          return (
+            o.stripSpace(e, []),
+            o.processNode(s, [], {
+              xsl: "http://www.w3.org/1999/XSL/Transform",
+            }),
+            n
+          );
+        }
+        ((e.exports.transform = a), (global.transform = a));
       },
-      379: (e, t, n) => {
+      712(e, t) {
+        "use strict";
+        (Object.defineProperty(t, "__esModule", { value: !0 }),
+          (t.NodeType =
+            t.DEFAULT_PRIORITIES =
+            t.XPATH_NSURI =
+            t.XMLNS_NSURI =
+            t.XSLT1_NSURI =
+              void 0));
+        const n = String.raw`[^,:\(\)\*\[\]/]`,
+          o = String.raw`(child::|attribute::|@)?`,
+          a = String.raw`(document-node\()?`;
+        var r;
+        ((t.XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform"),
+          (t.XMLNS_NSURI = "http://www.w3.org/2000/xmlns/"),
+          (t.XPATH_NSURI = "http://www.w3.org/2005/xpath-functions"),
+          (t.DEFAULT_PRIORITIES = new Map([
+            [new RegExp(String.raw`^\s*/\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*\*\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*${a}${o}processing-instruction`), 0],
+            [new RegExp(String.raw`^\s*${a}${o}element\(\*?\)\)?\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*${a}${o}attribute\(\*?\)\)?\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*${a}${o}element\(${n}+\)\)?\s*$`), 0],
+            [
+              new RegExp(String.raw`^\s*${a}${o}element\(\*,\s*${n}+\)\)?\s*$`),
+              0,
+            ],
+            [new RegExp(String.raw`^\s*${a}${o}attribute\(${n}+\)\)?\s*$`), 0],
+            [
+              new RegExp(
+                String.raw`^\s*${a}${o}attribute\(\*,\s*${n}+\)\)?\s*$`,
+              ),
+              0,
+            ],
+            [
+              new RegExp(
+                String.raw`^\s*${a}${o}element\(${n}+,\s*${n}+\)\)?\s*$`,
+              ),
+              0.25,
+            ],
+            [
+              new RegExp(
+                String.raw`^\s*${a}${o}attribute\(${n}+,\s*${n}+\)\)?\s*$`,
+              ),
+              0.25,
+            ],
+            [
+              new RegExp(
+                String.raw`^\s*${a}${o}schema-element\(${n}+\)\)?\s*$`,
+              ),
+              0.25,
+            ],
+            [
+              new RegExp(
+                String.raw`^\s*${a}${o}schema-attribute\(${n}+\)\)?\s*$`,
+              ),
+              0.25,
+            ],
+            [new RegExp(String.raw`^\s*document-node\(\)\s*$`), -0.5],
+            [
+              new RegExp(
+                String.raw`^\s*${o}(node\(\)|text\(\)|comment\(\))\s*$`,
+              ),
+              -0.5,
+            ],
+            [new RegExp(String.raw`^\s*${o}(${n}:)?\*\s*$`), -0.25],
+            [new RegExp(String.raw`^\s*${o}\*:${n}+\s*$`), -0.25],
+            [new RegExp(String.raw`^\s*${o}${n}+\s*$`), 0],
+          ])),
+          (function (e) {
+            ((e[(e.ELEMENT = 1)] = "ELEMENT"),
+              (e[(e.ATTRIBUTE = 2)] = "ATTRIBUTE"),
+              (e[(e.TEXT = 3)] = "TEXT"),
+              (e[(e.CDATA_SECTION = 4)] = "CDATA_SECTION"),
+              (e[(e.ENTITY_REFERENCE = 5)] = "ENTITY_REFERENCE"),
+              (e[(e.ENTITY = 6)] = "ENTITY"),
+              (e[(e.PROCESSING_INSTRUCTION = 7)] = "PROCESSING_INSTRUCTION"),
+              (e[(e.COMMENT = 8)] = "COMMENT"),
+              (e[(e.DOCUMENT = 9)] = "DOCUMENT"),
+              (e[(e.DOCUMENT_TYPE = 10)] = "DOCUMENT_TYPE"),
+              (e[(e.DOCUMENT_FRAGMENT = 11)] = "DOCUMENT_FRAGMENT"),
+              (e[(e.NOTATION = 12)] = "NOTATION"));
+          })(r || (t.NodeType = r = {})));
+      },
+      379(e, t, n) {
         "use strict";
         (Object.defineProperty(t, "__esModule", { value: !0 }),
           (t.registerFunctions = function () {
@@ -106,170 +262,7 @@
                       : "";
         }
       },
-      472: function (e, t, n) {
-        "use strict";
-        var o,
-          a =
-            (this && this.__createBinding) ||
-            (Object.create
-              ? function (e, t, n, o) {
-                  void 0 === o && (o = n);
-                  var a = Object.getOwnPropertyDescriptor(t, n);
-                  ((a &&
-                    !("get" in a
-                      ? !t.__esModule
-                      : a.writable || a.configurable)) ||
-                    (a = {
-                      enumerable: !0,
-                      get: function () {
-                        return t[n];
-                      },
-                    }),
-                    Object.defineProperty(e, o, a));
-                }
-              : function (e, t, n, o) {
-                  (void 0 === o && (o = n), (e[o] = t[n]));
-                }),
-          r =
-            (this && this.__setModuleDefault) ||
-            (Object.create
-              ? function (e, t) {
-                  Object.defineProperty(e, "default", {
-                    enumerable: !0,
-                    value: t,
-                  });
-                }
-              : function (e, t) {
-                  e.default = t;
-                }),
-          s =
-            (this && this.__importStar) ||
-            ((o = function (e) {
-              return (
-                (o =
-                  Object.getOwnPropertyNames ||
-                  function (e) {
-                    var t = [];
-                    for (var n in e)
-                      Object.prototype.hasOwnProperty.call(e, n) &&
-                        (t[t.length] = n);
-                    return t;
-                  }),
-                o(e)
-              );
-            }),
-            function (e) {
-              if (e && e.__esModule) return e;
-              var t = {};
-              if (null != e)
-                for (var n = o(e), s = 0; s < n.length; s++)
-                  "default" !== n[s] && a(t, e, n[s]);
-              return (r(t, e), t);
-            });
-        (Object.defineProperty(t, "__esModule", { value: !0 }),
-          (t.urlToDom = function (e, t) {
-            const n = e.inputURL ? (0, c.resolve)(e.inputURL.toString(), t) : t;
-            return n.startsWith("file:")
-              ? u.parseXmlDocument(
-                  (0, i.readFileSync)(
-                    (0, c.fileURLToPath)(new URL(n)),
-                  ).toString(),
-                )
-              : void 0;
-          }));
-        const c = n(16),
-          i = n(896),
-          u = s(n(898));
-      },
-      594: (e) => {
-        "use strict";
-        e.exports = require("fontoxpath");
-      },
-      712: (e, t) => {
-        "use strict";
-        (Object.defineProperty(t, "__esModule", { value: !0 }),
-          (t.NodeType =
-            t.DEFAULT_PRIORITIES =
-            t.XPATH_NSURI =
-            t.XMLNS_NSURI =
-            t.XSLT1_NSURI =
-              void 0));
-        const n = String.raw`[^,:\(\)\*\[\]/]`,
-          o = String.raw`(child::|attribute::|@)?`,
-          a = String.raw`(document-node\()?`;
-        var r;
-        ((t.XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform"),
-          (t.XMLNS_NSURI = "http://www.w3.org/2000/xmlns/"),
-          (t.XPATH_NSURI = "http://www.w3.org/2005/xpath-functions"),
-          (t.DEFAULT_PRIORITIES = new Map([
-            [new RegExp(String.raw`^\s*/\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*\*\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${a}${o}processing-instruction`), 0],
-            [new RegExp(String.raw`^\s*${a}${o}element\(\*?\)\)?\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${a}${o}attribute\(\*?\)\)?\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${a}${o}element\(${n}+\)\)?\s*$`), 0],
-            [
-              new RegExp(String.raw`^\s*${a}${o}element\(\*,\s*${n}+\)\)?\s*$`),
-              0,
-            ],
-            [new RegExp(String.raw`^\s*${a}${o}attribute\(${n}+\)\)?\s*$`), 0],
-            [
-              new RegExp(
-                String.raw`^\s*${a}${o}attribute\(\*,\s*${n}+\)\)?\s*$`,
-              ),
-              0,
-            ],
-            [
-              new RegExp(
-                String.raw`^\s*${a}${o}element\(${n}+,\s*${n}+\)\)?\s*$`,
-              ),
-              0.25,
-            ],
-            [
-              new RegExp(
-                String.raw`^\s*${a}${o}attribute\(${n}+,\s*${n}+\)\)?\s*$`,
-              ),
-              0.25,
-            ],
-            [
-              new RegExp(
-                String.raw`^\s*${a}${o}schema-element\(${n}+\)\)?\s*$`,
-              ),
-              0.25,
-            ],
-            [
-              new RegExp(
-                String.raw`^\s*${a}${o}schema-attribute\(${n}+\)\)?\s*$`,
-              ),
-              0.25,
-            ],
-            [new RegExp(String.raw`^\s*document-node\(\)\s*$`), -0.5],
-            [
-              new RegExp(
-                String.raw`^\s*${o}(node\(\)|text\(\)|comment\(\))\s*$`,
-              ),
-              -0.5,
-            ],
-            [new RegExp(String.raw`^\s*${o}(${n}:)?\*\s*$`), -0.25],
-            [new RegExp(String.raw`^\s*${o}\*:${n}+\s*$`), -0.25],
-            [new RegExp(String.raw`^\s*${o}${n}+\s*$`), 0],
-          ])),
-          (function (e) {
-            ((e[(e.ELEMENT = 1)] = "ELEMENT"),
-              (e[(e.ATTRIBUTE = 2)] = "ATTRIBUTE"),
-              (e[(e.TEXT = 3)] = "TEXT"),
-              (e[(e.CDATA_SECTION = 4)] = "CDATA_SECTION"),
-              (e[(e.ENTITY_REFERENCE = 5)] = "ENTITY_REFERENCE"),
-              (e[(e.ENTITY = 6)] = "ENTITY"),
-              (e[(e.PROCESSING_INSTRUCTION = 7)] = "PROCESSING_INSTRUCTION"),
-              (e[(e.COMMENT = 8)] = "COMMENT"),
-              (e[(e.DOCUMENT = 9)] = "DOCUMENT"),
-              (e[(e.DOCUMENT_TYPE = 10)] = "DOCUMENT_TYPE"),
-              (e[(e.DOCUMENT_FRAGMENT = 11)] = "DOCUMENT_FRAGMENT"),
-              (e[(e.NOTATION = 12)] = "NOTATION"));
-          })(r || (t.NodeType = r = {})));
-      },
-      777: (e, t) => {
+      777(e, t) {
         "use strict";
         function n(e) {
           return "yes" === e;
@@ -381,7 +374,82 @@
           return 0.5;
         }
       },
-      821: function (e, t, n) {
+      472(e, t, n) {
+        "use strict";
+        var o,
+          a =
+            (this && this.__createBinding) ||
+            (Object.create
+              ? function (e, t, n, o) {
+                  void 0 === o && (o = n);
+                  var a = Object.getOwnPropertyDescriptor(t, n);
+                  ((a &&
+                    !("get" in a
+                      ? !t.__esModule
+                      : a.writable || a.configurable)) ||
+                    (a = {
+                      enumerable: !0,
+                      get: function () {
+                        return t[n];
+                      },
+                    }),
+                    Object.defineProperty(e, o, a));
+                }
+              : function (e, t, n, o) {
+                  (void 0 === o && (o = n), (e[o] = t[n]));
+                }),
+          r =
+            (this && this.__setModuleDefault) ||
+            (Object.create
+              ? function (e, t) {
+                  Object.defineProperty(e, "default", {
+                    enumerable: !0,
+                    value: t,
+                  });
+                }
+              : function (e, t) {
+                  e.default = t;
+                }),
+          s =
+            (this && this.__importStar) ||
+            ((o = function (e) {
+              return (
+                (o =
+                  Object.getOwnPropertyNames ||
+                  function (e) {
+                    var t = [];
+                    for (var n in e)
+                      Object.prototype.hasOwnProperty.call(e, n) &&
+                        (t[t.length] = n);
+                    return t;
+                  }),
+                o(e)
+              );
+            }),
+            function (e) {
+              if (e && e.__esModule) return e;
+              var t = {};
+              if (null != e)
+                for (var n = o(e), s = 0; s < n.length; s++)
+                  "default" !== n[s] && a(t, e, n[s]);
+              return (r(t, e), t);
+            });
+        (Object.defineProperty(t, "__esModule", { value: !0 }),
+          (t.urlToDom = function (e, t) {
+            const n = e.inputURL ? (0, c.resolve)(e.inputURL.toString(), t) : t;
+            return n.startsWith("file:")
+              ? u.parseXmlDocument(
+                  (0, i.readFileSync)(
+                    (0, c.fileURLToPath)(new URL(n)),
+                  ).toString(),
+                )
+              : void 0;
+          }));
+        const c = n(16),
+          i = n(896),
+          u = s(n(898));
+      },
+      821(e, t, n) {
         "use strict";
         var o,
           a =
@@ -1316,89 +1384,21 @@
         }
         (0, u.registerFunctions)();
       },
-      896: (e) => {
+      594(e) {
         "use strict";
-        e.exports = require("fs");
+        e.exports = require("fontoxpath");
       },
-      898: (e) => {
+      898(e) {
         "use strict";
         e.exports = require("slimdom");
       },
-      977: (e, t, n) => {
-        (n(898), n(594));
-        let o = n(821);
-        function a(e, t) {
-          t = o.setParamDefaults(e, t);
-          let n = new Map();
-          n.set("#default", { document: t.outputDocument });
-          let a = new Map(),
-            r = new Map(),
-            s = {
-              outputDocument: t.outputDocument,
-              append: o.mkNodeAppender(t.outputNode),
-              resultDocuments: n,
-              contextItem: e,
-              mode: t.initialMode,
-              templates: [
-                {
-                  match: "comment() | processing-instruction()",
-                  matchFunction: void 0,
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (e) => {},
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: void 0,
-                  importPrecedence: 1,
-                },
-                {
-                  match: "/ | @* | node()",
-                  matchFunction: void 0,
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (e) => {
-                    o.copy(
-                      e,
-                      {
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (e) => {
-                        o.applyTemplates(e, {
-                          select: "@* | node()",
-                          mode: "#default",
-                          params: [],
-                          sortKeyComponents: [],
-                          namespaces: {
-                            xsl: "http://www.w3.org/1999/XSL/Transform",
-                          },
-                        });
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: void 0,
-                  importPrecedence: 1,
-                },
-              ],
-              variableScopes: [new Map()],
-              inputURL: t.inputURL,
-              keys: a,
-              outputDefinitions: r,
-              patternMatchCache: new Map(),
-              stylesheetParams: t.stylesheetParams,
-            };
-          return (
-            o.stripSpace(e, []),
-            o.processNode(s, [], {
-              xsl: "http://www.w3.org/1999/XSL/Transform",
-            }),
-            n
-          );
-        }
-        ((e.exports.transform = a), (global.transform = a));
+      896(e) {
+        "use strict";
+        e.exports = require("fs");
+      },
+      16(e) {
+        "use strict";
+        e.exports = require("url");
       },
     },
     t = {},
@@ -1407,6 +1407,6 @@
       if (void 0 !== a) return a.exports;
       var r = (t[o] = { exports: {} });
       return (e[o].call(r.exports, r, r.exports, n), r.exports);
-    })(977);
+    })(312);
   module.exports = n.transform;
 })();

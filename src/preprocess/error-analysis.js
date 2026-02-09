@@ -1,10 +1,6 @@
 (() => {
   var t = {
-      16: (t) => {
-        "use strict";
-        t.exports = require("url");
-      },
-      374: (t, e, n) => {
+      925(t, e, n) {
         (n(898), n(594));
         let o = n(821);
         function a(t, e) {
@@ -280,7 +276,91 @@
         }
         ((t.exports.transform = a), (global.transform = a));
       },
-      379: (t, e, n) => {
+      712(t, e) {
+        "use strict";
+        (Object.defineProperty(e, "__esModule", { value: !0 }),
+          (e.NodeType =
+            e.DEFAULT_PRIORITIES =
+            e.XPATH_NSURI =
+            e.XMLNS_NSURI =
+            e.XSLT1_NSURI =
+              void 0));
+        const n = String.raw`[^,:\(\)\*\[\]/]`,
+          o = String.raw`(child::|attribute::|@)?`,
+          a = String.raw`(document-node\()?`;
+        var r;
+        ((e.XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform"),
+          (e.XMLNS_NSURI = "http://www.w3.org/2000/xmlns/"),
+          (e.XPATH_NSURI = "http://www.w3.org/2005/xpath-functions"),
+          (e.DEFAULT_PRIORITIES = new Map([
+            [new RegExp(String.raw`^\s*/\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*\*\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*${a}${o}processing-instruction`), 0],
+            [new RegExp(String.raw`^\s*${a}${o}element\(\*?\)\)?\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*${a}${o}attribute\(\*?\)\)?\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*${a}${o}element\(${n}+\)\)?\s*$`), 0],
+            [
+              new RegExp(String.raw`^\s*${a}${o}element\(\*,\s*${n}+\)\)?\s*$`),
+              0,
+            ],
+            [new RegExp(String.raw`^\s*${a}${o}attribute\(${n}+\)\)?\s*$`), 0],
+            [
+              new RegExp(
+                String.raw`^\s*${a}${o}attribute\(\*,\s*${n}+\)\)?\s*$`,
+              ),
+              0,
+            ],
+            [
+              new RegExp(
+                String.raw`^\s*${a}${o}element\(${n}+,\s*${n}+\)\)?\s*$`,
+              ),
+              0.25,
+            ],
+            [
+              new RegExp(
+                String.raw`^\s*${a}${o}attribute\(${n}+,\s*${n}+\)\)?\s*$`,
+              ),
+              0.25,
+            ],
+            [
+              new RegExp(
+                String.raw`^\s*${a}${o}schema-element\(${n}+\)\)?\s*$`,
+              ),
+              0.25,
+            ],
+            [
+              new RegExp(
+                String.raw`^\s*${a}${o}schema-attribute\(${n}+\)\)?\s*$`,
+              ),
+              0.25,
+            ],
+            [new RegExp(String.raw`^\s*document-node\(\)\s*$`), -0.5],
+            [
+              new RegExp(
+                String.raw`^\s*${o}(node\(\)|text\(\)|comment\(\))\s*$`,
+              ),
+              -0.5,
+            ],
+            [new RegExp(String.raw`^\s*${o}(${n}:)?\*\s*$`), -0.25],
+            [new RegExp(String.raw`^\s*${o}\*:${n}+\s*$`), -0.25],
+            [new RegExp(String.raw`^\s*${o}${n}+\s*$`), 0],
+          ])),
+          (function (t) {
+            ((t[(t.ELEMENT = 1)] = "ELEMENT"),
+              (t[(t.ATTRIBUTE = 2)] = "ATTRIBUTE"),
+              (t[(t.TEXT = 3)] = "TEXT"),
+              (t[(t.CDATA_SECTION = 4)] = "CDATA_SECTION"),
+              (t[(t.ENTITY_REFERENCE = 5)] = "ENTITY_REFERENCE"),
+              (t[(t.ENTITY = 6)] = "ENTITY"),
+              (t[(t.PROCESSING_INSTRUCTION = 7)] = "PROCESSING_INSTRUCTION"),
+              (t[(t.COMMENT = 8)] = "COMMENT"),
+              (t[(t.DOCUMENT = 9)] = "DOCUMENT"),
+              (t[(t.DOCUMENT_TYPE = 10)] = "DOCUMENT_TYPE"),
+              (t[(t.DOCUMENT_FRAGMENT = 11)] = "DOCUMENT_FRAGMENT"),
+              (t[(t.NOTATION = 12)] = "NOTATION"));
+          })(r || (e.NodeType = r = {})));
+      },
+      379(t, e, n) {
         "use strict";
         (Object.defineProperty(e, "__esModule", { value: !0 }),
           (e.registerFunctions = function () {
@@ -382,170 +462,7 @@
                       : "";
         }
       },
-      472: function (t, e, n) {
-        "use strict";
-        var o,
-          a =
-            (this && this.__createBinding) ||
-            (Object.create
-              ? function (t, e, n, o) {
-                  void 0 === o && (o = n);
-                  var a = Object.getOwnPropertyDescriptor(e, n);
-                  ((a &&
-                    !("get" in a
-                      ? !e.__esModule
-                      : a.writable || a.configurable)) ||
-                    (a = {
-                      enumerable: !0,
-                      get: function () {
-                        return e[n];
-                      },
-                    }),
-                    Object.defineProperty(t, o, a));
-                }
-              : function (t, e, n, o) {
-                  (void 0 === o && (o = n), (t[o] = e[n]));
-                }),
-          r =
-            (this && this.__setModuleDefault) ||
-            (Object.create
-              ? function (t, e) {
-                  Object.defineProperty(t, "default", {
-                    enumerable: !0,
-                    value: e,
-                  });
-                }
-              : function (t, e) {
-                  t.default = e;
-                }),
-          s =
-            (this && this.__importStar) ||
-            ((o = function (t) {
-              return (
-                (o =
-                  Object.getOwnPropertyNames ||
-                  function (t) {
-                    var e = [];
-                    for (var n in t)
-                      Object.prototype.hasOwnProperty.call(t, n) &&
-                        (e[e.length] = n);
-                    return e;
-                  }),
-                o(t)
-              );
-            }),
-            function (t) {
-              if (t && t.__esModule) return t;
-              var e = {};
-              if (null != t)
-                for (var n = o(t), s = 0; s < n.length; s++)
-                  "default" !== n[s] && a(e, t, n[s]);
-              return (r(e, t), e);
-            });
-        (Object.defineProperty(e, "__esModule", { value: !0 }),
-          (e.urlToDom = function (t, e) {
-            const n = t.inputURL ? (0, c.resolve)(t.inputURL.toString(), e) : e;
-            return n.startsWith("file:")
-              ? m.parseXmlDocument(
-                  (0, i.readFileSync)(
-                    (0, c.fileURLToPath)(new URL(n)),
-                  ).toString(),
-                )
-              : void 0;
-          }));
-        const c = n(16),
-          i = n(896),
-          m = s(n(898));
-      },
-      594: (t) => {
-        "use strict";
-        t.exports = require("fontoxpath");
-      },
-      712: (t, e) => {
-        "use strict";
-        (Object.defineProperty(e, "__esModule", { value: !0 }),
-          (e.NodeType =
-            e.DEFAULT_PRIORITIES =
-            e.XPATH_NSURI =
-            e.XMLNS_NSURI =
-            e.XSLT1_NSURI =
-              void 0));
-        const n = String.raw`[^,:\(\)\*\[\]/]`,
-          o = String.raw`(child::|attribute::|@)?`,
-          a = String.raw`(document-node\()?`;
-        var r;
-        ((e.XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform"),
-          (e.XMLNS_NSURI = "http://www.w3.org/2000/xmlns/"),
-          (e.XPATH_NSURI = "http://www.w3.org/2005/xpath-functions"),
-          (e.DEFAULT_PRIORITIES = new Map([
-            [new RegExp(String.raw`^\s*/\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*\*\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${a}${o}processing-instruction`), 0],
-            [new RegExp(String.raw`^\s*${a}${o}element\(\*?\)\)?\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${a}${o}attribute\(\*?\)\)?\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${a}${o}element\(${n}+\)\)?\s*$`), 0],
-            [
-              new RegExp(String.raw`^\s*${a}${o}element\(\*,\s*${n}+\)\)?\s*$`),
-              0,
-            ],
-            [new RegExp(String.raw`^\s*${a}${o}attribute\(${n}+\)\)?\s*$`), 0],
-            [
-              new RegExp(
-                String.raw`^\s*${a}${o}attribute\(\*,\s*${n}+\)\)?\s*$`,
-              ),
-              0,
-            ],
-            [
-              new RegExp(
-                String.raw`^\s*${a}${o}element\(${n}+,\s*${n}+\)\)?\s*$`,
-              ),
-              0.25,
-            ],
-            [
-              new RegExp(
-                String.raw`^\s*${a}${o}attribute\(${n}+,\s*${n}+\)\)?\s*$`,
-              ),
-              0.25,
-            ],
-            [
-              new RegExp(
-                String.raw`^\s*${a}${o}schema-element\(${n}+\)\)?\s*$`,
-              ),
-              0.25,
-            ],
-            [
-              new RegExp(
-                String.raw`^\s*${a}${o}schema-attribute\(${n}+\)\)?\s*$`,
-              ),
-              0.25,
-            ],
-            [new RegExp(String.raw`^\s*document-node\(\)\s*$`), -0.5],
-            [
-              new RegExp(
-                String.raw`^\s*${o}(node\(\)|text\(\)|comment\(\))\s*$`,
-              ),
-              -0.5,
-            ],
-            [new RegExp(String.raw`^\s*${o}(${n}:)?\*\s*$`), -0.25],
-            [new RegExp(String.raw`^\s*${o}\*:${n}+\s*$`), -0.25],
-            [new RegExp(String.raw`^\s*${o}${n}+\s*$`), 0],
-          ])),
-          (function (t) {
-            ((t[(t.ELEMENT = 1)] = "ELEMENT"),
-              (t[(t.ATTRIBUTE = 2)] = "ATTRIBUTE"),
-              (t[(t.TEXT = 3)] = "TEXT"),
-              (t[(t.CDATA_SECTION = 4)] = "CDATA_SECTION"),
-              (t[(t.ENTITY_REFERENCE = 5)] = "ENTITY_REFERENCE"),
-              (t[(t.ENTITY = 6)] = "ENTITY"),
-              (t[(t.PROCESSING_INSTRUCTION = 7)] = "PROCESSING_INSTRUCTION"),
-              (t[(t.COMMENT = 8)] = "COMMENT"),
-              (t[(t.DOCUMENT = 9)] = "DOCUMENT"),
-              (t[(t.DOCUMENT_TYPE = 10)] = "DOCUMENT_TYPE"),
-              (t[(t.DOCUMENT_FRAGMENT = 11)] = "DOCUMENT_FRAGMENT"),
-              (t[(t.NOTATION = 12)] = "NOTATION"));
-          })(r || (e.NodeType = r = {})));
-      },
-      777: (t, e) => {
+      777(t, e) {
         "use strict";
         function n(t) {
           return "yes" === t;
@@ -657,7 +574,82 @@
           return 0.5;
         }
       },
-      821: function (t, e, n) {
+      472(t, e, n) {
+        "use strict";
+        var o,
+          a =
+            (this && this.__createBinding) ||
+            (Object.create
+              ? function (t, e, n, o) {
+                  void 0 === o && (o = n);
+                  var a = Object.getOwnPropertyDescriptor(e, n);
+                  ((a &&
+                    !("get" in a
+                      ? !e.__esModule
+                      : a.writable || a.configurable)) ||
+                    (a = {
+                      enumerable: !0,
+                      get: function () {
+                        return e[n];
+                      },
+                    }),
+                    Object.defineProperty(t, o, a));
+                }
+              : function (t, e, n, o) {
+                  (void 0 === o && (o = n), (t[o] = e[n]));
+                }),
+          r =
+            (this && this.__setModuleDefault) ||
+            (Object.create
+              ? function (t, e) {
+                  Object.defineProperty(t, "default", {
+                    enumerable: !0,
+                    value: e,
+                  });
+                }
+              : function (t, e) {
+                  t.default = e;
+                }),
+          s =
+            (this && this.__importStar) ||
+            ((o = function (t) {
+              return (
+                (o =
+                  Object.getOwnPropertyNames ||
+                  function (t) {
+                    var e = [];
+                    for (var n in t)
+                      Object.prototype.hasOwnProperty.call(t, n) &&
+                        (e[e.length] = n);
+                    return e;
+                  }),
+                o(t)
+              );
+            }),
+            function (t) {
+              if (t && t.__esModule) return t;
+              var e = {};
+              if (null != t)
+                for (var n = o(t), s = 0; s < n.length; s++)
+                  "default" !== n[s] && a(e, t, n[s]);
+              return (r(e, t), e);
+            });
+        (Object.defineProperty(e, "__esModule", { value: !0 }),
+          (e.urlToDom = function (t, e) {
+            const n = t.inputURL ? (0, c.resolve)(t.inputURL.toString(), e) : e;
+            return n.startsWith("file:")
+              ? m.parseXmlDocument(
+                  (0, i.readFileSync)(
+                    (0, c.fileURLToPath)(new URL(n)),
+                  ).toString(),
+                )
+              : void 0;
+          }));
+        const c = n(16),
+          i = n(896),
+          m = s(n(898));
+      },
+      821(t, e, n) {
         "use strict";
         var o,
           a =
@@ -1592,13 +1584,21 @@
         }
         (0, m.registerFunctions)();
       },
-      896: (t) => {
+      594(t) {
+        "use strict";
+        t.exports = require("fontoxpath");
+      },
+      898(t) {
+        "use strict";
+        t.exports = require("slimdom");
+      },
+      896(t) {
         "use strict";
         t.exports = require("fs");
       },
-      898: (t) => {
+      16(t) {
         "use strict";
-        t.exports = require("slimdom");
+        t.exports = require("url");
       },
     },
     e = {},
@@ -1607,6 +1607,6 @@
       if (void 0 !== a) return a.exports;
       var r = (e[o] = { exports: {} });
       return (t[o].call(r.exports, r, r.exports, n), r.exports);
-    })(374);
+    })(925);
   module.exports = n.transform;
 })();

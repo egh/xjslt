@@ -1,275 +1,6 @@
 (() => {
   var e = {
-      16: (e) => {
-        "use strict";
-        e.exports = require("url");
-      },
-      379: (e, t, n) => {
-        "use strict";
-        (Object.defineProperty(t, "__esModule", { value: !0 }),
-          (t.registerFunctions = function () {
-            ((0, o.registerCustomXPathFunction)(
-              { namespaceURI: r.XPATH_NSURI, localName: "current" },
-              [],
-              "item()",
-              s,
-            ),
-              (0, o.registerCustomXPathFunction)(
-                {
-                  namespaceURI: r.XPATH_NSURI,
-                  localName: "current-output-uri",
-                },
-                [],
-                "xs:string",
-                p,
-              ),
-              (0, o.registerCustomXPathFunction)(
-                { namespaceURI: r.XPATH_NSURI, localName: "doc" },
-                ["xs:string"],
-                "document-node()",
-                c,
-              ),
-              (0, o.registerCustomXPathFunction)(
-                {
-                  namespaceURI: r.XPATH_NSURI,
-                  localName: "current-grouping-key",
-                },
-                [],
-                "xs:string?",
-                i,
-              ),
-              (0, o.registerCustomXPathFunction)(
-                { namespaceURI: r.XPATH_NSURI, localName: "current-group" },
-                [],
-                "item()*",
-                u,
-              ),
-              (0, o.registerCustomXPathFunction)(
-                { namespaceURI: r.XPATH_NSURI, localName: "key" },
-                ["xs:string", "item()*"],
-                "node()*",
-                l,
-              ),
-              (0, o.registerCustomXPathFunction)(
-                { namespaceURI: r.XPATH_NSURI, localName: "system-property" },
-                ["xs:string"],
-                "xs:string",
-                m,
-              ));
-          }));
-        const o = n(594),
-          r = n(712),
-          a = n(472);
-        function s({ currentContext: e }) {
-          return e.contextItem;
-        }
-        function c({ currentContext: e }, t) {
-          return (0, a.urlToDom)(e, t);
-        }
-        function i({ currentContext: e }) {
-          return e.currentGroupingKey;
-        }
-        function u({ currentContext: e }) {
-          return e.currentGroup;
-        }
-        function p({ currentContext: e }) {
-          for (const [t, n] of e.resultDocuments)
-            if (n === e.outputDocument) return t;
-          return "#default";
-        }
-        function l({ currentContext: e }, t, n) {
-          const {
-            keys: o,
-            contextItem: r,
-            variableScopes: a,
-            patternMatchCache: s,
-          } = e;
-          if (!o.has(t)) throw new Error("XTDE1260");
-          return o.get(t).lookup(s, r.ownerDocument, a, n) || [];
-        }
-        function m(e, t) {
-          return "version" === t.split(":")[1]
-            ? "2.0"
-            : "vendor" === t.split(":")[1]
-              ? "xjslt"
-              : "vendor-url" === t.split(":")[1]
-                ? "https://github.com/egh/xjslt"
-                : "product-name" === t.split(":")[1]
-                  ? "xjslt"
-                  : "product-version" === t.split(":")[1]
-                    ? "0.1"
-                    : "supports-backwards-compatibility" === t.split(":")[1] ||
-                        "is-schema-aware" === t.split(":")[1] ||
-                        "supports-serialization" === t.split(":")[1] ||
-                        "supports-backwards-compatibility" === t.split(":")[1]
-                      ? "no"
-                      : "";
-        }
-      },
-      472: function (e, t, n) {
-        "use strict";
-        var o,
-          r =
-            (this && this.__createBinding) ||
-            (Object.create
-              ? function (e, t, n, o) {
-                  void 0 === o && (o = n);
-                  var r = Object.getOwnPropertyDescriptor(t, n);
-                  ((r &&
-                    !("get" in r
-                      ? !t.__esModule
-                      : r.writable || r.configurable)) ||
-                    (r = {
-                      enumerable: !0,
-                      get: function () {
-                        return t[n];
-                      },
-                    }),
-                    Object.defineProperty(e, o, r));
-                }
-              : function (e, t, n, o) {
-                  (void 0 === o && (o = n), (e[o] = t[n]));
-                }),
-          a =
-            (this && this.__setModuleDefault) ||
-            (Object.create
-              ? function (e, t) {
-                  Object.defineProperty(e, "default", {
-                    enumerable: !0,
-                    value: t,
-                  });
-                }
-              : function (e, t) {
-                  e.default = t;
-                }),
-          s =
-            (this && this.__importStar) ||
-            ((o = function (e) {
-              return (
-                (o =
-                  Object.getOwnPropertyNames ||
-                  function (e) {
-                    var t = [];
-                    for (var n in e)
-                      Object.prototype.hasOwnProperty.call(e, n) &&
-                        (t[t.length] = n);
-                    return t;
-                  }),
-                o(e)
-              );
-            }),
-            function (e) {
-              if (e && e.__esModule) return e;
-              var t = {};
-              if (null != e)
-                for (var n = o(e), s = 0; s < n.length; s++)
-                  "default" !== n[s] && r(t, e, n[s]);
-              return (a(t, e), t);
-            });
-        (Object.defineProperty(t, "__esModule", { value: !0 }),
-          (t.urlToDom = function (e, t) {
-            const n = e.inputURL ? (0, c.resolve)(e.inputURL.toString(), t) : t;
-            return n.startsWith("file:")
-              ? u.parseXmlDocument(
-                  (0, i.readFileSync)(
-                    (0, c.fileURLToPath)(new URL(n)),
-                  ).toString(),
-                )
-              : void 0;
-          }));
-        const c = n(16),
-          i = n(896),
-          u = s(n(898));
-      },
-      594: (e) => {
-        "use strict";
-        e.exports = require("fontoxpath");
-      },
-      712: (e, t) => {
-        "use strict";
-        (Object.defineProperty(t, "__esModule", { value: !0 }),
-          (t.NodeType =
-            t.DEFAULT_PRIORITIES =
-            t.XPATH_NSURI =
-            t.XMLNS_NSURI =
-            t.XSLT1_NSURI =
-              void 0));
-        const n = String.raw`[^,:\(\)\*\[\]/]`,
-          o = String.raw`(child::|attribute::|@)?`,
-          r = String.raw`(document-node\()?`;
-        var a;
-        ((t.XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform"),
-          (t.XMLNS_NSURI = "http://www.w3.org/2000/xmlns/"),
-          (t.XPATH_NSURI = "http://www.w3.org/2005/xpath-functions"),
-          (t.DEFAULT_PRIORITIES = new Map([
-            [new RegExp(String.raw`^\s*/\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*\*\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${r}${o}processing-instruction`), 0],
-            [new RegExp(String.raw`^\s*${r}${o}element\(\*?\)\)?\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${r}${o}attribute\(\*?\)\)?\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${r}${o}element\(${n}+\)\)?\s*$`), 0],
-            [
-              new RegExp(String.raw`^\s*${r}${o}element\(\*,\s*${n}+\)\)?\s*$`),
-              0,
-            ],
-            [new RegExp(String.raw`^\s*${r}${o}attribute\(${n}+\)\)?\s*$`), 0],
-            [
-              new RegExp(
-                String.raw`^\s*${r}${o}attribute\(\*,\s*${n}+\)\)?\s*$`,
-              ),
-              0,
-            ],
-            [
-              new RegExp(
-                String.raw`^\s*${r}${o}element\(${n}+,\s*${n}+\)\)?\s*$`,
-              ),
-              0.25,
-            ],
-            [
-              new RegExp(
-                String.raw`^\s*${r}${o}attribute\(${n}+,\s*${n}+\)\)?\s*$`,
-              ),
-              0.25,
-            ],
-            [
-              new RegExp(
-                String.raw`^\s*${r}${o}schema-element\(${n}+\)\)?\s*$`,
-              ),
-              0.25,
-            ],
-            [
-              new RegExp(
-                String.raw`^\s*${r}${o}schema-attribute\(${n}+\)\)?\s*$`,
-              ),
-              0.25,
-            ],
-            [new RegExp(String.raw`^\s*document-node\(\)\s*$`), -0.5],
-            [
-              new RegExp(
-                String.raw`^\s*${o}(node\(\)|text\(\)|comment\(\))\s*$`,
-              ),
-              -0.5,
-            ],
-            [new RegExp(String.raw`^\s*${o}(${n}:)?\*\s*$`), -0.25],
-            [new RegExp(String.raw`^\s*${o}\*:${n}+\s*$`), -0.25],
-            [new RegExp(String.raw`^\s*${o}${n}+\s*$`), 0],
-          ])),
-          (function (e) {
-            ((e[(e.ELEMENT = 1)] = "ELEMENT"),
-              (e[(e.ATTRIBUTE = 2)] = "ATTRIBUTE"),
-              (e[(e.TEXT = 3)] = "TEXT"),
-              (e[(e.CDATA_SECTION = 4)] = "CDATA_SECTION"),
-              (e[(e.ENTITY_REFERENCE = 5)] = "ENTITY_REFERENCE"),
-              (e[(e.ENTITY = 6)] = "ENTITY"),
-              (e[(e.PROCESSING_INSTRUCTION = 7)] = "PROCESSING_INSTRUCTION"),
-              (e[(e.COMMENT = 8)] = "COMMENT"),
-              (e[(e.DOCUMENT = 9)] = "DOCUMENT"),
-              (e[(e.DOCUMENT_TYPE = 10)] = "DOCUMENT_TYPE"),
-              (e[(e.DOCUMENT_FRAGMENT = 11)] = "DOCUMENT_FRAGMENT"),
-              (e[(e.NOTATION = 12)] = "NOTATION"));
-          })(a || (t.NodeType = a = {})));
-      },
-      741: (e, t, n) => {
+      760(e, t, n) {
         (n(898), n(594));
         let o = n(821);
         function r(e, t) {
@@ -410,7 +141,193 @@
         }
         ((e.exports.transform = r), (global.transform = r));
       },
-      777: (e, t) => {
+      712(e, t) {
+        "use strict";
+        (Object.defineProperty(t, "__esModule", { value: !0 }),
+          (t.NodeType =
+            t.DEFAULT_PRIORITIES =
+            t.XPATH_NSURI =
+            t.XMLNS_NSURI =
+            t.XSLT1_NSURI =
+              void 0));
+        const n = String.raw`[^,:\(\)\*\[\]/]`,
+          o = String.raw`(child::|attribute::|@)?`,
+          r = String.raw`(document-node\()?`;
+        var a;
+        ((t.XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform"),
+          (t.XMLNS_NSURI = "http://www.w3.org/2000/xmlns/"),
+          (t.XPATH_NSURI = "http://www.w3.org/2005/xpath-functions"),
+          (t.DEFAULT_PRIORITIES = new Map([
+            [new RegExp(String.raw`^\s*/\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*\*\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*${r}${o}processing-instruction`), 0],
+            [new RegExp(String.raw`^\s*${r}${o}element\(\*?\)\)?\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*${r}${o}attribute\(\*?\)\)?\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*${r}${o}element\(${n}+\)\)?\s*$`), 0],
+            [
+              new RegExp(String.raw`^\s*${r}${o}element\(\*,\s*${n}+\)\)?\s*$`),
+              0,
+            ],
+            [new RegExp(String.raw`^\s*${r}${o}attribute\(${n}+\)\)?\s*$`), 0],
+            [
+              new RegExp(
+                String.raw`^\s*${r}${o}attribute\(\*,\s*${n}+\)\)?\s*$`,
+              ),
+              0,
+            ],
+            [
+              new RegExp(
+                String.raw`^\s*${r}${o}element\(${n}+,\s*${n}+\)\)?\s*$`,
+              ),
+              0.25,
+            ],
+            [
+              new RegExp(
+                String.raw`^\s*${r}${o}attribute\(${n}+,\s*${n}+\)\)?\s*$`,
+              ),
+              0.25,
+            ],
+            [
+              new RegExp(
+                String.raw`^\s*${r}${o}schema-element\(${n}+\)\)?\s*$`,
+              ),
+              0.25,
+            ],
+            [
+              new RegExp(
+                String.raw`^\s*${r}${o}schema-attribute\(${n}+\)\)?\s*$`,
+              ),
+              0.25,
+            ],
+            [new RegExp(String.raw`^\s*document-node\(\)\s*$`), -0.5],
+            [
+              new RegExp(
+                String.raw`^\s*${o}(node\(\)|text\(\)|comment\(\))\s*$`,
+              ),
+              -0.5,
+            ],
+            [new RegExp(String.raw`^\s*${o}(${n}:)?\*\s*$`), -0.25],
+            [new RegExp(String.raw`^\s*${o}\*:${n}+\s*$`), -0.25],
+            [new RegExp(String.raw`^\s*${o}${n}+\s*$`), 0],
+          ])),
+          (function (e) {
+            ((e[(e.ELEMENT = 1)] = "ELEMENT"),
+              (e[(e.ATTRIBUTE = 2)] = "ATTRIBUTE"),
+              (e[(e.TEXT = 3)] = "TEXT"),
+              (e[(e.CDATA_SECTION = 4)] = "CDATA_SECTION"),
+              (e[(e.ENTITY_REFERENCE = 5)] = "ENTITY_REFERENCE"),
+              (e[(e.ENTITY = 6)] = "ENTITY"),
+              (e[(e.PROCESSING_INSTRUCTION = 7)] = "PROCESSING_INSTRUCTION"),
+              (e[(e.COMMENT = 8)] = "COMMENT"),
+              (e[(e.DOCUMENT = 9)] = "DOCUMENT"),
+              (e[(e.DOCUMENT_TYPE = 10)] = "DOCUMENT_TYPE"),
+              (e[(e.DOCUMENT_FRAGMENT = 11)] = "DOCUMENT_FRAGMENT"),
+              (e[(e.NOTATION = 12)] = "NOTATION"));
+          })(a || (t.NodeType = a = {})));
+      },
+      379(e, t, n) {
+        "use strict";
+        (Object.defineProperty(t, "__esModule", { value: !0 }),
+          (t.registerFunctions = function () {
+            ((0, o.registerCustomXPathFunction)(
+              { namespaceURI: r.XPATH_NSURI, localName: "current" },
+              [],
+              "item()",
+              s,
+            ),
+              (0, o.registerCustomXPathFunction)(
+                {
+                  namespaceURI: r.XPATH_NSURI,
+                  localName: "current-output-uri",
+                },
+                [],
+                "xs:string",
+                p,
+              ),
+              (0, o.registerCustomXPathFunction)(
+                { namespaceURI: r.XPATH_NSURI, localName: "doc" },
+                ["xs:string"],
+                "document-node()",
+                c,
+              ),
+              (0, o.registerCustomXPathFunction)(
+                {
+                  namespaceURI: r.XPATH_NSURI,
+                  localName: "current-grouping-key",
+                },
+                [],
+                "xs:string?",
+                i,
+              ),
+              (0, o.registerCustomXPathFunction)(
+                { namespaceURI: r.XPATH_NSURI, localName: "current-group" },
+                [],
+                "item()*",
+                u,
+              ),
+              (0, o.registerCustomXPathFunction)(
+                { namespaceURI: r.XPATH_NSURI, localName: "key" },
+                ["xs:string", "item()*"],
+                "node()*",
+                l,
+              ),
+              (0, o.registerCustomXPathFunction)(
+                { namespaceURI: r.XPATH_NSURI, localName: "system-property" },
+                ["xs:string"],
+                "xs:string",
+                m,
+              ));
+          }));
+        const o = n(594),
+          r = n(712),
+          a = n(472);
+        function s({ currentContext: e }) {
+          return e.contextItem;
+        }
+        function c({ currentContext: e }, t) {
+          return (0, a.urlToDom)(e, t);
+        }
+        function i({ currentContext: e }) {
+          return e.currentGroupingKey;
+        }
+        function u({ currentContext: e }) {
+          return e.currentGroup;
+        }
+        function p({ currentContext: e }) {
+          for (const [t, n] of e.resultDocuments)
+            if (n === e.outputDocument) return t;
+          return "#default";
+        }
+        function l({ currentContext: e }, t, n) {
+          const {
+            keys: o,
+            contextItem: r,
+            variableScopes: a,
+            patternMatchCache: s,
+          } = e;
+          if (!o.has(t)) throw new Error("XTDE1260");
+          return o.get(t).lookup(s, r.ownerDocument, a, n) || [];
+        }
+        function m(e, t) {
+          return "version" === t.split(":")[1]
+            ? "2.0"
+            : "vendor" === t.split(":")[1]
+              ? "xjslt"
+              : "vendor-url" === t.split(":")[1]
+                ? "https://github.com/egh/xjslt"
+                : "product-name" === t.split(":")[1]
+                  ? "xjslt"
+                  : "product-version" === t.split(":")[1]
+                    ? "0.1"
+                    : "supports-backwards-compatibility" === t.split(":")[1] ||
+                        "is-schema-aware" === t.split(":")[1] ||
+                        "supports-serialization" === t.split(":")[1] ||
+                        "supports-backwards-compatibility" === t.split(":")[1]
+                      ? "no"
+                      : "";
+        }
+      },
+      777(e, t) {
         "use strict";
         function n(e) {
           return "yes" === e;
@@ -522,7 +439,82 @@
           return 0.5;
         }
       },
-      821: function (e, t, n) {
+      472(e, t, n) {
+        "use strict";
+        var o,
+          r =
+            (this && this.__createBinding) ||
+            (Object.create
+              ? function (e, t, n, o) {
+                  void 0 === o && (o = n);
+                  var r = Object.getOwnPropertyDescriptor(t, n);
+                  ((r &&
+                    !("get" in r
+                      ? !t.__esModule
+                      : r.writable || r.configurable)) ||
+                    (r = {
+                      enumerable: !0,
+                      get: function () {
+                        return t[n];
+                      },
+                    }),
+                    Object.defineProperty(e, o, r));
+                }
+              : function (e, t, n, o) {
+                  (void 0 === o && (o = n), (e[o] = t[n]));
+                }),
+          a =
+            (this && this.__setModuleDefault) ||
+            (Object.create
+              ? function (e, t) {
+                  Object.defineProperty(e, "default", {
+                    enumerable: !0,
+                    value: t,
+                  });
+                }
+              : function (e, t) {
+                  e.default = t;
+                }),
+          s =
+            (this && this.__importStar) ||
+            ((o = function (e) {
+              return (
+                (o =
+                  Object.getOwnPropertyNames ||
+                  function (e) {
+                    var t = [];
+                    for (var n in e)
+                      Object.prototype.hasOwnProperty.call(e, n) &&
+                        (t[t.length] = n);
+                    return t;
+                  }),
+                o(e)
+              );
+            }),
+            function (e) {
+              if (e && e.__esModule) return e;
+              var t = {};
+              if (null != e)
+                for (var n = o(e), s = 0; s < n.length; s++)
+                  "default" !== n[s] && r(t, e, n[s]);
+              return (a(t, e), t);
+            });
+        (Object.defineProperty(t, "__esModule", { value: !0 }),
+          (t.urlToDom = function (e, t) {
+            const n = e.inputURL ? (0, c.resolve)(e.inputURL.toString(), t) : t;
+            return n.startsWith("file:")
+              ? u.parseXmlDocument(
+                  (0, i.readFileSync)(
+                    (0, c.fileURLToPath)(new URL(n)),
+                  ).toString(),
+                )
+              : void 0;
+          }));
+        const c = n(16),
+          i = n(896),
+          u = s(n(898));
+      },
+      821(e, t, n) {
         "use strict";
         var o,
           r =
@@ -1457,13 +1449,21 @@
         }
         (0, u.registerFunctions)();
       },
-      896: (e) => {
+      594(e) {
+        "use strict";
+        e.exports = require("fontoxpath");
+      },
+      898(e) {
+        "use strict";
+        e.exports = require("slimdom");
+      },
+      896(e) {
         "use strict";
         e.exports = require("fs");
       },
-      898: (e) => {
+      16(e) {
         "use strict";
-        e.exports = require("slimdom");
+        e.exports = require("url");
       },
     },
     t = {},
@@ -1472,6 +1472,6 @@
       if (void 0 !== r) return r.exports;
       var a = (t[o] = { exports: {} });
       return (e[o].call(a.exports, a, a.exports, n), a.exports);
-    })(741);
+    })(760);
   module.exports = n.transform;
 })();
