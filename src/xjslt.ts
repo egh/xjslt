@@ -1472,23 +1472,13 @@ function evaluateSequenceConstructorToArray(
   return output;
 }
 
-/**
- * Evaluate a sequence constructor in a temporary tree and return the
- * output document. Use for <xsl:attribute> and <xsl:variable>
- * https://www.w3.org/TR/xslt20/#temporary-trees
- */
-function evaluateSequenceConstructorInTemporaryTree(
+function withTemporaryTree(
   context: DynamicContext,
-  func: SequenceConstructor,
-): any {
+  f: (appender: Appender) => void,
+) {
   const fragment = context.outputDocument.createDocumentFragment();
-  func({
-    ...context,
-    append: mkNodeAppender(fragment),
-    outputDocument: context.outputDocument,
-    mode: "#default",
-    variableScopes: extendScope(context.variableScopes),
-  });
+  const appender = mkNodeAppender(fragment);
+  f(appender);
   /* If there is a single element child, return a document, which is more versatile. */
   if (fragment.childNodes.length === 1 && fragment.childElementCount === 1) {
     const doc = context.outputDocument.implementation.createDocument(
@@ -1500,6 +1490,26 @@ function evaluateSequenceConstructorInTemporaryTree(
     return doc;
   }
   return fragment;
+}
+
+/**
+ * Evaluate a sequence constructor in a temporary tree and return the
+ * output document. Use for <xsl:attribute> and <xsl:variable>
+ * https://www.w3.org/TR/xslt20/#temporary-trees
+ */
+function evaluateSequenceConstructorInTemporaryTree(
+  context: DynamicContext,
+  func: SequenceConstructor,
+): any {
+  return withTemporaryTree(context, (appender: Appender) => {
+    func({
+      ...context,
+      append: appender,
+      outputDocument: context.outputDocument,
+      mode: "#default",
+      variableScopes: extendScope(context.variableScopes),
+    });
+  });
 }
 
 /**
