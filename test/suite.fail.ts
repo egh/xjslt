@@ -2950,8 +2950,6 @@ export const KNOWN_SPEC_FAILURES = [
   "sort-061",
   "sort-062",
   "sort-063",
-  "sort-064",
-  "sort-065",
   "sort-066",
   "sort-067",
   "sort-069",

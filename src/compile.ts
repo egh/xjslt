@@ -188,6 +188,19 @@ function compileForEachGroupNode(
   );
 }
 
+function compilePerformSortNode(
+  node: slimdom.Element,
+  context: CompileContext,
+) {
+  return compileFuncall("performSort", [
+    toEstree({
+      select: node.getAttribute("select"),
+      sortKeyComponents: compileSortKeyComponents(node.childNodes, context),
+      namespaces: getNodeNS(node),
+    }),
+  ]);
+}
+
 function compileNextMatchNode(node: slimdom.Element, context: CompileContext) {
   return compileFuncall("nextMatch", [
     toEstree({
@@ -598,6 +611,8 @@ export function compileSequenceConstructorNode(
         return compileForEachNode(node, context);
       } else if (node.localName === "for-each-group") {
         return compileForEachGroupNode(node, context);
+      } else if (node.localName === "perform-sort") {
+        return compilePerformSortNode(node, context);
       } else if (node.localName === "namespace") {
         return compileNamespaceNode(node, context);
       } else if (node.localName === "next-match") {

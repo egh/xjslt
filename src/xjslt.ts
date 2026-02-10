@@ -1063,6 +1063,36 @@ export function document(
   });
 }
 
+export function performSort(
+  context: DynamicContext,
+  data: {
+    select: string;
+    namespaces: object;
+    sortKeyComponents: SortKeyComponent[];
+  },
+) {
+  const nsResolver = mkResolver(data.namespaces);
+  const nodeList = evaluateXPath(
+    data.select,
+    context.contextItem,
+    undefined,
+    mergeVariableScopes(context.variableScopes),
+    evaluateXPath.ALL_RESULTS_TYPE,
+    { currentContext: context, namespaceResolver: nsResolver },
+  );
+  if (nodeList && Symbol.iterator in Object(nodeList)) {
+    const sorted = sortNodes(
+      context,
+      nodeList,
+      data.sortKeyComponents,
+      nsResolver,
+    );
+    for (let node of sorted) {
+      context.append(node);
+    }
+  }
+}
+
 export function forEach(
   context: DynamicContext,
   data: {
