@@ -64,3 +64,6 @@ XJSLT can compile XSLT stylesheets into executable JavaScript code, which can th
 - [ ] `analyze-string` (depends on https://github.com/bwrrp/xspattern.js/issues/9)
 - [ ] tunneled parameters
 - [ ] … (probably other things I’m not aware of or forgot)
+
+# Contributing
+- Some functionality, including import and include, is implemented in terms of preprocessors: xslt stylesheets that are applied to the xslt stylesheet itself before it is compiled. If you make changes that impact these preprocessors, you will need to run `npm run build-preprocessors` to recompile them.
