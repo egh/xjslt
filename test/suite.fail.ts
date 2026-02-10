@@ -1211,7 +1211,6 @@ export const KNOWN_SPEC_FAILURES = [
   "import-2001",
   "import-2103",
   "import-2201",
-  "import-2202",
   "import-2401",
   "import-2402",
   "import-2403",

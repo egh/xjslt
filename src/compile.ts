@@ -1079,6 +1079,7 @@ function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
     doc = preprocessSimplified(doc).get("#default").document;
   }
   let counter = 0;
+  let basePrecedence = 100;
   while (
     evaluateXPathToBoolean(
       "//xsl:include|//xsl:import",
@@ -1090,7 +1091,6 @@ function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
       },
     )
   ) {
-    let basePrecedence = 100;
     doc = preprocessInclude(doc, {
       inputURL: pathToFileURL(path),
     }).get("#default").document;
