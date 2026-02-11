@@ -442,6 +442,10 @@ function skipAttribute(attr: slimdom.Attr): boolean {
   if (attr.namespaceURI == XMLNS_NSURI && attr.value === XSLT1_NSURI) {
     return true;
   }
+  // Skip XSLT attributes (like xsl:version) on literal result elements
+  if (attr.namespaceURI === XSLT1_NSURI) {
+    return true;
+  }
   return false;
 }
 
