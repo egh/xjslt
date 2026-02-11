@@ -181,6 +181,9 @@ function compileForEachGroupNode(
     toEstree({
       select: node.getAttribute("select"),
       groupBy: node.getAttribute("group-by"),
+      groupAdjacent: node.getAttribute("group-adjacent"),
+      groupStartingWith: node.getAttribute("group-starting-with"),
+      groupEndingWith: node.getAttribute("group-ending-with"),
       sortKeyComponents: compileSortKeyComponents(node.childNodes, context),
       namespaces: getNodeNS(node),
     }),

@@ -43,6 +43,7 @@ import {
   Constructor,
   DynamicContext,
   Key,
+  NodeGroup,
   NodeType,
   OutputDefinition,
   OutputResult,
@@ -1132,19 +1133,141 @@ function groupBy(
   nodes: any[],
   groupBy: string,
   nsResolver: NamespaceResolver,
-): Map<string, any[]> {
+): NodeGroup[] {
   const variables = mergeVariableScopes(context.variableScopes);
-  let retval = new Map<string, any[]>();
+  let retval: NodeGroup[] = [];
   for (let node of nodes) {
     const key = evaluateXPathToString(groupBy, node, undefined, variables, {
       currentContext: context,
       namespaceResolver: nsResolver,
     });
-    if (!retval.has(key)) {
-      retval.set(key, []);
+    let group = retval.find((g) => g.key === key);
+    if (!group) {
+      group = { key: key, nodes: [] };
+      retval.push(group);
     }
-    retval.set(key, retval.get(key).concat(node));
+    group.nodes.push(node);
   }
+  return retval;
+}
+
+function finishGroup(grouped: NodeGroup[], currentGroup: any[], key?: string) {
+  if (currentGroup.length > 0) {
+    if (key === null) {
+      const groupNo = grouped.length + 1;
+      key = `group-${groupNo}`;
+    }
+    grouped.push({ key: key, nodes: currentGroup });
+  }
+}
+
+function groupAdjacent(
+  context: DynamicContext,
+  nodes: any[],
+  groupAdjacent: string,
+  nsResolver: NamespaceResolver,
+): NodeGroup[] {
+  const variables = mergeVariableScopes(context.variableScopes);
+  let retval: NodeGroup[] = [];
+  let currentKey: string | null = null;
+  let currentGroup: any[] = [];
+
+  for (let node of nodes) {
+    const key = evaluateXPathToString(
+      groupAdjacent,
+      node,
+      undefined,
+      variables,
+      {
+        currentContext: context,
+        namespaceResolver: nsResolver,
+      },
+    );
+
+    if (key !== currentKey) {
+      finishGroup(retval, currentGroup, currentKey!);
+      currentKey = key;
+      currentGroup = [node];
+    } else {
+      // Add to current group
+      currentGroup.push(node);
+    }
+  }
+
+  // Last group
+  finishGroup(retval, currentGroup, currentKey!);
+
+  return retval;
+}
+
+function groupStartingWith(
+  context: DynamicContext,
+  nodes: any[],
+  pattern: string,
+  nsResolver: NamespaceResolver,
+): NodeGroup[] {
+  const variables = mergeVariableScopes(context.variableScopes);
+  let retval: NodeGroup[] = [];
+  let currentGroup: any[] = [];
+
+  for (let node of nodes) {
+    const matches = evaluateXPathToBoolean(
+      pattern,
+      node,
+      undefined,
+      variables,
+      {
+        currentContext: context,
+        namespaceResolver: nsResolver,
+      },
+    );
+
+    if (matches) {
+      finishGroup(retval, currentGroup);
+      currentGroup = [];
+    }
+    currentGroup.push(node);
+  }
+
+  // Last group
+  finishGroup(retval, currentGroup);
+
+  return retval;
+}
+
+function groupEndingWith(
+  context: DynamicContext,
+  nodes: any[],
+  pattern: string,
+  nsResolver: NamespaceResolver,
+): NodeGroup[] {
+  const variables = mergeVariableScopes(context.variableScopes);
+  let retval: NodeGroup[] = [];
+  let currentGroup: any[] = [];
+
+  for (let node of nodes) {
+    currentGroup.push(node);
+
+    const matches = evaluateXPathToBoolean(
+      pattern,
+      node,
+      undefined,
+      variables,
+      {
+        currentContext: context,
+        namespaceResolver: nsResolver,
+      },
+    );
+
+    if (matches) {
+      finishGroup(retval, currentGroup);
+      currentGroup = [];
+    }
+  }
+
+  // Last group
+  finishGroup(retval, currentGroup);
+
   return retval;
 }
 
@@ -1153,6 +1276,9 @@ export function forEachGroup(
   data: {
     select: string;
     groupBy?: string;
+    groupAdjacent?: string;
+    groupStartingWith?: string;
+    groupEndingWith?: string;
     namespaces: object;
     sortKeyComponents: SortKeyComponent[];
   },
@@ -1168,9 +1294,33 @@ export function forEachGroup(
     { currentContext: context, namespaceResolver: nsResolver },
   );
   if (nodeList && Symbol.iterator in Object(nodeList)) {
-    let groupedNodes = groupBy(context, nodeList, data.groupBy, nsResolver);
+    let groupedNodes: NodeGroup[] = [];
+    if (data.groupBy) {
+      groupedNodes = groupBy(context, nodeList, data.groupBy, nsResolver);
+    } else if (data.groupAdjacent) {
+      groupedNodes = groupAdjacent(
+        context,
+        nodeList,
+        data.groupAdjacent,
+        nsResolver,
+      );
+    } else if (data.groupEndingWith) {
+      groupedNodes = groupEndingWith(
+        context,
+        nodeList,
+        data.groupEndingWith,
+        nsResolver,
+      );
+    } else if (data.groupStartingWith) {
+      groupedNodes = groupStartingWith(
+        context,
+        nodeList,
+        data.groupStartingWith,
+        nsResolver,
+      );
+    }
     // TODO: sort
-    for (let [key, nodes] of groupedNodes) {
+    for (let { key, nodes } of groupedNodes) {
       func({
         ...context,
         contextItem: nodes[0],

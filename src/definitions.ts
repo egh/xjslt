@@ -235,3 +235,8 @@ export interface Key {
     value: any,
   ) => any;
 }
+
+export interface NodeGroup {
+  key: string;
+  nodes: any[];
+}
