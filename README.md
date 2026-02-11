@@ -9,24 +9,29 @@ Tested with [node 20](https://nodejs.org/) and in Chrome and Firefox.
 # Getting started
 
 ## Installation:
+
 - `npm install && npm run build`
 
 ## Command line invocation:
+
 - `xjslt jats-html.xsl <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)`
 
 # Compilation examples
+
 XJSLT can compile XSLT stylesheets into executable JavaScript code, which can then be deployed to various platforms that support JavaScript, including the browser, NodeJS, and potentially other JavaScript runtimes. The following are some examples of how to do this for the browser, google cloud functions, and cloudflare edge functions. Note that this compiled `.js` may need to be recompiled if the xjslt version changes.
 
-
 ## In the browser
+
 - `xjslt compile --web jats-html.xsl examples/html/transform.js`
 - Open `examples/html/example.html` (will load the generated `transform.js` file)
 
 ## For reuse in the command line
+
 - `xjslt compile jats-html.xsl`
 - `xjslt transform.js <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)`
 
 ## In a google cloud function
+
 - `xjslt compile --standalone jats-html.xsl examples/google-cloud/transform.js`
 - `cd examples/google-cloud`
 - `npm install`
@@ -34,6 +39,7 @@ XJSLT can compile XSLT stylesheets into executable JavaScript code, which can th
 - Visit http://localhost:8080/?url=https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml
 
 ## In a cloudflare edge function
+
 - `xjslt compile --standalone jats-html.xsl examples/cloudflare/src/transform.js`
 - `cd examples/cloudflare`
 - `npm install`
@@ -41,6 +47,7 @@ XJSLT can compile XSLT stylesheets into executable JavaScript code, which can th
 - Visit http://localhost:8787/?url=https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml
 
 # Supported features
+
 - `if`/`choose/when/otherwise` - conditional evaluation
 - `template`
 - `apply-templates`/`for-each` - recursive evaluation
@@ -54,11 +61,13 @@ XJSLT can compile XSLT stylesheets into executable JavaScript code, which can th
 - 2212 passing tests in the XSLT test suite (https://github.com/w3c/xslt30-test) (2424 not passing)
 
 # Incompletely supported features
+
 - `for-each-group` (only `group-by` supported)
 - `function` basically working, with better typing TBD
 - `output` not all options supported
 
 # TODO (not yet implemented)
+
 - [ ] `attribute-set`
 - [ ] `number`
 - [ ] `analyze-string` (depends on https://github.com/bwrrp/xspattern.js/issues/9)
@@ -66,4 +75,5 @@ XJSLT can compile XSLT stylesheets into executable JavaScript code, which can th
 - [ ] … (probably other things I’m not aware of or forgot)
 
 # Contributing
+
 - Some functionality, including import and include, is implemented in terms of preprocessors: xslt stylesheets that are applied to the xslt stylesheet itself before it is compiled. If you make changes that impact these preprocessors, you will need to run `npm run build-preprocessors` to recompile them.
