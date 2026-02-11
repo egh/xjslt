@@ -414,7 +414,7 @@ function sortNodesHelper(
   namespaceResolver: NamespaceResolver,
 ): any[] {
   let sorted: any[];
-  if (sort.dataType === "number" && typeof sort.sortKey === "string") {
+  if (sort.dataType === "number") {
     sorted = sortNodesHelperNumeric(context, nodes, sort, namespaceResolver);
   } else {
     sorted = sortNodesHelperText(context, nodes, sort, namespaceResolver);
@@ -436,13 +436,16 @@ function sortNodesHelperNumeric(
 ): any[] {
   let keyed: { key: number; item: any }[] = [];
   for (let node of nodes) {
-    let key = evaluateXPathToNumber(
-      `number(${sort.sortKey as string})`,
-      node,
-      undefined,
-      mergeVariableScopes(context.variableScopes),
-      { currentContext: context, namespaceResolver: namespaceResolver },
+    let key: number;
+    const newContext = { ...context, contextItem: node };
+
+    const text = constructSimpleContent(
+      newContext,
+      sort.sortKey,
+      namespaceResolver,
     );
+    key = Number(text);
+
     if (isNaN(key)) {
       key = Number.MIN_SAFE_INTEGER; // if we can't calculate a sort key, sort before everything
     }
