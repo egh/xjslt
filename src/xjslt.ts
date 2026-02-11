@@ -451,7 +451,6 @@ function sortNodesHelperNumeric(
       item: node,
     });
   }
-  keyed.sort((a, b) => a.key - b.key);
   return keyed.sort((a, b) => a.key - b.key).map((obj) => obj.item);
 }
 
