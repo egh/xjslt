@@ -18,9 +18,10 @@
  * <https://www.gnu.org/licenses/>.
  */
 
-import { registerCustomXPathFunction } from "fontoxpath";
-import { DynamicContext, XPATH_NSURI } from "./definitions";
+import { registerCustomXPathFunction, ResolvedQualifiedName } from "fontoxpath";
+import { DynamicContext, XJSLT_NSURI, XPATH_NSURI } from "./definitions";
 import { urlToDom } from "./util";
+
 function fnCurrent({ currentContext }) {
   return currentContext.contextItem;
 }
@@ -35,6 +36,14 @@ function fnCurrentGroupingKey({ currentContext }) {
 
 function fnCurrentGroup({ currentContext }) {
   return currentContext.currentGroup;
+}
+
+function fnPosition({ currentContext }) {
+  return currentContext.position || 1;
+}
+
+function fnLast({ currentContext }) {
+  return currentContext.last || 1;
 }
 
 function fnCurrentOutputUri({ currentContext }) {
@@ -91,30 +100,57 @@ function fnSystemProperty(_, property: string) {
   }
 }
 
+const FUNCTION_OVERRIDES = [
+  "current",
+  "current-group",
+  "current-grouping-key",
+  "current-output-uri",
+  "doc",
+  "key",
+  "last",
+  "position",
+  "system-property",
+];
+
+/**
+ * Use our own namespace prefix for function builtins to override.
+ */
+export function functionNameResolver(
+  { prefix, localName },
+  _arity: number,
+): ResolvedQualifiedName {
+  if (!prefix || prefix === "fn") {
+    if (FUNCTION_OVERRIDES.includes(localName)) {
+      return { namespaceURI: XJSLT_NSURI, localName };
+    }
+  }
+  return null;
+}
+
 export function registerFunctions() {
   registerCustomXPathFunction(
-    { namespaceURI: XPATH_NSURI, localName: "current" },
+    { namespaceURI: XJSLT_NSURI, localName: "current" },
     [],
     "item()",
     fnCurrent,
   );
 
   registerCustomXPathFunction(
-    { namespaceURI: XPATH_NSURI, localName: "current-output-uri" },
+    { namespaceURI: XJSLT_NSURI, localName: "current-output-uri" },
     [],
     "xs:string",
     fnCurrentOutputUri,
   );
 
   registerCustomXPathFunction(
-    { namespaceURI: XPATH_NSURI, localName: "doc" },
+    { namespaceURI: XJSLT_NSURI, localName: "doc" },
     ["xs:string"],
     "document-node()",
     fnDoc as (context: any, url: string) => any,
   );
 
   registerCustomXPathFunction(
-    { namespaceURI: XPATH_NSURI, localName: "current-grouping-key" },
+    { namespaceURI: XJSLT_NSURI, localName: "current-grouping-key" },
     [],
     /* This should be xs:anyAtomicType? but that makes fontoxpath crap
        out and xs:string is often correct */
@@ -123,21 +159,35 @@ export function registerFunctions() {
   );
 
   registerCustomXPathFunction(
-    { namespaceURI: XPATH_NSURI, localName: "current-group" },
+    { namespaceURI: XJSLT_NSURI, localName: "current-group" },
     [],
     "item()*",
     fnCurrentGroup as (context: any) => any,
   );
 
   registerCustomXPathFunction(
-    { namespaceURI: XPATH_NSURI, localName: "key" },
+    { namespaceURI: XJSLT_NSURI, localName: "position" },
+    [],
+    "xs:integer",
+    fnPosition as (context: any) => number,
+  );
+
+  registerCustomXPathFunction(
+    { namespaceURI: XJSLT_NSURI, localName: "last" },
+    [],
+    "xs:integer",
+    fnLast as (context: any) => number,
+  );
+
+  registerCustomXPathFunction(
+    { namespaceURI: XJSLT_NSURI, localName: "key" },
     ["xs:string", "item()*"],
     "node()*",
     fnKey as (context: any, name: string, value: any) => any,
   );
 
   registerCustomXPathFunction(
-    { namespaceURI: XPATH_NSURI, localName: "system-property" },
+    { namespaceURI: XJSLT_NSURI, localName: "system-property" },
     ["xs:string"],
     "xs:string",
     fnSystemProperty as (context: any, name: string) => string,

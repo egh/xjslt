@@ -8,6 +8,7 @@ const DOC_NODE_OPT = String.raw`(document-node\()?`;
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
 export const XMLNS_NSURI = "http://www.w3.org/2000/xmlns/";
 export const XPATH_NSURI = "http://www.w3.org/2005/xpath-functions";
+export const XJSLT_NSURI = "https://www.e6h.org/xjslt";
 
 export const DEFAULT_PRIORITIES = new Map<RegExp, number>([
   [new RegExp(String.raw`^\s*/\s*$`), -0.5],
@@ -191,6 +192,8 @@ export interface DynamicContext {
   patternMatchCache: PatternMatchCache;
   outputDefinitions: Map<string, OutputDefinition>;
   stylesheetParams?: object;
+  position?: number;
+  last?: number;
 }
 
 export interface CompileContext {

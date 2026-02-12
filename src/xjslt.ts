@@ -32,7 +32,7 @@ import {
   registerCustomXPathFunction,
 } from "fontoxpath";
 import * as slimdom from "slimdom";
-import { registerFunctions } from "./functions";
+import { functionNameResolver, registerFunctions } from "./functions";
 import {
   XMLNS_NSURI,
   Appender,
@@ -220,7 +220,7 @@ function patternMatch(
   matchFunction: CompiledXPathFunction | undefined,
   node: slimdom.Node,
   variableScopes: Array<VariableScope>,
-  nsResolver: NamespaceResolver,
+  namespaceResolver: NamespaceResolver,
 ): boolean {
   let checkContext = node;
   /* Using ancestors as the potential contexts */
@@ -247,7 +247,7 @@ function patternMatch(
                 /* TODO: Only top level variables are applicable here, so top
             level variables could be cached. */
                 mergeVariableScopes(variableScopes),
-                { namespaceResolver: nsResolver },
+                { namespaceResolver, functionNameResolver },
               ),
             );
           },
@@ -428,6 +428,18 @@ function sortNodesHelper(
   return sorted;
 }
 
+function iterateNodes(
+  nodes: any[],
+  f: (node: any, position: number, last: number) => void,
+) {
+  const last = nodes.length;
+  let position = 0;
+  for (const node of nodes) {
+    position++;
+    f(node, position, last);
+  }
+}
+
 function sortNodesHelperNumeric(
   context: DynamicContext,
   nodes: any[],
@@ -435,12 +447,10 @@ function sortNodesHelperNumeric(
   namespaceResolver: NamespaceResolver,
 ): any[] {
   let keyed: { key: number; item: any }[] = [];
-  for (let node of nodes) {
+  iterateNodes(nodes, (contextItem, position, last) => {
     let key: number;
-    const newContext = { ...context, contextItem: node };
-
     const text = constructSimpleContent(
-      newContext,
+      { ...context, last, contextItem, position },
       sort.sortKey,
       namespaceResolver,
     );
@@ -451,9 +461,9 @@ function sortNodesHelperNumeric(
     }
     keyed.push({
       key: key,
-      item: node,
+      item: contextItem,
     });
-  }
+  });
   return keyed.sort((a, b) => a.key - b.key).map((obj) => obj.item);
 }
 
@@ -544,14 +554,14 @@ export function applyTemplates(
     sortKeyComponents: SortKeyComponent[];
   },
 ) {
-  const nsResolver = mkResolver(data.namespaces);
+  const namespaceResolver = mkResolver(data.namespaces);
   /* The nodes we want to apply templates on.*/
   const nodes = evaluateXPathToNodes(
     data.select,
     context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
-    { currentContext: context, namespaceResolver: nsResolver },
+    { currentContext: context, namespaceResolver, functionNameResolver },
   );
   let mode = data.mode || "#default";
   if (mode === "#current") {
@@ -562,7 +572,7 @@ export function applyTemplates(
     context,
     nodes,
     data.sortKeyComponents,
-    nsResolver,
+    namespaceResolver,
   )) {
     /* for each node */
     processNode(
@@ -683,6 +693,7 @@ export function copyOf(
     {
       currentContext: context,
       namespaceResolver: mkResolver(data.namespaces),
+      functionNameResolver,
     },
   );
   for (let thing of things) {
@@ -819,6 +830,7 @@ export function sequence(
     {
       currentContext: context,
       namespaceResolver: mkResolver(data.namespaces),
+      functionNameResolver,
     },
   );
   context.append(things);
@@ -1017,6 +1029,7 @@ export function ifX(
       {
         currentContext: context,
         namespaceResolver: mkResolver(data.namespaces),
+        functionNameResolver,
       },
     )
   ) {
@@ -1037,7 +1050,7 @@ export function choose(
         context.contextItem,
         undefined,
         mergeVariableScopes(context.variableScopes),
-        { currentContext: context },
+        { currentContext: context, functionNameResolver },
         // {"namespaceResolver": mkResolver(attributes.namespaces)}
       )
     ) {
@@ -1074,21 +1087,21 @@ export function performSort(
     sortKeyComponents: SortKeyComponent[];
   },
 ) {
-  const nsResolver = mkResolver(data.namespaces);
+  const namespaceResolver = mkResolver(data.namespaces);
   const nodeList = evaluateXPath(
     data.select,
     context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
-    { currentContext: context, namespaceResolver: nsResolver },
+    { currentContext: context, namespaceResolver, functionNameResolver },
   );
   if (nodeList && Symbol.iterator in Object(nodeList)) {
     const sorted = sortNodes(
       context,
       nodeList,
       data.sortKeyComponents,
-      nsResolver,
+      namespaceResolver,
     );
     for (let node of sorted) {
       context.append(node);
@@ -1105,28 +1118,31 @@ export function forEach(
   },
   func: SequenceConstructor,
 ) {
-  const nsResolver = mkResolver(data.namespaces);
+  const namespaceResolver = mkResolver(data.namespaces);
   const nodeList = evaluateXPath(
     data.select,
     context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
-    { currentContext: context, namespaceResolver: nsResolver },
+    { currentContext: context, namespaceResolver, functionNameResolver },
   );
   if (nodeList && Symbol.iterator in Object(nodeList)) {
-    for (let node of sortNodes(
+    const nodes = sortNodes(
       context,
       nodeList,
       data.sortKeyComponents,
-      nsResolver,
-    )) {
+      namespaceResolver,
+    );
+    iterateNodes(nodes, (contextItem, position, last) => {
       func({
         ...context,
-        contextItem: node,
+        last,
+        position,
+        contextItem,
         variableScopes: extendScope(context.variableScopes),
       });
-    }
+    });
   }
 }
 
@@ -1134,14 +1150,15 @@ function groupBy(
   context: DynamicContext,
   nodes: any[],
   groupBy: string,
-  nsResolver: NamespaceResolver,
+  namespaceResolver: NamespaceResolver,
 ): NodeGroup[] {
   const variables = mergeVariableScopes(context.variableScopes);
   let retval: NodeGroup[] = [];
-  for (let node of nodes) {
+  iterateNodes(nodes, (node, position, last) => {
     const key = evaluateXPathToString(groupBy, node, undefined, variables, {
       currentContext: context,
-      namespaceResolver: nsResolver,
+      namespaceResolver,
+      functionNameResolver,
     });
     let group = retval.find((g) => g.key === key);
     if (!group) {
@@ -1149,7 +1166,7 @@ function groupBy(
       retval.push(group);
     }
     group.nodes.push(node);
-  }
+  });
   return retval;
 }
 
@@ -1167,14 +1184,14 @@ function groupAdjacent(
   context: DynamicContext,
   nodes: any[],
   groupAdjacent: string,
-  nsResolver: NamespaceResolver,
+  namespaceResolver: NamespaceResolver,
 ): NodeGroup[] {
   const variables = mergeVariableScopes(context.variableScopes);
   let retval: NodeGroup[] = [];
   let currentKey: string | null = null;
   let currentGroup: any[] = [];
 
-  for (let node of nodes) {
+  iterateNodes(nodes, (node, position, last) => {
     const key = evaluateXPathToString(
       groupAdjacent,
       node,
@@ -1182,7 +1199,8 @@ function groupAdjacent(
       variables,
       {
         currentContext: context,
-        namespaceResolver: nsResolver,
+        namespaceResolver,
+        functionNameResolver,
       },
     );
 
@@ -1194,7 +1212,7 @@ function groupAdjacent(
       // Add to current group
       currentGroup.push(node);
     }
-  }
+  });
 
   // Last group
   finishGroup(retval, currentGroup, currentKey!);
@@ -1206,13 +1224,13 @@ function groupStartingWith(
   context: DynamicContext,
   nodes: any[],
   pattern: string,
-  nsResolver: NamespaceResolver,
+  namespaceResolver: NamespaceResolver,
 ): NodeGroup[] {
   const variables = mergeVariableScopes(context.variableScopes);
   let retval: NodeGroup[] = [];
   let currentGroup: any[] = [];
 
-  for (let node of nodes) {
+  iterateNodes(nodes, (node, position, last) => {
     const matches = evaluateXPathToBoolean(
       pattern,
       node,
@@ -1220,7 +1238,8 @@ function groupStartingWith(
       variables,
       {
         currentContext: context,
-        namespaceResolver: nsResolver,
+        namespaceResolver,
+        functionNameResolver,
       },
     );
 
@@ -1229,7 +1248,7 @@ function groupStartingWith(
       currentGroup = [];
     }
     currentGroup.push(node);
-  }
+  });
 
   // Last group
   finishGroup(retval, currentGroup);
@@ -1241,13 +1260,13 @@ function groupEndingWith(
   context: DynamicContext,
   nodes: any[],
   pattern: string,
-  nsResolver: NamespaceResolver,
+  namespaceResolver: NamespaceResolver,
 ): NodeGroup[] {
   const variables = mergeVariableScopes(context.variableScopes);
   let retval: NodeGroup[] = [];
   let currentGroup: any[] = [];
 
-  for (let node of nodes) {
+  iterateNodes(nodes, (node, position, last) => {
     currentGroup.push(node);
 
     const matches = evaluateXPathToBoolean(
@@ -1257,7 +1276,8 @@ function groupEndingWith(
       variables,
       {
         currentContext: context,
-        namespaceResolver: nsResolver,
+        namespaceResolver,
+        functionNameResolver,
       },
     );
 
@@ -1265,7 +1285,7 @@ function groupEndingWith(
       finishGroup(retval, currentGroup);
       currentGroup = [];
     }
-  }
+  });
 
   // Last group
   finishGroup(retval, currentGroup);
@@ -1286,51 +1306,60 @@ export function forEachGroup(
   },
   func: SequenceConstructor,
 ) {
-  const nsResolver = mkResolver(data.namespaces);
+  const namespaceResolver = mkResolver(data.namespaces);
   const variables = mergeVariableScopes(context.variableScopes);
   const nodeList = evaluateXPathToNodes(
     data.select,
     context.contextItem,
     undefined,
     variables,
-    { currentContext: context, namespaceResolver: nsResolver },
+    { currentContext: context, namespaceResolver, functionNameResolver },
   );
   if (nodeList && Symbol.iterator in Object(nodeList)) {
     let groupedNodes: NodeGroup[] = [];
     if (data.groupBy) {
-      groupedNodes = groupBy(context, nodeList, data.groupBy, nsResolver);
+      groupedNodes = groupBy(
+        context,
+        nodeList,
+        data.groupBy,
+        namespaceResolver,
+      );
     } else if (data.groupAdjacent) {
       groupedNodes = groupAdjacent(
         context,
         nodeList,
         data.groupAdjacent,
-        nsResolver,
+        namespaceResolver,
       );
     } else if (data.groupEndingWith) {
       groupedNodes = groupEndingWith(
         context,
         nodeList,
         data.groupEndingWith,
-        nsResolver,
+        namespaceResolver,
       );
     } else if (data.groupStartingWith) {
       groupedNodes = groupStartingWith(
         context,
         nodeList,
         data.groupStartingWith,
-        nsResolver,
+        namespaceResolver,
       );
     }
     // TODO: sort
-    for (let { key, nodes } of groupedNodes) {
-      func({
+    const last = groupedNodes.length;
+    iterateNodes(groupedNodes, ({ key, nodes }, position, last) => {
+      const newContext = {
         ...context,
         contextItem: nodes[0],
         currentGroupingKey: key,
         currentGroup: nodes,
+        position,
+        last,
         variableScopes: extendScope(context.variableScopes),
-      });
-    }
+      };
+      func(newContext);
+    });
   }
 }
 
@@ -1506,9 +1535,16 @@ function shouldStripSpace(
 ): boolean {
   let patternMatchCache: PatternMatchCache = new Map();
   for (const decl of whitespaceDeclarations) {
-    const nsResolver = mkResolver(decl.namespaces);
+    const namespaceResolver = mkResolver(decl.namespaces);
     if (
-      patternMatch(patternMatchCache, decl.match, null, node, [], nsResolver)
+      patternMatch(
+        patternMatchCache,
+        decl.match,
+        null,
+        node,
+        [],
+        namespaceResolver,
+      )
     ) {
       if (decl.preserve) {
         return false;
@@ -1600,7 +1636,11 @@ function constructSimpleContent(
       undefined,
       mergeVariableScopes(context.variableScopes),
       evaluateXPath.STRINGS_TYPE,
-      { currentContext: context, namespaceResolver: namespaceResolver },
+      {
+        currentContext: context,
+        namespaceResolver: namespaceResolver,
+        functionNameResolver,
+      },
     ).join(effectiveSeparator);
   } else {
     return extractText(
