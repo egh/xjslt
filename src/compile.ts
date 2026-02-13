@@ -432,12 +432,6 @@ function compileWhitespaceDeclarationNode(
   );
 }
 
-function mkResolverForNode(node: slimdom.Element): NamespaceResolver {
-  return (prefix: string) => {
-    return node.lookupNamespaceURI(prefix);
-  };
-}
-
 function skipAttribute(attr: slimdom.Attr): boolean {
   if (attr.namespaceURI == XMLNS_NSURI && attr.value === XSLT1_NSURI) {
     return true;
@@ -502,6 +496,14 @@ export function getNodeNS(node: slimdom.Element, retval: object = undefined) {
       }
     }
   }
+
+  const xpathDefaultNs =
+    node.getAttribute("xpath-default-namespace") ||
+    node.getAttributeNS(XSLT1_NSURI, "xpath-default-namespace");
+  if (xpathDefaultNs !== null) {
+    retval["#xpath-default"] = xpathDefaultNs;
+  }
+
   return retval;
 }
 
@@ -943,7 +945,7 @@ function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
   let matchFunction: any = mkLiteral(undefined);
   if (match) {
     let compiled = compileXPathToJavaScript(match, evaluateXPath.NODES_TYPE, {
-      namespaceResolver: mkResolverForNode(node),
+      namespaceResolver: mkResolver(getNodeNS(node)),
     });
     if (compiled.isAstAccepted) {
       matchFunction = {

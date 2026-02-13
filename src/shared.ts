@@ -30,7 +30,11 @@ export function mkOutputDefinition(data: {
 
 export function mkResolver(namespaces: object) {
   return (prefix: string): string | null => {
-    return namespaces[prefix];
+    // For empty prefix, check xpath-default-namespace first
+    if (prefix === "" && "#xpath-default" in namespaces) {
+      return (namespaces["#xpath-default"] as string) || null;
+    }
+    return namespaces[prefix] as string | null;
   };
 }
 
