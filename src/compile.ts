@@ -162,6 +162,34 @@ function compileFunctionNode(node: slimdom.Element, context: CompileContext) {
   ]);
 }
 
+/**
+ * Try to precompile an xpath.
+ * Returns an AST node for a compiled match function, or undefined literal if compilation fails.
+ */
+function tryCompilePattern(
+  pattern: string | null | undefined,
+  namespaces: object,
+): any {
+  if (!pattern) {
+    return mkLiteral(undefined);
+  }
+
+  const compiled = compileXPathToJavaScript(pattern, evaluateXPath.NODES_TYPE, {
+    namespaceResolver: mkResolver(namespaces),
+  });
+
+  if (compiled.isAstAccepted) {
+    return {
+      type: "CallExpression",
+      callee: mkMember("xjslt", "compileMatchFunction"),
+      arguments: [mkLiteral(compiled.code)],
+      optional: false,
+    };
+  }
+
+  return mkLiteral(undefined);
+}
+
 function compileForEachNode(node: slimdom.Element, context: CompileContext) {
   const args = {
     select: node.getAttribute("select"),
@@ -175,6 +203,20 @@ function compileForEachGroupNode(
   node: slimdom.Element,
   context: CompileContext,
 ) {
+  const namespaces = getNodeNS(node);
+  const groupStartingWith = node.getAttribute("group-starting-with");
+  const groupEndingWith = node.getAttribute("group-ending-with");
+
+  // Precompile patterns if possible
+  const groupStartingWithFunction = tryCompilePattern(
+    groupStartingWith,
+    namespaces,
+  );
+  const groupEndingWithFunction = tryCompilePattern(
+    groupEndingWith,
+    namespaces,
+  );
+
   return compileFuncallWithChildren(
     node,
     "forEachGroup",
@@ -182,10 +224,12 @@ function compileForEachGroupNode(
       select: node.getAttribute("select"),
       groupBy: node.getAttribute("group-by"),
       groupAdjacent: node.getAttribute("group-adjacent"),
-      groupStartingWith: node.getAttribute("group-starting-with"),
-      groupEndingWith: node.getAttribute("group-ending-with"),
+      groupStartingWith: groupStartingWith,
+      groupStartingWithFunction: groupStartingWithFunction,
+      groupEndingWith: groupEndingWith,
+      groupEndingWithFunction: groupEndingWithFunction,
       sortKeyComponents: compileSortKeyComponents(node.childNodes, context),
-      namespaces: getNodeNS(node),
+      namespaces: namespaces,
     }),
     context,
   );
@@ -942,20 +986,7 @@ function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
   let allowedParams = compileParams("param", node.childNodes, context);
   let namespaces = getNodeNS(node);
   const match: string | undefined = node.getAttribute("match") || undefined;
-  let matchFunction: any = mkLiteral(undefined);
-  if (match) {
-    let compiled = compileXPathToJavaScript(match, evaluateXPath.NODES_TYPE, {
-      namespaceResolver: mkResolver(getNodeNS(node)),
-    });
-    if (compiled.isAstAccepted) {
-      matchFunction = {
-        type: "CallExpression",
-        callee: mkMember("xjslt", "compileMatchFunction"),
-        arguments: [mkLiteral(compiled.code)],
-        optional: false,
-      };
-    }
-  }
+  const matchFunction = tryCompilePattern(match, namespaces);
   context.templates.push({
     match: match,
     matchFunction: matchFunction,

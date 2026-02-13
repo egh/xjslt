@@ -1224,23 +1224,20 @@ function groupStartingWith(
   context: DynamicContext,
   nodes: any[],
   pattern: string,
+  matchFunction: CompiledXPathFunction | undefined,
   namespaceResolver: NamespaceResolver,
 ): NodeGroup[] {
-  const variables = mergeVariableScopes(context.variableScopes);
   let retval: NodeGroup[] = [];
   let currentGroup: any[] = [];
 
   iterateNodes(nodes, (node, position, last) => {
-    const matches = evaluateXPathToBoolean(
+    const matches = patternMatch(
+      context.patternMatchCache,
       pattern,
+      matchFunction,
       node,
-      undefined,
-      variables,
-      {
-        currentContext: context,
-        namespaceResolver,
-        functionNameResolver,
-      },
+      context.variableScopes,
+      namespaceResolver,
     );
 
     if (matches) {
@@ -1260,25 +1257,22 @@ function groupEndingWith(
   context: DynamicContext,
   nodes: any[],
   pattern: string,
+  matchFunction: CompiledXPathFunction | undefined,
   namespaceResolver: NamespaceResolver,
 ): NodeGroup[] {
-  const variables = mergeVariableScopes(context.variableScopes);
   let retval: NodeGroup[] = [];
   let currentGroup: any[] = [];
 
   iterateNodes(nodes, (node, position, last) => {
     currentGroup.push(node);
 
-    const matches = evaluateXPathToBoolean(
+    const matches = patternMatch(
+      context.patternMatchCache,
       pattern,
+      matchFunction,
       node,
-      undefined,
-      variables,
-      {
-        currentContext: context,
-        namespaceResolver,
-        functionNameResolver,
-      },
+      context.variableScopes,
+      namespaceResolver,
     );
 
     if (matches) {
@@ -1300,7 +1294,9 @@ export function forEachGroup(
     groupBy?: string;
     groupAdjacent?: string;
     groupStartingWith?: string;
+    groupStartingWithFunction?: CompiledXPathFunction;
     groupEndingWith?: string;
+    groupEndingWithFunction?: CompiledXPathFunction;
     namespaces: object;
     sortKeyComponents: SortKeyComponent[];
   },
@@ -1336,6 +1332,7 @@ export function forEachGroup(
         context,
         nodeList,
         data.groupEndingWith,
+        data.groupEndingWithFunction,
         namespaceResolver,
       );
     } else if (data.groupStartingWith) {
@@ -1343,6 +1340,7 @@ export function forEachGroup(
         context,
         nodeList,
         data.groupStartingWith,
+        data.groupStartingWithFunction,
         namespaceResolver,
       );
     }
