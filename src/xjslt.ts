@@ -215,7 +215,7 @@ function fastSuccess(pattern: string, node: slimdom.Node) {
 
 /* Implementation of https://www.w3.org/TR/xslt20/#pattern-syntax */
 function patternMatch(
-  patternMatchCache: PatternMatchCache | undefined,
+  patternMatchCache: PatternMatchCache,
   match: string,
   matchFunction: CompiledXPathFunction | undefined,
   node: slimdom.Node,
