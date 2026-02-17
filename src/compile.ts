@@ -66,10 +66,16 @@ import {
   XSLT1_NSURI,
   XMLNS_NSURI,
   NodeType,
+  NumberFormat,
   OutputDefinition,
   xpathstring,
 } from "./definitions";
-import { mkOutputDefinition, mkResolver, sortSortable } from "./shared";
+import {
+  isAlphanumeric,
+  mkOutputDefinition,
+  mkResolver,
+  sortSortable,
+} from "./shared";
 
 /**
  * Functions to walk a DOM tree of an XSLT stylesheet and generate an
@@ -235,6 +241,72 @@ function compileForEachGroupNode(
   );
 }
 
+/**
+ * Parse format tokens from a format string at compile time.
+ * The first token never has a separator.
+ */
+export function parseNumberFormat(format: string): NumberFormat {
+  let retval: NumberFormat = {
+    prefix: undefined,
+    suffix: undefined,
+    formats: [],
+  };
+  let currentAlpha = "";
+  let currentNonAlpha = "";
+  let inAlpha = false;
+
+  for (let i = 0; i < format.length; i++) {
+    const ch = format[i];
+    if (isAlphanumeric(ch)) {
+      if (inAlpha) {
+        // Continue building the current token
+        currentAlpha += ch;
+      } else {
+        // Starting a new token
+        if (retval.formats.length === 0) {
+          // First token - what we've seen so far is the prefix
+          if (currentNonAlpha) {
+            retval.prefix = currentNonAlpha;
+          }
+        } else {
+          // Subsequent token - save the separator on the previous token
+          if (retval.formats.length > 0) {
+            retval.formats[retval.formats.length - 1].separator =
+              currentNonAlpha || undefined;
+          }
+        }
+        currentNonAlpha = "";
+        currentAlpha = ch;
+        inAlpha = true;
+      }
+    } else {
+      // Non-alphanumeric character found
+      if (inAlpha) {
+        // Ending a token
+        retval.formats.push({ format: currentAlpha });
+        currentAlpha = "";
+        inAlpha = false;
+      }
+      currentNonAlpha += ch;
+    }
+  }
+
+  // Handle any remaining token
+  if (currentAlpha.length > 0) {
+    retval.formats.push({ format: currentAlpha });
+  }
+
+  // Any remaining non-alpha text is the suffix
+  retval.suffix = currentNonAlpha || undefined;
+
+  // If no formats found, everything is the prefix, not suffix
+  if (retval.formats.length === 0) {
+    retval.prefix = currentNonAlpha || undefined;
+    retval.suffix = undefined;
+  }
+
+  return retval;
+}
 function compilePerformSortNode(
   node: slimdom.Element,
   context: CompileContext,

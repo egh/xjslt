@@ -13,6 +13,18 @@ export function parseYesNoOmit(input: string): boolean | undefined {
   }
 }
 
+/**
+ * https://www.w3.org/TR/xslt20/#convert
+ * Test if a character is alphanumeric according to Unicode categories:
+ * Nd (Decimal Number), Nl (Letter Number), No (Other Number),
+ * Lu (Uppercase Letter), Ll (Lowercase Letter), Lt (Titlecase Letter),
+ * Lm (Modifier Letter), Lo (Other Letter)
+ */
+export function isAlphanumeric(char: string): boolean {
+  // Test for Unicode number and letter categories
+  return /^[\p{Nd}\p{Nl}\p{No}\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}]$/u.test(char);
+}
+
 /* Make an output definition from strings. */
 export function mkOutputDefinition(data: {
   omitXmlDeclaration?: string;

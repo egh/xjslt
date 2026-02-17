@@ -98,6 +98,12 @@ export interface OutputDefinition {
   standalone?: boolean | undefined;
 }
 
+export interface NumberFormat {
+  prefix?: string;
+  suffix?: string;
+  formats: Array<{ format: string; separator?: string }>;
+}
+
 export enum NodeType {
   ELEMENT = 1,
   ATTRIBUTE,
