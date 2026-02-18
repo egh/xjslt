@@ -19,6 +19,7 @@
  */
 
 import { parseNumberFormat } from "../src/compile";
+import { toRoman } from "../src/xjslt";
 
 describe("parseNumberFormat", () => {
   describe("Simple formats", () => {
@@ -282,6 +283,54 @@ describe("parseNumberFormat", () => {
         suffix: undefined,
         formats: [{ format: "١" }],
       });
+    });
+  });
+});
+
+describe("toRoman", () => {
+  describe("Basic numerals 1-10", () => {
+    test("units 1-3", () => {
+      expect(toRoman(1)).toBe("i");
+      expect(toRoman(2)).toBe("ii");
+      expect(toRoman(3)).toBe("iii");
+      expect(toRoman(4)).toBe("iv");
+      expect(toRoman(5)).toBe("v");
+      expect(toRoman(6)).toBe("vi");
+      expect(toRoman(7)).toBe("vii");
+      expect(toRoman(8)).toBe("viii");
+      expect(toRoman(9)).toBe("ix");
+      expect(toRoman(10)).toBe("x");
+    });
+  });
+
+  describe("Tens 10-100", () => {
+    test("multiples of 10", () => {
+      expect(toRoman(10)).toBe("x");
+      expect(toRoman(20)).toBe("xx");
+      expect(toRoman(30)).toBe("xxx");
+      expect(toRoman(40)).toBe("xl");
+      expect(toRoman(50)).toBe("l");
+      expect(toRoman(60)).toBe("lx");
+      expect(toRoman(70)).toBe("lxx");
+      expect(toRoman(80)).toBe("lxxx");
+      expect(toRoman(90)).toBe("xc");
+      expect(toRoman(100)).toBe("c");
+    });
+  });
+
+  describe("Large numbers", () => {
+    test("thousands", () => {
+      expect(toRoman(1000)).toBe("m");
+      expect(toRoman(2000)).toBe("mm");
+      expect(toRoman(3000)).toBe("mmm");
+    });
+
+    test("mixed large numbers", () => {
+      expect(toRoman(1234)).toBe("mccxxxiv");
+      expect(toRoman(2345)).toBe("mmcccxlv");
+      expect(toRoman(3456)).toBe("mmmcdlvi");
+      expect(toRoman(3888)).toBe("mmmdccclxxxviii");
+      expect(toRoman(3999)).toBe("mmmcmxcix");
     });
   });
 });

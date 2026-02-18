@@ -1361,6 +1361,39 @@ export function forEachGroup(
   }
 }
 
+/**
+ * Convert a number to Roman numerals.
+ */
+export function toRoman(input: number): string {
+  const romanNumerals = new Map<number, string>([
+    [1000, "m"],
+    [900, "cm"],
+    [500, "d"],
+    [400, "cd"],
+    [100, "c"],
+    [90, "xc"],
+    [50, "l"],
+    [40, "xl"],
+    [10, "x"],
+    [9, "ix"],
+    [5, "v"],
+    [4, "iv"],
+    [1, "i"],
+  ]);
+
+  let retval = "";
+  let remaining = input;
+
+  for (const [value, symbol] of romanNumerals) {
+    while (remaining >= value) {
+      retval += symbol;
+      remaining -= value;
+    }
+  }
+
+  return retval;
+}
+
 export function mkNodeAppender(
   outputNode: slimdom.Element | slimdom.Document | slimdom.DocumentFragment,
 ): Appender {
