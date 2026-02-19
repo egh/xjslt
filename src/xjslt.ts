@@ -1361,6 +1361,96 @@ export function forEachGroup(
   }
 }
 
+const UNICODE_DIGIT_STARTS = [
+  0x0031, // ASCII digits (1-9)
+  0x0661, // Arabic-Indic digits (١-٩)
+  0x06f1, // Extended Arabic-Indic digits (۱-۹)
+  0x0967, // Devanagari digits (१-९)
+  0x09e7, // Bengali digits (১-৯)
+  0x0a67, // Gurmukhi digits (੧-੯)
+  0x0ae7, // Gujarati digits (૧-૯)
+  0x0b67, // Oriya digits (୧-୯)
+  0x0be7, // Tamil digits (௧-௯)
+  0x0c67, // Telugu digits (౧-౯)
+  0x0ce7, // Kannada digits (೧-೯)
+  0x0d67, // Malayalam digits (൧-൯)
+  0x0de7, // Sinhala Lith digits (෧-෯)
+  0x0e51, // Thai digits (๑-๙)
+  0x0ed1, // Lao digits (໑-໙)
+  0x0f21, // Tibetan digits (༡-༩)
+  0x1041, // Myanmar digits (၁-၉)
+  0x1091, // Myanmar Shan digits (႑-႙)
+  0x17e1, // Khmer digits (១-៩)
+  0x1811, // Mongolian digits (᠑-᠙)
+  0x1947, // Limbu digits (᥇-᥏)
+  0x19d1, // New Tai Lue digits (᧑-᧙)
+  0x1a81, // Tai Tham Hora digits (᪁-᪉)
+  0x1a91, // Tai Tham Tham digits (᪑-᪙)
+  0x1b51, // Balinese digits (᭑-᭙)
+  0x1bb1, // Sundanese digits (᮱-᮹)
+  0x1c41, // Lepcha digits (᱁-᱉)
+  0x1c51, // Ol Chiki digits (᱑-᱙)
+  0xa621, // Vai digits (꘡-꘩)
+  0xa8d1, // Saurashtra digits (꣑-꣙)
+  0xa901, // Kayah Li digits (꤁-꤉)
+  0xa9d1, // Javanese digits (꧑-꧙)
+  0xa9f1, // Myanmar Tai Laing digits (꧱-꧹)
+  0xaa51, // Cham digits (꩑-꩙)
+  0xabf1, // Meetei Mayek digits (꯱-꯹)
+  0xff11, // Fullwidth digits (１-９)
+  0x104a1, // Osmanya digits (𐒡-𐒩)
+  0x10d31, // Hanifi Rohingya digits (𐴱-𐴹)
+  0x11067, // Brahmi digits (𑁧-𑁯)
+  0x110f1, // Sora Sompeng digits (𑃱-𑃹)
+  0x11137, // Chakma digits (𑄷-𑄿)
+  0x111d1, // Sharada digits (𑇑-𑇙)
+  0x112f1, // Khudawadi digits (𑋱-𑋹)
+  0x11451, // Newa digits (𑑑-𑑙)
+  0x114d1, // Tirhuta digits (𑓑-𑓙)
+  0x11651, // Modi digits (𑙑-𑙙)
+  0x116c1, // Takri digits (𑛁-𑛉)
+  0x11731, // Ahom digits (𑜱-𑜹)
+  0x118e1, // Warang Citi digits (𑣡-𑣩)
+  0x11c51, // Bhaiksuki digits (𑱑-𑱙)
+  0x11d51, // Masaram Gondi digits (𑵑-𑵙)
+  0x11da1, // Gunjala Gondi digits (𑶡-𑶩)
+  0x16a61, // Mro digits (𖩡-𖩩)
+  0x16b51, // Pahawh Hmong digits (𖭑-𖭙)
+  0x1d7cf, // Mathematical bold digits (𝟏-𝟗)
+  0x1d7d9, // Mathematical double-struck digits (𝟙-𝟡)
+  0x1d7e3, // Mathematical sans-serif digits (𝟣-𝟫)
+  0x1d7ed, // Mathematical sans-serif bold digits (𝟭-𝟵)
+  0x1d7f7, // Mathematical monospace digits (𝟷-𝟿)
+  0x1e951, // Adlam digits (𞥑-𞥙)
+];
+
+export function mkToNumeric(
+  startDigit: number,
+): (n: number, padding?: number) => string {
+  const digitZero = startDigit - 1;
+  const strings = [...Array(10)].map((_, i) =>
+    String.fromCodePoint(digitZero + i),
+  );
+  return function (n: number, padding: number = 0): string {
+    if (n === 0) {
+      return strings[0].padStart(padding, strings[0]);
+    }
+
+    let result = "";
+    let i = n;
+    while (i > 0) {
+      result = strings[i % 10] + result;
+      i = Math.floor(i / 10);
+    }
+    return result.padStart(padding, strings[0]);
+  };
+}
+
+// Standard ASCII numeric generator
+export function toNumeric(n: number, padding: number = 0) {
+  return String(n).padStart(padding, "0");
+}
+
 /**
  * Convert a number to Roman numerals.
  */

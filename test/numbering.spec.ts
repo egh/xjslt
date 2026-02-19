@@ -19,7 +19,7 @@
  */
 
 import { parseNumberFormat } from "../src/compile";
-import { toRoman } from "../src/xjslt";
+import { mkToNumeric, toNumeric, toRoman } from "../src/xjslt";
 
 describe("parseNumberFormat", () => {
   describe("Simple formats", () => {
@@ -331,6 +331,87 @@ describe("toRoman", () => {
       expect(toRoman(3456)).toBe("mmmcdlvi");
       expect(toRoman(3888)).toBe("mmmdccclxxxviii");
       expect(toRoman(3999)).toBe("mmmcmxcix");
+    });
+  });
+});
+describe("mkToNumeric", () => {
+  describe("ASCII digits", () => {
+    const toAsciiNumeric = mkToNumeric(0x0031);
+
+    test("single digits", () => {
+      expect(toAsciiNumeric(0)).toBe("0");
+      expect(toAsciiNumeric(1)).toBe("1");
+      expect(toAsciiNumeric(5)).toBe("5");
+      expect(toAsciiNumeric(9)).toBe("9");
+      expect(toNumeric(0)).toBe("0");
+      expect(toNumeric(1)).toBe("1");
+      expect(toNumeric(5)).toBe("5");
+      expect(toNumeric(9)).toBe("9");
+    });
+
+    test("multi-digit numbers", () => {
+      expect(toAsciiNumeric(10)).toBe("10");
+      expect(toAsciiNumeric(42)).toBe("42");
+      expect(toAsciiNumeric(123)).toBe("123");
+      expect(toAsciiNumeric(1234567890)).toBe("1234567890");
+      expect(toNumeric(10)).toBe("10");
+      expect(toNumeric(42)).toBe("42");
+      expect(toNumeric(123)).toBe("123");
+      expect(toNumeric(1234567890)).toBe("1234567890");
+    });
+
+    test("with padding", () => {
+      expect(toAsciiNumeric(1, 3)).toBe("001");
+      expect(toAsciiNumeric(42, 5)).toBe("00042");
+      expect(toAsciiNumeric(123, 2)).toBe("123"); // No padding if already longer
+      expect(toAsciiNumeric(7, 1)).toBe("7"); // Padding equals length
+      expect(toNumeric(1, 3)).toBe("001");
+      expect(toNumeric(42, 5)).toBe("00042");
+      expect(toNumeric(123, 2)).toBe("123"); // No padding if already longer
+      expect(toNumeric(7, 1)).toBe("7"); // Padding equals length
+    });
+
+    test("zero with padding", () => {
+      expect(toAsciiNumeric(0, 1)).toBe("0");
+      expect(toAsciiNumeric(0, 3)).toBe("000");
+      expect(toAsciiNumeric(0, 5)).toBe("00000");
+      expect(toNumeric(0, 1)).toBe("0");
+      expect(toNumeric(0, 3)).toBe("000");
+      expect(toNumeric(0, 5)).toBe("00000");
+    });
+  });
+
+  describe("Mathematical bold digits", () => {
+    const toBoldDigits = mkToNumeric(0x1d7cf);
+
+    test("single digits", () => {
+      expect(toBoldDigits(0)).toBe("𝟎");
+      expect(toBoldDigits(1)).toBe("𝟏");
+      expect(toBoldDigits(5)).toBe("𝟓");
+      expect(toBoldDigits(9)).toBe("𝟗");
+    });
+
+    test("multi-digit numbers", () => {
+      expect(toBoldDigits(42)).toBe("𝟒𝟐");
+      expect(toBoldDigits(123)).toBe("𝟏𝟐𝟑");
+    });
+  });
+
+  describe("Edge cases", () => {
+    const toAsciiNumeric = mkToNumeric(0x0031);
+
+    test("excessive padding", () => {
+      expect(toAsciiNumeric(1, 10)).toBe("0000000001");
+      expect(toAsciiNumeric(42, 20)).toBe("00000000000000000042");
+      expect(toNumeric(1, 10)).toBe("0000000001");
+      expect(toNumeric(42, 20)).toBe("00000000000000000042");
+    });
+
+    test("zero padding", () => {
+      expect(toAsciiNumeric(123, 0)).toBe("123");
+      expect(toAsciiNumeric(42, 0)).toBe("42");
+      expect(toNumeric(123, 0)).toBe("123");
+      expect(toNumeric(42, 0)).toBe("42");
     });
   });
 });
