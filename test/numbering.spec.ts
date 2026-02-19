@@ -20,6 +20,7 @@
 
 import { parseNumberFormat } from "../src/compile";
 import {
+  groupNumeric,
   mkToNumeric,
   toAlphabetic,
   toAlphabeticUpper,
@@ -396,13 +397,7 @@ describe("toAlphabetic", () => {
 
 describe("mkToNumeric", () => {
   describe("ASCII digits", () => {
-    const toAsciiNumeric = mkToNumeric(0x0031);
-
     test("single digits", () => {
-      expect(toAsciiNumeric(0)).toBe("0");
-      expect(toAsciiNumeric(1)).toBe("1");
-      expect(toAsciiNumeric(5)).toBe("5");
-      expect(toAsciiNumeric(9)).toBe("9");
       expect(toNumeric(0)).toBe("0");
       expect(toNumeric(1)).toBe("1");
       expect(toNumeric(5)).toBe("5");
@@ -410,10 +405,6 @@ describe("mkToNumeric", () => {
     });
 
     test("multi-digit numbers", () => {
-      expect(toAsciiNumeric(10)).toBe("10");
-      expect(toAsciiNumeric(42)).toBe("42");
-      expect(toAsciiNumeric(123)).toBe("123");
-      expect(toAsciiNumeric(1234567890)).toBe("1234567890");
       expect(toNumeric(10)).toBe("10");
       expect(toNumeric(42)).toBe("42");
       expect(toNumeric(123)).toBe("123");
@@ -421,10 +412,6 @@ describe("mkToNumeric", () => {
     });
 
     test("with padding", () => {
-      expect(toAsciiNumeric(1, 3)).toBe("001");
-      expect(toAsciiNumeric(42, 5)).toBe("00042");
-      expect(toAsciiNumeric(123, 2)).toBe("123"); // No padding if already longer
-      expect(toAsciiNumeric(7, 1)).toBe("7"); // Padding equals length
       expect(toNumeric(1, 3)).toBe("001");
       expect(toNumeric(42, 5)).toBe("00042");
       expect(toNumeric(123, 2)).toBe("123"); // No padding if already longer
@@ -432,9 +419,6 @@ describe("mkToNumeric", () => {
     });
 
     test("zero with padding", () => {
-      expect(toAsciiNumeric(0, 1)).toBe("0");
-      expect(toAsciiNumeric(0, 3)).toBe("000");
-      expect(toAsciiNumeric(0, 5)).toBe("00000");
       expect(toNumeric(0, 1)).toBe("0");
       expect(toNumeric(0, 3)).toBe("000");
       expect(toNumeric(0, 5)).toBe("00000");
@@ -457,19 +441,62 @@ describe("mkToNumeric", () => {
     });
   });
 
-  describe("Edge cases", () => {
-    const toAsciiNumeric = mkToNumeric(0x0031);
+  describe("Grouping separators", () => {
+    test("grouping with different separator", () => {
+      expect(groupNumeric(toNumeric(1000, 0), " ", 3)).toBe("1 000");
+      expect(groupNumeric(toNumeric(1234567, 0), ".", 3)).toBe("1.234.567");
+      expect(groupNumeric(toNumeric(12345, 0), "_", 3)).toBe("12_345");
+    });
 
+    test("different grouping sizes", () => {
+      expect(groupNumeric(toNumeric(12345, 0), ",", 2)).toBe("1,23,45");
+      expect(groupNumeric(toNumeric(123456, 0), ",", 4)).toBe("12,3456");
+      expect(groupNumeric(toNumeric(1234567890, 0), ",", 5)).toBe(
+        "12345,67890",
+      ); // Right-to-left grouping
+    });
+
+    test("no grouping when length doesn't exceed grouping size", () => {
+      expect(groupNumeric(toNumeric(123, 0), ",", 3)).toBe("123");
+      expect(groupNumeric(toNumeric(99, 0), ",", 3)).toBe("99");
+      expect(groupNumeric(toNumeric(1, 0), ",", 3)).toBe("1");
+    });
+
+    test("grouping with padding", () => {
+      expect(groupNumeric(toNumeric(42, 6), ",", 3)).toBe("000,042");
+      expect(groupNumeric(toNumeric(1, 5), ",", 3)).toBe("00,001");
+    });
+
+    test("zero with grouping", () => {
+      expect(groupNumeric(toNumeric(0, 0), ",", 3)).toBe("0");
+    });
+
+    test("Unicode digit grouping with Arabic-Indic digits", () => {
+      const toArabicIndic = mkToNumeric(0x0661); // Arabic-Indic digits
+      expect(groupNumeric(toArabicIndic(1234, 0), "٬", 3)).toBe("١٬٢٣٤");
+      expect(groupNumeric(toArabicIndic(1234567, 0), "٬", 3)).toBe("١٬٢٣٤٬٥٦٧");
+    });
+
+    test("Unicode digit grouping with Devanagari digits", () => {
+      const toDevanagari = mkToNumeric(0x0967); // Devanagari digits
+      expect(groupNumeric(toDevanagari(1234, 0), ",", 3)).toBe("१,२३४");
+      expect(groupNumeric(toDevanagari(123456, 0), ",", 3)).toBe("१२३,४५६");
+    });
+
+    test("Unicode digit grouping with Thai digits", () => {
+      const toThai = mkToNumeric(0x0e51); // Thai digits
+      expect(groupNumeric(toThai(1234, 0), ",", 3)).toBe("๑,๒๓๔");
+      expect(groupNumeric(toThai(12345678, 0), " ", 3)).toBe("๑๒ ๓๔๕ ๖๗๘");
+    });
+  });
+
+  describe("Edge cases", () => {
     test("excessive padding", () => {
-      expect(toAsciiNumeric(1, 10)).toBe("0000000001");
-      expect(toAsciiNumeric(42, 20)).toBe("00000000000000000042");
       expect(toNumeric(1, 10)).toBe("0000000001");
       expect(toNumeric(42, 20)).toBe("00000000000000000042");
     });
 
     test("zero padding", () => {
-      expect(toAsciiNumeric(123, 0)).toBe("123");
-      expect(toAsciiNumeric(42, 0)).toBe("42");
       expect(toNumeric(123, 0)).toBe("123");
       expect(toNumeric(42, 0)).toBe("42");
     });

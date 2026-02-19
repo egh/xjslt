@@ -1424,6 +1424,23 @@ const UNICODE_DIGIT_STARTS = [
   0x1e951, // Adlam digits (𞥑-𞥙)
 ];
 
+export function groupNumeric(
+  n: string,
+  groupingSeparator: string,
+  groupingSize: number,
+): string {
+  const parts: string[] = [];
+  let remaining = n;
+  while (remaining.length > groupingSize) {
+    parts.unshift(remaining.slice(-groupingSize));
+    remaining = remaining.slice(0, -groupingSize);
+  }
+  if (remaining) {
+    parts.unshift(remaining);
+  }
+  return parts.join(groupingSeparator);
+}
+
 export function mkToNumeric(
   startDigit: number,
 ): (n: number, padding?: number) => string {
@@ -1447,9 +1464,7 @@ export function mkToNumeric(
 }
 
 // Standard ASCII numeric generator
-export function toNumeric(n: number, padding: number = 0) {
-  return String(n).padStart(padding, "0");
-}
+export const toNumeric = mkToNumeric(0x0031);
 
 /**
  * Generate a function to convert a number to alphabetic format (a, b, c, ..., z, aa, ...)
