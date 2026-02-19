@@ -1452,6 +1452,35 @@ export function toNumeric(n: number, padding: number = 0) {
 }
 
 /**
+ * Generate a function to convert a number to alphabetic format (a, b, c, ..., z, aa, ...)
+ */
+export function mkToAlphabetic(
+  startChar: number,
+  endChar: number,
+): (value: number) => string | undefined {
+  const radix = endChar - startChar + 1;
+  const strings = [...Array(radix)].map((_, i) =>
+    String.fromCodePoint(startChar + i),
+  );
+  return function (value: number) {
+    if (value === 0) return undefined;
+    let result = "";
+    let n = value;
+
+    while (n > 0) {
+      n--; // if n is 1, that's equal to startChar
+      result = strings[n % radix] + result;
+      n = Math.floor(n / radix);
+    }
+
+    return result;
+  };
+}
+
+export const toAlphabetic = mkToAlphabetic(97, 122);
+export const toAlphabeticUpper = mkToAlphabetic(65, 90);
+
+/**
  * Convert a number to Roman numerals.
  */
 export function toRoman(input: number): string {

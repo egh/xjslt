@@ -19,7 +19,13 @@
  */
 
 import { parseNumberFormat } from "../src/compile";
-import { mkToNumeric, toNumeric, toRoman } from "../src/xjslt";
+import {
+  mkToNumeric,
+  toAlphabetic,
+  toAlphabeticUpper,
+  toNumeric,
+  toRoman,
+} from "../src/xjslt";
 
 describe("parseNumberFormat", () => {
   describe("Simple formats", () => {
@@ -334,6 +340,60 @@ describe("toRoman", () => {
     });
   });
 });
+
+describe("toAlphabetic", () => {
+  test("basic", () => {
+    expect(toAlphabetic(1)).toBe("a");
+    expect(toAlphabetic(2)).toBe("b");
+    expect(toAlphabetic(3)).toBe("c");
+    expect(toAlphabetic(26)).toBe("z");
+    expect(toAlphabetic(27)).toBe("aa");
+    expect(toAlphabetic(28)).toBe("ab");
+    expect(toAlphabetic(29)).toBe("ac");
+    expect(toAlphabetic(52)).toBe("az");
+    expect(toAlphabetic(53)).toBe("ba");
+    expect(toAlphabetic(54)).toBe("bb");
+    expect(toAlphabetic(78)).toBe("bz");
+    expect(toAlphabetic(677)).toBe("za");
+    expect(toAlphabetic(702)).toBe("zz");
+    expect(toAlphabetic(703)).toBe("aaa");
+    expect(toAlphabetic(704)).toBe("aab");
+    expect(toAlphabetic(728)).toBe("aaz");
+    expect(toAlphabeticUpper(1)).toBe("A");
+    expect(toAlphabeticUpper(2)).toBe("B");
+    expect(toAlphabeticUpper(3)).toBe("C");
+    expect(toAlphabeticUpper(26)).toBe("Z");
+    expect(toAlphabeticUpper(27)).toBe("AA");
+    expect(toAlphabeticUpper(28)).toBe("AB");
+    expect(toAlphabeticUpper(29)).toBe("AC");
+    expect(toAlphabeticUpper(52)).toBe("AZ");
+    expect(toAlphabeticUpper(53)).toBe("BA");
+    expect(toAlphabeticUpper(54)).toBe("BB");
+    expect(toAlphabeticUpper(78)).toBe("BZ");
+    expect(toAlphabeticUpper(677)).toBe("ZA");
+    expect(toAlphabeticUpper(702)).toBe("ZZ");
+    expect(toAlphabeticUpper(703)).toBe("AAA");
+    expect(toAlphabeticUpper(704)).toBe("AAB");
+    expect(toAlphabeticUpper(728)).toBe("AAZ");
+  });
+
+  test("specific examples", () => {
+    expect(toAlphabetic(100)).toBe("cv");
+    expect(toAlphabetic(500)).toBe("sf");
+    expect(toAlphabetic(1000)).toBe("all");
+    expect(toAlphabeticUpper(100)).toBe("CV");
+    expect(toAlphabeticUpper(500)).toBe("SF");
+    expect(toAlphabeticUpper(1000)).toBe("ALL");
+  });
+
+  test("large numbers work correctly", () => {
+    expect(toAlphabetic(18278)).toBe("zzz");
+    expect(toAlphabetic(18279)).toBe("aaaa");
+    expect(toAlphabeticUpper(18279)).toBe("AAAA");
+    expect(toAlphabeticUpper(18278)).toBe("ZZZ");
+  });
+});
+
 describe("mkToNumeric", () => {
   describe("ASCII digits", () => {
     const toAsciiNumeric = mkToNumeric(0x0031);
