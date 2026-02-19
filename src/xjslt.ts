@@ -1426,9 +1426,13 @@ const UNICODE_DIGIT_STARTS = [
 
 export function groupNumeric(
   n: string,
-  groupingSeparator: string,
-  groupingSize: number,
+  groupingSeparator?: string,
+  groupingSize?: number,
 ): string {
+  if (!groupingSeparator || !groupingSize || n.length <= groupingSize) {
+    return n;
+  }
+
   const parts: string[] = [];
   let remaining = n;
   while (remaining.length > groupingSize) {
@@ -1494,6 +1498,73 @@ export function mkToAlphabetic(
 
 export const toAlphabetic = mkToAlphabetic(97, 122);
 export const toAlphabeticUpper = mkToAlphabetic(65, 90);
+
+/**
+ * Format a number with a specific format token.
+ * Based on XSLT 2.0 number formatting rules.
+ */
+export function formatWithToken(
+  value: number,
+  token: string,
+  groupingSeparator?: string,
+  groupingSize?: number,
+): string {
+  if (isNaN(value) || !isFinite(value)) {
+    return "";
+  }
+
+  // Check for ASCII decimal format
+  if (/0*1/.test(token)) {
+    return groupNumeric(
+      toNumeric(value, token.length),
+      groupingSeparator,
+      groupingSize,
+    );
+  }
+
+  // Uppercase alphabetic (A, B, C, ..., Z, AA, AB, ...)
+  if (token === "A") {
+    return toAlphabeticUpper(value) || "";
+  }
+
+  // Lowercase alphabetic (a, b, c, ..., z, aa, ab, ...)
+  if (token === "a") {
+    return toAlphabetic(value) || "";
+  }
+
+  // Uppercase Roman numerals
+  if (token === "I") {
+    return toRoman(value).toUpperCase();
+  }
+
+  // Lowercase Roman numerals
+  if (token === "i") {
+    return toRoman(value);
+  }
+
+  // Check for Unicode digit formats (excluding ASCII which is handled above)
+  for (const digitOne of UNICODE_DIGIT_STARTS) {
+    if (digitOne === 0x0031) continue; // Skip ASCII, already handled
+    const digitZero = digitOne - 1;
+    const re = new RegExp(
+      `${String.fromCharCode(digitZero)}*${String.fromCharCode(digitOne)}`,
+    );
+    if (re.test(token)) {
+      return groupNumeric(
+        mkToNumeric(digitOne)(value, token.length),
+        groupingSeparator,
+        groupingSize,
+      );
+    }
+  }
+
+  // Huh?
+  return groupNumeric(
+    toNumeric(value, token.length),
+    groupingSeparator,
+    groupingSize,
+  );
+}
 
 /**
  * Convert a number to Roman numerals.

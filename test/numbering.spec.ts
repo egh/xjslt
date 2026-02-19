@@ -21,6 +21,7 @@
 import { parseNumberFormat } from "../src/compile";
 import {
   groupNumeric,
+  formatWithToken,
   mkToNumeric,
   toAlphabetic,
   toAlphabeticUpper,
@@ -499,6 +500,109 @@ describe("mkToNumeric", () => {
     test("zero padding", () => {
       expect(toNumeric(123, 0)).toBe("123");
       expect(toNumeric(42, 0)).toBe("42");
+    });
+  });
+});
+
+describe("formatWithToken", () => {
+  describe("ASCII decimal formats", () => {
+    test("single digit token '1'", () => {
+      expect(formatWithToken(5, "1")).toBe("5");
+      expect(formatWithToken(42, "1")).toBe("42");
+      expect(formatWithToken(123, "1")).toBe("123");
+    });
+
+    test("zero-padded tokens", () => {
+      expect(formatWithToken(5, "01")).toBe("05");
+      expect(formatWithToken(5, "001")).toBe("005");
+      expect(formatWithToken(42, "0001")).toBe("0042");
+      expect(formatWithToken(1234, "01")).toBe("1234"); // No truncation
+    });
+
+    test("decimal with grouping separator", () => {
+      expect(formatWithToken(1234, "1", ",", 3)).toBe("1,234");
+      expect(formatWithToken(1234567, "1", ",", 3)).toBe("1,234,567");
+      expect(formatWithToken(12345, "01", " ", 3)).toBe("12 345");
+    });
+  });
+
+  describe("Alphabetic formats", () => {
+    test("lowercase alphabetic 'a'", () => {
+      expect(formatWithToken(1, "a")).toBe("a");
+      expect(formatWithToken(26, "a")).toBe("z");
+      expect(formatWithToken(27, "a")).toBe("aa");
+    });
+
+    test("uppercase alphabetic 'A'", () => {
+      expect(formatWithToken(1, "A")).toBe("A");
+      expect(formatWithToken(26, "A")).toBe("Z");
+      expect(formatWithToken(27, "A")).toBe("AA");
+    });
+  });
+
+  describe("Roman numeral formats", () => {
+    test("lowercase roman 'i'", () => {
+      expect(formatWithToken(1, "i")).toBe("i");
+      expect(formatWithToken(9, "i")).toBe("ix");
+      expect(formatWithToken(42, "i")).toBe("xlii");
+      expect(formatWithToken(1999, "i")).toBe("mcmxcix");
+    });
+
+    test("uppercase roman 'I'", () => {
+      expect(formatWithToken(1, "I")).toBe("I");
+      expect(formatWithToken(9, "I")).toBe("IX");
+      expect(formatWithToken(42, "I")).toBe("XLII");
+      expect(formatWithToken(1999, "I")).toBe("MCMXCIX");
+    });
+  });
+
+  describe("Unicode digit formats", () => {
+    test("Arabic-Indic digits '١'", () => {
+      expect(formatWithToken(5, "١")).toBe("٥");
+      expect(formatWithToken(42, "١")).toBe("٤٢");
+      expect(formatWithToken(123, "٠١")).toBe("١٢٣");
+    });
+
+    test("Devanagari digits '१'", () => {
+      expect(formatWithToken(5, "१")).toBe("५");
+      expect(formatWithToken(42, "१")).toBe("४२");
+      expect(formatWithToken(123, "०१")).toBe("१२३");
+    });
+
+    test("Thai digits '๑'", () => {
+      expect(formatWithToken(5, "๑")).toBe("๕");
+      expect(formatWithToken(42, "๑")).toBe("๔๒");
+      expect(formatWithToken(123, "๐๑")).toBe("๑๒๓");
+    });
+
+    test("Unicode digits with grouping", () => {
+      expect(formatWithToken(1234, "١", "٬", 3)).toBe("١٬٢٣٤");
+      expect(formatWithToken(1234567, "१", ",", 3)).toBe("१,२३४,५६७");
+    });
+
+    test("Unicode digits with padding", () => {
+      expect(formatWithToken(5, "٠١")).toBe("٠٥");
+      expect(formatWithToken(5, "०००१")).toBe("०००५");
+    });
+  });
+
+  describe("Edge cases", () => {
+    test("zero value", () => {
+      expect(formatWithToken(0, "1")).toBe("0");
+      expect(formatWithToken(0, "01")).toBe("00");
+      expect(formatWithToken(0, "a")).toBe("");
+      expect(formatWithToken(0, "A")).toBe("");
+      expect(formatWithToken(0, "i")).toBe("");
+    });
+
+    test("NaN returns empty string", () => {
+      expect(formatWithToken(NaN, "1")).toBe("");
+      expect(formatWithToken(NaN, "a")).toBe("");
+    });
+
+    test("Infinity returns empty string", () => {
+      expect(formatWithToken(Infinity, "1")).toBe("");
+      expect(formatWithToken(-Infinity, "1")).toBe("");
     });
   });
 });
