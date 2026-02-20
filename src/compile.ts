@@ -262,51 +262,51 @@ export function parseNumberFormat(format: string): NumberFormat {
         // Continue building the current token
         currentAlpha += ch;
       } else {
-        // Starting a new token
+        // Transition from non-alpha -> alpha (starting a new token)
         if (retval.formats.length === 0) {
           // First token - what we've seen so far is the prefix
           if (currentNonAlpha) {
             retval.prefix = currentNonAlpha;
           }
-        } else {
-          // Subsequent token - save the separator on the previous token
-          if (retval.formats.length > 0) {
-            retval.formats[retval.formats.length - 1].separator =
-              currentNonAlpha || undefined;
-          }
+          currentNonAlpha = "";
         }
-        currentNonAlpha = "";
         currentAlpha = ch;
         inAlpha = true;
       }
     } else {
       // Non-alphanumeric character found
       if (inAlpha) {
-        // Ending a token
-        retval.formats.push({ format: currentAlpha });
+        // Ending a token - push it with its separator
+        retval.formats.push({
+          format: currentAlpha,
+          separator: currentNonAlpha || ".",
+        });
         currentAlpha = "";
+        currentNonAlpha = "";
         inAlpha = false;
       }
       currentNonAlpha += ch;
     }
   }
 
-  // Handle any remaining token
-  if (currentAlpha.length > 0) {
-    retval.formats.push({ format: currentAlpha });
+  // Add the last token if we were in alpha mode
+  if (inAlpha && currentAlpha) {
+    retval.formats.push({
+      format: currentAlpha,
+      separator: currentNonAlpha || ".",
+    });
+  } else {
+    // Any remaining non-alpha text is the suffix
+    retval.suffix = currentNonAlpha || undefined;
   }
 
-  // Any remaining non-alpha text is the suffix
-  retval.suffix = currentNonAlpha || undefined;
-
-  // If no formats found, everything is the prefix, not suffix
   if (retval.formats.length === 0) {
-    retval.prefix = currentNonAlpha || undefined;
-    retval.suffix = undefined;
+    retval.prefix = retval.suffix;
   }
 
   return retval;
 }
+
 function compilePerformSortNode(
   node: slimdom.Element,
   context: CompileContext,

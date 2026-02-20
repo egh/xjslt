@@ -36,7 +36,7 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: undefined,
         suffix: undefined,
-        formats: [{ format: "1" }],
+        formats: [{ format: "1", separator: "." }],
       });
     });
 
@@ -45,7 +45,7 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: undefined,
         suffix: undefined,
-        formats: [{ format: "01" }],
+        formats: [{ format: "01", separator: "." }],
       });
     });
 
@@ -54,7 +54,7 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: undefined,
         suffix: undefined,
-        formats: [{ format: "a" }],
+        formats: [{ format: "a", separator: "." }],
       });
     });
 
@@ -63,7 +63,7 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: undefined,
         suffix: undefined,
-        formats: [{ format: "A" }],
+        formats: [{ format: "A", separator: "." }],
       });
     });
 
@@ -72,7 +72,7 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: undefined,
         suffix: undefined,
-        formats: [{ format: "i" }],
+        formats: [{ format: "i", separator: "." }],
       });
     });
 
@@ -81,7 +81,7 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: undefined,
         suffix: undefined,
-        formats: [{ format: "I" }],
+        formats: [{ format: "I", separator: "." }],
       });
     });
   });
@@ -92,7 +92,7 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: "§",
         suffix: undefined,
-        formats: [{ format: "1" }],
+        formats: [{ format: "1", separator: "." }],
       });
     });
 
@@ -101,7 +101,7 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: "(",
         suffix: undefined,
-        formats: [{ format: "1" }],
+        formats: [{ format: "1", separator: "." }],
       });
     });
   });
@@ -112,7 +112,7 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: undefined,
         suffix: ".",
-        formats: [{ format: "1" }],
+        formats: [{ format: "1", separator: "." }],
       });
     });
 
@@ -121,7 +121,7 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: undefined,
         suffix: ")",
-        formats: [{ format: "1" }],
+        formats: [{ format: "1", separator: "." }],
       });
     });
 
@@ -130,7 +130,7 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: undefined,
         suffix: ":",
-        formats: [{ format: "A" }],
+        formats: [{ format: "A", separator: "." }],
       });
     });
   });
@@ -141,7 +141,7 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: "(",
         suffix: ")",
-        formats: [{ format: "1" }],
+        formats: [{ format: "1", separator: "." }],
       });
     });
 
@@ -150,7 +150,7 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: "- ",
         suffix: " -",
-        formats: [{ format: "1" }],
+        formats: [{ format: "1", separator: "." }],
       });
     });
   });
@@ -161,7 +161,10 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: undefined,
         suffix: undefined,
-        formats: [{ format: "1", separator: "." }, { format: "1" }],
+        formats: [
+          { format: "1", separator: "." },
+          { format: "1", separator: "." },
+        ],
       });
     });
 
@@ -170,7 +173,10 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: undefined,
         suffix: undefined,
-        formats: [{ format: "1", separator: "." }, { format: "a" }],
+        formats: [
+          { format: "1", separator: "." },
+          { format: "a", separator: "." },
+        ],
       });
     });
 
@@ -182,66 +188,72 @@ describe("parseNumberFormat", () => {
         formats: [
           { format: "1", separator: "." },
           { format: "1", separator: "." },
-          { format: "1" },
+          { format: "1", separator: "." },
         ],
       });
     });
 
-    test("complex mixed format 'A.1.a'", () => {
-      const result = parseNumberFormat("A.1.a");
+    test("complex mixed format 'A:1,a'", () => {
+      const result = parseNumberFormat("A:1,a");
       expect(result).toEqual({
         prefix: undefined,
         suffix: undefined,
         formats: [
           { format: "A", separator: "." },
-          { format: "1", separator: "." },
-          { format: "a" },
+          { format: "1", separator: ":" },
+          { format: "a", separator: "," },
         ],
       });
     });
 
-    test("format with different separators '1-a.i'", () => {
-      const result = parseNumberFormat("1-a.i");
+    test("format with different separators '1-a,i'", () => {
+      const result = parseNumberFormat("1-a,i");
       expect(result).toEqual({
         prefix: undefined,
         suffix: undefined,
         formats: [
-          { format: "1", separator: "-" },
-          { format: "a", separator: "." },
-          { format: "i" },
+          { format: "1", separator: "." },
+          { format: "a", separator: "-" },
+          { format: "i", separator: "," },
         ],
       });
     });
   });
 
   describe("Complex formats with prefix and suffix", () => {
-    test("hierarchical with prefix '§ 1.1'", () => {
-      const result = parseNumberFormat("§ 1.1");
+    test("hierarchical with prefix '§ 1:1'", () => {
+      const result = parseNumberFormat("§ 1:1");
       expect(result).toEqual({
         prefix: "§ ",
         suffix: undefined,
-        formats: [{ format: "1", separator: "." }, { format: "1" }],
+        formats: [
+          { format: "1", separator: "." },
+          { format: "1", separator: ":" },
+        ],
       });
     });
 
-    test("hierarchical with suffix '1.1.'", () => {
-      const result = parseNumberFormat("1.1.");
+    test("hierarchical with suffix '1,1.'", () => {
+      const result = parseNumberFormat("1,1.");
       expect(result).toEqual({
         prefix: undefined,
         suffix: ".",
-        formats: [{ format: "1", separator: "." }, { format: "1" }],
+        formats: [
+          { format: "1", separator: "." },
+          { format: "1", separator: "," },
+        ],
       });
     });
 
-    test("hierarchical with both '(1.a.i)'", () => {
-      const result = parseNumberFormat("(1.a.i)");
+    test("hierarchical with both '(1:a~i)'", () => {
+      const result = parseNumberFormat("(1:a~i)");
       expect(result).toEqual({
         prefix: "(",
         suffix: ")",
         formats: [
           { format: "1", separator: "." },
-          { format: "a", separator: "." },
-          { format: "i" },
+          { format: "a", separator: ":" },
+          { format: "i", separator: "~" },
         ],
       });
     });
@@ -261,7 +273,7 @@ describe("parseNumberFormat", () => {
       const result = parseNumberFormat("...");
       expect(result).toEqual({
         prefix: "...",
-        suffix: undefined,
+        suffix: "...",
         formats: [],
       });
     });
@@ -271,7 +283,10 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: undefined,
         suffix: undefined,
-        formats: [{ format: "1", separator: "---" }, { format: "a" }],
+        formats: [
+          { format: "1", separator: "." },
+          { format: "a", separator: "---" },
+        ],
       });
     });
 
@@ -280,7 +295,10 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: undefined,
         suffix: undefined,
-        formats: [{ format: "1", separator: "   " }, { format: "a" }],
+        formats: [
+          { format: "1", separator: "." },
+          { format: "a", separator: "   " },
+        ],
       });
     });
 
@@ -289,7 +307,7 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: undefined,
         suffix: undefined,
-        formats: [{ format: "١" }],
+        formats: [{ format: "١", separator: "." }],
       });
     });
   });
