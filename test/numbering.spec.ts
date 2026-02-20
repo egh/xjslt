@@ -21,6 +21,7 @@
 import { parseNumberFormat } from "../src/compile";
 import {
   groupNumeric,
+  formatNumber,
   formatWithToken,
   mkToNumeric,
   toAlphabetic,
@@ -621,6 +622,161 @@ describe("formatWithToken", () => {
     test("Infinity returns empty string", () => {
       expect(formatWithToken(Infinity, "1")).toBe("");
       expect(formatWithToken(-Infinity, "1")).toBe("");
+    });
+  });
+});
+
+describe("formatNumber", () => {
+  describe("Single number formatting", () => {
+    test("simple decimal format", () => {
+      expect(formatNumber([5], parseNumberFormat("1"))).toBe("5");
+      expect(formatNumber([42], parseNumberFormat("1"))).toBe("42");
+      expect(formatNumber([123], parseNumberFormat("1"))).toBe("123");
+    });
+
+    test("zero-padded format", () => {
+      expect(formatNumber([5], parseNumberFormat("01"))).toBe("05");
+      expect(formatNumber([5], parseNumberFormat("001"))).toBe("005");
+      expect(formatNumber([42], parseNumberFormat("0001"))).toBe("0042");
+    });
+
+    test("alphabetic format", () => {
+      expect(formatNumber([1], parseNumberFormat("a"))).toBe("a");
+      expect(formatNumber([26], parseNumberFormat("a"))).toBe("z");
+      expect(formatNumber([27], parseNumberFormat("a"))).toBe("aa");
+      expect(formatNumber([1], parseNumberFormat("A"))).toBe("A");
+      expect(formatNumber([26], parseNumberFormat("A"))).toBe("Z");
+    });
+
+    test("roman numeral format", () => {
+      expect(formatNumber([1], parseNumberFormat("i"))).toBe("i");
+      expect(formatNumber([9], parseNumberFormat("i"))).toBe("ix");
+      expect(formatNumber([42], parseNumberFormat("i"))).toBe("xlii");
+      expect(formatNumber([1], parseNumberFormat("I"))).toBe("I");
+      expect(formatNumber([42], parseNumberFormat("I"))).toBe("XLII");
+    });
+  });
+
+  describe("Formatting with prefix and suffix", () => {
+    test("with prefix only", () => {
+      expect(formatNumber([5], parseNumberFormat("§1"))).toBe("§5");
+      expect(formatNumber([42], parseNumberFormat("(1"))).toBe("(42");
+    });
+
+    test("with suffix only", () => {
+      expect(formatNumber([5], parseNumberFormat("1."))).toBe("5.");
+      expect(formatNumber([42], parseNumberFormat("1)"))).toBe("42)");
+    });
+
+    test("with both prefix and suffix", () => {
+      expect(formatNumber([5], parseNumberFormat("(1)"))).toBe("(5)");
+      expect(formatNumber([42], parseNumberFormat("- 1 -"))).toBe("- 42 -");
+    });
+  });
+
+  describe("Multiple number formatting (hierarchical)", () => {
+    test("two-level format '1.1'", () => {
+      expect(formatNumber([1, 2], parseNumberFormat("1.1"))).toBe("1.2");
+      expect(formatNumber([3, 5], parseNumberFormat("1.1"))).toBe("3.5");
+    });
+
+    test("three-level format '1.1.1'", () => {
+      expect(formatNumber([1, 2, 3], parseNumberFormat("1.1.1"))).toBe("1.2.3");
+      expect(formatNumber([10, 20, 30], parseNumberFormat("1.1.1"))).toBe(
+        "10.20.30",
+      );
+    });
+
+    test("mixed format types '1.a.i'", () => {
+      expect(formatNumber([1, 2, 3], parseNumberFormat("1.a.i"))).toBe(
+        "1.b.iii",
+      );
+    });
+
+    test("different separators '1-a.i'", () => {
+      expect(formatNumber([1, 2, 3], parseNumberFormat("1-a.i"))).toBe(
+        "1-b.iii",
+      );
+    });
+  });
+
+  describe("More numbers than format tokens", () => {
+    test("reuse last format token for additional numbers", () => {
+      // default separator
+      expect(formatNumber([1, 2, 3], parseNumberFormat("1"))).toBe("1.2.3");
+
+      // Format has only 2 tokens, but we provide 3 numbers
+      expect(formatNumber([1, 2, 3], parseNumberFormat("1:1"))).toBe("1:2:3");
+
+      // Format has only 2 tokens, but we provide 4 numbers
+      expect(formatNumber([1, 2, 3, 4], parseNumberFormat("1.1"))).toBe(
+        "1.2.3.4",
+      );
+    });
+
+    test("reuse with different format types", () => {
+      expect(formatNumber([1, 2, 3, 4], parseNumberFormat("A-1"))).toBe(
+        "A-2-3-4",
+      );
+    });
+  });
+
+  describe("Hierarchical formats with prefix and suffix", () => {
+    test("hierarchical with prefix", () => {
+      expect(formatNumber([1, 2], parseNumberFormat("§ 1.1"))).toBe("§ 1.2");
+    });
+
+    test("hierarchical with suffix", () => {
+      expect(formatNumber([1, 2], parseNumberFormat("1.1."))).toBe("1.2.");
+    });
+
+    test("hierarchical with both prefix and suffix", () => {
+      expect(formatNumber([1, 2, 3], parseNumberFormat("(1.a.i)"))).toBe(
+        "(1.b.iii)",
+      );
+    });
+  });
+
+  describe("Grouping separators", () => {
+    test("decimal with grouping separator", () => {
+      expect(formatNumber([1234], parseNumberFormat("1"), ",", 3)).toBe(
+        "1,234",
+      );
+      expect(formatNumber([1234567], parseNumberFormat("1"), ",", 3)).toBe(
+        "1,234,567",
+      );
+    });
+
+    test("hierarchical with grouping separator", () => {
+      expect(formatNumber([1234, 5678], parseNumberFormat("1.1"), ",", 3)).toBe(
+        "1,234.5,678",
+      );
+    });
+
+    test("different grouping separator", () => {
+      expect(formatNumber([1234567], parseNumberFormat("1"), " ", 3)).toBe(
+        "1 234 567",
+      );
+    });
+  });
+
+  describe("Edge cases", () => {
+    test("empty numbers array", () => {
+      expect(formatNumber([], parseNumberFormat("1"))).toBe("");
+    });
+
+    test("zero-padded hierarchical format", () => {
+      expect(formatNumber([1, 2], parseNumberFormat("01.01"))).toBe("01.02");
+    });
+
+    test("single number with multi-level format", () => {
+      expect(formatNumber([1], parseNumberFormat("1.1.1"))).toBe("1");
+    });
+
+    test("throws error with no formats", () => {
+      expect(() => formatNumber([1], parseNumberFormat(""))).toThrow(
+        "No number format found",
+      );
     });
   });
 });

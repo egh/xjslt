@@ -45,6 +45,7 @@ import {
   Key,
   NodeGroup,
   NodeType,
+  NumberFormat,
   OutputDefinition,
   OutputResult,
   SequenceConstructor,
@@ -1564,6 +1565,53 @@ export function formatWithToken(
     groupingSeparator,
     groupingSize,
   );
+}
+
+/**
+ * Format an array of numbers according to a NumberFormat
+ * specification. Implements XSLT 2.0 number formatting rules from
+ * https://www.w3.org/TR/xslt20/#convert
+ */
+export function formatNumber(
+  numbers: number[],
+  format: NumberFormat,
+  groupingSeparator?: string,
+  groupingSize?: number,
+): string {
+  const parts: string[] = [];
+
+  if (format.prefix) {
+    parts.push(format.prefix);
+  }
+
+  // Format each number
+  for (let i = 0; i < numbers.length; i++) {
+    // If we have more numbers than format tokens, use the last format token
+    const tokenIndex = Math.min(i, format.formats.length - 1);
+    const formatToken = format.formats[tokenIndex];
+
+    if (!formatToken) {
+      // Shouldn't happen.
+      throw new Error("No number format found");
+    }
+    if (formatToken.separator && i !== 0) {
+      parts.push(formatToken.separator);
+    }
+    parts.push(
+      formatWithToken(
+        numbers[i],
+        formatToken.format,
+        groupingSeparator,
+        groupingSize,
+      ),
+    );
+  }
+
+  if (format.suffix) {
+    parts.push(format.suffix);
+  }
+
+  return parts.join("");
 }
 
 /**
