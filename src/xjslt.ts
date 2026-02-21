@@ -78,6 +78,60 @@ function coerceToString(value: any): string {
   }
 }
 
+/** Rewrite xpaths to support any workarounds/hacks we need. */
+export function hackXpath(context: DynamicContext, xpath: string): string {
+  if (context.position !== undefined) {
+    // Override to use our own position, but only outside square brackets
+    // and not when preceded by / or ::
+    let result = "";
+    let depth = 0;
+    let i = 0;
+
+    while (i < xpath.length) {
+      const char = xpath[i];
+
+      if (char === "[") {
+        depth++;
+        result += char;
+        i++;
+      } else if (char === "]") {
+        depth--;
+        result += char;
+        i++;
+      } else if (depth === 0) {
+        // We're outside brackets, check for position() or last()
+        // But not if preceded by / or ::
+        const precededBySlash = i > 0 && xpath[i - 1] === "/";
+        const precededByDoubleColon =
+          i > 1 && xpath.substring(i - 2, i) === "::";
+
+        if (!precededBySlash && !precededByDoubleColon) {
+          if (xpath.substring(i).startsWith("position()")) {
+            result += "positionx()";
+            i += "position()".length;
+          } else if (xpath.substring(i).startsWith("last()")) {
+            result += "lastx()";
+            i += "last()".length;
+          } else {
+            result += char;
+            i++;
+          }
+        } else {
+          result += char;
+          i++;
+        }
+      } else {
+        // Inside brackets, don't modify
+        result += char;
+        i++;
+      }
+    }
+
+    return result;
+  }
+  return xpath;
+}
+
 export class KeyImpl implements Key {
   match: string;
   use: string | SequenceConstructor;
@@ -558,7 +612,7 @@ export function applyTemplates(
   const namespaceResolver = mkResolver(data.namespaces);
   /* The nodes we want to apply templates on.*/
   const nodes = evaluateXPathToNodes(
-    data.select,
+    hackXpath(context, data.select),
     context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
@@ -686,7 +740,7 @@ export function copyOf(
   func: SequenceConstructor,
 ) {
   let things = evaluateXPath(
-    data.select,
+    hackXpath(context, data.select),
     context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
@@ -823,7 +877,7 @@ export function sequence(
   data: { select: string; namespaces: object },
 ) {
   const things = evaluateXPath(
-    data.select,
+    hackXpath(context, data.select),
     context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
@@ -1023,7 +1077,7 @@ export function ifX(
 ) {
   if (
     evaluateXPathToBoolean(
-      data.test,
+      hackXpath(context, data.test),
       context.contextItem,
       undefined,
       mergeVariableScopes(context.variableScopes),
@@ -1047,7 +1101,7 @@ export function choose(
       return alternative.apply(context);
     } else if (
       evaluateXPathToBoolean(
-        alternative.test,
+        hackXpath(context, alternative.test),
         context.contextItem,
         undefined,
         mergeVariableScopes(context.variableScopes),
@@ -1090,7 +1144,7 @@ export function performSort(
 ) {
   const namespaceResolver = mkResolver(data.namespaces);
   const nodeList = evaluateXPath(
-    data.select,
+    hackXpath(context, data.select),
     context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
@@ -1121,7 +1175,7 @@ export function forEach(
 ) {
   const namespaceResolver = mkResolver(data.namespaces);
   const nodeList = evaluateXPath(
-    data.select,
+    hackXpath(context, data.select),
     context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
@@ -1156,11 +1210,17 @@ function groupBy(
   const variables = mergeVariableScopes(context.variableScopes);
   let retval: NodeGroup[] = [];
   iterateNodes(nodes, (node, position, last) => {
-    const key = evaluateXPathToString(groupBy, node, undefined, variables, {
-      currentContext: context,
-      namespaceResolver,
-      functionNameResolver,
-    });
+    const key = evaluateXPathToString(
+      hackXpath(context, groupBy),
+      node,
+      undefined,
+      variables,
+      {
+        currentContext: { ...context, last, position },
+        namespaceResolver,
+        functionNameResolver,
+      },
+    );
     let group = retval.find((g) => g.key === key);
     if (!group) {
       group = { key: key, nodes: [] };
@@ -1194,12 +1254,12 @@ function groupAdjacent(
 
   iterateNodes(nodes, (node, position, last) => {
     const key = evaluateXPathToString(
-      groupAdjacent,
+      hackXpath(context, groupAdjacent),
       node,
       undefined,
       variables,
       {
-        currentContext: context,
+        currentContext: { ...context, last, position },
         namespaceResolver,
         functionNameResolver,
       },
@@ -1306,7 +1366,7 @@ export function forEachGroup(
   const namespaceResolver = mkResolver(data.namespaces);
   const variables = mergeVariableScopes(context.variableScopes);
   const nodeList = evaluateXPathToNodes(
-    data.select,
+    hackXpath(context, data.select),
     context.contextItem,
     undefined,
     variables,
@@ -1346,7 +1406,6 @@ export function forEachGroup(
       );
     }
     // TODO: sort
-    const last = groupedNodes.length;
     iterateNodes(groupedNodes, ({ key, nodes }, position, last) => {
       const newContext = {
         ...context,
@@ -1644,7 +1703,7 @@ export function number(
   if (data.value) {
     // Use the @value attribute
     numberValue = evaluateXPathToNumber(
-      data.value,
+      hackXpath(context, data.value),
       context.contextItem,
       undefined,
       variables,
@@ -1936,7 +1995,7 @@ export function evaluateAttributeValueTemplate(
         return piece;
       } else {
         return evaluateXPathToString(
-          piece.xpath,
+          hackXpath(context, piece.xpath),
           context.contextItem,
           undefined,
           mergeVariableScopes(context.variableScopes),
@@ -1967,7 +2026,7 @@ function constructSimpleContent(
   );
   if (typeof generator === "string") {
     return evaluateXPath(
-      generator,
+      hackXpath(context, generator),
       context.contextItem,
       undefined,
       mergeVariableScopes(context.variableScopes),
@@ -1991,7 +2050,7 @@ function evaluateVariableLike(
 ): string | EvaluateXPath | slimdom.Document | slimdom.DocumentFragment {
   if (typeof variable.content === "string") {
     return evaluateXPath(
-      variable.content,
+      hackXpath(context, variable.content),
       context.contextItem,
       undefined,
       mergeVariableScopes(context.variableScopes),

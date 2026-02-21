@@ -107,8 +107,8 @@ const FUNCTION_OVERRIDES = [
   "current-output-uri",
   "doc",
   "key",
-  "last",
-  "position",
+  "lastx",
+  "positionx",
   "system-property",
 ];
 
@@ -166,14 +166,14 @@ export function registerFunctions() {
   );
 
   registerCustomXPathFunction(
-    { namespaceURI: XJSLT_NSURI, localName: "position" },
+    { namespaceURI: XJSLT_NSURI, localName: "positionx" },
     [],
     "xs:integer",
     fnPosition as (context: any) => number,
   );
 
   registerCustomXPathFunction(
-    { namespaceURI: XJSLT_NSURI, localName: "last" },
+    { namespaceURI: XJSLT_NSURI, localName: "lastx" },
     [],
     "xs:integer",
     fnLast as (context: any) => number,
