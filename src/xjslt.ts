@@ -1614,6 +1614,50 @@ export function formatNumber(
   return parts.join("");
 }
 
+export function number(
+  context: DynamicContext,
+  data: {
+    value?: string;
+    select?: string;
+    count?: string;
+    countFunction?: CompiledXPathFunction;
+    from?: string;
+    fromFunction?: CompiledXPathFunction;
+    level: string;
+    format: NumberFormat;
+    lang?: string;
+    letterValue?: string;
+    ordinal?: string;
+    groupingSeparator?: string;
+    groupingSize?: number;
+    namespaces: object;
+  },
+) {
+  const namespaceResolver = mkResolver(data.namespaces);
+  const variables = mergeVariableScopes(context.variableScopes);
+
+  let numberValue: number;
+
+  // Determine the number to format
+  if (data.value) {
+    // Use the @value attribute
+    numberValue = evaluateXPathToNumber(
+      data.value,
+      context.contextItem,
+      undefined,
+      variables,
+      { currentContext: context, namespaceResolver, functionNameResolver },
+    );
+  }
+
+  context.append(formatNumber(
+    [numberValue],
+    data.format,
+    data.groupingSeparator,
+    data.groupingSize,
+  ));
+}
+
 /**
  * Convert a number to Roman numerals.
  */

@@ -307,6 +307,36 @@ export function parseNumberFormat(format: string): NumberFormat {
   return retval;
 }
 
+function compileNumberNode(node: slimdom.Element, context: CompileContext) {
+  const namespaces = getNodeNS(node);
+  const count = node.getAttribute("count");
+  const from = node.getAttribute("from");
+  const format = node.getAttribute("format") || "1";
+
+  // Precompile patterns if possible
+  const countFunction = tryCompilePattern(count, namespaces);
+  const fromFunction = tryCompilePattern(from, namespaces);
+
+  return compileFuncall("number", [
+    toEstree({
+      value: node.getAttribute("value"),
+      select: node.getAttribute("select"),
+      count: count,
+      countFunction: countFunction,
+      from: from,
+      fromFunction: fromFunction,
+      level: node.getAttribute("level") || "single",
+      format: parseNumberFormat(format),
+      lang: node.getAttribute("lang"),
+      letterValue: node.getAttribute("letter-value"),
+      ordinal: node.getAttribute("ordinal"),
+      groupingSeparator: node.getAttribute("grouping-separator"),
+      groupingSize: parseInt(node.getAttribute("grouping-size")),
+      namespaces: namespaces,
+    }),
+  ]);
+}
+
 function compilePerformSortNode(
   node: slimdom.Element,
   context: CompileContext,
@@ -743,7 +773,7 @@ export function compileSequenceConstructorNode(
       } else if (node.localName === "next-match") {
         return compileNextMatchNode(node, context);
       } else if (node.localName === "number") {
-        // TODO
+        return compileNumberNode(node, context);
       } else if (node.localName === "param") {
         // Handled by special case.
       } else if (node.localName === "processing-instruction") {
