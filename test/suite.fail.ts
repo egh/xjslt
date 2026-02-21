@@ -1565,7 +1565,6 @@ export const KNOWN_SPEC_FAILURES = [
   "number-2506",
   "number-2601",
   "number-2602",
-  "number-2701",
   "number-2801",
   "number-2802",
   "number-2803",

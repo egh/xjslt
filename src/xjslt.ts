@@ -1483,7 +1483,9 @@ export function mkToAlphabetic(
     String.fromCodePoint(startChar + i),
   );
   return function (value: number) {
-    if (value === 0) return undefined;
+    if (value === 0) {
+      return toNumeric(value);
+    }
     let result = "";
     let n = value;
 
@@ -1650,12 +1652,14 @@ export function number(
     );
   }
 
-  context.append(formatNumber(
-    [numberValue],
-    data.format,
-    data.groupingSeparator,
-    data.groupingSize,
-  ));
+  context.append(
+    formatNumber(
+      [numberValue],
+      data.format,
+      data.groupingSeparator,
+      data.groupingSize,
+    ),
+  );
 }
 
 /**
@@ -1677,6 +1681,10 @@ export function toRoman(input: number): string {
     [4, "iv"],
     [1, "i"],
   ]);
+
+  if (input === 0) {
+    return toNumeric(input);
+  }
 
   let retval = "";
   let remaining = input;
