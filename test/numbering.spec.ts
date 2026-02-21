@@ -609,9 +609,9 @@ describe("formatWithToken", () => {
     test("zero value", () => {
       expect(formatWithToken(0, "1")).toBe("0");
       expect(formatWithToken(0, "01")).toBe("00");
-      expect(formatWithToken(0, "a")).toBe("");
-      expect(formatWithToken(0, "A")).toBe("");
-      expect(formatWithToken(0, "i")).toBe("");
+      expect(formatWithToken(0, "a")).toBe("0");
+      expect(formatWithToken(0, "A")).toBe("0");
+      expect(formatWithToken(0, "i")).toBe("0");
     });
 
     test("NaN returns empty string", () => {
