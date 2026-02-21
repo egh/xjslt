@@ -266,7 +266,7 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: undefined,
         suffix: undefined,
-        formats: [],
+        formats: [{ format: "1", separator: "." }],
       });
     });
 
@@ -275,7 +275,7 @@ describe("parseNumberFormat", () => {
       expect(result).toEqual({
         prefix: "...",
         suffix: "...",
-        formats: [],
+        formats: [{ format: "1", separator: "." }],
       });
     });
 
@@ -773,10 +773,8 @@ describe("formatNumber", () => {
       expect(formatNumber([1], parseNumberFormat("1.1.1"))).toBe("1");
     });
 
-    test("throws error with no formats", () => {
-      expect(() => formatNumber([1], parseNumberFormat(""))).toThrow(
-        "No number format found",
-      );
+    test("uses default format when empty string provided", () => {
+      expect(formatNumber([1], parseNumberFormat(""))).toBe("1");
     });
   });
 });

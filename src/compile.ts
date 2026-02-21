@@ -301,7 +301,9 @@ export function parseNumberFormat(format: string): NumberFormat {
   }
 
   if (retval.formats.length === 0) {
+    // Defaults per spec.
     retval.prefix = retval.suffix;
+    retval.formats.push({ format: "1", separator: "." });
   }
 
   return retval;
