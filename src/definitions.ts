@@ -186,7 +186,6 @@ export interface DynamicContext {
   outputDocument: slimdom.Document;
   resultDocuments: Map<string, OutputResult>;
   append: Appender;
-  contextItem: any;
   mode: string;
   templates: Array<Template>;
   variableScopes: Array<VariableScope>;
@@ -198,6 +197,9 @@ export interface DynamicContext {
   patternMatchCache: PatternMatchCache;
   outputDefinitions: Map<string, OutputDefinition>;
   stylesheetParams?: object;
+  // The actual context
+  contextItem: any;
+  contextList: any[];
   position?: number;
   last?: number;
 }

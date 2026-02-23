@@ -484,15 +484,15 @@ function sortNodesHelper(
 }
 
 function iterateNodes(
-  nodes: any[],
+  contextList: any[],
   context: DynamicContext,
   f: (context: DynamicContext) => void,
 ) {
-  const last = nodes.length;
+  const last = contextList.length;
   let position = 0;
-  for (const contextItem of nodes) {
+  for (const contextItem of contextList) {
     position++;
-    f({ ...context, contextItem, position, last });
+    f({ ...context, contextItem, contextList, position, last });
   }
 }
 
@@ -531,7 +531,7 @@ function sortNodesHelperText(
 ): any[] {
   let keyed: { key: string; item: any }[] = [];
   for (let node of nodes) {
-    const newContext = { ...context, contextItem: node };
+    const newContext = { ...context, contextItem: node, contextList: nodes };
     keyed.push({
       key: constructSimpleContent(newContext, sort.sortKey, namespaceResolver),
       item: node,
@@ -624,24 +624,23 @@ export function applyTemplates(
     /* keep the current mode */
     mode = context.mode;
   }
-  for (let node of sortNodes(
+  const sorted = sortNodes(
     context,
     nodes,
     data.sortKeyComponents,
     namespaceResolver,
-  )) {
-    /* for each node */
+  );
+  iterateNodes(sorted, context, (context) => {
     processNode(
       {
         ...context,
         mode: mode,
-        contextItem: node,
         variableScopes: extendScope(context.variableScopes),
       },
       data.params,
       data.namespaces,
     );
-  }
+  });
 }
 
 export function callTemplate(
@@ -2062,6 +2061,7 @@ function evaluateVariableLike(
       {
         currentContext: context,
         namespaceResolver: mkResolver(variable.namespaces),
+        functionNameResolver,
       },
     );
   } else if (variable.content == undefined) {
