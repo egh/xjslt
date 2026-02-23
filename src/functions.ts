@@ -39,11 +39,11 @@ function fnCurrentGroup({ currentContext }) {
 }
 
 function fnPosition({ currentContext }) {
-  return currentContext.position || 1;
+  return currentContext.position;
 }
 
 function fnLast({ currentContext }) {
-  return currentContext.last || 1;
+  return currentContext.last;
 }
 
 function fnCurrentOutputUri({ currentContext }) {
