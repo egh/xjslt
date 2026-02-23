@@ -485,13 +485,14 @@ function sortNodesHelper(
 
 function iterateNodes(
   nodes: any[],
-  f: (node: any, position: number, last: number) => void,
+  context: DynamicContext,
+  f: (context: DynamicContext) => void,
 ) {
   const last = nodes.length;
   let position = 0;
-  for (const node of nodes) {
+  for (const contextItem of nodes) {
     position++;
-    f(node, position, last);
+    f({ ...context, contextItem, position, last });
   }
 }
 
@@ -502,10 +503,10 @@ function sortNodesHelperNumeric(
   namespaceResolver: NamespaceResolver,
 ): any[] {
   let keyed: { key: number; item: any }[] = [];
-  iterateNodes(nodes, (contextItem, position, last) => {
+  iterateNodes(nodes, context, (context) => {
     let key: number;
     const text = constructSimpleContent(
-      { ...context, last, contextItem, position },
+      context,
       sort.sortKey,
       namespaceResolver,
     );
@@ -516,7 +517,7 @@ function sortNodesHelperNumeric(
     }
     keyed.push({
       key: key,
-      item: contextItem,
+      item: context.contextItem,
     });
   });
   return keyed.sort((a, b) => a.key - b.key).map((obj) => obj.item);
@@ -1189,12 +1190,9 @@ export function forEach(
       data.sortKeyComponents,
       namespaceResolver,
     );
-    iterateNodes(nodes, (contextItem, position, last) => {
+    iterateNodes(nodes, context, (context) => {
       func({
         ...context,
-        last,
-        position,
-        contextItem,
         variableScopes: extendScope(context.variableScopes),
       });
     });
@@ -1209,14 +1207,14 @@ function groupBy(
 ): NodeGroup[] {
   const variables = mergeVariableScopes(context.variableScopes);
   let retval: NodeGroup[] = [];
-  iterateNodes(nodes, (node, position, last) => {
+  iterateNodes(nodes, context, (context) => {
     const key = evaluateXPathToString(
       hackXpath(context, groupBy),
-      node,
+      context.contextItem,
       undefined,
       variables,
       {
-        currentContext: { ...context, last, position },
+        currentContext: context,
         namespaceResolver,
         functionNameResolver,
       },
@@ -1226,7 +1224,7 @@ function groupBy(
       group = { key: key, nodes: [] };
       retval.push(group);
     }
-    group.nodes.push(node);
+    group.nodes.push(context.contextItem);
   });
   return retval;
 }
@@ -1252,14 +1250,15 @@ function groupAdjacent(
   let currentKey: string | null = null;
   let currentGroup: any[] = [];
 
-  iterateNodes(nodes, (node, position, last) => {
+  iterateNodes(nodes, context, (context) => {
+    const node = context.contextItem;
     const key = evaluateXPathToString(
       hackXpath(context, groupAdjacent),
       node,
       undefined,
       variables,
       {
-        currentContext: { ...context, last, position },
+        currentContext: context,
         namespaceResolver,
         functionNameResolver,
       },
@@ -1291,7 +1290,8 @@ function groupStartingWith(
   let retval: NodeGroup[] = [];
   let currentGroup: any[] = [];
 
-  iterateNodes(nodes, (node, position, last) => {
+  iterateNodes(nodes, context, (context) => {
+    const node = context.contextItem;
     const matches = patternMatch(
       context.patternMatchCache,
       pattern,
@@ -1324,7 +1324,8 @@ function groupEndingWith(
   let retval: NodeGroup[] = [];
   let currentGroup: any[] = [];
 
-  iterateNodes(nodes, (node, position, last) => {
+  iterateNodes(nodes, context, (context) => {
+    const node = context.contextItem;
     currentGroup.push(node);
 
     const matches = patternMatch(
@@ -1406,7 +1407,10 @@ export function forEachGroup(
       );
     }
     // TODO: sort
-    iterateNodes(groupedNodes, ({ key, nodes }, position, last) => {
+    const last = groupedNodes.length;
+    let position = 0;
+    for (const { key, nodes } of groupedNodes) {
+      position++;
       const newContext = {
         ...context,
         contextItem: nodes[0],
@@ -1417,7 +1421,7 @@ export function forEachGroup(
         variableScopes: extendScope(context.variableScopes),
       };
       func(newContext);
-    });
+    }
   }
 }
 
