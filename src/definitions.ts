@@ -201,7 +201,6 @@ export interface DynamicContext {
   contextItem: any;
   contextList: any[];
   position: number;
-  last: number;
 }
 
 export interface CompileContext {

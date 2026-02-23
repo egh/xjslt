@@ -43,7 +43,7 @@ function fnPosition({ currentContext }) {
 }
 
 function fnLast({ currentContext }) {
-  return currentContext.last;
+  return currentContext.contextList.length;
 }
 
 function fnCurrentOutputUri({ currentContext }) {

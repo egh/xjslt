@@ -485,11 +485,10 @@ function iterateNodes(
   context: DynamicContext,
   f: (context: DynamicContext) => void,
 ) {
-  const last = contextList.length;
   let position = 0;
   for (const contextItem of contextList) {
     position++;
-    f({ ...context, contextItem, contextList, position, last });
+    f({ ...context, contextItem, contextList, position });
   }
 }
 
@@ -1402,7 +1401,6 @@ export function forEachGroup(
       );
     }
     // TODO: sort
-    const last = groupedNodes.length;
     let position = 0;
     for (const { key, nodes } of groupedNodes) {
       position++;
@@ -1413,7 +1411,6 @@ export function forEachGroup(
         currentGroupingKey: key,
         currentGroup: nodes,
         position,
-        last,
         variableScopes: extendScope(context.variableScopes),
       };
       func(newContext);
