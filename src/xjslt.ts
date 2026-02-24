@@ -264,6 +264,43 @@ function fastSuccess(pattern: string, node: slimdom.Node) {
   return false;
 }
 
+function patternMatchNodes(
+  patternMatchCache: PatternMatchCache,
+  match: string,
+  matchFunction: CompiledXPathFunction | undefined,
+  node: slimdom.Node,
+  variableScopes: Array<VariableScope>,
+  namespaceResolver: NamespaceResolver,
+): slimdom.Node[] | undefined {
+  let checkContext = node;
+  while (checkContext) {
+    const matches = withCached(patternMatchCache, match, checkContext, (): any[] => {
+      if (matchFunction) {
+        return executeJavaScriptCompiledXPath(matchFunction, checkContext);
+      }
+      return evaluateXPathToNodes(
+        match,
+        checkContext,
+        undefined,
+        /* TODO: Only top level variables are applicable here, so top
+        level variables could be cached. */
+        mergeVariableScopes(variableScopes),
+        { namespaceResolver, functionNameResolver },
+      );
+    });
+    /* It counts as a match if the node we were testing against is in
+       the resulting node set. */
+    if (matches.indexOf(node) !== -1) {
+      return matches;
+    }
+    /* Match not found, continue up the tree */
+    checkContext =
+          checkContext.parentNode ||
+            (checkContext.nodeType === NodeType.ATTRIBUTE &&
+              (checkContext as slimdom.Attr).ownerElement);
+  }
+  return undefined;
+}
 /* Implementation of https://www.w3.org/TR/xslt20/#pattern-syntax */
 function patternMatch(
   patternMatchCache: PatternMatchCache,
@@ -273,46 +310,19 @@ function patternMatch(
   variableScopes: Array<VariableScope>,
   namespaceResolver: NamespaceResolver,
 ): boolean {
-  let checkContext = node;
   /* Using ancestors as the potential contexts */
   if (node && !failFast(match, node)) {
     if (fastSuccess(match, node)) {
       return true;
     } else {
-      while (checkContext) {
-        const matches = withCached(
-          patternMatchCache,
-          match,
-          checkContext,
-          () => {
-            if (matchFunction) {
-              return new Set(
-                executeJavaScriptCompiledXPath(matchFunction, checkContext),
-              );
-            }
-            return new Set(
-              evaluateXPathToNodes(
-                match,
-                checkContext,
-                undefined,
-                /* TODO: Only top level variables are applicable here, so top
-            level variables could be cached. */
-                mergeVariableScopes(variableScopes),
-                { namespaceResolver, functionNameResolver },
-              ),
-            );
-          },
-        );
-        /* It counts as a match if the node we were testing against is in the resulting node set. */
-        if (matches.has(node)) {
-          return true;
-        }
-        /* Match not found, continue up the tree */
-        checkContext =
-          checkContext.parentNode ||
-          (checkContext.nodeType === NodeType.ATTRIBUTE &&
-            (checkContext as slimdom.Attr).ownerElement);
-      }
+      return patternMatchNodes(
+        patternMatchCache,
+        match,
+        matchFunction,
+        node,
+        variableScopes,
+        namespaceResolver,
+      ) !== undefined;
     }
   }
   return false;
