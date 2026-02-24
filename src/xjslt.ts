@@ -101,8 +101,7 @@ export function hackXpath(xpath: string): string {
       // We're outside brackets, check for position() or last()
       // But not if preceded by / or ::
       const precededBySlash = i > 0 && xpath[i - 1] === "/";
-      const precededByDoubleColon =
-        i > 1 && xpath.substring(i - 2, i) === "::";
+      const precededByDoubleColon = i > 1 && xpath.substring(i - 2, i) === "::";
 
       if (!precededBySlash && !precededByDoubleColon) {
         if (xpath.substring(i).startsWith("position()")) {
@@ -485,10 +484,8 @@ function iterateNodes(
   context: DynamicContext,
   f: (context: DynamicContext) => void,
 ) {
-  let position = 0;
   for (const contextItem of contextList) {
-    position++;
-    f({ ...context, contextItem, contextList, position });
+    f({ ...context, contextItem, contextList });
   }
 }
 
@@ -526,7 +523,7 @@ function sortNodesHelperText(
   namespaceResolver: NamespaceResolver,
 ): any[] {
   let keyed: { key: string; item: any }[] = [];
-  iterateNodes(nodes, context, (context)=>{
+  iterateNodes(nodes, context, (context) => {
     keyed.push({
       key: constructSimpleContent(context, sort.sortKey, namespaceResolver),
       item: context.contextItem,
@@ -1401,16 +1398,13 @@ export function forEachGroup(
       );
     }
     // TODO: sort
-    let position = 0;
     for (const { key, nodes } of groupedNodes) {
-      position++;
       const newContext = {
         ...context,
         contextItem: nodes[0],
         contextList: nodes,
         currentGroupingKey: key,
         currentGroup: nodes,
-        position,
         variableScopes: extendScope(context.variableScopes),
       };
       func(newContext);
