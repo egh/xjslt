@@ -315,6 +315,7 @@ test("evaluateAttributeValueTemplate", () => {
     inputURL: new URL("file:///fake.xml"),
     keys: new Map(),
     patternMatchCache: new Map(),
+    contextList: [],
   };
   expect(
     evaluateAttributeValueTemplate(
@@ -582,6 +583,7 @@ test("buildNode", () => {
     inputURL: new URL("file:///fake.xml"),
     keys: new Map(),
     patternMatchCache: new Map(),
+    contextList: [],
   };
   let nodeA = buildNode(context, {
     name: "baz:foo",
@@ -618,6 +620,7 @@ test("buildAttributeNode", () => {
     inputURL: new URL("file:///fake.xml"),
     keys: new Map(),
     patternMatchCache: new Map(),
+    contextList: [],
   };
   let nodeA = buildAttributeNode(context, {
     name: "baz:foo",
