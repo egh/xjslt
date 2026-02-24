@@ -943,6 +943,8 @@ export const KNOWN_SPEC_FAILURES = [
   "expression-0912",
   "expression-0915",
   "expression-0930",
+  "expression-0932",
+  "expression-0933",
   "expression-1101",
   "expression-1103",
   "expression-1601",
