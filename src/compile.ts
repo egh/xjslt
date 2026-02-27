@@ -71,6 +71,7 @@ import {
   xpathstring,
 } from "./definitions";
 import {
+  hackXpath,
   isAlphanumeric,
   mkOutputDefinition,
   mkResolver,
@@ -86,6 +87,7 @@ interface SimpleElement {
   name: string;
   hasChildren: boolean;
   arguments: Map<string, string | undefined>;
+  xpathArguments?: Set<string>;
 }
 
 function buildInResolver(prefix: string): string | null {
@@ -102,6 +104,7 @@ const simpleElements = new Map<string, SimpleElement>([
     {
       name: "copyOf",
       arguments: new Map([["select", undefined]]),
+      xpathArguments: new Set(["select"]),
       hasChildren: true,
     },
   ],
@@ -111,6 +114,7 @@ const simpleElements = new Map<string, SimpleElement>([
     {
       name: "ifX",
       arguments: new Map([["test", undefined]]),
+      xpathArguments: new Set(["test"]),
       hasChildren: true,
     },
   ],
@@ -122,6 +126,7 @@ const simpleElements = new Map<string, SimpleElement>([
         ["select", undefined],
         ["terminate", "no"],
       ]),
+      xpathArguments: new Set(["select"]),
       hasChildren: true,
     },
   ],
@@ -130,6 +135,7 @@ const simpleElements = new Map<string, SimpleElement>([
     {
       name: "sequence",
       arguments: new Map([["select", undefined]]),
+      xpathArguments: new Set(["select"]),
       hasChildren: false,
     },
   ],
@@ -141,7 +147,7 @@ function compileApplyTemplatesNode(
 ) {
   const mode = expandQname(node.getAttribute("mode"), getNodeNS(node));
   const args = {
-    select: node.getAttribute("select") || "child::node()",
+    select: hackXpath(node.getAttribute("select") || "child::node()"),
     mode: mode || "#default",
     params: compileParams("with-param", node.childNodes, context),
     sortKeyComponents: compileSortKeyComponents(node.childNodes, context),
@@ -200,7 +206,7 @@ function tryCompilePattern(
 
 function compileForEachNode(node: slimdom.Element, context: CompileContext) {
   const args = {
-    select: node.getAttribute("select"),
+    select: hackXpath(node.getAttribute("select")),
     sortKeyComponents: compileSortKeyComponents(node.childNodes, context),
     namespaces: getNodeNS(node),
   };
@@ -227,9 +233,9 @@ function compileForEachGroupNode(
     node,
     "forEachGroup",
     toEstree({
-      select: node.getAttribute("select"),
-      groupBy: node.getAttribute("group-by"),
-      groupAdjacent: node.getAttribute("group-adjacent"),
+      select: hackXpath(node.getAttribute("select")),
+      groupBy: hackXpath(node.getAttribute("group-by")),
+      groupAdjacent: hackXpath(node.getAttribute("group-adjacent")),
       groupStartingWith: groupStartingWith,
       groupEndingWith: groupEndingWith,
       sortKeyComponents: compileSortKeyComponents(node.childNodes, context),
@@ -317,8 +323,8 @@ function compileNumberNode(node: slimdom.Element, context: CompileContext) {
 
   return compileFuncall("number", [
     toEstree({
-      value: node.getAttribute("value"),
-      select: node.getAttribute("select"),
+      value: hackXpath(node.getAttribute("value")),
+      select: hackXpath(node.getAttribute("select")),
       count: count,
       from: from,
       level: node.getAttribute("level") || "single",
@@ -339,7 +345,7 @@ function compilePerformSortNode(
 ) {
   return compileFuncall("performSort", [
     toEstree({
-      select: node.getAttribute("select"),
+      select: hackXpath(node.getAttribute("select")),
       sortKeyComponents: compileSortKeyComponents(node.childNodes, context),
       namespaces: getNodeNS(node),
     }),
@@ -375,7 +381,7 @@ function compileVariableLike(node: slimdom.Element, context: CompileContext) {
   if (node.hasAttribute("select")) {
     return toEstree({
       name: name,
-      content: node.getAttribute("select"),
+      content: hackXpath(node.getAttribute("select")),
       namespaces: getNodeNS(node),
       as: as,
     });
@@ -419,7 +425,7 @@ function compileSortKeyComponents(nodes: any[], context: CompileContext) {
         sortKeyComponents.push(
           toEstree({
             ...args,
-            sortKey: node.getAttribute("select") || ".",
+            sortKey: hackXpath(node.getAttribute("select") || "."),
           }),
         );
       }
@@ -494,6 +500,7 @@ function compileFuncallWithChildren(
 function compileArgs(
   node: slimdom.Element,
   keyList: Map<string, string | undefined>,
+  xpathKeys: Set<string> = new Set(),
 ): ObjectExpression {
   var args = {};
   for (let [key, fallback] of keyList) {
@@ -501,7 +508,7 @@ function compileArgs(
     if (value === null) {
       value = fallback;
     }
-    args[key] = value;
+    args[key] = xpathKeys.has(key) ? hackXpath(value) : value;
   }
   args["namespaces"] = getNodeNS(node);
   return toEstree(args);
@@ -509,7 +516,7 @@ function compileArgs(
 
 function compileSimpleElement(node: slimdom.Element, context: CompileContext) {
   const what = simpleElements.get(node.localName);
-  const args = compileArgs(node, what.arguments);
+  const args = compileArgs(node, what.arguments, what.xpathArguments);
   if (what.hasChildren) {
     return compileFuncallWithChildren(node, what.name, args, context);
   } else {
@@ -524,7 +531,7 @@ function compileChooseNode(node: slimdom.Element, context: CompileContext) {
       if (childNode.localName === "when") {
         alternatives.push(
           toEstree({
-            test: childNode.getAttribute("test"),
+            test: hackXpath(childNode.getAttribute("test")),
             apply: mkArrowFun(
               compileSequenceConstructor(childNode.childNodes, context),
             ),
@@ -821,7 +828,7 @@ function compileAttributeNode(node: slimdom.Element, context: CompileContext) {
     toEstree({
       name: compileAvt(node.getAttribute("name")),
       separator: compileAvt(node.getAttribute("separator")),
-      select: node.getAttribute("select"),
+      select: hackXpath(node.getAttribute("select")),
       namespace: compileAvt(node.getAttribute("namespace")),
       namespaces: getNodeNS(node),
     }),
@@ -837,7 +844,7 @@ function compileProcessingInstruction(
     node,
     "processingInstruction",
     toEstree({
-      select: node.getAttribute("select"),
+      select: hackXpath(node.getAttribute("select")),
       name: compileAvt(node.getAttribute("name")),
       namespaces: getNodeNS(node),
     }),
@@ -850,7 +857,7 @@ function compileNamespaceNode(node: slimdom.Element, context: CompileContext) {
     node,
     "namespace",
     toEstree({
-      select: node.getAttribute("select"),
+      select: hackXpath(node.getAttribute("select")),
       name: compileAvt(node.getAttribute("name")),
       namespaces: getNodeNS(node),
     }),
@@ -863,7 +870,7 @@ function compileCommentNode(node: slimdom.Element, context: CompileContext) {
     node,
     "comment",
     toEstree({
-      select: node.getAttribute("select"),
+      select: hackXpath(node.getAttribute("select")),
       namespaces: getNodeNS(node),
     }),
     context,
@@ -875,7 +882,7 @@ function compileValueOf(node: slimdom.Element, context: CompileContext) {
     node,
     "valueOf",
     toEstree({
-      select: node.getAttribute("select"),
+      select: hackXpath(node.getAttribute("select")),
       separator: compileAvt(node.getAttribute("separator")),
       namespaces: getNodeNS(node),
     }),
@@ -1179,7 +1186,7 @@ export function compileAvtRaw(avt: string | undefined | null): any {
           throw new Error("XTSE0370");
         }
         // Ending xpath
-        retval = retval.concat(xpathOutput);
+        retval = retval.concat({ xpath: hackXpath(xpathOutput.xpath) });
         xpathOutput = { xpath: "" };
         inXpath = false;
       }
