@@ -127,14 +127,13 @@ export interface VariableLike {
 }
 
 export interface Sortable {
-  match?: string;
+  match?: Xpath;
   importPrecedence: number;
   priority?: number;
   [propName: string]: unknown;
 }
 
 interface GenericTemplate extends Sortable {
-  matchFunction?: CompiledXPathFunction;
   name?: string;
   modes: string[];
   allowedParams: Array<VariableLike>;
@@ -245,4 +244,9 @@ export interface Key {
 export interface NodeGroup {
   key: string;
   nodes: any[];
+}
+
+export interface Xpath {
+  xpath: string;
+  compiled?: CompiledXPathFunction;
 }

@@ -180,8 +180,8 @@ export function sortSortable(templates: Array<Sortable>): Array<Sortable> {
   // Higher priority comes first
   templates.sort(
     (a, b) =>
-      (b.priority || computeDefaultPriority(b.match)) -
-      (a.priority || computeDefaultPriority(a.match)),
+      (b.priority || computeDefaultPriority(b.match?.xpath)) -
+      (a.priority || computeDefaultPriority(a.match?.xpath)),
   );
   // "Higher" (lower number) import precedence comes first
   templates.sort((a, b) => a.importPrecedence - b.importPrecedence);

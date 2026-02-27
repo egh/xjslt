@@ -19,7 +19,6 @@
  */
 
 import {
-  CompiledXPathFunction,
   createTypedValueFactory,
   evaluateXPath,
   evaluateXPathToString,
@@ -55,6 +54,7 @@ import {
   VariableScope,
   WhitespaceDeclaration,
   PatternMatchCache,
+  Xpath,
 } from "./definitions";
 import { determineNamespace, mkOutputDefinition, mkResolver } from "./shared";
 
@@ -154,8 +154,7 @@ export class KeyImpl implements Key {
         if (
           patternMatch(
             patternMatchCache,
-            this.match,
-            undefined,
+            { xpath: this.match },
             node,
             variableScopes,
             mkResolver(this.namespaces),
@@ -189,18 +188,18 @@ export class KeyImpl implements Key {
 
 function withCached<T>(
   cache: Map<string, Map<slimdom.Node, T>>,
-  pattern: string,
+  key: string,
   node: slimdom.Node,
   thunk: () => T,
 ): T {
-  if (!cache.has(pattern)) {
-    cache.set(pattern, new Map());
+  if (!cache.has(key)) {
+    cache.set(key, new Map());
   }
-  const cacheForPattern = cache.get(pattern);
-  if (!cacheForPattern.has(node)) {
-    cacheForPattern.set(node, thunk());
+  const cacheForKey = cache.get(key);
+  if (!cacheForKey.has(node)) {
+    cacheForKey.set(node, thunk());
   }
-  return cacheForPattern.get(node);
+  return cacheForKey.get(node);
 }
 
 const ELEMENT_ONLY_PATTERN = new RegExp(/^[a-z |-]+$/);
@@ -266,28 +265,32 @@ function fastSuccess(pattern: string, node: slimdom.Node) {
 
 function patternMatchNodes(
   patternMatchCache: PatternMatchCache,
-  match: string,
-  matchFunction: CompiledXPathFunction | undefined,
+  match: Xpath,
   node: slimdom.Node,
   variableScopes: Array<VariableScope>,
   namespaceResolver: NamespaceResolver,
 ): slimdom.Node[] | undefined {
   let checkContext = node;
   while (checkContext) {
-    const matches = withCached(patternMatchCache, match, checkContext, (): any[] => {
-      if (matchFunction) {
-        return executeJavaScriptCompiledXPath(matchFunction, checkContext);
-      }
-      return evaluateXPathToNodes(
-        match,
-        checkContext,
-        undefined,
-        /* TODO: Only top level variables are applicable here, so top
+    const matches = withCached(
+      patternMatchCache,
+      match.xpath,
+      checkContext,
+      (): any[] => {
+        if (match.compiled) {
+          return executeJavaScriptCompiledXPath(match.compiled, checkContext);
+        }
+        return evaluateXPathToNodes(
+          match.xpath,
+          checkContext,
+          undefined,
+          /* TODO: Only top level variables are applicable here, so top
         level variables could be cached. */
-        mergeVariableScopes(variableScopes),
-        { namespaceResolver, functionNameResolver },
-      );
-    });
+          mergeVariableScopes(variableScopes),
+          { namespaceResolver, functionNameResolver },
+        );
+      },
+    );
     /* It counts as a match if the node we were testing against is in
        the resulting node set. */
     if (matches.indexOf(node) !== -1) {
@@ -295,34 +298,34 @@ function patternMatchNodes(
     }
     /* Match not found, continue up the tree */
     checkContext =
-          checkContext.parentNode ||
-            (checkContext.nodeType === NodeType.ATTRIBUTE &&
-              (checkContext as slimdom.Attr).ownerElement);
+      checkContext.parentNode ||
+      (checkContext.nodeType === NodeType.ATTRIBUTE &&
+        (checkContext as slimdom.Attr).ownerElement);
   }
   return undefined;
 }
 /* Implementation of https://www.w3.org/TR/xslt20/#pattern-syntax */
 function patternMatch(
   patternMatchCache: PatternMatchCache,
-  match: string,
-  matchFunction: CompiledXPathFunction | undefined,
+  match: Xpath,
   node: slimdom.Node,
   variableScopes: Array<VariableScope>,
   namespaceResolver: NamespaceResolver,
 ): boolean {
   /* Using ancestors as the potential contexts */
-  if (node && !failFast(match, node)) {
-    if (fastSuccess(match, node)) {
+  if (node && !failFast(match.xpath, node)) {
+    if (fastSuccess(match.xpath, node)) {
       return true;
     } else {
-      return patternMatchNodes(
-        patternMatchCache,
-        match,
-        matchFunction,
-        node,
-        variableScopes,
-        namespaceResolver,
-      ) !== undefined;
+      return (
+        patternMatchNodes(
+          patternMatchCache,
+          match,
+          node,
+          variableScopes,
+          namespaceResolver,
+        ) !== undefined
+      );
     }
   }
   return false;
@@ -348,7 +351,6 @@ function* getTemplates(
       patternMatch(
         patternMatchCache,
         template.match,
-        template.matchFunction,
         node,
         variableScopes,
         mkResolver(namespaces),
@@ -363,14 +365,14 @@ function mkBuiltInTemplates(namespaces: object): Array<Template> {
   /* Pre-sorted in order of default priority */
   return [
     {
-      match: "processing-instruction()|comment()",
+      match: { xpath: "processing-instruction()|comment()" },
       apply: (_context: DynamicContext) => {},
       allowedParams: [],
       modes: ["#all"],
       importPrecedence: Number.MAX_VALUE,
     },
     {
-      match: "text()|@*",
+      match: { xpath: "text()|@*" },
       apply: (context: DynamicContext) => {
         valueOf(
           context,
@@ -383,7 +385,7 @@ function mkBuiltInTemplates(namespaces: object): Array<Template> {
       importPrecedence: Number.MAX_VALUE,
     },
     {
-      match: "*|/",
+      match: { xpath: "*|/" },
       apply: (context: DynamicContext) => {
         applyTemplates(context, {
           select: "child::node()",
@@ -1284,8 +1286,7 @@ function groupAdjacent(
 function groupStartingWith(
   context: DynamicContext,
   nodes: any[],
-  pattern: string,
-  matchFunction: CompiledXPathFunction | undefined,
+  pattern: Xpath,
   namespaceResolver: NamespaceResolver,
 ): NodeGroup[] {
   let retval: NodeGroup[] = [];
@@ -1296,7 +1297,6 @@ function groupStartingWith(
     const matches = patternMatch(
       context.patternMatchCache,
       pattern,
-      matchFunction,
       node,
       context.variableScopes,
       namespaceResolver,
@@ -1318,8 +1318,7 @@ function groupStartingWith(
 function groupEndingWith(
   context: DynamicContext,
   nodes: any[],
-  pattern: string,
-  matchFunction: CompiledXPathFunction | undefined,
+  pattern: Xpath,
   namespaceResolver: NamespaceResolver,
 ): NodeGroup[] {
   let retval: NodeGroup[] = [];
@@ -1332,7 +1331,6 @@ function groupEndingWith(
     const matches = patternMatch(
       context.patternMatchCache,
       pattern,
-      matchFunction,
       node,
       context.variableScopes,
       namespaceResolver,
@@ -1356,10 +1354,8 @@ export function forEachGroup(
     select: string;
     groupBy?: string;
     groupAdjacent?: string;
-    groupStartingWith?: string;
-    groupStartingWithFunction?: CompiledXPathFunction;
-    groupEndingWith?: string;
-    groupEndingWithFunction?: CompiledXPathFunction;
+    groupStartingWith?: Xpath;
+    groupEndingWith?: Xpath;
     namespaces: object;
     sortKeyComponents: SortKeyComponent[];
   },
@@ -1395,7 +1391,6 @@ export function forEachGroup(
         context,
         nodeList,
         data.groupEndingWith,
-        data.groupEndingWithFunction,
         namespaceResolver,
       );
     } else if (data.groupStartingWith) {
@@ -1403,7 +1398,6 @@ export function forEachGroup(
         context,
         nodeList,
         data.groupStartingWith,
-        data.groupStartingWithFunction,
         namespaceResolver,
       );
     }
@@ -1681,10 +1675,8 @@ export function number(
   data: {
     value?: string;
     select?: string;
-    count?: string;
-    countFunction?: CompiledXPathFunction;
-    from?: string;
-    fromFunction?: CompiledXPathFunction;
+    count?: Xpath;
+    from?: Xpath;
     level: string;
     format: NumberFormat;
     lang?: string;
@@ -1933,14 +1925,7 @@ function shouldStripSpace(
   for (const decl of whitespaceDeclarations) {
     const namespaceResolver = mkResolver(decl.namespaces);
     if (
-      patternMatch(
-        patternMatchCache,
-        decl.match,
-        null,
-        node,
-        [],
-        namespaceResolver,
-      )
+      patternMatch(patternMatchCache, decl.match, node, [], namespaceResolver)
     ) {
       if (decl.preserve) {
         return false;

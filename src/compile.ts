@@ -183,17 +183,19 @@ function tryCompilePattern(
   const compiled = compileXPathToJavaScript(pattern, evaluateXPath.NODES_TYPE, {
     namespaceResolver: mkResolver(namespaces),
   });
-
+  let compiledFunc: any = mkLiteral(undefined);
   if (compiled.isAstAccepted) {
-    return {
+    compiledFunc = {
       type: "CallExpression",
       callee: mkMember("xjslt", "compileMatchFunction"),
       arguments: [mkLiteral(compiled.code)],
       optional: false,
     };
   }
-
-  return mkLiteral(undefined);
+  return toEstree({
+    xpath: mkLiteral(pattern),
+    compiled: compiledFunc,
+  });
 }
 
 function compileForEachNode(node: slimdom.Element, context: CompileContext) {
@@ -210,16 +212,14 @@ function compileForEachGroupNode(
   context: CompileContext,
 ) {
   const namespaces = getNodeNS(node);
-  const groupStartingWith = node.getAttribute("group-starting-with");
-  const groupEndingWith = node.getAttribute("group-ending-with");
 
   // Precompile patterns if possible
-  const groupStartingWithFunction = tryCompilePattern(
-    groupStartingWith,
+  const groupStartingWith = tryCompilePattern(
+    node.getAttribute("group-starting-with"),
     namespaces,
   );
-  const groupEndingWithFunction = tryCompilePattern(
-    groupEndingWith,
+  const groupEndingWith = tryCompilePattern(
+    node.getAttribute("group-ending-with"),
     namespaces,
   );
 
@@ -231,9 +231,7 @@ function compileForEachGroupNode(
       groupBy: node.getAttribute("group-by"),
       groupAdjacent: node.getAttribute("group-adjacent"),
       groupStartingWith: groupStartingWith,
-      groupStartingWithFunction: groupStartingWithFunction,
       groupEndingWith: groupEndingWith,
-      groupEndingWithFunction: groupEndingWithFunction,
       sortKeyComponents: compileSortKeyComponents(node.childNodes, context),
       namespaces: namespaces,
     }),
@@ -311,22 +309,18 @@ export function parseNumberFormat(format: string): NumberFormat {
 
 function compileNumberNode(node: slimdom.Element, context: CompileContext) {
   const namespaces = getNodeNS(node);
-  const count = node.getAttribute("count");
-  const from = node.getAttribute("from");
   const format = node.getAttribute("format") || "1";
 
   // Precompile patterns if possible
-  const countFunction = tryCompilePattern(count, namespaces);
-  const fromFunction = tryCompilePattern(from, namespaces);
+  const count = tryCompilePattern(node.getAttribute("count"), namespaces);
+  const from = tryCompilePattern(node.getAttribute("from"), namespaces);
 
   return compileFuncall("number", [
     toEstree({
       value: node.getAttribute("value"),
       select: node.getAttribute("select"),
       count: count,
-      countFunction: countFunction,
       from: from,
-      fromFunction: fromFunction,
       level: node.getAttribute("level") || "single",
       format: parseNumberFormat(format),
       lang: node.getAttribute("lang"),
@@ -572,7 +566,9 @@ function compileWhitespaceDeclarationNode(
       .map((e) => {
         return toEstree({
           importPrecedence: node.getAttribute("import-precedence") || 1,
-          match: e,
+          match: toEstree({
+            xpath: mkLiteral(e),
+          }),
           preserve: preserve,
           namespaces: getNodeNS(node),
         });
@@ -693,7 +689,9 @@ export function compileTopLevelNode(
       } else if (node.localName === "strip-space") {
         return compileWhitespaceDeclarationNode(node, false, context);
       } else {
-        throw new Error("Found unexpected XSL element: " + node.tagName);
+        throw new Error(
+          "XTSE0010: Found unexpected XSL element: " + node.tagName,
+        );
       }
     }
   }
@@ -793,7 +791,9 @@ export function compileSequenceConstructorNode(
       } else if (node.localName === "value-of") {
         return compileValueOf(node, context);
       } else {
-        throw new Error("Found unexpected XSL element: " + node.tagName);
+        throw new Error(
+          "XTSE0010: Found unexpected XSL element: " + node.tagName,
+        );
       }
     } else {
       return compileLiteralElementNode(node, context);
@@ -1090,11 +1090,10 @@ function resolveQname(name: string | null, namespaces: object) {
 function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
   let allowedParams = compileParams("param", node.childNodes, context);
   let namespaces = getNodeNS(node);
-  const match: string | undefined = node.getAttribute("match") || undefined;
-  const matchFunction = tryCompilePattern(match, namespaces);
+  const matchStr = node.getAttribute("match") || undefined;
+  const match = matchStr ? tryCompilePattern(matchStr, namespaces) : undefined;
   context.templates.push({
     match: match,
-    matchFunction: matchFunction,
     name: expandQname(node.getAttribute("name"), namespaces) || undefined,
     modes: (node.getAttribute("mode") || "#default")
       .split(" ")
