@@ -1941,7 +1941,11 @@ export function evaluateAttributeValueTemplate(
           context.contextItem,
           undefined,
           mergeVariableScopes(context.variableScopes),
-          { currentContext: context, namespaceResolver: namespaceResolver },
+          {
+            currentContext: context,
+            namespaceResolver: namespaceResolver,
+            functionNameResolver,
+          },
         );
       }
     })
