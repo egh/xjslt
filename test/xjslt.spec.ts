@@ -285,7 +285,7 @@ test("compileTemplateNode", () => {
   let context = { templates: [], whitespaceDeclarations: [] };
   compileTopLevelNode(nodes[0], context);
   expect(generate(toEstree(context.templates), GENERATE_OPTS)).toEqual(
-    '[{"match": "/","matchFunction": xjslt.compileMatchFunction("\\n\\treturn (contextItem, domFacade, runtimeLib, options) => {\\n\\t\\tconst {\\n\\t\\t\\terrXPDY0002,\\n\\t\\t} = runtimeLib;\\n\\t\\tif (!contextItem) {\\n\\t\\t\\tthrow errXPDY0002(\\"Context is needed to evaluate the given path expression.\\");\\n\\t\\t}\\n\\n\\t\\tif (!contextItem.nodeType) {\\n\\t\\t\\tthrow new Error(\\"Context item must be subtype of node().\\");\\n\\t\\t}\\n\\t\\t\\n\\t\\tconst nodes0 = (function* (contextItem0) {\\n\\t\\t\\tconst root0 = (function () {\\n\\t\\t\\t\\tlet n = contextItem0;\\n\\t\\t\\t\\twhile (n.nodeType !== /*DOCUMENT_NODE*/9) {\\n\\t\\t\\t\\t\\tn = domFacade.getParentNode(n);\\n\\t\\t\\t\\t\\tif (n === null) {\\n\\t\\t\\t\\t\\t\\tthrow new Error(\'XPDY0050: the root node of the context node is not a document node.\');\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t}\\n\\t\\t\\t\\treturn n;\\n\\t\\t\\t})();\\n\\t\\t\\tyield root0;\\n\\t\\t});\\n\\t\\treturn Array.from(nodes0(contextItem));}\\n//# sourceURL=generated.js"),"name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"name": "doc","attributes": [],"namespace": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default","params": [],"sortKeyComponents": [],"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}});});},"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"},"priority": undefined,"importPrecedence": 1}]',
+    '[{"match": {"xpath": "/","compiled": xjslt.compileMatchFunction("\\n\\treturn (contextItem, domFacade, runtimeLib, options) => {\\n\\t\\tconst {\\n\\t\\t\\terrXPDY0002,\\n\\t\\t} = runtimeLib;\\n\\t\\tif (!contextItem) {\\n\\t\\t\\tthrow errXPDY0002(\\"Context is needed to evaluate the given path expression.\\");\\n\\t\\t}\\n\\n\\t\\tif (!contextItem.nodeType) {\\n\\t\\t\\tthrow new Error(\\"Context item must be subtype of node().\\");\\n\\t\\t}\\n\\t\\t\\n\\t\\tconst nodes0 = (function* (contextItem0) {\\n\\t\\t\\tconst root0 = (function () {\\n\\t\\t\\t\\tlet n = contextItem0;\\n\\t\\t\\t\\twhile (n.nodeType !== /*DOCUMENT_NODE*/9) {\\n\\t\\t\\t\\t\\tn = domFacade.getParentNode(n);\\n\\t\\t\\t\\t\\tif (n === null) {\\n\\t\\t\\t\\t\\t\\tthrow new Error(\'XPDY0050: the root node of the context node is not a document node.\');\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t}\\n\\t\\t\\t\\treturn n;\\n\\t\\t\\t})();\\n\\t\\t\\tyield root0;\\n\\t\\t});\\n\\t\\treturn Array.from(nodes0(contextItem));}\\n//# sourceURL=generated.js")},"name": undefined,"modes": ["#default"],"allowedParams": [],"apply": context => {xjslt.literalElement(context, {"name": "doc","attributes": [],"namespace": undefined,"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}}, context => {xjslt.applyTemplates(context, {"select": "child::node()","mode": "#default","params": [],"sortKeyComponents": [],"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"}});});},"namespaces": {"xsl": "http://www.w3.org/1999/XSL/Transform"},"priority": undefined,"importPrecedence": 1}]',
   );
 });
 
@@ -316,6 +316,7 @@ test("evaluateAttributeValueTemplate", () => {
     keys: new Map(),
     patternMatchCache: new Map(),
     contextList: [],
+    position: 1,
   };
   expect(
     evaluateAttributeValueTemplate(
@@ -584,6 +585,7 @@ test("buildNode", () => {
     keys: new Map(),
     patternMatchCache: new Map(),
     contextList: [],
+    position: 1,
   };
   let nodeA = buildNode(context, {
     name: "baz:foo",
@@ -621,6 +623,7 @@ test("buildAttributeNode", () => {
     keys: new Map(),
     patternMatchCache: new Map(),
     contextList: [],
+    position: 1,
   };
   let nodeA = buildAttributeNode(context, {
     name: "baz:foo",
