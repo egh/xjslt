@@ -39,7 +39,7 @@ function fnCurrentGroup({ currentContext }) {
 }
 
 function fnPosition({ currentContext }) {
-  return currentContext.contextList.indexOf(currentContext.contextItem) + 1;
+  return currentContext.position;
 }
 
 function fnLast({ currentContext }) {

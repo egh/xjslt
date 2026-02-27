@@ -998,6 +998,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               resultDocuments: mkIdentifier("resultDocuments"),
               contextItem: mkIdentifier("document"),
               contextList: mkArray([mkIdentifier("document")]),
+              position: mkLiteral(1),
               mode: mkMember("params", "initialMode"),
               templates: sortSortable(context.templates),
               variableScopes: [mkNew(mkIdentifier("Map"), [])],

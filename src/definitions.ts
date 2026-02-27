@@ -199,6 +199,7 @@ export interface DynamicContext {
   // The actual context
   contextItem: any;
   contextList: any[];
+  position: number;
 }
 
 export interface CompileContext {
