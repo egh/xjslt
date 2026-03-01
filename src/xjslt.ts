@@ -1657,6 +1657,15 @@ export function number(
       variables,
       { currentContext: context, namespaceResolver, functionNameResolver },
     );
+  } else if (data.level === "single") {
+    if (
+      data.value === undefined &&
+      data.select === undefined &&
+      data.count === undefined
+    ) {
+      // position
+      numberValue = context.position;
+    }
   }
 
   context.append(
