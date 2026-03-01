@@ -71,7 +71,6 @@ import {
   xpathstring,
 } from "./definitions";
 import {
-  hackXpath,
   isAlphanumeric,
   mkOutputDefinition,
   mkResolver,
@@ -95,6 +94,61 @@ function buildInResolver(prefix: string): string | null {
     return XSLT1_NSURI;
   }
   return null;
+}
+
+/** Rewrite xpaths to support any workarounds/hacks we need. */
+function hackXpath(
+  xpath: string | undefined | null,
+): string | undefined | null {
+  if (!xpath) {
+    return xpath;
+  }
+  // Override to use our own position, but only outside square brackets
+  // and not when preceded by / or ::
+  let result = "";
+  let depth = 0;
+  let i = 0;
+
+  while (i < xpath.length) {
+    const char = xpath[i];
+
+    if (char === "[") {
+      depth++;
+      result += char;
+      i++;
+    } else if (char === "]") {
+      depth--;
+      result += char;
+      i++;
+    } else if (depth === 0) {
+      // We're outside brackets, check for position() or last()
+      // But not if preceded by / or ::
+      const precededBySlash = i > 0 && xpath[i - 1] === "/";
+      const precededByDoubleColon = i > 1 && xpath.substring(i - 2, i) === "::";
+
+      if (!precededBySlash && !precededByDoubleColon) {
+        if (xpath.substring(i).startsWith("position()")) {
+          result += "positionx()";
+          i += "position()".length;
+        } else if (xpath.substring(i).startsWith("last()")) {
+          result += "lastx()";
+          i += "last()".length;
+        } else {
+          result += char;
+          i++;
+        }
+      } else {
+        result += char;
+        i++;
+      }
+    } else {
+      // Inside brackets, don't modify
+      result += char;
+      i++;
+    }
+  }
+
+  return result;
 }
 
 const simpleElements = new Map<string, SimpleElement>([
