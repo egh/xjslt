@@ -1,6 +1,6 @@
 (() => {
   var e = {
-      709(e, t, n) {
+      296(e, t, n) {
         (n(898), n(594));
         let o = n(821);
         function r(e, t) {
@@ -335,10 +335,10 @@
           return (0, a.urlToDom)(e, t);
         }
         function i({ currentContext: e }) {
-          return e.currentGroupingKey;
+          return e.currentGroup.key;
         }
         function u({ currentContext: e }) {
-          return e.currentGroup;
+          return e.currentGroup.nodes;
         }
         function p({ currentContext: e }) {
           return e.position;
@@ -977,7 +977,7 @@
               );
             if (a && Symbol.iterator in Object(a)) {
               let r = [];
-              t.groupBy
+              (t.groupBy
                 ? (r = (function (e, t, n, o) {
                     const r = D(e.variableScopes);
                     let a = [];
@@ -1062,20 +1062,21 @@
                           L(r, a),
                           r
                         );
-                      })(e, a, t.groupStartingWith, o));
-              let s = 0;
-              for (const { key: t, nodes: o } of r)
-                (s++,
-                  n(
-                    Object.assign(Object.assign({}, e), {
-                      contextItem: o[0],
-                      contextList: o,
-                      currentGroupingKey: t,
-                      currentGroup: o,
-                      position: s,
-                      variableScopes: $(e.variableScopes),
-                    }),
-                  ));
+                      })(e, a, t.groupStartingWith, o)),
+                (function (e, t, n) {
+                  let o = 0;
+                  for (const r of e)
+                    (o++,
+                      n(
+                        Object.assign(Object.assign({}, t), {
+                          contextItem: r.nodes[0],
+                          contextList: r.nodes,
+                          currentGroup: r,
+                          position: o,
+                          variableScopes: $(t.variableScopes),
+                        }),
+                      ));
+                })(r, e, n));
             }
           }),
           (t.groupNumeric = j),
@@ -1087,23 +1088,28 @@
             const n = (0, l.mkResolver)(t.namespaces),
               o = D(e.variableScopes);
             let r;
-            (t.value &&
-              (r = (0, c.evaluateXPathToNumber)(
-                t.value,
-                e.contextItem,
-                void 0,
-                o,
-                {
-                  currentContext: e,
-                  namespaceResolver: n,
-                  functionNameResolver: u.functionNameResolver,
-                },
-              )),
+            (t.value
+              ? (r = (0, c.evaluateXPathToNumber)(
+                  t.value,
+                  e.contextItem,
+                  void 0,
+                  o,
+                  {
+                    currentContext: e,
+                    namespaceResolver: n,
+                    functionNameResolver: u.functionNameResolver,
+                  },
+                ))
+              : "single" === t.level &&
+                void 0 === t.value &&
+                void 0 === t.select &&
+                void 0 === t.count &&
+                (r = e.position),
               e.append(Y([r], t.format, t.groupingSeparator, t.groupingSize)));
           }),
           (t.toRoman = B),
-          (t.mkNodeAppender = G),
-          (t.mkArrayAppender = J),
+          (t.mkNodeAppender = J),
+          (t.mkArrayAppender = G),
           (t.resultDocument = function (e, t, n) {
             const o = (0, l.mkResolver)(t.namespaces);
             function r(t) {
@@ -1148,7 +1154,7 @@
                 n(
                   Object.assign(Object.assign({}, e), {
                     outputDocument: t,
-                    append: G(t),
+                    append: J(t),
                   }),
                 ));
             } else {
@@ -1161,7 +1167,7 @@
                   u,
                 )),
                 (e.outputDocument = t),
-                (e.append = G(t))),
+                (e.append = J(t))),
                 e.resultDocuments.set(
                   "#default",
                   Object.assign(Object.assign({}, c), { document: t }),
@@ -1633,7 +1639,7 @@
           for (const [e, t] of n) for (; r >= e; ) ((o += t), (r -= e));
           return o;
         }
-        function G(e) {
+        function J(e) {
           const t = e.ownerDocument || e;
           return function n(o) {
             if (o.length && o.values) {
@@ -1654,21 +1660,21 @@
             } else {
               if (o.nodeType === p.NodeType.DOCUMENT) {
                 const e = o;
-                return (o = o.documentElement) ? (n(o), G(o)) : G(e);
+                return (o = o.documentElement) ? (n(o), J(o)) : J(e);
               }
               if (o.nodeType === p.NodeType.DOCUMENT_FRAGMENT) n(o.childNodes);
               else if (o.nodeType === p.NodeType.TEXT) n(o.data);
               else {
                 if (o.nodeType) {
                   let n = t.importNode(o, !0);
-                  return (e.append(n), G(n));
+                  return (e.append(n), J(n));
                 }
                 n(`${o}`);
               }
             }
           };
         }
-        function J(e) {
+        function G(e) {
           return function (t) {
             if (
               (e.push(t),
@@ -1676,7 +1682,7 @@
                 (t.nodeType === p.NodeType.DOCUMENT ||
                   t.nodeType === p.NodeType.ELEMENT))
             )
-              return G(t);
+              return J(t);
           };
         }
         function K(e, t, n) {
@@ -1749,7 +1755,7 @@
                     return (
                       t(
                         Object.assign(Object.assign({}, e), {
-                          append: J(n),
+                          append: G(n),
                           mode: "#default",
                           variableScopes: $(e.variableScopes),
                         }),
@@ -1763,7 +1769,7 @@
           return (function (e, t) {
             const n = e.outputDocument.createDocumentFragment();
             if (
-              (t(G(n)), 1 === n.childNodes.length && 1 === n.childElementCount)
+              (t(J(n)), 1 === n.childNodes.length && 1 === n.childElementCount)
             ) {
               const t = e.outputDocument.implementation.createDocument(
                 null,
@@ -1812,6 +1818,6 @@
       if (void 0 !== r) return r.exports;
       var a = (t[o] = { exports: {} });
       return (e[o].call(a.exports, a, a.exports, n), a.exports);
-    })(709);
+    })(296);
   module.exports = n.transform;
 })();
