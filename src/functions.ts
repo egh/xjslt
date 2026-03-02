@@ -31,11 +31,11 @@ function fnDoc({ currentContext }, url: string) {
 }
 
 function fnCurrentGroupingKey({ currentContext }) {
-  return currentContext.currentGroupingKey;
+  return currentContext.currentGroup.key;
 }
 
 function fnCurrentGroup({ currentContext }) {
-  return currentContext.currentGroup;
+  return currentContext.currentGroup.nodes;
 }
 
 function fnPosition({ currentContext }) {

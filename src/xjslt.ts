@@ -1355,14 +1355,13 @@ export function forEachGroup(
     }
     // TODO: sort
     let position = 0;
-    for (const { key, nodes } of groupedNodes) {
+    for (const group of groupedNodes) {
       position++;
       const newContext = {
         ...context,
-        contextItem: nodes[0],
-        contextList: nodes,
-        currentGroupingKey: key,
-        currentGroup: nodes,
+        contextItem: group.nodes[0],
+        contextList: group.nodes,
+        currentGroup: group,
         position,
         variableScopes: extendScope(context.variableScopes),
       };

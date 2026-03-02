@@ -190,8 +190,7 @@ export interface DynamicContext {
   variableScopes: Array<VariableScope>;
   nextMatches?: Generator<Template>;
   inputURL: URL;
-  currentGroup?: any[];
-  currentGroupingKey?: string;
+  currentGroup?: NodeGroup;
   keys: Map<String, Key>;
   patternMatchCache: PatternMatchCache;
   outputDefinitions: Map<string, OutputDefinition>;
