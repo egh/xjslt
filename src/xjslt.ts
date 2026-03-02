@@ -444,15 +444,34 @@ function sortNodesHelper(
 function iterateNodes(
   contextList: any[],
   context: DynamicContext,
-  f: (context: DynamicContext) => void,
+  func: SequenceConstructor,
 ) {
   let position = 0;
   for (const contextItem of contextList) {
     position++;
-    f({ ...context, contextItem, contextList, position });
+    func({ ...context, contextItem, contextList, position });
   }
 }
 
+function iterateGroupedNodes(
+  groupedNodes: NodeGroup[],
+  context: DynamicContext,
+  func: SequenceConstructor,
+) {
+  let position = 0;
+  for (const group of groupedNodes) {
+    position++;
+    const newContext = {
+      ...context,
+      contextItem: group.nodes[0],
+      contextList: group.nodes,
+      currentGroup: group,
+      position,
+      variableScopes: extendScope(context.variableScopes),
+    };
+    func(newContext);
+  }
+}
 function sortNodesHelperNumeric(
   context: DynamicContext,
   nodes: any[],
@@ -1354,19 +1373,7 @@ export function forEachGroup(
       );
     }
     // TODO: sort
-    let position = 0;
-    for (const group of groupedNodes) {
-      position++;
-      const newContext = {
-        ...context,
-        contextItem: group.nodes[0],
-        contextList: group.nodes,
-        currentGroup: group,
-        position,
-        variableScopes: extendScope(context.variableScopes),
-      };
-      func(newContext);
-    }
+    iterateGroupedNodes(groupedNodes, context, func);
   }
 }
 
