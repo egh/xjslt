@@ -106,15 +106,15 @@ test("astring", () => {
 });
 
 const document = slimdom.parseXmlDocument(
-  readFileSync("./test/simple.xml").toString(),
+  readFileSync(`${__dirname}/simple.xml`).toString(),
 );
 
 const xsltDoc = preprocessStripWhitespace2(
-  slimdom.parseXmlDocument(readFileSync("./test/simple.xslt").toString()),
+  slimdom.parseXmlDocument(readFileSync(`${__dirname}/simple.xslt`).toString()),
 ).get("#default").document;
 
 const xslt2Doc = preprocessStripWhitespace2(
-  slimdom.parseXmlDocument(readFileSync("./test/simple2.xslt").toString()),
+  slimdom.parseXmlDocument(readFileSync(`${__dirname}/simple2.xslt`).toString()),
 ).get("#default").document;
 
 function walkTree(node: any, func: (node: any) => void): void {
@@ -290,15 +290,15 @@ test("compileTemplateNode", () => {
 });
 
 test("compileStylesheetNode", () => {
-  const transform = buildStylesheet("./test/simple2.xslt");
+  const transform = buildStylesheet(`${__dirname}/simple2.xslt`);
   expect(
     slimdom.serializeToWellFormedString(
       transform(
-        slimdom.parseXmlDocument(readFileSync("./test/simple.xml", "utf-8")),
+        slimdom.parseXmlDocument(readFileSync(`${__dirname}/simple.xml`, "utf-8")),
         new slimdom.Document(),
       ).get("#default").document,
     ),
-  ).toEqual(readFileSync("./test/simple2.out", "utf-8"));
+  ).toEqual(readFileSync(`${__dirname}/simple2.out`, "utf-8"));
 });
 
 test("evaluateAttributeValueTemplate", () => {
