@@ -41,6 +41,7 @@ import {
   Template,
   Constructor,
   DynamicContext,
+  isNodeGroupArray,
   Key,
   NodeGroup,
   NodeType,
@@ -48,6 +49,7 @@ import {
   OutputDefinition,
   OutputResult,
   SequenceConstructor,
+  SequenceConstructorWithReturn,
   SortKeyComponent,
   TransformParams,
   VariableLike,
@@ -56,10 +58,18 @@ import {
   PatternMatchCache,
   Xpath,
 } from "./definitions";
-import { determineNamespace, mkOutputDefinition, mkResolver } from "./shared";
+import {
+  determineNamespace,
+  mkOutputDefinition,
+  mkResolver,
+  zip,
+} from "./shared";
 
 /* Depth first node visit */
-export function visitNodes(node: slimdom.Node, visit: (node: slimdom.Node) => void) {
+export function visitNodes(
+  node: slimdom.Node,
+  visit: (node: slimdom.Node) => void,
+) {
   visit(node);
   if (node.childNodes) {
     for (let childNode of node.childNodes) {
@@ -420,17 +430,17 @@ export function applyImports(
   }
 }
 
-function sortNodesHelper(
+function sortHelper<T extends slimdom.Node | NodeGroup>(
   context: DynamicContext,
-  nodes: slimdom.Node[],
+  things: T[],
   sort: SortKeyComponent,
   namespaceResolver: NamespaceResolver,
-): slimdom.Node[] {
-  let sorted: slimdom.Node[];
+): T[] {
+  let sorted: T[];
   if (sort.dataType === "number") {
-    sorted = sortNodesHelperNumeric(context, nodes, sort, namespaceResolver);
+    sorted = sortHelperNumeric(context, things, sort, namespaceResolver);
   } else {
-    sorted = sortNodesHelperText(context, nodes, sort, namespaceResolver);
+    sorted = sortHelperText(context, things, sort, namespaceResolver);
   }
   if (
     evaluateAttributeValueTemplate(context, sort.order, namespaceResolver) ===
@@ -441,25 +451,39 @@ function sortNodesHelper(
   return sorted;
 }
 
-function iterateNodes(
-  contextList: slimdom.Node[],
+function iterateNodesOrNodeGroups<T extends slimdom.Node | NodeGroup, U>(
+  things: T[],
   context: DynamicContext,
-  func: SequenceConstructor,
-) {
-  let position = 0;
-  for (const contextItem of contextList) {
-    position++;
-    func({ ...context, contextItem, contextList, position });
+  func: SequenceConstructorWithReturn<U>,
+): U[] {
+  if (things.length > 0) {
+    if (isNodeGroupArray(things)) {
+      return iterateNodeGroups(things, context, func);
+    } else {
+      return iterateNodes(things as slimdom.Node[], context, func);
+    }
   }
 }
 
-function iterateGroupedNodes(
-  groupedNodes: NodeGroup[],
+function iterateNodes<T>(
+  contextList: slimdom.Node[],
   context: DynamicContext,
-  func: SequenceConstructor,
-) {
+  func: SequenceConstructorWithReturn<T>,
+): T[] {
   let position = 0;
-  for (const group of groupedNodes) {
+  return contextList.map((contextItem) => {
+    position++;
+    return func({ ...context, contextItem, contextList, position });
+  });
+}
+
+function iterateNodeGroups<T>(
+  nodeGroups: NodeGroup[],
+  context: DynamicContext,
+  func: SequenceConstructorWithReturn<T>,
+): T[] {
+  let position = 0;
+  return nodeGroups.map((group) => {
     position++;
     const newContext = {
       ...context,
@@ -469,17 +493,17 @@ function iterateGroupedNodes(
       position,
       variableScopes: extendScope(context.variableScopes),
     };
-    func(newContext);
-  }
+    return func(newContext);
+  });
 }
-function sortNodesHelperNumeric(
+
+function sortHelperNumeric<T extends slimdom.Node | NodeGroup>(
   context: DynamicContext,
-  nodes: slimdom.Node[],
+  things: T[],
   sort: SortKeyComponent,
   namespaceResolver: NamespaceResolver,
-): slimdom.Node[] {
-  let keyed: { key: number; item: slimdom.Node }[] = [];
-  iterateNodes(nodes, context, (context) => {
+): T[] {
+  const keys = iterateNodesOrNodeGroups(things, context, (context) => {
     let key: number;
     const text = constructSimpleContent(
       context,
@@ -491,46 +515,43 @@ function sortNodesHelperNumeric(
     if (isNaN(key)) {
       key = Number.MIN_SAFE_INTEGER; // if we can't calculate a sort key, sort before everything
     }
-    keyed.push({
-      key: key,
-      item: context.contextItem,
-    });
+    return key;
   });
-  return keyed.sort((a, b) => a.key - b.key).map((obj) => obj.item);
+  return zip(keys, things)
+    .sort((a, b) => a[0] - b[0])
+    .map((t) => t[1]);
 }
 
-function sortNodesHelperText(
+function sortHelperText<T extends slimdom.Node | NodeGroup>(
   context: DynamicContext,
-  nodes: slimdom.Node[],
+  things: T[],
   sort: SortKeyComponent,
   namespaceResolver: NamespaceResolver,
-): slimdom.Node[] {
-  let keyed: { key: string; item: slimdom.Node }[] = [];
-  iterateNodes(nodes, context, (context) => {
-    keyed.push({
-      key: constructSimpleContent(context, sort.sortKey, namespaceResolver),
-      item: context.contextItem,
-    });
+): T[] {
+  const keys = iterateNodesOrNodeGroups(things, context, (context) => {
+    return constructSimpleContent(context, sort.sortKey, namespaceResolver);
   });
   const lang =
     sort.lang &&
     evaluateAttributeValueTemplate(context, sort.lang, namespaceResolver);
   let collator = new Intl.Collator(lang).compare;
-  return keyed.sort((a, b) => collator(a.key, b.key)).map((obj) => obj.item);
+  return zip(keys, things)
+    .sort((a, b) => collator(a[0], b[0]))
+    .map((t) => t[1]);
 }
 
-export function sortNodes(
+export function sort<T extends slimdom.Node | NodeGroup>(
   context: DynamicContext,
-  nodes: slimdom.Node[],
+  things: T[],
   sorts: SortKeyComponent[],
   namespaceResolver: NamespaceResolver,
-): slimdom.Node[] {
+): T[] {
   if (sorts) {
     for (let sort of [...sorts].reverse()) {
-      nodes = sortNodesHelper(context, nodes, sort, namespaceResolver);
+      things = sortHelper(context, things, sort, namespaceResolver);
     }
   }
-  return nodes;
+  return things;
 }
 
 function getParam(
@@ -599,7 +620,7 @@ export function applyTemplates(
     /* keep the current mode */
     mode = context.mode;
   }
-  const sorted = sortNodes(
+  const sorted = sort<slimdom.Node>(
     context,
     nodes,
     data.sortKeyComponents,
@@ -1128,7 +1149,7 @@ export function performSort(
     { currentContext: context, namespaceResolver, functionNameResolver },
   ) as slimdom.Node[];
   if (nodeList && Symbol.iterator in Object(nodeList)) {
-    const sorted = sortNodes(
+    const sorted = sort(
       context,
       nodeList,
       data.sortKeyComponents,
@@ -1150,7 +1171,7 @@ export function forEach(
   func: SequenceConstructor,
 ) {
   const namespaceResolver = mkResolver(data.namespaces);
-  const nodeList = evaluateXPath(
+  let nodeList = evaluateXPath(
     data.select,
     context.contextItem,
     undefined,
@@ -1159,13 +1180,13 @@ export function forEach(
     { currentContext: context, namespaceResolver, functionNameResolver },
   ) as slimdom.Node[];
   if (nodeList && Symbol.iterator in Object(nodeList)) {
-    const nodes = sortNodes(
+    nodeList = sort(
       context,
       nodeList,
       data.sortKeyComponents,
       namespaceResolver,
     );
-    iterateNodes(nodes, context, (context) => {
+    iterateNodes(nodeList, context, (context) => {
       func({
         ...context,
         variableScopes: extendScope(context.variableScopes),
@@ -1204,7 +1225,11 @@ function groupBy(
   return retval;
 }
 
-function finishGroup(grouped: NodeGroup[], currentGroup: slimdom.Node[], key?: string) {
+function finishGroup(
+  grouped: NodeGroup[],
+  currentGroup: slimdom.Node[],
+  key?: string,
+) {
   if (currentGroup.length > 0) {
     if (key === null) {
       const groupNo = grouped.length + 1;
@@ -1373,8 +1398,13 @@ export function forEachGroup(
         namespaceResolver,
       );
     }
-    // TODO: sort
-    iterateGroupedNodes(groupedNodes, context, func);
+    groupedNodes = sort(
+      context,
+      groupedNodes,
+      data.sortKeyComponents,
+      namespaceResolver,
+    );
+    iterateNodeGroups(groupedNodes, context, func);
   }
 }
 
@@ -1919,7 +1949,10 @@ export function stripSpace(
     if (node.nodeType === NodeType.TEXT) {
       if (
         ONLY_WHITESPACE.test(node.textContent) &&
-        shouldStripSpace(node.parentNode as slimdom.Element, whitespaceDeclarations)
+        shouldStripSpace(
+          node.parentNode as slimdom.Element,
+          whitespaceDeclarations,
+        )
       ) {
         toRemove.push(node);
       }

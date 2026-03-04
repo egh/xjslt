@@ -147,7 +147,9 @@ export interface TemplateForCompilation extends GenericTemplate {
   apply: ArrowFunctionExpression;
 }
 
-export type SequenceConstructor = (context: DynamicContext) => void;
+export type SequenceConstructorWithReturn<T> = (context: DynamicContext) => T;
+
+export type SequenceConstructor = SequenceConstructorWithReturn<void>;
 
 export type VariableScope = Map<string, any>;
 
@@ -244,6 +246,19 @@ export interface Key {
 export interface NodeGroup {
   key: string;
   nodes: slimdom.Node[];
+}
+
+export function isNodeGroup(value: any): value is NodeGroup {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof value.key === "string" &&
+    Array.isArray(value.nodes)
+  );
+}
+
+export function isNodeGroupArray(value: any): value is NodeGroup[] {
+  return Array.isArray(value) && (value.length === 0 || isNodeGroup(value[0]));
 }
 
 export interface Xpath {

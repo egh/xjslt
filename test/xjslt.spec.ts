@@ -114,7 +114,9 @@ const xsltDoc = preprocessStripWhitespace2(
 ).get("#default").document;
 
 const xslt2Doc = preprocessStripWhitespace2(
-  slimdom.parseXmlDocument(readFileSync(`${__dirname}/simple2.xslt`).toString()),
+  slimdom.parseXmlDocument(
+    readFileSync(`${__dirname}/simple2.xslt`).toString(),
+  ),
 ).get("#default").document;
 
 function walkTree(node: any, func: (node: any) => void): void {
@@ -294,7 +296,9 @@ test("compileStylesheetNode", () => {
   expect(
     slimdom.serializeToWellFormedString(
       transform(
-        slimdom.parseXmlDocument(readFileSync(`${__dirname}/simple.xml`, "utf-8")),
+        slimdom.parseXmlDocument(
+          readFileSync(`${__dirname}/simple.xml`, "utf-8"),
+        ),
         new slimdom.Document(),
       ).get("#default").document,
     ),

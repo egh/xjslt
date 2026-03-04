@@ -189,6 +189,9 @@ export function sortSortable(templates: Array<Sortable>): Array<Sortable> {
 }
 
 export function zip<T, U>(arr1: T[], arr2: U[]): [T, U][] {
+  if (arr1 === undefined || arr2 === undefined) {
+    return [];
+  }
   const minLength = Math.min(arr1.length, arr2.length);
   return arr1.slice(0, minLength).map((element, index) => {
     return [element, arr2[index]];
