@@ -187,3 +187,10 @@ export function sortSortable(templates: Array<Sortable>): Array<Sortable> {
   templates.sort((a, b) => a.importPrecedence - b.importPrecedence);
   return templates;
 }
+
+export function zip<T, U>(arr1: T[], arr2: U[]): [T, U][] {
+  const minLength = Math.min(arr1.length, arr2.length);
+  return arr1.slice(0, minLength).map((element, index) => {
+    return [element, arr2[index]];
+  });
+}
