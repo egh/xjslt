@@ -59,7 +59,7 @@ import {
 import { determineNamespace, mkOutputDefinition, mkResolver } from "./shared";
 
 /* Depth first node visit */
-export function visitNodes(node: any, visit: (node: any) => void) {
+export function visitNodes(node: slimdom.Node, visit: (node: slimdom.Node) => void) {
   visit(node);
   if (node.childNodes) {
     for (let childNode of node.childNodes) {
@@ -99,7 +99,7 @@ export class KeyImpl implements Key {
     variableScopes: VariableScope[],
   ): Map<any, any> {
     let docCache = new Map();
-    visitNodes(document, (node: any) => {
+    visitNodes(document, (node: slimdom.Node) => {
       if (typeof this.use === "string") {
         if (
           patternMatch(
@@ -226,7 +226,7 @@ function patternMatchNodes(
       patternMatchCache,
       match.xpath,
       checkContext,
-      (): any[] => {
+      (): slimdom.Node[] => {
         if (match.compiled) {
           return executeJavaScriptCompiledXPath(match.compiled, checkContext);
         }
@@ -288,7 +288,7 @@ function patternMatch(
  */
 function* getTemplates(
   patternMatchCache: PatternMatchCache,
-  node: any,
+  node: slimdom.Node,
   templates: Array<Template>,
   variableScopes: Array<VariableScope>,
   mode: string,
@@ -422,11 +422,11 @@ export function applyImports(
 
 function sortNodesHelper(
   context: DynamicContext,
-  nodes: any[],
+  nodes: slimdom.Node[],
   sort: SortKeyComponent,
   namespaceResolver: NamespaceResolver,
-): any[] {
-  let sorted: any[];
+): slimdom.Node[] {
+  let sorted: slimdom.Node[];
   if (sort.dataType === "number") {
     sorted = sortNodesHelperNumeric(context, nodes, sort, namespaceResolver);
   } else {
@@ -442,7 +442,7 @@ function sortNodesHelper(
 }
 
 function iterateNodes(
-  contextList: any[],
+  contextList: slimdom.Node[],
   context: DynamicContext,
   func: SequenceConstructor,
 ) {
@@ -474,11 +474,11 @@ function iterateGroupedNodes(
 }
 function sortNodesHelperNumeric(
   context: DynamicContext,
-  nodes: any[],
+  nodes: slimdom.Node[],
   sort: SortKeyComponent,
   namespaceResolver: NamespaceResolver,
-): any[] {
-  let keyed: { key: number; item: any }[] = [];
+): slimdom.Node[] {
+  let keyed: { key: number; item: slimdom.Node }[] = [];
   iterateNodes(nodes, context, (context) => {
     let key: number;
     const text = constructSimpleContent(
@@ -501,11 +501,11 @@ function sortNodesHelperNumeric(
 
 function sortNodesHelperText(
   context: DynamicContext,
-  nodes: any[],
+  nodes: slimdom.Node[],
   sort: SortKeyComponent,
   namespaceResolver: NamespaceResolver,
-): any[] {
-  let keyed: { key: string; item: any }[] = [];
+): slimdom.Node[] {
+  let keyed: { key: string; item: slimdom.Node }[] = [];
   iterateNodes(nodes, context, (context) => {
     keyed.push({
       key: constructSimpleContent(context, sort.sortKey, namespaceResolver),
@@ -521,10 +521,10 @@ function sortNodesHelperText(
 
 export function sortNodes(
   context: DynamicContext,
-  nodes: any[],
+  nodes: slimdom.Node[],
   sorts: SortKeyComponent[],
   namespaceResolver: NamespaceResolver,
-): any[] {
+): slimdom.Node[] {
   if (sorts) {
     for (let sort of [...sorts].reverse()) {
       nodes = sortNodesHelper(context, nodes, sort, namespaceResolver);
@@ -593,7 +593,7 @@ export function applyTemplates(
     undefined,
     mergeVariableScopes(context.variableScopes),
     { currentContext: context, namespaceResolver, functionNameResolver },
-  );
+  ) as slimdom.Node[];
   let mode = data.mode || "#default";
   if (mode === "#current") {
     /* keep the current mode */
@@ -672,9 +672,10 @@ export function copy(
   const node = context.contextItem;
   let newNode: slimdom.Node;
   if (node.nodeType === NodeType.ELEMENT) {
+    const elem = node as slimdom.Element;
     newNode = context.outputDocument.createElementNS(
-      node.namespaceURI,
-      node.prefix ? `${node.prefix}:${node.localName}` : node.localName,
+      elem.namespaceURI,
+      elem.prefix ? `${elem.prefix}:${elem.localName}` : elem.localName,
     );
     // We maybe shouldn't do this, but in some cases we need to copy
     // nodes & their namespaces & retain the namespaces even if not a
@@ -682,12 +683,12 @@ export function copy(
     // <xsl:template match="foo:bar" xmlns:foo="...">
     //   <out/>
     // </xsl:template>
-    for (let attribute of node.attributes) {
+    for (let attribute of elem.attributes) {
       if (attribute.namespaceURI === XMLNS_NSURI) {
         const name = attribute.localName;
         (newNode as slimdom.Element).setAttributeNode(
           context.outputDocument.importNode(
-            node.getAttributeNodeNS(XMLNS_NSURI, name),
+            elem.getAttributeNodeNS(XMLNS_NSURI, name),
           ),
         );
       }
@@ -869,8 +870,8 @@ export function sequence(
 export function buildNode(
   context: DynamicContext,
   data: { name: string; namespace?: string },
-): any {
-  let newNode: any;
+): slimdom.Element {
+  let newNode: slimdom.Element;
   if (data.namespace !== undefined && data.namespace !== null) {
     newNode = context.outputDocument.createElementNS(data.namespace, data.name);
   } else {
@@ -882,8 +883,8 @@ export function buildNode(
 export function buildAttributeNode(
   context: DynamicContext,
   data: { name: string; value: string; namespace?: string },
-): any {
-  let newNode: any;
+): slimdom.Attr {
+  let newNode: slimdom.Attr;
   if (data.namespace) {
     newNode = context.outputDocument.createAttributeNS(
       data.namespace,
@@ -1125,7 +1126,7 @@ export function performSort(
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
     { currentContext: context, namespaceResolver, functionNameResolver },
-  );
+  ) as slimdom.Node[];
   if (nodeList && Symbol.iterator in Object(nodeList)) {
     const sorted = sortNodes(
       context,
@@ -1156,7 +1157,7 @@ export function forEach(
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
     { currentContext: context, namespaceResolver, functionNameResolver },
-  );
+  ) as slimdom.Node[];
   if (nodeList && Symbol.iterator in Object(nodeList)) {
     const nodes = sortNodes(
       context,
@@ -1175,7 +1176,7 @@ export function forEach(
 
 function groupBy(
   context: DynamicContext,
-  nodes: any[],
+  nodes: slimdom.Node[],
   groupBy: string,
   namespaceResolver: NamespaceResolver,
 ): NodeGroup[] {
@@ -1203,7 +1204,7 @@ function groupBy(
   return retval;
 }
 
-function finishGroup(grouped: NodeGroup[], currentGroup: any[], key?: string) {
+function finishGroup(grouped: NodeGroup[], currentGroup: slimdom.Node[], key?: string) {
   if (currentGroup.length > 0) {
     if (key === null) {
       const groupNo = grouped.length + 1;
@@ -1215,14 +1216,14 @@ function finishGroup(grouped: NodeGroup[], currentGroup: any[], key?: string) {
 
 function groupAdjacent(
   context: DynamicContext,
-  nodes: any[],
+  nodes: slimdom.Node[],
   groupAdjacent: string,
   namespaceResolver: NamespaceResolver,
 ): NodeGroup[] {
   const variables = mergeVariableScopes(context.variableScopes);
   let retval: NodeGroup[] = [];
   let currentKey: string | null = null;
-  let currentGroup: any[] = [];
+  let currentGroup: slimdom.Node[] = [];
 
   iterateNodes(nodes, context, (context) => {
     const node = context.contextItem;
@@ -1256,12 +1257,12 @@ function groupAdjacent(
 
 function groupStartingWith(
   context: DynamicContext,
-  nodes: any[],
+  nodes: slimdom.Node[],
   pattern: Xpath,
   namespaceResolver: NamespaceResolver,
 ): NodeGroup[] {
   let retval: NodeGroup[] = [];
-  let currentGroup: any[] = [];
+  let currentGroup: slimdom.Node[] = [];
 
   iterateNodes(nodes, context, (context) => {
     const node = context.contextItem;
@@ -1288,12 +1289,12 @@ function groupStartingWith(
 
 function groupEndingWith(
   context: DynamicContext,
-  nodes: any[],
+  nodes: slimdom.Node[],
   pattern: Xpath,
   namespaceResolver: NamespaceResolver,
 ): NodeGroup[] {
   let retval: NodeGroup[] = [];
-  let currentGroup: any[] = [];
+  let currentGroup: slimdom.Node[] = [];
 
   iterateNodes(nodes, context, (context) => {
     const node = context.contextItem;
@@ -1340,7 +1341,7 @@ export function forEachGroup(
     undefined,
     variables,
     { currentContext: context, namespaceResolver, functionNameResolver },
-  );
+  ) as slimdom.Node[];
   if (nodeList && Symbol.iterator in Object(nodeList)) {
     let groupedNodes: NodeGroup[] = [];
     if (data.groupBy) {
@@ -1909,16 +1910,16 @@ function shouldStripSpace(
 
 /* https://www.w3.org/TR/xslt20/#strip */
 export function stripSpace(
-  doc: any,
+  doc: slimdom.Node,
   whitespaceDeclarations: WhitespaceDeclaration[],
 ) {
   const ONLY_WHITESPACE = RegExp("^[ \n\r\t]+$");
   let toRemove = [];
-  function walkTree(node: any) {
+  function walkTree(node: slimdom.Node) {
     if (node.nodeType === NodeType.TEXT) {
       if (
         ONLY_WHITESPACE.test(node.textContent) &&
-        shouldStripSpace(node.parentNode, whitespaceDeclarations)
+        shouldStripSpace(node.parentNode as slimdom.Element, whitespaceDeclarations)
       ) {
         toRemove.push(node);
       }
@@ -2078,7 +2079,7 @@ function withTemporaryTree(
 function evaluateSequenceConstructorInTemporaryTree(
   context: DynamicContext,
   func: SequenceConstructor,
-): any {
+): slimdom.Document | slimdom.DocumentFragment {
   return withTemporaryTree(context, (appender: Appender) => {
     func({
       ...context,
@@ -2093,12 +2094,12 @@ function evaluateSequenceConstructorInTemporaryTree(
 /**
  * Extract text content of a document.
  */
-function extractText(document: any): string[] {
+function extractText(document: slimdom.Node): string[] {
   let strs: string[] = [];
   /* https://www.w3.org/TR/xslt20/#creating-text-nodes */
   visitNodes(document, (node) => {
-    if (node.nodeType === NodeType.TEXT && node.data !== "") {
-      strs = strs.concat(node.data);
+    if (node.nodeType === NodeType.TEXT && (node as slimdom.Text).data !== "") {
+      strs = strs.concat((node as slimdom.Text).data);
     }
   });
   return strs;

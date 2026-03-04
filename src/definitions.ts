@@ -196,8 +196,8 @@ export interface DynamicContext {
   outputDefinitions: Map<string, OutputDefinition>;
   stylesheetParams?: object;
   // The actual context
-  contextItem: any;
-  contextList: any[];
+  contextItem: slimdom.Node;
+  contextList: slimdom.Node[];
   position: number;
 }
 
@@ -243,7 +243,7 @@ export interface Key {
 
 export interface NodeGroup {
   key: string;
-  nodes: any[];
+  nodes: slimdom.Node[];
 }
 
 export interface Xpath {

@@ -302,7 +302,7 @@ test("compileStylesheetNode", () => {
 });
 
 test("evaluateAttributeValueTemplate", () => {
-  const nodes = evaluateXPathToNodes("//Author", document);
+  const nodes = evaluateXPathToNodes<slimdom.Node>("//Author", document);
   const context = {
     outputDocument: undefined,
     resultDocuments: new Map<string, OutputResult>(),
