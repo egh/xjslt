@@ -20,15 +20,17 @@
 
 import {
   createTypedValueFactory,
-  evaluateXPath,
-  evaluateXPathToString,
-  evaluateXPathToNodes,
-  evaluateXPathToBoolean,
   EvaluateXPath,
+  evaluateXPath,
+  evaluateXPathToBoolean,
+  evaluateXPathToNodes,
   evaluateXPathToNumber,
+  evaluateXPathToString,
   executeJavaScriptCompiledXPath,
+  IDomFacade,
   NamespaceResolver,
   registerCustomXPathFunction,
+  ValidValueSequence,
 } from "fontoxpath";
 import * as slimdom from "slimdom";
 import { functionNameResolver, registerFunctions } from "./functions";
@@ -830,22 +832,47 @@ export function extendScope(variableScopes: Array<VariableScope>) {
   return variableScopes.concat([new Map()]);
 }
 
-const wrapNumericSequence = createTypedValueFactory("xs:numeric*");
-const wrapStringSequence = createTypedValueFactory("xs:string*");
-const wrapItemSequence = createTypedValueFactory("item()*");
+let factories = new Map<
+  string,
+  (value: ValidValueSequence, domFacade: IDomFacade) => unknown
+>();
 
-function wrapValue(thing: any) {
-  /* wraps a value for fontoxpath */
-  if (Array.isArray(thing)) {
-    if (typeof thing[0] === "string") {
-      return wrapStringSequence(thing, null);
-    } else if (typeof thing[0] === "number") {
-      return wrapNumericSequence(thing, null);
-    } else {
-      return wrapItemSequence(thing, null);
+function getTypedValueFactory(valueType: string) {
+  if (!factories.has(valueType)) {
+    factories.set(valueType, createTypedValueFactory(valueType));
+  }
+  return factories.get(valueType);
+}
+
+/* Attempt to wrap a value. If `as` is provided, wrap as that,
+   otherwise provide a best guess. */
+function wrapValue(thing: any, as?: string) {
+  // Empty array is always an empty sequence regardless of declared type
+  if (Array.isArray(thing) && thing.length === 0) {
+    return getTypedValueFactory("item()*")([], null);
+  }
+  if (as) {
+    try {
+      return getTypedValueFactory(as)(thing, null);
+    } catch {
+      /* let's try best guess */
     }
   }
-  return thing;
+
+  const isArray = Array.isArray(thing);
+  const testThing = isArray ? thing[0] : thing;
+  let bestGuess = "item()";
+  const arraySuffix = isArray ? "*" : "";
+  if (typeof testThing === "string") {
+    bestGuess = "xs:string";
+  } else if (typeof testThing === "number") {
+    if (Number.isInteger(testThing)) {
+      bestGuess = "xs:integer";
+    } else {
+      bestGuess = "xs:numeric";
+    }
+  }
+  return getTypedValueFactory(`${bestGuess}${arraySuffix}`)(thing, null);
 }
 
 export function setVariable(
@@ -853,7 +880,7 @@ export function setVariable(
   name: string,
   value: any,
 ) {
-  variableScopes[variableScopes.length - 1].set(name, wrapValue(value));
+  variableScopes[variableScopes.length - 1].set(name, value);
 }
 
 export function mergeVariableScopes(variableScopes: Array<VariableScope>) {
@@ -2041,24 +2068,38 @@ function constructSimpleContent(
 function evaluateVariableLike(
   context: DynamicContext,
   variable: VariableLike,
-): string | EvaluateXPath | slimdom.Document | slimdom.DocumentFragment {
+):
+  | string
+  | EvaluateXPath
+  | slimdom.Document
+  | slimdom.DocumentFragment
+  | unknown {
   if (typeof variable.content === "string") {
-    return evaluateXPath(
+    // Should this be an array type.
+    const asSeq = variable.as && variable.as.match(/[\+\*]$/);
+    let results: any = evaluateXPath(
       variable.content,
       context.contextItem,
       undefined,
       mergeVariableScopes(context.variableScopes),
-      evaluateXPath.ANY_TYPE,
+      evaluateXPath.ALL_RESULTS_TYPE,
       {
         currentContext: context,
         namespaceResolver: mkResolver(variable.namespaces),
         functionNameResolver,
       },
     );
+    if (results.length === 1 && !asSeq) {
+      results = results[0];
+    }
+    return wrapValue(results, variable.as);
   } else if (variable.content == undefined) {
     return "";
   } else if (variable.as) {
-    return evaluateSequenceConstructorToArray(context, variable.content);
+    return wrapValue(
+      evaluateSequenceConstructorToArray(context, variable.content),
+      variable.as,
+    );
   } else {
     return evaluateSequenceConstructorInTemporaryTree(
       context,
