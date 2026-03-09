@@ -100,6 +100,16 @@ function fnSystemProperty(_, property: string) {
   }
 }
 
+function fnNormalizeUnicode(_, value: string, normalizationForm: string) {
+  const validForms = ["NFC", "NFD", "NFKC", "NFKD"];
+  if (value === null || value === undefined) return "";
+  const form = normalizationForm.toUpperCase().replace("-", "");
+  if (!validForms.includes(form)) {
+    throw new Error("FOCH0003: Normalization form not supported.");
+  }
+  return value.normalize(form as "NFC" | "NFD" | "NFKC" | "NFKD");
+}
+
 const FUNCTION_OVERRIDES = [
   "current",
   "current-group",
@@ -108,6 +118,7 @@ const FUNCTION_OVERRIDES = [
   "doc",
   "key",
   "lastx",
+  "normalize-unicode",
   "positionx",
   "system-property",
 ];
@@ -191,5 +202,18 @@ export function registerFunctions() {
     ["xs:string"],
     "xs:string",
     fnSystemProperty as (context: any, name: string) => string,
+  );
+  registerCustomXPathFunction(
+    { namespaceURI: XJSLT_NSURI, localName: "normalize-unicode" },
+    ["xs:string?"],
+    "xs:string",
+    (ctx: any, value: string) => fnNormalizeUnicode(ctx, value, "NFC"),
+  );
+
+  registerCustomXPathFunction(
+    { namespaceURI: XJSLT_NSURI, localName: "normalize-unicode" },
+    ["xs:string?", "xs:string"],
+    "xs:string",
+    fnNormalizeUnicode as (context: any, value: string, form: string) => string,
   );
 }
