@@ -100,6 +100,30 @@ function fnSystemProperty(_, property: string) {
   }
 }
 
+function fnBaseUri({ currentContext }, node?: any) {
+  const target = node !== undefined ? node : currentContext.contextItem;
+  if (!target) return null;
+  // Walk up ancestry looking for xml:base
+  let n = target;
+  const bases: string[] = [];
+  // Walk up the tree and add bases to the front of our list.
+  while (n) {
+    const base =
+      n.nodeType === 1
+        ? n.getAttributeNS("http://www.w3.org/XML/1998/namespace", "base")
+        : null;
+    if (base) bases.unshift(base);
+    n = n.parentNode;
+  }
+  // Walk down our list of bases resolving the URLs.
+  let result = currentContext.inputURL || undefined;
+  for (const base of bases) {
+    // Resolve URL relative to previous or just set it if there is an
+    // issue.
+    result = URL.parse(base, result) || base;
+  }
+  return result;
+}
 function fnNormalizeUnicode(_, value: string, normalizationForm: string) {
   const validForms = ["NFC", "NFD", "NFKC", "NFKD"];
   if (value === null || value === undefined) return "";
@@ -111,6 +135,7 @@ function fnNormalizeUnicode(_, value: string, normalizationForm: string) {
 }
 
 const FUNCTION_OVERRIDES = [
+  "base-uri",
   "current",
   "current-group",
   "current-grouping-key",
@@ -203,6 +228,21 @@ export function registerFunctions() {
     "xs:string",
     fnSystemProperty as (context: any, name: string) => string,
   );
+
+  registerCustomXPathFunction(
+    { namespaceURI: XJSLT_NSURI, localName: "base-uri" },
+    [],
+    "xs:string?",
+    fnBaseUri as (context: any) => any,
+  );
+
+  registerCustomXPathFunction(
+    { namespaceURI: XJSLT_NSURI, localName: "base-uri" },
+    ["node()?"],
+    "xs:string?",
+    fnBaseUri as (context: any, node: any) => any,
+  );
+
   registerCustomXPathFunction(
     { namespaceURI: XJSLT_NSURI, localName: "normalize-unicode" },
     ["xs:string?"],
