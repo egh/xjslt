@@ -28,7 +28,7 @@ import {
   toAlphabeticUpper,
   toNumeric,
   toRoman,
-} from "../src/xjslt";
+} from "../src/number";
 
 describe("parseNumberFormat", () => {
   describe("Simple formats", () => {
