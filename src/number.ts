@@ -1,4 +1,6 @@
-import { NumberFormat } from "./definitions";
+import { DecimalFormat, NumberFormat, ParsedSubpicture } from "./definitions";
+import { evaluateXPathToNumber } from "fontoxpath";
+import { wrapValue } from "./xjslt";
 
 const UNICODE_DIGIT_STARTS = [
   0x0031, // ASCII digits (1-9)
@@ -84,30 +86,9 @@ export function groupNumeric(
   return parts.join(groupingSeparator);
 }
 
-export function mkToNumeric(
-  startDigit: number,
-): (n: number, padding?: number) => string {
-  const digitZero = startDigit - 1;
-  const strings = [...Array(10)].map((_, i) =>
-    String.fromCodePoint(digitZero + i),
-  );
-  return function (n: number, padding: number = 0): string {
-    if (n === 0) {
-      return strings[0].padStart(padding, strings[0]);
-    }
-
-    let result = "";
-    let i = n;
-    while (i > 0) {
-      result = strings[i % 10] + result;
-      i = Math.floor(i / 10);
-    }
-    return result.padStart(padding, strings[0]);
-  };
+export function toNumeric(n: number, padding?: number): string {
+  return n.toString().padStart(padding, "0");
 }
-
-// Standard ASCII numeric generator
-export const toNumeric = mkToNumeric(0x0031);
 
 /**
  * Generate a function to convert a number to alphabetic format (a, b, c, ..., z, aa, ...)
@@ -122,7 +103,7 @@ export function mkToAlphabetic(
   );
   return function (value: number) {
     if (value === 0) {
-      return toNumeric(value);
+      return "0";
     }
     let result = "";
     let n = value;
@@ -161,7 +142,7 @@ export function toRoman(input: number): string {
   ]);
 
   if (input === 0) {
-    return toNumeric(input);
+    return "0";
   }
 
   let retval = "";
@@ -229,7 +210,7 @@ export function formatWithToken(
     );
     if (re.test(token)) {
       return groupNumeric(
-        mkToNumeric(digitOne)(value, token.length),
+        remapDigits(toNumeric(value, token.length), digitZero),
         groupingSeparator,
         groupingSize,
       );
@@ -289,4 +270,189 @@ export function formatNumber(
   }
 
   return parts.join("");
+}
+
+/* Code for xsl:decimal-format and fn:format-number() */
+
+function parseSubpicture(sub: string, fmt: DecimalFormat): ParsedSubpicture {
+  const zero = fmt.zeroDigit;
+  const hash = fmt.digit;
+  const dec = fmt.decimalSeparator;
+  const grp = fmt.groupingSeparator;
+
+  let i = 0;
+  let isPercent = false;
+  let isPerMille = false;
+
+  function checkPerRules() {
+    if (isPercent || isPerMille) {
+      throw new Error("XTDE1310: Multiple percent/per-mille characters.");
+    }
+  }
+
+  function slurpPassive() {
+    let slurped = "";
+    while (
+      i < sub.length &&
+      sub[i] !== zero &&
+      sub[i] !== hash &&
+      sub[i] !== dec
+    ) {
+      if (sub[i] === fmt.percent) {
+        checkPerRules();
+        isPercent = true;
+      }
+      if (sub[i] === fmt.perMille) {
+        checkPerRules();
+        isPerMille = true;
+      }
+      slurped += sub[i++];
+    }
+    return slurped;
+  }
+  const prefix = slurpPassive();
+
+  let intMinDigits = 0;
+  let intDigitCount = 0;
+  let lastGroupPos = -1;
+  let groupingSize: number | undefined;
+
+  while (i < sub.length && sub[i] !== dec) {
+    const c = sub[i];
+    if (c === zero) {
+      intMinDigits++;
+      intDigitCount++;
+    } else if (c === hash) {
+      intDigitCount++;
+    } else if (c === grp) {
+      lastGroupPos = intDigitCount;
+    } else {
+      break;
+    }
+    i++;
+  }
+
+  if (lastGroupPos >= 0) {
+    groupingSize = intDigitCount - lastGroupPos;
+  }
+
+  let decMinDigits = 0;
+  let decMaxDigits = 0;
+
+  if (i < sub.length && sub[i] === dec) {
+    i++;
+    while (i < sub.length) {
+      const c = sub[i];
+      if (c === zero) {
+        decMinDigits++;
+        decMaxDigits++;
+      } else if (c === hash) {
+        decMaxDigits++;
+      } else {
+        break;
+      }
+      i++;
+    }
+  }
+
+  const suffix = slurpPassive();
+  if (i < sub.length) {
+    throw new Error(`XTDE1310: Active characters after picture string suffix: ${sub.slice(i)}`);
+  }
+
+  return {
+    prefix,
+    suffix,
+    integerMinDigits: Math.max(intMinDigits, 1),
+    integerGroupSize: groupingSize,
+    decimalMinDigits: decMinDigits,
+    decimalMaxDigits: decMaxDigits,
+    isPercent,
+    isPerMille,
+  };
+}
+
+/* Remap standard arabic numerals to another set of decimals. */
+function remapDigits(str: string, zeroCode: number): string {
+  return [...str]
+    .map((c) => {
+      const code = c.codePointAt(0)!;
+      if (code >= 48 && code <= 57) {
+        return String.fromCodePoint(zeroCode + code - 48);
+      }
+      return c;
+    })
+    .join("");
+}
+
+function applySubpicture(
+  value: number,
+  sub: ParsedSubpicture,
+  fmt: DecimalFormat,
+): string {
+  if (sub.isPercent) value = value * 100;
+  else if (sub.isPerMille) value = value * 1000;
+
+  const rounded = evaluateXPathToNumber(
+    "round-half-to-even($number, $precision)",
+    undefined,
+    undefined,
+    {
+      number: wrapValue(value, "xs:double"),
+      precision: wrapValue(sub.decimalMaxDigits, "xs:integer"),
+    },
+  );
+
+  const wholePart = Math.trunc(rounded);
+  let intStr = groupNumeric(
+    toNumeric(wholePart, sub.integerMinDigits),
+    fmt.groupingSeparator,
+    sub.integerGroupSize,
+  );
+
+  // Format decimal part.
+  let decStr = rounded.toString().split(".")[1] ?? ""; // is there a better way?
+  while (decStr.length < sub.decimalMinDigits) {
+    decStr += "0";
+  }
+  const decimalSeparator = decStr.length > 0 ? fmt.decimalSeparator : "";
+
+  const zeroCode = fmt.zeroDigit.codePointAt(0)!;
+  if (zeroCode !== 48) {
+    intStr = remapDigits(intStr, zeroCode);
+    decStr = remapDigits(decStr, zeroCode);
+  }
+
+  return `${sub.prefix}${intStr}${decimalSeparator}${decStr}${sub.suffix}`;
+}
+
+export function formatNumberWithPicture(
+  value: number,
+  picture: string,
+  fmt: DecimalFormat,
+): string {
+  if (isNaN(value)) return fmt.nan;
+  if (!isFinite(value)) {
+    return (value < 0 ? fmt.minusSign : "") + fmt.infinity;
+  }
+
+  const pictureStringParts = picture.split(fmt.patternSeparator);
+  let subPicture: ParsedSubpicture | undefined = undefined;
+
+  if (value < 0) {
+    if (pictureStringParts.length > 1) {
+      // Use the negative subpicture.
+      subPicture = parseSubpicture(pictureStringParts[1], fmt);
+    } else {
+      // Use a modified positive subpicture.
+      const positiveSub = parseSubpicture(pictureStringParts[0], fmt);
+      subPicture = {
+        ...positiveSub,
+        prefix: `${fmt.minusSign}${positiveSub.prefix || ""}`,
+      };
+    }
+  } else {
+    subPicture = parseSubpicture(pictureStringParts[0], fmt);
+  }
+  return applySubpicture(Math.abs(value), subPicture, fmt);
 }

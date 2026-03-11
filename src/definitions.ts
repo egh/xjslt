@@ -196,6 +196,7 @@ export interface DynamicContext {
   keys: Map<String, Key>;
   patternMatchCache: PatternMatchCache;
   outputDefinitions: Map<string, OutputDefinition>;
+  decimalFormats: Map<string, DecimalFormat>;
   stylesheetParams?: object;
   // The actual context
   contextItem: slimdom.Node;
@@ -264,4 +265,41 @@ export function isNodeGroupArray(value: any): value is NodeGroup[] {
 export interface Xpath {
   xpath: string;
   compiled?: CompiledXPathFunction;
+}
+
+export interface DecimalFormat {
+  decimalSeparator: string;
+  digit: string;
+  groupingSeparator: string;
+  infinity: string;
+  minusSign: string;
+  nan: string;
+  patternSeparator: string;
+  percent: string;
+  perMille: string;
+  zeroDigit: string;
+}
+
+export const DEFAULT_DECIMAL_FORMAT: DecimalFormat = {
+  decimalSeparator: ".",
+  digit: "#",
+  groupingSeparator: ",",
+  infinity: "Infinity",
+  minusSign: "-",
+  nan: "NaN",
+  patternSeparator: ";",
+  percent: "%",
+  perMille: "\u2030",
+  zeroDigit: "0",
+};
+
+export interface ParsedSubpicture {
+  prefix: string;
+  suffix: string;
+  integerMinDigits: number;
+  integerGroupSize?: number;
+  decimalMinDigits: number;
+  decimalMaxDigits: number;
+  isPercent: boolean;
+  isPerMille: boolean;
 }

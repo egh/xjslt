@@ -19,7 +19,12 @@
  */
 
 import { registerCustomXPathFunction, ResolvedQualifiedName } from "fontoxpath";
-import { DynamicContext, XJSLT_NSURI, XPATH_NSURI } from "./definitions";
+import {
+  DEFAULT_DECIMAL_FORMAT,
+  DynamicContext,
+  XJSLT_NSURI,
+} from "./definitions";
+import { formatNumberWithPicture } from "./number";
 import { urlToDom } from "./util";
 
 function fnCurrent({ currentContext }) {
@@ -124,6 +129,7 @@ function fnBaseUri({ currentContext }, node?: any) {
   }
   return result;
 }
+
 function fnNormalizeUnicode(_, value: string, normalizationForm: string) {
   const validForms = ["NFC", "NFD", "NFKC", "NFKD"];
   if (value === null || value === undefined) return "";
@@ -134,6 +140,18 @@ function fnNormalizeUnicode(_, value: string, normalizationForm: string) {
   return value.normalize(form as "NFC" | "NFD" | "NFKC" | "NFKD");
 }
 
+function fnFormatNumber(
+  { currentContext },
+  value: number,
+  picture: string,
+  formatName?: string,
+) {
+  const name = formatName || "#default";
+  const fmt =
+    currentContext.decimalFormats?.get(name) ?? DEFAULT_DECIMAL_FORMAT;
+  return formatNumberWithPicture(value, picture, fmt);
+}
+
 const FUNCTION_OVERRIDES = [
   "base-uri",
   "current",
@@ -141,6 +159,7 @@ const FUNCTION_OVERRIDES = [
   "current-grouping-key",
   "current-output-uri",
   "doc",
+  "format-number",
   "key",
   "lastx",
   "normalize-unicode",
@@ -255,5 +274,24 @@ export function registerFunctions() {
     ["xs:string?", "xs:string"],
     "xs:string",
     fnNormalizeUnicode as (context: any, value: string, form: string) => string,
+  );
+
+  registerCustomXPathFunction(
+    { namespaceURI: XJSLT_NSURI, localName: "format-number" },
+    ["xs:numeric", "xs:string"],
+    "xs:string",
+    fnFormatNumber as (context: any, value: number, picture: string) => string,
+  );
+
+  registerCustomXPathFunction(
+    { namespaceURI: XJSLT_NSURI, localName: "format-number" },
+    ["xs:numeric", "xs:string", "xs:string"],
+    "xs:string",
+    fnFormatNumber as (
+      context: any,
+      value: number,
+      picture: string,
+      formatName: string,
+    ) => string,
   );
 }

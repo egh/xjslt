@@ -68,6 +68,8 @@ import {
   NodeType,
   NumberFormat,
   OutputDefinition,
+  DecimalFormat,
+  DEFAULT_DECIMAL_FORMAT,
   xpathstring,
 } from "./definitions";
 import {
@@ -737,10 +739,11 @@ export function compileTopLevelNode(
         return compileFunctionNode(node, context);
       } else if (node.localName === "output") {
         return compileOutputNode(node);
+      } else if (node.localName === "decimal-format") {
+        return compileDecimalFormatNode(node);
       } else if (
         node.localName === "attribute-set" ||
         node.localName === "character-map" ||
-        node.localName === "decimal-format" ||
         node.localName === "import-schema" ||
         node.localName === "namespace-alias"
       ) {
@@ -791,6 +794,29 @@ export function compileOutputNode(node: slimdom.Element) {
   } else {
     return mkCall(mkMember("outputDefinitions", "set"), toEstree([name, tmp]));
   }
+}
+
+export function compileDecimalFormatNode(node: slimdom.Element) {
+  const name = node.getAttribute("name") || "#default";
+  const attrs = Object.fromEntries(
+    Object.entries({
+      decimalSeparator: node.getAttribute("decimal-separator"),
+      digit: node.getAttribute("digit"),
+      groupingSeparator: node.getAttribute("grouping-separator"),
+      infinity: node.getAttribute("infinity"),
+      minusSign: node.getAttribute("minus-sign"),
+      nan: node.getAttribute("NaN"),
+      patternSeparator: node.getAttribute("pattern-separator"),
+      percent: node.getAttribute("percent"),
+      perMille: node.getAttribute("per-mille"),
+      zeroDigit: node.getAttribute("zero-digit"),
+    }).filter(([_, v]) => v !== null),
+  );
+  const fmt: DecimalFormat = {
+    ...DEFAULT_DECIMAL_FORMAT,
+    ...attrs,
+  };
+  return mkCall(mkMember("decimalFormats", "set"), [toEstree(name), toEstree(fmt)]);
 }
 
 export function compileSequenceConstructorNode(
@@ -1014,6 +1040,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             mkIdentifier("outputDefinitions"),
             mkNew(mkIdentifier("Map"), []),
           ),
+          mkLet(mkIdentifier("decimalFormats"), mkNew(mkIdentifier("Map"), [])),
           /* First compile the keys */
           ...compileNodeArray(
             evaluateXPathToNodes("./xsl:key", node, undefined, undefined, {
@@ -1035,6 +1062,18 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             evaluateXPathToNodes("./xsl:output", node, undefined, undefined, {
               namespaceResolver: buildInResolver,
             }),
+            context,
+            compileTopLevelNode,
+          ),
+          /* Then the decimal formats */
+          ...compileNodeArray(
+            evaluateXPathToNodes(
+              "./xsl:decimal-format",
+              node,
+              undefined,
+              undefined,
+              { namespaceResolver: buildInResolver },
+            ),
             context,
             compileTopLevelNode,
           ),
@@ -1066,6 +1105,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               inputURL: mkMember("params", "inputURL"),
               keys: mkIdentifier("keys"),
               outputDefinitions: mkIdentifier("outputDefinitions"),
+              decimalFormats: mkIdentifier("decimalFormats"),
               patternMatchCache: mkNew(mkIdentifier("Map"), []),
               stylesheetParams: mkMember("params", "stylesheetParams"),
             }),
@@ -1073,7 +1113,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
           /* Then everything else */
           ...compileNodeArray(
             evaluateXPathToNodes(
-              "./xsl:*[local-name()!='template' and local-name()!='key' and local-name()!='function' and local-name()!='output']",
+              "./xsl:*[local-name()!='template' and local-name()!='key' and local-name()!='function' and local-name()!='output' and local-name()!='decimal-format']",
               node,
               undefined,
               undefined,

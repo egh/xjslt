@@ -847,7 +847,7 @@ function getTypedValueFactory(valueType: string) {
 
 /* Attempt to wrap a value. If `as` is provided, wrap as that,
    otherwise provide a best guess. */
-function wrapValue(thing: any, as?: string) {
+export function wrapValue(thing: any, as?: string) {
   // Empty array is always an empty sequence regardless of declared type
   if (Array.isArray(thing) && thing.length === 0) {
     return getTypedValueFactory("item()*")([], null);
