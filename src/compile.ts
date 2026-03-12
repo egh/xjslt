@@ -792,7 +792,7 @@ export function compileOutputNode(node: slimdom.Element) {
       },
     ]);
   } else {
-    return mkCall(mkMember("outputDefinitions", "set"), toEstree([name, tmp]));
+    return mkCall(mkMember("outputDefinitions", "set"), [toEstree(name), toEstree(tmp)]);
   }
 }
 
