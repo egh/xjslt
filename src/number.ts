@@ -373,7 +373,7 @@ function parseSubpicture(sub: string, fmt: DecimalFormat): ParsedSubpicture {
 }
 
 /* Remap standard arabic numerals to another set of decimals. */
-function remapDigits(str: string, zeroCode: number): string {
+export function remapDigits(str: string, zeroCode: number): string {
   return [...str]
     .map((c) => {
       const code = c.codePointAt(0)!;

@@ -23,7 +23,7 @@ import {
   groupNumeric,
   formatNumber,
   formatWithToken,
-  mkToNumeric,
+  remapDigits,
   toAlphabetic,
   toAlphabeticUpper,
   toNumeric,
@@ -446,7 +446,7 @@ describe("mkToNumeric", () => {
   });
 
   describe("Mathematical bold digits", () => {
-    const toBoldDigits = mkToNumeric(0x1d7cf);
+    const toBoldDigits = (n: number) => remapDigits(toNumeric(n), 0x1d7ce);
 
     test("single digits", () => {
       expect(toBoldDigits(0)).toBe("𝟎");
@@ -492,21 +492,21 @@ describe("mkToNumeric", () => {
     });
 
     test("Unicode digit grouping with Arabic-Indic digits", () => {
-      const toArabicIndic = mkToNumeric(0x0661); // Arabic-Indic digits
-      expect(groupNumeric(toArabicIndic(1234, 0), "٬", 3)).toBe("١٬٢٣٤");
-      expect(groupNumeric(toArabicIndic(1234567, 0), "٬", 3)).toBe("١٬٢٣٤٬٥٦٧");
+      const toArabicIndic = (n: number, ) => remapDigits(toNumeric(n), 0x0660);
+      expect(groupNumeric(toArabicIndic(1234), "٬", 3)).toBe("١٬٢٣٤");
+      expect(groupNumeric(toArabicIndic(1234567), "٬", 3)).toBe("١٬٢٣٤٬٥٦٧");
     });
 
     test("Unicode digit grouping with Devanagari digits", () => {
-      const toDevanagari = mkToNumeric(0x0967); // Devanagari digits
-      expect(groupNumeric(toDevanagari(1234, 0), ",", 3)).toBe("१,२३४");
-      expect(groupNumeric(toDevanagari(123456, 0), ",", 3)).toBe("१२३,४५६");
+      const toDevanagari = (n: number, ) => remapDigits(toNumeric(n), 0x0966);
+      expect(groupNumeric(toDevanagari(1234), ",", 3)).toBe("१,२३४");
+      expect(groupNumeric(toDevanagari(123456), ",", 3)).toBe("१२३,४५६");
     });
 
     test("Unicode digit grouping with Thai digits", () => {
-      const toThai = mkToNumeric(0x0e51); // Thai digits
-      expect(groupNumeric(toThai(1234, 0), ",", 3)).toBe("๑,๒๓๔");
-      expect(groupNumeric(toThai(12345678, 0), " ", 3)).toBe("๑๒ ๓๔๕ ๖๗๘");
+      const toThai = (n: number, ) => remapDigits(toNumeric(n), 0x0e50);
+      expect(groupNumeric(toThai(1234), ",", 3)).toBe("๑,๒๓๔");
+      expect(groupNumeric(toThai(12345678), " ", 3)).toBe("๑๒ ๓๔๕ ๖๗๘");
     });
   });
 
