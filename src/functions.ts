@@ -24,7 +24,7 @@ import {
   DynamicContext,
   XJSLT_NSURI,
 } from "./definitions";
-import { formatNumberWithPicture } from "./number";
+import { formatNumberWithPicture } from "./numbering";
 import { urlToDom } from "./util";
 
 function fnCurrent({ currentContext }) {

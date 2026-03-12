@@ -28,7 +28,7 @@ import {
   toAlphabeticUpper,
   toNumeric,
   toRoman,
-} from "../src/number";
+} from "../src/numbering";
 
 describe("parseNumberFormat", () => {
   describe("Simple formats", () => {

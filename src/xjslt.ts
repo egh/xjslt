@@ -66,7 +66,7 @@ import {
   mkResolver,
   zip,
 } from "./shared";
-import { formatNumber } from "./number";
+import { formatNumber } from "./numbering";
 
 /* Depth first node visit */
 export function visitNodes(
