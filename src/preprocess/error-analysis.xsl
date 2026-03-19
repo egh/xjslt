@@ -197,4 +197,81 @@
    <xsl:template match="xsl:choose[text()[normalize-space(.)]]">
      <xsl:message terminate="yes">XTSE0010: xsl:choose may not contain text content.</xsl:message>
    </xsl:template>
+
+   <!-- XTSE0090: Unknown attributes on XSLT elements.
+        Standard attributes (valid on any XSLT element, null namespace): version,
+        exclude-result-prefixes, extension-element-prefixes, xpath-default-namespace,
+        default-collation, use-when. -->
+   <xsl:template match="xsl:*/@*[not(namespace-uri()) or namespace-uri() = 'http://www.w3.org/1999/XSL/Transform']">
+     <xsl:variable name="parent" select="local-name(..)"/>
+     <xsl:variable name="attr" select="local-name()"/>
+     <xsl:variable name="ns" select="namespace-uri()"/>
+     <!-- XSLT-namespace attributes are not valid on XSLT elements -->
+     <xsl:if test="$ns = 'http://www.w3.org/1999/XSL/Transform'">
+       <xsl:message terminate="yes">XTSE0090: xsl:<xsl:value-of select="$attr"/> is not a valid attribute of xsl:<xsl:value-of select="$parent"/>.</xsl:message>
+     </xsl:if>
+     <!-- Standard attributes are valid on all XSLT elements -->
+     <xsl:if test="not($ns) and not($attr = ('version', 'exclude-result-prefixes', 'extension-element-prefixes', 'xpath-default-namespace', 'default-collation', 'use-when'))">
+       <xsl:variable name="allowed">
+         <xsl:choose>
+           <xsl:when test="$parent = ('stylesheet', 'transform')">id version extension-element-prefixes exclude-result-prefixes xpath-default-namespace default-validation default-collation input-type-annotations</xsl:when>
+           <xsl:when test="$parent = 'analyze-string'">select regex flags</xsl:when>
+           <xsl:when test="$parent = 'apply-imports'"></xsl:when>
+           <xsl:when test="$parent = 'apply-templates'">select mode</xsl:when>
+           <xsl:when test="$parent = 'attribute'">name namespace select separator type validation</xsl:when>
+           <xsl:when test="$parent = 'attribute-set'">name use-attribute-sets</xsl:when>
+           <xsl:when test="$parent = 'call-template'">name</xsl:when>
+           <xsl:when test="$parent = 'character-map'">name use-character-maps</xsl:when>
+           <xsl:when test="$parent = 'choose'"></xsl:when>
+           <xsl:when test="$parent = 'comment'">select</xsl:when>
+           <xsl:when test="$parent = 'copy'">copy-namespaces inherit-namespaces use-attribute-sets type validation select</xsl:when>
+           <xsl:when test="$parent = 'copy-of'">select copy-namespaces type validation</xsl:when>
+           <xsl:when test="$parent = 'decimal-format'">name decimal-separator grouping-separator infinity minus-sign NaN percent per-mille zero-digit digit pattern-separator exponent-separator</xsl:when>
+           <xsl:when test="$parent = 'document'">validation type</xsl:when>
+           <xsl:when test="$parent = 'element'">name namespace inherit-namespaces use-attribute-sets type validation</xsl:when>
+           <xsl:when test="$parent = 'fallback'"></xsl:when>
+           <xsl:when test="$parent = 'for-each'">select</xsl:when>
+           <xsl:when test="$parent = 'for-each-group'">select group-by group-adjacent group-starting-with group-ending-with collation</xsl:when>
+           <xsl:when test="$parent = 'function'">name as override visibility</xsl:when>
+           <xsl:when test="$parent = 'if'">test</xsl:when>
+           <xsl:when test="$parent = 'import'">href</xsl:when>
+           <xsl:when test="$parent = 'import-schema'">namespace schema-location</xsl:when>
+           <xsl:when test="$parent = 'include'">href</xsl:when>
+           <xsl:when test="$parent = 'key'">name match use collation as</xsl:when>
+           <xsl:when test="$parent = 'matching-substring'"></xsl:when>
+           <xsl:when test="$parent = 'message'">select terminate error-code</xsl:when>
+           <xsl:when test="$parent = 'namespace'">name select</xsl:when>
+           <xsl:when test="$parent = 'namespace-alias'">stylesheet-prefix result-prefix</xsl:when>
+           <xsl:when test="$parent = 'next-match'"></xsl:when>
+           <xsl:when test="$parent = 'non-matching-substring'"></xsl:when>
+           <xsl:when test="$parent = 'number'">value count from level format lang letter-value ordinal grouping-separator grouping-size select as</xsl:when>
+           <xsl:when test="$parent = 'otherwise'"></xsl:when>
+           <xsl:when test="$parent = 'output'">name method byte-order-mark cdata-section-elements doctype-public doctype-system encoding escape-uri-attributes include-content-type indent media-type normalization-form omit-xml-declaration standalone undeclare-prefixes use-character-maps version</xsl:when>
+           <xsl:when test="$parent = 'output-character'">character string</xsl:when>
+           <xsl:when test="$parent = 'param'">name select as required tunnel static</xsl:when>
+           <xsl:when test="$parent = 'perform-sort'">select</xsl:when>
+           <xsl:when test="$parent = 'preserve-space'">elements</xsl:when>
+           <xsl:when test="$parent = 'processing-instruction'">name select</xsl:when>
+           <xsl:when test="$parent = 'result-document'">format href validation type method byte-order-mark cdata-section-elements doctype-public doctype-system encoding escape-uri-attributes include-content-type indent media-type normalization-form omit-xml-declaration output-version standalone undeclare-prefixes use-character-maps parameter-document</xsl:when>
+           <xsl:when test="$parent = 'sequence'">select as</xsl:when>
+           <xsl:when test="$parent = 'sort'">select lang data-type order case-order collation stable as</xsl:when>
+           <xsl:when test="$parent = 'strip-space'">elements</xsl:when>
+           <xsl:when test="$parent = 'template'">match name priority mode as import-</xsl:when>
+           <xsl:when test="$parent = 'text'">disable-output-escaping</xsl:when>
+           <xsl:when test="$parent = 'value-of'">select separator disable-output-escaping</xsl:when>
+           <xsl:when test="$parent = 'variable'">name select as</xsl:when>
+           <xsl:when test="$parent = 'when'">test</xsl:when>
+           <xsl:when test="$parent = 'with-param'">name select as tunnel</xsl:when>
+           <xsl:otherwise>unknown</xsl:otherwise>
+         </xsl:choose>
+       </xsl:variable>
+       <!-- Only check known elements; unknown elements are handled by XTSE0010 -->
+       <!-- Only check when version=2.0 - otherwise ignore. -->
+       <xsl:if test="/*[@version='2.0'] and $allowed != 'unknown' and not(tokenize(normalize-space($allowed), ' ') = $attr)">
+         <xsl:message terminate="yes">XTSE0090: <xsl:value-of select="$attr"/> is not a valid attribute of xsl:<xsl:value-of select="$parent"/>.</xsl:message>
+       </xsl:if>
+     </xsl:if>
+     <xsl:copy/>
+   </xsl:template>
+
 </xsl:stylesheet>

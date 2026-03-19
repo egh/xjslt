@@ -1,6 +1,6 @@
 (() => {
   var t = {
-      762(t, e, n) {
+      851(t, e, n) {
         (n(898), n(594));
         let o = n(821);
         function a(t, e) {
@@ -9,8 +9,8 @@
           n.set("#default", { document: e.outputDocument });
           let a = new Map(),
             r = new Map(),
-            c = new Map(),
-            s = {
+            s = new Map(),
+            c = {
               outputDocument: e.outputDocument,
               append: o.mkNodeAppender(e.outputNode),
               resultDocuments: n,
@@ -19,6 +19,514 @@
               position: 1,
               mode: e.initialMode,
               templates: [
+                {
+                  match: {
+                    xpath:
+                      "xsl:*/@*[not(namespace-uri()) or namespace-uri() = 'http://www.w3.org/1999/XSL/Transform']",
+                    compiled: void 0,
+                  },
+                  name: void 0,
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    (o.variable(t, {
+                      name: "parent",
+                      content: "local-name(..)",
+                      namespaces: {
+                        xsl: "http://www.w3.org/1999/XSL/Transform",
+                      },
+                      as: void 0,
+                    }),
+                      o.variable(t, {
+                        name: "attr",
+                        content: "local-name()",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                        as: void 0,
+                      }),
+                      o.variable(t, {
+                        name: "ns",
+                        content: "namespace-uri()",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                        as: void 0,
+                      }),
+                      o.ifX(
+                        t,
+                        {
+                          test: "$ns = 'http://www.w3.org/1999/XSL/Transform'",
+                          namespaces: {
+                            xsl: "http://www.w3.org/1999/XSL/Transform",
+                          },
+                        },
+                        (t) => {
+                          o.message(
+                            t,
+                            {
+                              select: void 0,
+                              terminate: "yes",
+                              namespaces: {
+                                xsl: "http://www.w3.org/1999/XSL/Transform",
+                              },
+                            },
+                            (t) => {
+                              (o.literalText(t, "XTSE0090: xsl:"),
+                                o.valueOf(
+                                  t,
+                                  {
+                                    select: "$attr",
+                                    separator: void 0,
+                                    namespaces: {
+                                      xsl: "http://www.w3.org/1999/XSL/Transform",
+                                    },
+                                  },
+                                  (t) => {},
+                                ),
+                                o.literalText(
+                                  t,
+                                  " is not a valid attribute of xsl:",
+                                ),
+                                o.valueOf(
+                                  t,
+                                  {
+                                    select: "$parent",
+                                    separator: void 0,
+                                    namespaces: {
+                                      xsl: "http://www.w3.org/1999/XSL/Transform",
+                                    },
+                                  },
+                                  (t) => {},
+                                ),
+                                o.literalText(t, "."));
+                            },
+                          );
+                        },
+                      ),
+                      o.ifX(
+                        t,
+                        {
+                          test: "not($ns) and not($attr = ('version', 'exclude-result-prefixes', 'extension-element-prefixes', 'xpath-default-namespace', 'default-collation', 'use-when'))",
+                          namespaces: {
+                            xsl: "http://www.w3.org/1999/XSL/Transform",
+                          },
+                        },
+                        (t) => {
+                          (o.variable(t, {
+                            name: "allowed",
+                            content: (t) => {
+                              o.choose(t, [
+                                {
+                                  test: "$parent = ('stylesheet', 'transform')",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "id version extension-element-prefixes exclude-result-prefixes xpath-default-namespace default-validation default-collation input-type-annotations",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'analyze-string'",
+                                  apply: (t) => {
+                                    o.literalText(t, "select regex flags");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'apply-imports'",
+                                  apply: (t) => {},
+                                },
+                                {
+                                  test: "$parent = 'apply-templates'",
+                                  apply: (t) => {
+                                    o.literalText(t, "select mode");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'attribute'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "name namespace select separator type validation",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'attribute-set'",
+                                  apply: (t) => {
+                                    o.literalText(t, "name use-attribute-sets");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'call-template'",
+                                  apply: (t) => {
+                                    o.literalText(t, "name");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'character-map'",
+                                  apply: (t) => {
+                                    o.literalText(t, "name use-character-maps");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'choose'",
+                                  apply: (t) => {},
+                                },
+                                {
+                                  test: "$parent = 'comment'",
+                                  apply: (t) => {
+                                    o.literalText(t, "select");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'copy'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "copy-namespaces inherit-namespaces use-attribute-sets type validation select",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'copy-of'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "select copy-namespaces type validation",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'decimal-format'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "name decimal-separator grouping-separator infinity minus-sign NaN percent per-mille zero-digit digit pattern-separator exponent-separator",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'document'",
+                                  apply: (t) => {
+                                    o.literalText(t, "validation type");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'element'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "name namespace inherit-namespaces use-attribute-sets type validation",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'fallback'",
+                                  apply: (t) => {},
+                                },
+                                {
+                                  test: "$parent = 'for-each'",
+                                  apply: (t) => {
+                                    o.literalText(t, "select");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'for-each-group'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "select group-by group-adjacent group-starting-with group-ending-with collation",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'function'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "name as override visibility",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'if'",
+                                  apply: (t) => {
+                                    o.literalText(t, "test");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'import'",
+                                  apply: (t) => {
+                                    o.literalText(t, "href");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'import-schema'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "namespace schema-location",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'include'",
+                                  apply: (t) => {
+                                    o.literalText(t, "href");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'key'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "name match use collation as",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'matching-substring'",
+                                  apply: (t) => {},
+                                },
+                                {
+                                  test: "$parent = 'message'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "select terminate error-code",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'namespace'",
+                                  apply: (t) => {
+                                    o.literalText(t, "name select");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'namespace-alias'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "stylesheet-prefix result-prefix",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'next-match'",
+                                  apply: (t) => {},
+                                },
+                                {
+                                  test: "$parent = 'non-matching-substring'",
+                                  apply: (t) => {},
+                                },
+                                {
+                                  test: "$parent = 'number'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "value count from level format lang letter-value ordinal grouping-separator grouping-size select as",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'otherwise'",
+                                  apply: (t) => {},
+                                },
+                                {
+                                  test: "$parent = 'output'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "name method byte-order-mark cdata-section-elements doctype-public doctype-system encoding escape-uri-attributes include-content-type indent media-type normalization-form omit-xml-declaration standalone undeclare-prefixes use-character-maps version",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'output-character'",
+                                  apply: (t) => {
+                                    o.literalText(t, "character string");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'param'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "name select as required tunnel static",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'perform-sort'",
+                                  apply: (t) => {
+                                    o.literalText(t, "select");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'preserve-space'",
+                                  apply: (t) => {
+                                    o.literalText(t, "elements");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'processing-instruction'",
+                                  apply: (t) => {
+                                    o.literalText(t, "name select");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'result-document'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "format href validation type method byte-order-mark cdata-section-elements doctype-public doctype-system encoding escape-uri-attributes include-content-type indent media-type normalization-form omit-xml-declaration output-version standalone undeclare-prefixes use-character-maps parameter-document",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'sequence'",
+                                  apply: (t) => {
+                                    o.literalText(t, "select as");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'sort'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "select lang data-type order case-order collation stable as",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'strip-space'",
+                                  apply: (t) => {
+                                    o.literalText(t, "elements");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'template'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "match name priority mode as import-",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'text'",
+                                  apply: (t) => {
+                                    o.literalText(t, "disable-output-escaping");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'value-of'",
+                                  apply: (t) => {
+                                    o.literalText(
+                                      t,
+                                      "select separator disable-output-escaping",
+                                    );
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'variable'",
+                                  apply: (t) => {
+                                    o.literalText(t, "name select as");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'when'",
+                                  apply: (t) => {
+                                    o.literalText(t, "test");
+                                  },
+                                },
+                                {
+                                  test: "$parent = 'with-param'",
+                                  apply: (t) => {
+                                    o.literalText(t, "name select as tunnel");
+                                  },
+                                },
+                                {
+                                  apply: (t) => {
+                                    o.literalText(t, "unknown");
+                                  },
+                                },
+                              ]);
+                            },
+                            namespaces: {
+                              xsl: "http://www.w3.org/1999/XSL/Transform",
+                            },
+                            as: void 0,
+                          }),
+                            o.ifX(
+                              t,
+                              {
+                                test: "/*[@version='2.0'] and $allowed != 'unknown' and not(tokenize(normalize-space($allowed), ' ') = $attr)",
+                                namespaces: {
+                                  xsl: "http://www.w3.org/1999/XSL/Transform",
+                                },
+                              },
+                              (t) => {
+                                o.message(
+                                  t,
+                                  {
+                                    select: void 0,
+                                    terminate: "yes",
+                                    namespaces: {
+                                      xsl: "http://www.w3.org/1999/XSL/Transform",
+                                    },
+                                  },
+                                  (t) => {
+                                    (o.literalText(t, "XTSE0090: "),
+                                      o.valueOf(
+                                        t,
+                                        {
+                                          select: "$attr",
+                                          separator: void 0,
+                                          namespaces: {
+                                            xsl: "http://www.w3.org/1999/XSL/Transform",
+                                          },
+                                        },
+                                        (t) => {},
+                                      ),
+                                      o.literalText(
+                                        t,
+                                        " is not a valid attribute of xsl:",
+                                      ),
+                                      o.valueOf(
+                                        t,
+                                        {
+                                          select: "$parent",
+                                          separator: void 0,
+                                          namespaces: {
+                                            xsl: "http://www.w3.org/1999/XSL/Transform",
+                                          },
+                                        },
+                                        (t) => {},
+                                      ),
+                                      o.literalText(t, "."));
+                                  },
+                                );
+                              },
+                            ));
+                        },
+                      ),
+                      o.copy(
+                        t,
+                        {
+                          namespaces: {
+                            xsl: "http://www.w3.org/1999/XSL/Transform",
+                          },
+                        },
+                        (t) => {},
+                      ));
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: void 0,
+                  importPrecedence: 1,
+                },
                 {
                   match: {
                     xpath: "xsl:choose[text()[normalize-space(.)]]",
@@ -1353,13 +1861,13 @@
               inputURL: e.inputURL,
               keys: a,
               outputDefinitions: r,
-              decimalFormats: c,
+              decimalFormats: s,
               patternMatchCache: new Map(),
               stylesheetParams: e.stylesheetParams,
             };
           return (
             o.stripSpace(t, []),
-            o.processNode(s, [], {
+            o.processNode(c, [], {
               xsl: "http://www.w3.org/1999/XSL/Transform",
             }),
             n
@@ -1378,15 +1886,15 @@
             e.XMLNS_NSURI =
             e.XSLT1_NSURI =
               void 0),
-          (e.isNodeGroup = c),
+          (e.isNodeGroup = s),
           (e.isNodeGroupArray = function (t) {
-            return Array.isArray(t) && (0 === t.length || c(t[0]));
+            return Array.isArray(t) && (0 === t.length || s(t[0]));
           }));
         const n = String.raw`[^,:\(\)\*\[\]/]`,
           o = String.raw`(child::|attribute::|@)?`,
           a = String.raw`(document-node\()?`;
         var r;
-        function c(t) {
+        function s(t) {
           return (
             "object" == typeof t &&
             null !== t &&
@@ -1487,7 +1995,7 @@
               { namespaceURI: a.XJSLT_NSURI, localName: "current" },
               [],
               "item()",
-              s,
+              c,
             ),
               (0, o.registerCustomXPathFunction)(
                 {
@@ -1547,13 +2055,13 @@
                 { namespaceURI: a.XJSLT_NSURI, localName: "base-uri" },
                 [],
                 "xs:string?",
-                I,
+                w,
               ),
               (0, o.registerCustomXPathFunction)(
                 { namespaceURI: a.XJSLT_NSURI, localName: "base-uri" },
                 ["node()?"],
                 "xs:string?",
-                I,
+                w,
               ),
               (0, o.registerCustomXPathFunction)(
                 { namespaceURI: a.XJSLT_NSURI, localName: "evaluate" },
@@ -1579,36 +2087,36 @@
                 { namespaceURI: a.XJSLT_NSURI, localName: "normalize-unicode" },
                 ["xs:string?"],
                 "xs:string",
-                (t, e) => w(0, e, "NFC"),
+                (t, e) => I(0, e, "NFC"),
               ),
               (0, o.registerCustomXPathFunction)(
                 { namespaceURI: a.XJSLT_NSURI, localName: "normalize-unicode" },
                 ["xs:string?", "xs:string"],
                 "xs:string",
-                w,
+                I,
               ),
               (0, o.registerCustomXPathFunction)(
                 { namespaceURI: a.XJSLT_NSURI, localName: "format-number" },
                 ["xs:numeric", "xs:string"],
                 "xs:string",
-                h,
+                T,
               ),
               (0, o.registerCustomXPathFunction)(
                 { namespaceURI: a.XJSLT_NSURI, localName: "format-number" },
                 ["xs:numeric", "xs:string", "xs:string"],
                 "xs:string",
-                h,
+                T,
               ));
           }));
         const o = n(594),
           a = n(712),
           r = n(845),
-          c = n(472);
-        function s({ currentContext: t }) {
+          s = n(472);
+        function c({ currentContext: t }) {
           return t.contextItem;
         }
         function m({ currentContext: t }, e) {
-          return (0, c.urlToDom)(t, e);
+          return (0, s.urlToDom)(t, e);
         }
         function i({ currentContext: t }) {
           return t.currentGroup.key;
@@ -1632,10 +2140,10 @@
             keys: o,
             contextItem: a,
             variableScopes: r,
-            patternMatchCache: c,
+            patternMatchCache: s,
           } = t;
           if (!o.has(e)) throw new Error("XTDE1260");
-          return o.get(e).lookup(c, a.ownerDocument, r, n) || [];
+          return o.get(e).lookup(s, a.ownerDocument, r, n) || [];
         }
         function f(t, e) {
           return "version" === e.split(":")[1]
@@ -1655,7 +2163,7 @@
                       ? "no"
                       : "";
         }
-        function I({ currentContext: t }, e) {
+        function w({ currentContext: t }, e) {
           const n = void 0 !== e ? e : t.contextItem;
           if (!n) return null;
           let o = n;
@@ -1674,27 +2182,27 @@
           for (const t of a) r = URL.parse(t, r) || t;
           return r;
         }
-        function w(t, e, n) {
+        function I(t, e, n) {
           if (null == e) return "";
           const o = n.toUpperCase().replace("-", "");
           if (!["NFC", "NFD", "NFKC", "NFKD"].includes(o))
             throw new Error("FOCH0003: Normalization form not supported.");
           return e.normalize(o);
         }
-        function h({ currentContext: t }, e, n, o) {
-          var c, s;
+        function T({ currentContext: t }, e, n, o) {
+          var s, c;
           const m = o || "#default",
             i =
               null !==
-                (s =
-                  null === (c = t.decimalFormats) || void 0 === c
+                (c =
+                  null === (s = t.decimalFormats) || void 0 === s
                     ? void 0
-                    : c.get(m)) && void 0 !== s
-                ? s
+                    : s.get(m)) && void 0 !== c
+                ? c
                 : a.DEFAULT_DECIMAL_FORMAT;
           return (0, r.formatNumberWithPicture)(e, n, i);
         }
-        const T = [
+        const h = [
           "base-uri",
           "current",
           "current-group",
@@ -1709,7 +2217,7 @@
           "system-property",
         ];
         function g({ prefix: t, localName: e }, n) {
-          return (t && "fn" !== t) || !T.includes(e)
+          return (t && "fn" !== t) || !h.includes(e)
             ? null
             : { namespaceURI: a.XJSLT_NSURI, localName: e };
         }
@@ -1718,8 +2226,8 @@
         "use strict";
         (Object.defineProperty(e, "__esModule", { value: !0 }),
           (e.toAlphabeticUpper = e.toAlphabetic = void 0),
-          (e.groupNumeric = c),
-          (e.toNumeric = s),
+          (e.groupNumeric = s),
+          (e.toNumeric = c),
           (e.mkToAlphabetic = m),
           (e.toRoman = i),
           (e.formatWithToken = l),
@@ -1727,11 +2235,11 @@
             const a = [];
             e.prefix && a.push(e.prefix);
             for (let r = 0; r < t.length; r++) {
-              const c = Math.min(r, e.formats.length - 1),
-                s = e.formats[c];
-              if (!s) throw new Error("No number format found");
-              (s.separator && 0 !== r && a.push(s.separator),
-                a.push(l(t[r], s.format, n, o)));
+              const s = Math.min(r, e.formats.length - 1),
+                c = e.formats[s];
+              if (!c) throw new Error("No number format found");
+              (c.separator && 0 !== r && a.push(c.separator),
+                a.push(l(t[r], c.format, n, o)));
             }
             return (e.suffix && a.push(e.suffix), a.join(""));
           }),
@@ -1762,8 +2270,8 @@
                   precision: (0, a.wrapValue)(e.decimalMaxDigits, "xs:integer"),
                 },
               );
-              let i = c(
-                  s(Math.trunc(m), e.integerMinDigits),
+              let i = s(
+                  c(Math.trunc(m), e.integerMinDigits),
                   n.groupingSeparator,
                   e.integerGroupSize,
                 ),
@@ -1791,14 +2299,14 @@
             73041, 73121, 92769, 93009, 120783, 120793, 120803, 120813, 120823,
             125265,
           ];
-        function c(t, e, n) {
+        function s(t, e, n) {
           if (!e || !n || t.length <= n) return t;
           const o = [];
           let a = t;
           for (; a.length > n; ) (o.unshift(a.slice(-n)), (a = a.slice(0, -n)));
           return (a && o.unshift(a), o.join(e));
         }
-        function s(t, e) {
+        function c(t, e) {
           return t.toString().padStart(e, "0");
         }
         function m(t, e) {
@@ -1836,7 +2344,7 @@
         }
         function l(t, n, o, a) {
           if (isNaN(t) || !isFinite(t)) return "";
-          if (/0*1/.test(n)) return c(s(t, n.length), o, a);
+          if (/0*1/.test(n)) return s(c(t, n.length), o, a);
           if ("A" === n) return (0, e.toAlphabeticUpper)(t) || "";
           if ("a" === n) return (0, e.toAlphabetic)(t) || "";
           if ("I" === n) return i(t).toUpperCase();
@@ -1849,30 +2357,30 @@
                 `${String.fromCharCode(r)}*${String.fromCharCode(e)}`,
               ).test(n)
             )
-              return c(u(s(t, n.length), r), o, a);
+              return s(u(c(t, n.length), r), o, a);
           }
-          return c(s(t, n.length), o, a);
+          return s(c(t, n.length), o, a);
         }
         function p(t, e) {
           const n = e.zeroDigit,
             o = e.digit,
             a = e.decimalSeparator,
             r = e.groupingSeparator;
-          let c = 0,
-            s = !1,
+          let s = 0,
+            c = !1,
             m = !1;
           function i() {
-            if (s || m)
+            if (c || m)
               throw new Error(
                 "XTDE1310: Multiple percent/per-mille characters.",
               );
           }
           function l() {
             let r = "";
-            for (; c < t.length && t[c] !== n && t[c] !== o && t[c] !== a; )
-              (t[c] === e.percent && (i(), (s = !0)),
-                t[c] === e.perMille && (i(), (m = !0)),
-                (r += t[c++]));
+            for (; s < t.length && t[s] !== n && t[s] !== o && t[s] !== a; )
+              (t[s] === e.percent && (i(), (c = !0)),
+                t[s] === e.perMille && (i(), (m = !0)),
+                (r += t[s++]));
             return r;
           }
           const p = l();
@@ -1880,42 +2388,42 @@
             d = 0,
             x = 0,
             f = -1;
-          for (; c < t.length && t[c] !== a; ) {
-            const e = t[c];
+          for (; s < t.length && t[s] !== a; ) {
+            const e = t[s];
             if (e === n) (d++, x++);
             else if (e === o) x++;
             else {
               if (e !== r) break;
               f = x;
             }
-            c++;
+            s++;
           }
           f >= 0 && (u = x - f);
-          let I = 0,
-            w = 0;
-          if (c < t.length && t[c] === a)
-            for (c++; c < t.length; ) {
-              const e = t[c];
-              if (e === n) (I++, w++);
+          let w = 0,
+            I = 0;
+          if (s < t.length && t[s] === a)
+            for (s++; s < t.length; ) {
+              const e = t[s];
+              if (e === n) (w++, I++);
               else {
                 if (e !== o) break;
-                w++;
+                I++;
               }
-              c++;
+              s++;
             }
-          const h = l();
-          if (c < t.length)
+          const T = l();
+          if (s < t.length)
             throw new Error(
-              `XTDE1310: Active characters after picture string suffix: ${t.slice(c)}`,
+              `XTDE1310: Active characters after picture string suffix: ${t.slice(s)}`,
             );
           return {
             prefix: p,
-            suffix: h,
+            suffix: T,
             integerMinDigits: Math.max(d, 1),
             integerGroupSize: u,
-            decimalMinDigits: I,
-            decimalMaxDigits: w,
-            isPercent: s,
+            decimalMinDigits: w,
+            decimalMaxDigits: I,
+            isPercent: c,
             isPerMille: m,
           };
         }
@@ -1997,46 +2505,46 @@
           }));
         const a = String.raw`[^,:\(\)\*\[\]/]`,
           r = String.raw`(child::|attribute::|@)?`,
-          c = String.raw`(document-node\()?`,
-          s = new Map([
+          s = String.raw`(document-node\()?`,
+          c = new Map([
             [new RegExp(String.raw`^\s*/\s*$`), -0.5],
             [new RegExp(String.raw`^\s*\*\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${c}${r}processing-instruction`), 0],
-            [new RegExp(String.raw`^\s*${c}${r}element\(\*?\)\)?\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${c}${r}attribute\(\*?\)\)?\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${c}${r}element\(${a}+\)\)?\s*$`), 0],
+            [new RegExp(String.raw`^\s*${s}${r}processing-instruction`), 0],
+            [new RegExp(String.raw`^\s*${s}${r}element\(\*?\)\)?\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*${s}${r}attribute\(\*?\)\)?\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*${s}${r}element\(${a}+\)\)?\s*$`), 0],
             [
-              new RegExp(String.raw`^\s*${c}${r}element\(\*,\s*${a}+\)\)?\s*$`),
+              new RegExp(String.raw`^\s*${s}${r}element\(\*,\s*${a}+\)\)?\s*$`),
               0,
             ],
-            [new RegExp(String.raw`^\s*${c}${r}attribute\(${a}+\)\)?\s*$`), 0],
+            [new RegExp(String.raw`^\s*${s}${r}attribute\(${a}+\)\)?\s*$`), 0],
             [
               new RegExp(
-                String.raw`^\s*${c}${r}attribute\(\*,\s*${a}+\)\)?\s*$`,
+                String.raw`^\s*${s}${r}attribute\(\*,\s*${a}+\)\)?\s*$`,
               ),
               0,
             ],
             [
               new RegExp(
-                String.raw`^\s*${c}${r}element\(${a}+,\s*${a}+\)\)?\s*$`,
+                String.raw`^\s*${s}${r}element\(${a}+,\s*${a}+\)\)?\s*$`,
               ),
               0.25,
             ],
             [
               new RegExp(
-                String.raw`^\s*${c}${r}attribute\(${a}+,\s*${a}+\)\)?\s*$`,
+                String.raw`^\s*${s}${r}attribute\(${a}+,\s*${a}+\)\)?\s*$`,
               ),
               0.25,
             ],
             [
               new RegExp(
-                String.raw`^\s*${c}${r}schema-element\(${a}+\)\)?\s*$`,
+                String.raw`^\s*${s}${r}schema-element\(${a}+\)\)?\s*$`,
               ),
               0.25,
             ],
             [
               new RegExp(
-                String.raw`^\s*${c}${r}schema-attribute\(${a}+\)\)?\s*$`,
+                String.raw`^\s*${s}${r}schema-attribute\(${a}+\)\)?\s*$`,
               ),
               0.25,
             ],
@@ -2059,7 +2567,7 @@
                 .filter((t) => "" !== t)
                 .map((t) => m(t)),
             );
-          for (let [e, n] of s) if (e.test(t)) return n;
+          for (let [e, n] of c) if (e.test(t)) return n;
           return 0.5;
         }
       },
@@ -2099,7 +2607,7 @@
               : function (t, e) {
                   t.default = e;
                 }),
-          c =
+          s =
             (this && this.__importStar) ||
             ((o = function (t) {
               return (
@@ -2119,24 +2627,24 @@
               if (t && t.__esModule) return t;
               var e = {};
               if (null != t)
-                for (var n = o(t), c = 0; c < n.length; c++)
-                  "default" !== n[c] && a(e, t, n[c]);
+                for (var n = o(t), s = 0; s < n.length; s++)
+                  "default" !== n[s] && a(e, t, n[s]);
               return (r(e, t), e);
             });
         (Object.defineProperty(e, "__esModule", { value: !0 }),
           (e.urlToDom = function (t, e) {
-            const n = t.inputURL ? (0, s.resolve)(t.inputURL.toString(), e) : e;
+            const n = t.inputURL ? (0, c.resolve)(t.inputURL.toString(), e) : e;
             return n.startsWith("file:")
               ? i.parseXmlDocument(
                   (0, m.readFileSync)(
-                    (0, s.fileURLToPath)(new URL(n)),
+                    (0, c.fileURLToPath)(new URL(n)),
                   ).toString(),
                 )
               : void 0;
           }));
-        const s = n(16),
+        const c = n(16),
           m = n(896),
-          i = c(n(898));
+          i = s(n(898));
       },
       821(t, e, n) {
         "use strict";
@@ -2174,7 +2682,7 @@
               : function (t, e) {
                   t.default = e;
                 }),
-          c =
+          s =
             (this && this.__importStar) ||
             ((o = function (t) {
               return (
@@ -2194,8 +2702,8 @@
               if (t && t.__esModule) return t;
               var e = {};
               if (null != t)
-                for (var n = o(t), c = 0; c < n.length; c++)
-                  "default" !== n[c] && a(e, t, n[c]);
+                for (var n = o(t), s = 0; s < n.length; s++)
+                  "default" !== n[s] && a(e, t, n[s]);
               return (r(e, t), e);
             });
         (Object.defineProperty(e, "__esModule", { value: !0 }),
@@ -2238,7 +2746,7 @@
           (e.functionX = function (t, e) {
             const n = t.params.map((t) => "item()"),
               o = t.params.map((t) => t.name);
-            (0, s.registerCustomXPathFunction)(
+            (0, c.registerCustomXPathFunction)(
               { namespaceURI: t.namespace, localName: t.name },
               n,
               t.as || "item()",
@@ -2246,7 +2754,7 @@
                 let a = new Map();
                 return (
                   o.forEach((t, e) => a.set(t, n[e])),
-                  z(
+                  q(
                     Object.assign(Object.assign({}, t), {
                       variableScopes: [a].concat(t.variableScopes),
                     }),
@@ -2288,12 +2796,12 @@
                 ));
           }),
           (e.copyOf = function (t, e, n) {
-            let o = (0, s.evaluateXPath)(
+            let o = (0, c.evaluateXPath)(
               e.select,
               t.contextItem,
               void 0,
-              _(t.variableScopes),
-              s.evaluateXPath.ALL_RESULTS_TYPE,
+              C(t.variableScopes),
+              c.evaluateXPath.ALL_RESULTS_TYPE,
               {
                 currentContext: t,
                 namespaceResolver: (0, p.mkResolver)(e.namespaces),
@@ -2302,35 +2810,35 @@
             );
             for (let e of o) t.append(e);
           }),
-          (e.valueOf = D),
+          (e.valueOf = P),
           (e.message = function (t, e, n) {
-            const o = B(t, e.select || n, (0, p.mkResolver)(e.namespaces));
+            const o = z(t, e.select || n, (0, p.mkResolver)(e.namespaces));
             if ("yes" === e.terminate) throw new Error(o);
             console.log(o);
           }),
           (e.text = function (t, e, n) {
-            t.append(B(t, n, (0, p.mkResolver)(e.namespaces), [""]));
+            t.append(z(t, n, (0, p.mkResolver)(e.namespaces), [""]));
           }),
           (e.variable = function (t, e) {
-            C(t.variableScopes, e.name, q(t, e));
+            $(t.variableScopes, e.name, B(t, e));
           }),
           (e.param = function (t, e) {
-            C(t.variableScopes, e.name, t.stylesheetParams[e.name] || q(t, e));
+            $(t.variableScopes, e.name, t.stylesheetParams[e.name] || B(t, e));
           }),
-          (e.extendScope = P),
+          (e.extendScope = D),
           (e.wrapValue = F),
-          (e.setVariable = C),
-          (e.mergeVariableScopes = _),
+          (e.setVariable = $),
+          (e.mergeVariableScopes = C),
           (e.literalText = function (t, e) {
             t.append(e);
           }),
           (e.sequence = function (t, e) {
-            const n = (0, s.evaluateXPath)(
+            const n = (0, c.evaluateXPath)(
               e.select,
               t.contextItem,
               void 0,
-              _(t.variableScopes),
-              s.evaluateXPath.ALL_RESULTS_TYPE,
+              C(t.variableScopes),
+              c.evaluateXPath.ALL_RESULTS_TYPE,
               {
                 currentContext: t,
                 namespaceResolver: (0, p.mkResolver)(e.namespaces),
@@ -2339,64 +2847,64 @@
             );
             t.append(n);
           }),
-          (e.buildNode = U),
-          (e.buildAttributeNode = A),
+          (e.buildNode = _),
+          (e.buildAttributeNode = U),
           (e.literalElement = function (t, e, n) {
-            let o = U(t, { name: e.name, namespace: e.namespace });
+            let o = _(t, { name: e.name, namespace: e.namespace });
             const a = (0, p.mkResolver)(e.namespaces);
             for (let n of e.attributes) {
-              const e = k(t, n.value, a),
-                r = A(t, { name: n.name, namespace: n.namespace, value: e });
+              const e = Y(t, n.value, a),
+                r = U(t, { name: n.name, namespace: n.namespace, value: e });
               o.setAttributeNode(r);
             }
             const r = t.append(o);
             n(
               Object.assign(Object.assign({}, t), {
-                variableScopes: P(t.variableScopes),
+                variableScopes: D(t.variableScopes),
                 append: r || t.append,
               }),
             );
           }),
           (e.attribute = function (t, e, n) {
             const o = (0, p.mkResolver)(e.namespaces),
-              a = k(t, e.name, o),
-              [r, c] = (0, p.determineNamespace)(a, o, k(t, e.namespace, o)),
-              s = A(t, {
+              a = Y(t, e.name, o),
+              [r, s] = (0, p.determineNamespace)(a, o, Y(t, e.namespace, o)),
+              c = U(t, {
                 name: a,
                 namespace: r,
-                value: B(t, e.select || n, o, e.separator),
+                value: z(t, e.select || n, o, e.separator),
               });
-            t.append(s);
+            t.append(c);
           }),
           (e.processingInstruction = function (t, e, n) {
-            const o = k(t, e.name, (0, p.mkResolver)(e.namespaces)),
-              a = B(t, e.select || n, (0, p.mkResolver)(e.namespaces), [
+            const o = Y(t, e.name, (0, p.mkResolver)(e.namespaces)),
+              a = z(t, e.select || n, (0, p.mkResolver)(e.namespaces), [
                 "",
               ]).trimStart();
             t.append(t.outputDocument.createProcessingInstruction(o, a));
           }),
           (e.comment = function (t, e, n) {
-            const o = B(t, e.select || n, (0, p.mkResolver)(e.namespaces), [
+            const o = z(t, e.select || n, (0, p.mkResolver)(e.namespaces), [
               "",
             ]);
             t.append(t.outputDocument.createComment(o));
           }),
           (e.namespace = function (t, e, n) {
             const o = (0, p.mkResolver)(e.namespaces),
-              a = k(t, e.name, o),
-              r = B(t, e.select || n, o, [""]),
-              c = A(t, {
+              a = Y(t, e.name, o),
+              r = z(t, e.select || n, o, [""]),
+              s = U(t, {
                 name: `xmlns:${a}`,
                 namespace: l.XMLNS_NSURI,
                 value: r,
               });
-            t.append(c);
+            t.append(s);
           }),
           (e.element = function (t, e, n) {
             const o = (0, p.mkResolver)(e.namespaces);
-            let a = k(t, e.name, o),
-              r = k(t, e.namespace, o),
-              c = U(t, {
+            let a = Y(t, e.name, o),
+              r = Y(t, e.namespace, o),
+              s = _(t, {
                 name: a,
                 namespace: (0, p.determineNamespace)(
                   a,
@@ -2404,20 +2912,20 @@
                   r,
                 )[0],
               });
-            const s = t.append(c);
+            const c = t.append(s);
             n(
               Object.assign(Object.assign({}, t), {
-                variableScopes: P(t.variableScopes),
-                append: s || t.append,
+                variableScopes: D(t.variableScopes),
+                append: c || t.append,
               }),
             );
           }),
           (e.ifX = function (t, e, n) {
-            (0, s.evaluateXPathToBoolean)(
+            (0, c.evaluateXPathToBoolean)(
               e.test,
               t.contextItem,
               void 0,
-              _(t.variableScopes),
+              C(t.variableScopes),
               {
                 currentContext: t,
                 namespaceResolver: (0, p.mkResolver)(e.namespaces),
@@ -2429,11 +2937,11 @@
             for (let n of e) {
               if (!n.test) return n.apply(t);
               if (
-                (0, s.evaluateXPathToBoolean)(
+                (0, c.evaluateXPathToBoolean)(
                   n.test,
                   t.contextItem,
                   void 0,
-                  _(t.variableScopes),
+                  C(t.variableScopes),
                   {
                     currentContext: t,
                     functionNameResolver: i.functionNameResolver,
@@ -2455,18 +2963,18 @@
                 outputDocument: o,
                 append: a,
                 mode: "#default",
-                variableScopes: P(t.variableScopes),
+                variableScopes: D(t.variableScopes),
               }),
             );
           }),
           (e.performSort = function (t, e) {
             const n = (0, p.mkResolver)(e.namespaces),
-              o = (0, s.evaluateXPath)(
+              o = (0, c.evaluateXPath)(
                 e.select,
                 t.contextItem,
                 void 0,
-                _(t.variableScopes),
-                s.evaluateXPath.ALL_RESULTS_TYPE,
+                C(t.variableScopes),
+                c.evaluateXPath.ALL_RESULTS_TYPE,
                 {
                   currentContext: t,
                   namespaceResolver: n,
@@ -2480,12 +2988,12 @@
           }),
           (e.forEach = function (t, e, n) {
             const o = (0, p.mkResolver)(e.namespaces);
-            let a = (0, s.evaluateXPath)(
+            let a = (0, c.evaluateXPath)(
               e.select,
               t.contextItem,
               void 0,
-              _(t.variableScopes),
-              s.evaluateXPath.ALL_RESULTS_TYPE,
+              C(t.variableScopes),
+              c.evaluateXPath.ALL_RESULTS_TYPE,
               {
                 currentContext: t,
                 namespaceResolver: o,
@@ -2495,18 +3003,18 @@
             a &&
               Symbol.iterator in Object(a) &&
               ((a = b(t, a, e.sortKeyComponents, o)),
-              v(a, t, (t) => {
+              N(a, t, (t) => {
                 n(
                   Object.assign(Object.assign({}, t), {
-                    variableScopes: P(t.variableScopes),
+                    variableScopes: D(t.variableScopes),
                   }),
                 );
               }));
           }),
           (e.forEachGroup = function (t, e, n) {
             const o = (0, p.mkResolver)(e.namespaces),
-              a = _(t.variableScopes),
-              r = (0, s.evaluateXPathToNodes)(
+              a = C(t.variableScopes),
+              r = (0, c.evaluateXPathToNodes)(
                 e.select,
                 t.contextItem,
                 void 0,
@@ -2521,11 +3029,11 @@
               let a = [];
               (e.groupBy
                 ? (a = (function (t, e, n, o) {
-                    const a = _(t.variableScopes);
+                    const a = C(t.variableScopes);
                     let r = [];
                     return (
-                      v(e, t, (t) => {
-                        const e = (0, s.evaluateXPathToString)(
+                      N(e, t, (t) => {
+                        const e = (0, c.evaluateXPathToString)(
                           n,
                           t.contextItem,
                           void 0,
@@ -2536,32 +3044,32 @@
                             functionNameResolver: i.functionNameResolver,
                           },
                         );
-                        let c = r.find((t) => t.key === e);
-                        (c || ((c = { key: e, nodes: [] }), r.push(c)),
-                          c.nodes.push(t.contextItem));
+                        let s = r.find((t) => t.key === e);
+                        (s || ((s = { key: e, nodes: [] }), r.push(s)),
+                          s.nodes.push(t.contextItem));
                       }),
                       r
                     );
                   })(t, r, e.groupBy, o))
                 : e.groupAdjacent
                   ? (a = (function (t, e, n, o) {
-                      const a = _(t.variableScopes);
+                      const a = C(t.variableScopes);
                       let r = [],
-                        c = null,
+                        s = null,
                         m = [];
                       return (
-                        v(e, t, (t) => {
+                        N(e, t, (t) => {
                           const e = t.contextItem,
-                            l = (0, s.evaluateXPathToString)(n, e, void 0, a, {
+                            l = (0, c.evaluateXPathToString)(n, e, void 0, a, {
                               currentContext: t,
                               namespaceResolver: o,
                               functionNameResolver: i.functionNameResolver,
                             });
-                          l !== c
-                            ? ($(r, m, c), (c = l), (m = [e]))
+                          l !== s
+                            ? (A(r, m, s), (s = l), (m = [e]))
                             : m.push(e);
                         }),
-                        $(r, m, c),
+                        A(r, m, s),
                         r
                       );
                     })(t, r, e.groupAdjacent, o))
@@ -2570,7 +3078,7 @@
                         let a = [],
                           r = [];
                         return (
-                          v(e, t, (t) => {
+                          N(e, t, (t) => {
                             const e = t.contextItem;
                             (r.push(e),
                               g(
@@ -2579,9 +3087,9 @@
                                 e,
                                 t.variableScopes,
                                 o,
-                              ) && ($(a, r), (r = [])));
+                              ) && (A(a, r), (r = [])));
                           }),
-                          $(a, r),
+                          A(a, r),
                           a
                         );
                       })(t, r, e.groupEndingWith, o))
@@ -2590,7 +3098,7 @@
                         let a = [],
                           r = [];
                         return (
-                          v(e, t, (t) => {
+                          N(e, t, (t) => {
                             const e = t.contextItem;
                             (g(
                               t.patternMatchCache,
@@ -2598,10 +3106,10 @@
                               e,
                               t.variableScopes,
                               o,
-                            ) && ($(a, r), (r = [])),
+                            ) && (A(a, r), (r = [])),
                               r.push(e));
                           }),
-                          $(a, r),
+                          A(a, r),
                           a
                         );
                       })(t, r, e.groupStartingWith, o)),
@@ -2611,10 +3119,10 @@
           }),
           (e.number = function (t, e) {
             const n = (0, p.mkResolver)(e.namespaces),
-              o = _(t.variableScopes);
+              o = C(t.variableScopes);
             let a;
             (e.value
-              ? (a = (0, s.evaluateXPathToNumber)(
+              ? (a = (0, c.evaluateXPathToNumber)(
                   e.value,
                   t.contextItem,
                   void 0,
@@ -2640,34 +3148,34 @@
               ));
           }),
           (e.mkNodeAppender = j),
-          (e.mkArrayAppender = Y),
+          (e.mkArrayAppender = k),
           (e.resultDocument = function (t, e, n) {
             const o = (0, p.mkResolver)(e.namespaces);
             function a(e) {
-              return k(t, e, o);
+              return Y(t, e, o);
             }
             const r = a(e.format);
-            let c = (0, p.mkOutputDefinition)({
+            let s = (0, p.mkOutputDefinition)({
               omitXmlDeclaration: a(e.omitXmlDeclaration),
               doctypePublic: a(e.doctypePublic),
               doctypeSystem: a(e.doctypeSystem),
               standalone: a(e.standalone),
             });
-            Object.keys(c).forEach((t) => {
-              c[t] || delete c[t];
+            Object.keys(s).forEach((t) => {
+              s[t] || delete s[t];
             });
-            const s = Object.assign(
+            const c = Object.assign(
                 Object.assign({}, r ? t.outputDefinitions.get(r) : {}),
-                c,
+                s,
               ),
               m = a(e.href);
             let i = null;
             if (
-              ((s.doctypePublic || s.doctypeSystem) &&
+              ((c.doctypePublic || c.doctypeSystem) &&
                 (i = t.outputDocument.implementation.createDocumentType(
                   "out",
-                  s.doctypePublic || "",
-                  s.doctypeSystem || "",
+                  c.doctypePublic || "",
+                  c.doctypeSystem || "",
                 )),
               m)
             ) {
@@ -2680,7 +3188,7 @@
                 throw new Error(`XTDE1490: ${m} is a duplicate`);
               (t.resultDocuments.set(
                 m,
-                Object.assign(Object.assign({}, s), { document: e }),
+                Object.assign(Object.assign({}, c), { document: e }),
               ),
                 n(
                   Object.assign(Object.assign({}, t), {
@@ -2701,7 +3209,7 @@
                 (t.append = j(e))),
                 t.resultDocuments.set(
                   "#default",
-                  Object.assign(Object.assign({}, s), { document: e }),
+                  Object.assign(Object.assign({}, c), { document: e }),
                 ),
                 n(t));
             }
@@ -2727,7 +3235,7 @@
             for (let t of o) t.remove();
             return t;
           }),
-          (e.evaluateAttributeValueTemplate = k),
+          (e.evaluateAttributeValueTemplate = Y),
           (e.serialize = function (t) {
             const e = new m.XMLSerializer();
             if (!0 !== t.omitXmlDeclaration) {
@@ -2769,8 +3277,8 @@
               return;
             }
           }));
-        const s = n(594),
-          m = c(n(898)),
+        const c = n(594),
+          m = s(n(898)),
           i = n(379),
           l = n(712),
           p = n(777),
@@ -2811,7 +3319,7 @@
                     (0, p.mkResolver)(this.namespaces),
                   )
                 ) {
-                  let t = (0, s.evaluateXPathToString)(this.use, e);
+                  let t = (0, c.evaluateXPathToString)(this.use, e);
                   (o.has(t) || o.set(t, []), o.set(t, o.get(t).concat(e)));
                 }
               }),
@@ -2826,19 +3334,19 @@
             );
           }
         };
-        const I = new RegExp(/^[a-z |-]+$/),
-          w = new RegExp(/^@[a-z]+$/),
-          h = new RegExp(/text\(\)|node\(\)/),
-          T = new RegExp(/@|attribute|node/);
+        const w = new RegExp(/^[a-z |-]+$/),
+          I = new RegExp(/^@[a-z]+$/),
+          T = new RegExp(/text\(\)|node\(\)/),
+          h = new RegExp(/@|attribute|node/);
         function g(t, e, n, o, a) {
           return !(
             !n ||
             (function (t, e) {
               return (
-                (e.nodeType === l.NodeType.ATTRIBUTE && !T.exec(t)) ||
-                (e.nodeType === l.NodeType.TEXT && !h.exec(t)) ||
-                !(!I.exec(t) || e.nodeType === l.NodeType.ELEMENT) ||
-                !(!w.exec(t) || e.nodeType === l.NodeType.ATTRIBUTE)
+                (e.nodeType === l.NodeType.ATTRIBUTE && !h.exec(t)) ||
+                (e.nodeType === l.NodeType.TEXT && !T.exec(t)) ||
+                !(!w.exec(t) || e.nodeType === l.NodeType.ELEMENT) ||
+                !(!I.exec(t) || e.nodeType === l.NodeType.ATTRIBUTE)
               );
             })(e.xpath, n) ||
             (!(function (t, e) {
@@ -2859,21 +3367,21 @@
                 (function (t, e, n, o, a) {
                   let r = n;
                   for (; r; ) {
-                    const c = f(t, e.xpath, r, () =>
+                    const s = f(t, e.xpath, r, () =>
                       e.compiled
-                        ? (0, s.executeJavaScriptCompiledXPath)(e.compiled, r)
-                        : (0, s.evaluateXPathToNodes)(
+                        ? (0, c.executeJavaScriptCompiledXPath)(e.compiled, r)
+                        : (0, c.evaluateXPathToNodes)(
                             e.xpath,
                             r,
                             void 0,
-                            _(o),
+                            C(o),
                             {
                               namespaceResolver: a,
                               functionNameResolver: i.functionNameResolver,
                             },
                           ),
                     );
-                    if (-1 !== c.indexOf(n)) return c;
+                    if (-1 !== s.indexOf(n)) return s;
                     r =
                       r.parentNode ||
                       (r.nodeType === l.NodeType.ATTRIBUTE && r.ownerElement);
@@ -2883,11 +3391,11 @@
         }
         function y(t, e, n) {
           let o = (function* (t, e, n, o, a, r) {
-            for (let c of n)
-              c.match &&
-                ("#all" === c.modes[0] || c.modes.includes(a)) &&
-                g(t, c.match, e, o, (0, p.mkResolver)(r)) &&
-                (yield c);
+            for (let s of n)
+              s.match &&
+                ("#all" === s.modes[0] || s.modes.includes(a)) &&
+                g(t, s.match, e, o, (0, p.mkResolver)(r)) &&
+                (yield s);
           })(
             t.patternMatchCache,
             t.contextItem,
@@ -2904,7 +3412,7 @@
                   {
                     match: { xpath: "text()|@*" },
                     apply: (e) => {
-                      D(e, { select: ".", namespaces: t }, () => {});
+                      P(e, { select: ".", namespaces: t }, () => {});
                     },
                     allowedParams: [],
                     modes: ["#all"],
@@ -2946,9 +3454,9 @@
             (a =
               "number" === n.dataType
                 ? (function (t, e, n, o) {
-                    const a = N(e, t, (t) => {
+                    const a = v(e, t, (t) => {
                       let e;
-                      const a = B(t, n.sortKey, o);
+                      const a = z(t, n.sortKey, o);
                       return (
                         (e = Number(a)),
                         isNaN(e) && (e = Number.MIN_SAFE_INTEGER),
@@ -2960,22 +3468,22 @@
                       .map((t) => t[1]);
                   })(t, e, n, o)
                 : (function (t, e, n, o) {
-                    const a = N(e, t, (t) => B(t, n.sortKey, o)),
-                      r = n.lang && k(t, n.lang, o);
-                    let c = new Intl.Collator(r).compare;
+                    const a = v(e, t, (t) => z(t, n.sortKey, o)),
+                      r = n.lang && Y(t, n.lang, o);
+                    let s = new Intl.Collator(r).compare;
                     return (0, p.zip)(a, e)
-                      .sort((t, e) => c(t[0], e[0]))
+                      .sort((t, e) => s(t[0], e[0]))
                       .map((t) => t[1]);
                   })(t, e, n, o)),
-            "descending" === k(t, n.order, o) && a.reverse(),
+            "descending" === Y(t, n.order, o) && a.reverse(),
             a
           );
         }
-        function N(t, e, n) {
-          if (t.length > 0)
-            return (0, l.isNodeGroupArray)(t) ? S(t, e, n) : v(t, e, n);
-        }
         function v(t, e, n) {
+          if (t.length > 0)
+            return (0, l.isNodeGroupArray)(t) ? S(t, e, n) : N(t, e, n);
+        }
+        function N(t, e, n) {
           let o = 0;
           return t.map(
             (a) => (
@@ -2999,7 +3507,7 @@
               contextList: t.nodes,
               currentGroup: t,
               position: o,
-              variableScopes: P(e.variableScopes),
+              variableScopes: D(e.variableScopes),
             });
             return n(a);
           });
@@ -3012,10 +3520,10 @@
           for (let n of e) if (n.name === t) return n;
         }
         function X(t, e, n) {
-          let o = P(e.variableScopes);
+          let o = D(e.variableScopes);
           for (let a of t.allowedParams) {
             let t = L(a.name, n);
-            void 0 !== t ? C(o, t.name, q(e, t)) : C(o, a.name, q(e, a));
+            void 0 !== t ? $(o, t.name, B(e, t)) : $(o, a.name, B(e, a));
           }
           return t.apply(
             Object.assign(Object.assign({}, e), { variableScopes: o }),
@@ -3023,11 +3531,11 @@
         }
         function R(t, e) {
           const n = (0, p.mkResolver)(e.namespaces),
-            o = (0, s.evaluateXPathToNodes)(
+            o = (0, c.evaluateXPathToNodes)(
               e.select,
               t.contextItem,
               void 0,
-              _(t.variableScopes),
+              C(t.variableScopes),
               {
                 currentContext: t,
                 namespaceResolver: n,
@@ -3036,29 +3544,29 @@
             );
           let a = e.mode || "#default";
           ("#current" === a && (a = t.mode),
-            v(b(t, o, e.sortKeyComponents, n), t, (t) => {
+            N(b(t, o, e.sortKeyComponents, n), t, (t) => {
               y(
                 Object.assign(Object.assign({}, t), {
                   mode: a,
-                  variableScopes: P(t.variableScopes),
+                  variableScopes: D(t.variableScopes),
                 }),
                 e.params,
                 e.namespaces,
               );
             }));
         }
-        function D(t, e, n) {
+        function P(t, e, n) {
           t.append(
-            B(t, e.select || n, (0, p.mkResolver)(e.namespaces), e.separator),
+            z(t, e.select || n, (0, p.mkResolver)(e.namespaces), e.separator),
           );
         }
-        function P(t) {
+        function D(t) {
           return t.concat([new Map()]);
         }
         let M = new Map();
         function O(t) {
           return (
-            M.has(t) || M.set(t, (0, s.createTypedValueFactory)(t)),
+            M.has(t) || M.set(t, (0, c.createTypedValueFactory)(t)),
             M.get(t)
           );
         }
@@ -3080,15 +3588,15 @@
             O(`${a}${r}`)(t, null)
           );
         }
-        function C(t, e, n) {
+        function $(t, e, n) {
           t[t.length - 1].set(e, n);
         }
-        function _(t) {
+        function C(t) {
           let e = {};
           for (let n of t) for (let [t, o] of n) e[t] = o;
           return e;
         }
-        function U(t, e) {
+        function _(t, e) {
           let n;
           return (
             (n =
@@ -3098,7 +3606,7 @@
             n
           );
         }
-        function A(t, e) {
+        function U(t, e) {
           let n;
           return (
             (n = e.namespace
@@ -3108,7 +3616,7 @@
             n
           );
         }
-        function $(t, e, n) {
+        function A(t, e, n) {
           e.length > 0 &&
             (null === n && (n = `group-${t.length + 1}`),
             t.push({ key: n, nodes: e }));
@@ -3148,7 +3656,7 @@
             }
           };
         }
-        function Y(t) {
+        function k(t) {
           return function (e) {
             if (
               (t.push(e),
@@ -3159,17 +3667,17 @@
               return j(e);
           };
         }
-        function k(t, e, n) {
+        function Y(t, e, n) {
           if (e)
             return e
               .map((e) =>
                 "string" == typeof e
                   ? e
-                  : (0, s.evaluateXPathToString)(
+                  : (0, c.evaluateXPathToString)(
                       e.xpath,
                       t.contextItem,
                       void 0,
-                      _(t.variableScopes),
+                      C(t.variableScopes),
                       {
                         currentContext: t,
                         namespaceResolver: n,
@@ -3179,16 +3687,16 @@
               )
               .join("");
         }
-        function B(t, e, n, o) {
+        function z(t, e, n, o) {
           o || (o = "string" == typeof e ? [" "] : []);
-          const a = k(t, o, n);
+          const a = Y(t, o, n);
           return "string" == typeof e
-            ? (0, s.evaluateXPath)(
+            ? (0, c.evaluateXPath)(
                 e,
                 t.contextItem,
                 void 0,
-                _(t.variableScopes),
-                s.evaluateXPath.STRINGS_TYPE,
+                C(t.variableScopes),
+                c.evaluateXPath.STRINGS_TYPE,
                 {
                   currentContext: t,
                   namespaceResolver: n,
@@ -3205,17 +3713,17 @@
                   }),
                   e
                 );
-              })(z(t, e)).join(a);
+              })(q(t, e)).join(a);
         }
-        function q(t, e) {
+        function B(t, e) {
           if ("string" == typeof e.content) {
             const n = e.as && e.as.match(/[\+\*]$/);
-            let o = (0, s.evaluateXPath)(
+            let o = (0, c.evaluateXPath)(
               e.content,
               t.contextItem,
               void 0,
-              _(t.variableScopes),
-              s.evaluateXPath.ALL_RESULTS_TYPE,
+              C(t.variableScopes),
+              c.evaluateXPath.ALL_RESULTS_TYPE,
               {
                 currentContext: t,
                 namespaceResolver: (0, p.mkResolver)(e.namespaces),
@@ -3233,9 +3741,9 @@
                     return (
                       e(
                         Object.assign(Object.assign({}, t), {
-                          append: Y(n),
+                          append: k(n),
                           mode: "#default",
-                          variableScopes: P(t.variableScopes),
+                          variableScopes: D(t.variableScopes),
                         }),
                       ),
                       1 === n.length ? n[0] : n
@@ -3243,9 +3751,9 @@
                   })(t, e.content),
                   e.as,
                 )
-              : z(t, e.content);
+              : q(t, e.content);
         }
-        function z(t, e) {
+        function q(t, e) {
           return (function (t, e) {
             const n = t.outputDocument.createDocumentFragment();
             if (
@@ -3265,7 +3773,7 @@
                 append: n,
                 outputDocument: t.outputDocument,
                 mode: "#default",
-                variableScopes: P(t.variableScopes),
+                variableScopes: D(t.variableScopes),
               }),
             );
           });
@@ -3295,6 +3803,6 @@
       if (void 0 !== a) return a.exports;
       var r = (e[o] = { exports: {} });
       return (t[o].call(r.exports, r, r.exports, n), r.exports);
-    })(762);
+    })(851);
   module.exports = n.transform;
 })();

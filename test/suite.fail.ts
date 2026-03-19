@@ -18,16 +18,6 @@
  * <https://www.gnu.org/licenses/>.
  */
 
-/*
-(let ((to-delete '(
-...
-)))
-(cl-loop for item in to-delete do
-  (beginning-of-buffer)
-  (while (re-search-forward (format "\"%s\",\n  " item) nil t)
-  (replace-match "" nil nil))))
- */
-
 export const KNOWN_SPEC_FAILURES = [
   "accessor-002",
   "accessor-007",
@@ -152,7 +142,6 @@ export const KNOWN_SPEC_FAILURES = [
   "as-1302",
   "as-1303",
   "as-1304",
-  "as-1601",
   "as-1602",
   "attribute-0001",
   "attribute-0002",
@@ -444,7 +433,6 @@ export const KNOWN_SPEC_FAILURES = [
   "construct-node-032",
   "construct-node-033",
   "copy-0104",
-  "copy-0105",
   "copy-0401",
   "copy-1201",
   "copy-1202",
@@ -606,17 +594,8 @@ export const KNOWN_SPEC_FAILURES = [
   "error-0047a",
   "error-0050a",
   "error-0080a",
-  "error-0090a",
-  "error-0090b",
-  "error-0090c",
-  "error-0090d",
-  "error-0090f",
-  "error-0090g",
   "error-0090h",
   "error-0090i",
-  "error-0090j",
-  "error-0090l",
-  "error-0090n",
   "error-0110a",
   "error-0120a",
   "error-0120b",
@@ -1088,9 +1067,7 @@ export const KNOWN_SPEC_FAILURES = [
   "import-2201",
   "import-2202",
   "import-2401",
-  "import-2402",
   "import-2403",
-  "import-2404",
   "include-0102",
   "include-0103",
   "include-0301",
@@ -1593,19 +1570,15 @@ export const KNOWN_SPEC_FAILURES = [
   "output-0726",
   "param-0101",
   "param-0104",
-  "param-0110",
   "param-0111",
   "param-0112",
   "param-0113",
-  "param-0114",
-  "param-0115",
   "param-0116",
   "param-0301",
   "param-0402",
   "param-0403",
   "param-0601",
   "param-0602",
-  "param-0701",
   "param-0702",
   "position-0102",
   "position-2101",
@@ -2929,7 +2902,6 @@ export const KNOWN_SPEC_FAILURES = [
   "use-when-0218",
   "use-when-0220",
   "use-when-0224",
-  "use-when-0225",
   "use-when-0226",
   "use-when-0227",
   "use-when-0301",
@@ -2938,7 +2910,6 @@ export const KNOWN_SPEC_FAILURES = [
   "use-when-0414",
   "use-when-0416",
   "use-when-0417",
-  "use-when-0418",
   "use-when-0420",
   "use-when-0424",
   "use-when-0425",
@@ -3020,7 +2991,6 @@ export const KNOWN_SPEC_FAILURES = [
   "xpath-default-namespace-0201",
   "xpath-default-namespace-0401",
   "xpath-default-namespace-0502",
-  "xpath-default-namespace-0801",
   "xpath-default-namespace-1201",
   "xsl-document-0102",
   "xsl-document-0103",
