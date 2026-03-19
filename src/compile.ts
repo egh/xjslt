@@ -246,7 +246,8 @@ function tryCompilePattern(
     namespaceResolver: mkResolver(namespaces),
   });
   let compiledFunc: any = mkLiteral(undefined);
-  if (compiled.isAstAccepted) {
+  // Apparently a bug in fontoxpath
+  if (compiled.isAstAccepted && !compiled.code.includes('"name-*"')) {
     compiledFunc = {
       type: "CallExpression",
       callee: mkMember("xjslt", "compileMatchFunction"),
