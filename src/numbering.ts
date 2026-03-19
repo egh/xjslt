@@ -357,7 +357,9 @@ function parseSubpicture(sub: string, fmt: DecimalFormat): ParsedSubpicture {
 
   const suffix = slurpPassive();
   if (i < sub.length) {
-    throw new Error(`XTDE1310: Active characters after picture string suffix: ${sub.slice(i)}`);
+    throw new Error(
+      `XTDE1310: Active characters after picture string suffix: ${sub.slice(i)}`,
+    );
   }
 
   return {

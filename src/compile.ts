@@ -60,6 +60,7 @@ import preprocessInclude from "./preprocess/include";
 import preprocessImport from "./preprocess/import";
 import preprocessStripWhitespace1 from "./preprocess/stripWhitespace1";
 import preprocessStripWhitespace2 from "./preprocess/stripWhitespace2";
+import preprocessUseWhen from "./preprocess/use-when";
 import preprocessErrorAnalysis from "./preprocess/error-analysis";
 import {
   CompileContext,
@@ -722,12 +723,6 @@ export function compileTopLevelNode(
 ) {
   if (node.nodeType === NodeType.ELEMENT) {
     if (node.namespaceURI === XSLT1_NSURI) {
-      if (
-        node.hasAttribute("use-when") &&
-        !evaluateXPathToBoolean(node.getAttribute("use-when"))
-      ) {
-        return undefined;
-      }
       if (node.localName === "template") {
         return compileTemplateNode(node, context);
       } else if (node.localName === "variable") {
@@ -793,7 +788,10 @@ export function compileOutputNode(node: slimdom.Element) {
       },
     ]);
   } else {
-    return mkCall(mkMember("outputDefinitions", "set"), [toEstree(name), toEstree(tmp)]);
+    return mkCall(mkMember("outputDefinitions", "set"), [
+      toEstree(name),
+      toEstree(tmp),
+    ]);
   }
 }
 
@@ -817,7 +815,10 @@ export function compileDecimalFormatNode(node: slimdom.Element) {
     ...DEFAULT_DECIMAL_FORMAT,
     ...attrs,
   };
-  return mkCall(mkMember("decimalFormats", "set"), [toEstree(name), toEstree(fmt)]);
+  return mkCall(mkMember("decimalFormats", "set"), [
+    toEstree(name),
+    toEstree(fmt),
+  ]);
 }
 
 export function compileSequenceConstructorNode(
@@ -1364,10 +1365,11 @@ function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
     if (counter > 100) throw new Error("Import level too deep!");
     counter++;
   }
-  doc = preprocessErrorAnalysis(doc).get("#default").document;
   /* https://www.w3.org/TR/xslt20/#stylesheet-stripping */
   doc = preprocessStripWhitespace1(doc).get("#default").document;
   doc = preprocessStripWhitespace2(doc).get("#default").document;
+  doc = preprocessUseWhen(doc).get("#default").document;
+  doc = preprocessErrorAnalysis(doc).get("#default").document;
   return doc;
 }
 

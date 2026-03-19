@@ -18,7 +18,11 @@
  * <https://www.gnu.org/licenses/>.
  */
 
-import { registerCustomXPathFunction, ResolvedQualifiedName } from "fontoxpath";
+import {
+  registerCustomXPathFunction,
+  evaluateXPath,
+  ResolvedQualifiedName,
+} from "fontoxpath";
 import {
   DEFAULT_DECIMAL_FORMAT,
   DynamicContext,
@@ -76,6 +80,25 @@ function fnKey({ currentContext }, name: string, value: any) {
     );
   if (!retval) {
     return [];
+  } else {
+    return retval;
+  }
+}
+
+function fnEvaluate({ currentContext }, xpath: string) {
+  const retval = evaluateXPath(
+    xpath,
+    undefined,
+    undefined,
+    undefined,
+    evaluateXPath.ALL_RESULTS_TYPE,
+    {
+      currentContext: { currentContext },
+      functionNameResolver,
+    },
+  );
+  if (retval.length === 1) {
+    return retval[0];
   } else {
     return retval;
   }
@@ -260,6 +283,13 @@ export function registerFunctions() {
     ["node()?"],
     "xs:string?",
     fnBaseUri as (context: any, node: any) => any,
+  );
+
+  registerCustomXPathFunction(
+    { namespaceURI: XJSLT_NSURI, localName: "evaluate" },
+    ["xs:string"],
+    "item()",
+    (ctx: any, xpath: string) => fnEvaluate(ctx, xpath),
   );
 
   registerCustomXPathFunction(

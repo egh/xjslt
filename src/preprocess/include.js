@@ -1,6 +1,6 @@
 (() => {
   var e = {
-      732(e, t, n) {
+      974(e, t, n) {
         (n(898), n(594));
         let o = n(821);
         function r(e, t) {
@@ -215,11 +215,7 @@
       379(e, t, n) {
         "use strict";
         (Object.defineProperty(t, "__esModule", { value: !0 }),
-          (t.functionNameResolver = function ({ prefix: e, localName: t }, n) {
-            return (e && "fn" !== e) || !x.includes(t)
-              ? null
-              : { namespaceURI: r.XJSLT_NSURI, localName: t };
-          }),
+          (t.functionNameResolver = T),
           (t.registerFunctions = function () {
             ((0, o.registerCustomXPathFunction)(
               { namespaceURI: r.XJSLT_NSURI, localName: "current" },
@@ -292,6 +288,26 @@
                 ["node()?"],
                 "xs:string?",
                 h,
+              ),
+              (0, o.registerCustomXPathFunction)(
+                { namespaceURI: r.XJSLT_NSURI, localName: "evaluate" },
+                ["xs:string"],
+                "item()",
+                (e, t) =>
+                  (function ({ currentContext: e }, t) {
+                    const n = (0, o.evaluateXPath)(
+                      t,
+                      void 0,
+                      void 0,
+                      void 0,
+                      o.evaluateXPath.ALL_RESULTS_TYPE,
+                      {
+                        currentContext: { currentContext: e },
+                        functionNameResolver: T,
+                      },
+                    );
+                    return 1 === n.length ? n[0] : n;
+                  })(e, t),
               ),
               (0, o.registerCustomXPathFunction)(
                 { namespaceURI: r.XJSLT_NSURI, localName: "normalize-unicode" },
@@ -426,6 +442,11 @@
           "positionx",
           "system-property",
         ];
+        function T({ prefix: e, localName: t }, n) {
+          return (e && "fn" !== e) || !x.includes(t)
+            ? null
+            : { namespaceURI: r.XJSLT_NSURI, localName: t };
+        }
       },
       845(e, t, n) {
         "use strict";
@@ -1653,13 +1674,13 @@
               t,
             );
         }
-        function b(e, t, n, o) {
+        function R(e, t, n, o) {
           let r;
           return (
             (r =
               "number" === n.dataType
                 ? (function (e, t, n, o) {
-                    const r = R(t, e, (e) => {
+                    const r = b(t, e, (e) => {
                       let t;
                       const r = J(e, n.sortKey, o);
                       return (
@@ -1673,7 +1694,7 @@
                       .map((e) => e[1]);
                   })(e, t, n, o)
                 : (function (e, t, n, o) {
-                    const r = R(t, e, (e) => J(e, n.sortKey, o)),
+                    const r = b(t, e, (e) => J(e, n.sortKey, o)),
                       a = n.lang && z(e, n.lang, o);
                     let s = new Intl.Collator(a).compare;
                     return (0, p.zip)(r, t)
@@ -1684,7 +1705,7 @@
             r
           );
         }
-        function R(e, t, n) {
+        function b(e, t, n) {
           if (e.length > 0)
             return (0, l.isNodeGroupArray)(e) ? y(e, t, n) : w(e, t, n);
         }
@@ -1718,7 +1739,7 @@
           });
         }
         function E(e, t, n, o) {
-          if (n) for (let r of [...n].reverse()) t = b(e, t, r, o);
+          if (n) for (let r of [...n].reverse()) t = R(e, t, r, o);
           return t;
         }
         function $(e, t) {
@@ -2008,6 +2029,6 @@
       if (void 0 !== r) return r.exports;
       var a = (t[o] = { exports: {} });
       return (e[o].call(a.exports, a, a.exports, n), a.exports);
-    })(732);
+    })(974);
   module.exports = n.transform;
 })();

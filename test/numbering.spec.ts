@@ -492,19 +492,19 @@ describe("mkToNumeric", () => {
     });
 
     test("Unicode digit grouping with Arabic-Indic digits", () => {
-      const toArabicIndic = (n: number, ) => remapDigits(toNumeric(n), 0x0660);
+      const toArabicIndic = (n: number) => remapDigits(toNumeric(n), 0x0660);
       expect(groupNumeric(toArabicIndic(1234), "٬", 3)).toBe("١٬٢٣٤");
       expect(groupNumeric(toArabicIndic(1234567), "٬", 3)).toBe("١٬٢٣٤٬٥٦٧");
     });
 
     test("Unicode digit grouping with Devanagari digits", () => {
-      const toDevanagari = (n: number, ) => remapDigits(toNumeric(n), 0x0966);
+      const toDevanagari = (n: number) => remapDigits(toNumeric(n), 0x0966);
       expect(groupNumeric(toDevanagari(1234), ",", 3)).toBe("१,२३४");
       expect(groupNumeric(toDevanagari(123456), ",", 3)).toBe("१२३,४५६");
     });
 
     test("Unicode digit grouping with Thai digits", () => {
-      const toThai = (n: number, ) => remapDigits(toNumeric(n), 0x0e50);
+      const toThai = (n: number) => remapDigits(toNumeric(n), 0x0e50);
       expect(groupNumeric(toThai(1234), ",", 3)).toBe("๑,๒๓๔");
       expect(groupNumeric(toThai(12345678), " ", 3)).toBe("๑๒ ๓๔๕ ๖๗๘");
     });

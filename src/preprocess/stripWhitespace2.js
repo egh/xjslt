@@ -1,6 +1,6 @@
 (() => {
   var e = {
-      732(e, t, n) {
+      102(e, t, n) {
         (n(898), n(594));
         let o = n(821);
         function r(e, t) {
@@ -278,11 +278,7 @@
       379(e, t, n) {
         "use strict";
         (Object.defineProperty(t, "__esModule", { value: !0 }),
-          (t.functionNameResolver = function ({ prefix: e, localName: t }, n) {
-            return (e && "fn" !== e) || !T.includes(t)
-              ? null
-              : { namespaceURI: r.XJSLT_NSURI, localName: t };
-          }),
+          (t.functionNameResolver = S),
           (t.registerFunctions = function () {
             ((0, o.registerCustomXPathFunction)(
               { namespaceURI: r.XJSLT_NSURI, localName: "current" },
@@ -355,6 +351,26 @@
                 ["node()?"],
                 "xs:string?",
                 h,
+              ),
+              (0, o.registerCustomXPathFunction)(
+                { namespaceURI: r.XJSLT_NSURI, localName: "evaluate" },
+                ["xs:string"],
+                "item()",
+                (e, t) =>
+                  (function ({ currentContext: e }, t) {
+                    const n = (0, o.evaluateXPath)(
+                      t,
+                      void 0,
+                      void 0,
+                      void 0,
+                      o.evaluateXPath.ALL_RESULTS_TYPE,
+                      {
+                        currentContext: { currentContext: e },
+                        functionNameResolver: S,
+                      },
+                    );
+                    return 1 === n.length ? n[0] : n;
+                  })(e, t),
               ),
               (0, o.registerCustomXPathFunction)(
                 { namespaceURI: r.XJSLT_NSURI, localName: "normalize-unicode" },
@@ -489,6 +505,11 @@
           "positionx",
           "system-property",
         ];
+        function S({ prefix: e, localName: t }, n) {
+          return (e && "fn" !== e) || !T.includes(t)
+            ? null
+            : { namespaceURI: r.XJSLT_NSURI, localName: t };
+        }
       },
       845(e, t, n) {
         "use strict";
@@ -1022,7 +1043,7 @@
                 let r = new Map();
                 return (
                   o.forEach((e, t) => r.set(e, n[t])),
-                  B(
+                  Y(
                     Object.assign(Object.assign({}, e), {
                       variableScopes: [r].concat(e.variableScopes),
                     }),
@@ -1093,7 +1114,7 @@
           (t.param = function (e, t) {
             U(e.variableScopes, t.name, e.stylesheetParams[t.name] || G(e, t));
           }),
-          (t.extendScope = O),
+          (t.extendScope = X),
           (t.wrapValue = D),
           (t.setVariable = U),
           (t.mergeVariableScopes = _),
@@ -1128,7 +1149,7 @@
             const a = e.append(o);
             n(
               Object.assign(Object.assign({}, e), {
-                variableScopes: O(e.variableScopes),
+                variableScopes: X(e.variableScopes),
                 append: a || e.append,
               }),
             );
@@ -1183,7 +1204,7 @@
             const i = e.append(s);
             n(
               Object.assign(Object.assign({}, e), {
-                variableScopes: O(e.variableScopes),
+                variableScopes: X(e.variableScopes),
                 append: i || e.append,
               }),
             );
@@ -1231,7 +1252,7 @@
                 outputDocument: o,
                 append: r,
                 mode: "#default",
-                variableScopes: O(e.variableScopes),
+                variableScopes: X(e.variableScopes),
               }),
             );
           }),
@@ -1271,10 +1292,10 @@
             r &&
               Symbol.iterator in Object(r) &&
               ((r = E(e, r, t.sortKeyComponents, o)),
-              y(r, e, (e) => {
+              b(r, e, (e) => {
                 n(
                   Object.assign(Object.assign({}, e), {
-                    variableScopes: O(e.variableScopes),
+                    variableScopes: X(e.variableScopes),
                   }),
                 );
               }));
@@ -1300,7 +1321,7 @@
                     const r = _(e.variableScopes);
                     let a = [];
                     return (
-                      y(t, e, (e) => {
+                      b(t, e, (e) => {
                         const t = (0, i.evaluateXPathToString)(
                           n,
                           e.contextItem,
@@ -1326,7 +1347,7 @@
                         s = null,
                         c = [];
                       return (
-                        y(t, e, (e) => {
+                        b(t, e, (e) => {
                           const t = e.contextItem,
                             l = (0, i.evaluateXPathToString)(n, t, void 0, r, {
                               currentContext: e,
@@ -1346,7 +1367,7 @@
                         let r = [],
                           a = [];
                         return (
-                          y(t, e, (e) => {
+                          b(t, e, (e) => {
                             const t = e.contextItem;
                             (a.push(t),
                               S(
@@ -1366,7 +1387,7 @@
                         let r = [],
                           a = [];
                         return (
-                          y(t, e, (e) => {
+                          b(t, e, (e) => {
                             const t = e.contextItem;
                             (S(
                               e.patternMatchCache,
@@ -1382,7 +1403,7 @@
                         );
                       })(e, a, t.groupStartingWith, o)),
                 (r = E(e, r, t.sortKeyComponents, o)),
-                R(r, e, n));
+                y(r, e, n));
             }
           }),
           (t.number = function (e, t) {
@@ -1722,7 +1743,7 @@
             (r =
               "number" === n.dataType
                 ? (function (e, t, n, o) {
-                    const r = b(t, e, (e) => {
+                    const r = R(t, e, (e) => {
                       let t;
                       const r = J(e, n.sortKey, o);
                       return (
@@ -1736,7 +1757,7 @@
                       .map((e) => e[1]);
                   })(e, t, n, o)
                 : (function (e, t, n, o) {
-                    const r = b(t, e, (e) => J(e, n.sortKey, o)),
+                    const r = R(t, e, (e) => J(e, n.sortKey, o)),
                       a = n.lang && z(e, n.lang, o);
                     let s = new Intl.Collator(a).compare;
                     return (0, p.zip)(r, t)
@@ -1747,11 +1768,11 @@
             r
           );
         }
-        function b(e, t, n) {
+        function R(e, t, n) {
           if (e.length > 0)
-            return (0, l.isNodeGroupArray)(e) ? R(e, t, n) : y(e, t, n);
+            return (0, l.isNodeGroupArray)(e) ? y(e, t, n) : b(e, t, n);
         }
-        function y(e, t, n) {
+        function b(e, t, n) {
           let o = 0;
           return e.map(
             (r) => (
@@ -1766,7 +1787,7 @@
             ),
           );
         }
-        function R(e, t, n) {
+        function y(e, t, n) {
           let o = 0;
           return e.map((e) => {
             o++;
@@ -1775,7 +1796,7 @@
               contextList: e.nodes,
               currentGroup: e,
               position: o,
-              variableScopes: O(t.variableScopes),
+              variableScopes: X(t.variableScopes),
             });
             return n(r);
           });
@@ -1788,7 +1809,7 @@
           for (let n of t) if (n.name === e) return n;
         }
         function I(e, t, n) {
-          let o = O(t.variableScopes);
+          let o = X(t.variableScopes);
           for (let r of e.allowedParams) {
             let e = $(r.name, n);
             void 0 !== e ? U(o, e.name, G(t, e)) : U(o, r.name, G(t, r));
@@ -1812,11 +1833,11 @@
             );
           let r = t.mode || "#default";
           ("#current" === r && (r = e.mode),
-            y(E(e, o, t.sortKeyComponents, n), e, (e) => {
+            b(E(e, o, t.sortKeyComponents, n), e, (e) => {
               x(
                 Object.assign(Object.assign({}, e), {
                   mode: r,
-                  variableScopes: O(e.variableScopes),
+                  variableScopes: X(e.variableScopes),
                 }),
                 t.params,
                 t.namespaces,
@@ -1828,14 +1849,14 @@
             J(e, t.select || n, (0, p.mkResolver)(t.namespaces), t.separator),
           );
         }
-        function O(e) {
+        function X(e) {
           return e.concat([new Map()]);
         }
-        let X = new Map();
+        let O = new Map();
         function M(e) {
           return (
-            X.has(e) || X.set(e, (0, i.createTypedValueFactory)(e)),
-            X.get(e)
+            O.has(e) || O.set(e, (0, i.createTypedValueFactory)(e)),
+            O.get(e)
           );
         }
         function D(e, t) {
@@ -1981,7 +2002,7 @@
                   }),
                   t
                 );
-              })(B(e, t)).join(r);
+              })(Y(e, t)).join(r);
         }
         function G(e, t) {
           if ("string" == typeof t.content) {
@@ -2011,7 +2032,7 @@
                         Object.assign(Object.assign({}, e), {
                           append: F(n),
                           mode: "#default",
-                          variableScopes: O(e.variableScopes),
+                          variableScopes: X(e.variableScopes),
                         }),
                       ),
                       1 === n.length ? n[0] : n
@@ -2019,9 +2040,9 @@
                   })(e, t.content),
                   t.as,
                 )
-              : B(e, t.content);
+              : Y(e, t.content);
         }
-        function B(e, t) {
+        function Y(e, t) {
           return (function (e, t) {
             const n = e.outputDocument.createDocumentFragment();
             if (
@@ -2041,7 +2062,7 @@
                 append: n,
                 outputDocument: e.outputDocument,
                 mode: "#default",
-                variableScopes: O(e.variableScopes),
+                variableScopes: X(e.variableScopes),
               }),
             );
           });
@@ -2071,6 +2092,6 @@
       if (void 0 !== r) return r.exports;
       var a = (t[o] = { exports: {} });
       return (e[o].call(a.exports, a, a.exports, n), a.exports);
-    })(732);
+    })(102);
   module.exports = n.transform;
 })();

@@ -1,6 +1,6 @@
 (() => {
   var t = {
-      431(t, e, n) {
+      762(t, e, n) {
         (n(898), n(594));
         let o = n(821);
         function a(t, e) {
@@ -1481,11 +1481,7 @@
       379(t, e, n) {
         "use strict";
         (Object.defineProperty(e, "__esModule", { value: !0 }),
-          (e.functionNameResolver = function ({ prefix: t, localName: e }, n) {
-            return (t && "fn" !== t) || !T.includes(e)
-              ? null
-              : { namespaceURI: a.XJSLT_NSURI, localName: e };
-          }),
+          (e.functionNameResolver = g),
           (e.registerFunctions = function () {
             ((0, o.registerCustomXPathFunction)(
               { namespaceURI: a.XJSLT_NSURI, localName: "current" },
@@ -1558,6 +1554,26 @@
                 ["node()?"],
                 "xs:string?",
                 I,
+              ),
+              (0, o.registerCustomXPathFunction)(
+                { namespaceURI: a.XJSLT_NSURI, localName: "evaluate" },
+                ["xs:string"],
+                "item()",
+                (t, e) =>
+                  (function ({ currentContext: t }, e) {
+                    const n = (0, o.evaluateXPath)(
+                      e,
+                      void 0,
+                      void 0,
+                      void 0,
+                      o.evaluateXPath.ALL_RESULTS_TYPE,
+                      {
+                        currentContext: { currentContext: t },
+                        functionNameResolver: g,
+                      },
+                    );
+                    return 1 === n.length ? n[0] : n;
+                  })(t, e),
               ),
               (0, o.registerCustomXPathFunction)(
                 { namespaceURI: a.XJSLT_NSURI, localName: "normalize-unicode" },
@@ -1692,6 +1708,11 @@
           "positionx",
           "system-property",
         ];
+        function g({ prefix: t, localName: e }, n) {
+          return (t && "fn" !== t) || !T.includes(e)
+            ? null
+            : { namespaceURI: a.XJSLT_NSURI, localName: e };
+        }
       },
       845(t, e, n) {
         "use strict";
@@ -2271,7 +2292,7 @@
               e.select,
               t.contextItem,
               void 0,
-              C(t.variableScopes),
+              _(t.variableScopes),
               s.evaluateXPath.ALL_RESULTS_TYPE,
               {
                 currentContext: t,
@@ -2291,15 +2312,15 @@
             t.append(B(t, n, (0, p.mkResolver)(e.namespaces), [""]));
           }),
           (e.variable = function (t, e) {
-            _(t.variableScopes, e.name, q(t, e));
+            C(t.variableScopes, e.name, q(t, e));
           }),
           (e.param = function (t, e) {
-            _(t.variableScopes, e.name, t.stylesheetParams[e.name] || q(t, e));
+            C(t.variableScopes, e.name, t.stylesheetParams[e.name] || q(t, e));
           }),
           (e.extendScope = P),
           (e.wrapValue = F),
-          (e.setVariable = _),
-          (e.mergeVariableScopes = C),
+          (e.setVariable = C),
+          (e.mergeVariableScopes = _),
           (e.literalText = function (t, e) {
             t.append(e);
           }),
@@ -2308,7 +2329,7 @@
               e.select,
               t.contextItem,
               void 0,
-              C(t.variableScopes),
+              _(t.variableScopes),
               s.evaluateXPath.ALL_RESULTS_TYPE,
               {
                 currentContext: t,
@@ -2396,7 +2417,7 @@
               e.test,
               t.contextItem,
               void 0,
-              C(t.variableScopes),
+              _(t.variableScopes),
               {
                 currentContext: t,
                 namespaceResolver: (0, p.mkResolver)(e.namespaces),
@@ -2412,7 +2433,7 @@
                   n.test,
                   t.contextItem,
                   void 0,
-                  C(t.variableScopes),
+                  _(t.variableScopes),
                   {
                     currentContext: t,
                     functionNameResolver: i.functionNameResolver,
@@ -2444,7 +2465,7 @@
                 e.select,
                 t.contextItem,
                 void 0,
-                C(t.variableScopes),
+                _(t.variableScopes),
                 s.evaluateXPath.ALL_RESULTS_TYPE,
                 {
                   currentContext: t,
@@ -2463,7 +2484,7 @@
               e.select,
               t.contextItem,
               void 0,
-              C(t.variableScopes),
+              _(t.variableScopes),
               s.evaluateXPath.ALL_RESULTS_TYPE,
               {
                 currentContext: t,
@@ -2484,7 +2505,7 @@
           }),
           (e.forEachGroup = function (t, e, n) {
             const o = (0, p.mkResolver)(e.namespaces),
-              a = C(t.variableScopes),
+              a = _(t.variableScopes),
               r = (0, s.evaluateXPathToNodes)(
                 e.select,
                 t.contextItem,
@@ -2500,7 +2521,7 @@
               let a = [];
               (e.groupBy
                 ? (a = (function (t, e, n, o) {
-                    const a = C(t.variableScopes);
+                    const a = _(t.variableScopes);
                     let r = [];
                     return (
                       v(e, t, (t) => {
@@ -2524,7 +2545,7 @@
                   })(t, r, e.groupBy, o))
                 : e.groupAdjacent
                   ? (a = (function (t, e, n, o) {
-                      const a = C(t.variableScopes);
+                      const a = _(t.variableScopes);
                       let r = [],
                         c = null,
                         m = [];
@@ -2590,7 +2611,7 @@
           }),
           (e.number = function (t, e) {
             const n = (0, p.mkResolver)(e.namespaces),
-              o = C(t.variableScopes);
+              o = _(t.variableScopes);
             let a;
             (e.value
               ? (a = (0, s.evaluateXPathToNumber)(
@@ -2845,7 +2866,7 @@
                             e.xpath,
                             r,
                             void 0,
-                            C(o),
+                            _(o),
                             {
                               namespaceResolver: a,
                               functionNameResolver: i.functionNameResolver,
@@ -2994,7 +3015,7 @@
           let o = P(e.variableScopes);
           for (let a of t.allowedParams) {
             let t = L(a.name, n);
-            void 0 !== t ? _(o, t.name, q(e, t)) : _(o, a.name, q(e, a));
+            void 0 !== t ? C(o, t.name, q(e, t)) : C(o, a.name, q(e, a));
           }
           return t.apply(
             Object.assign(Object.assign({}, e), { variableScopes: o }),
@@ -3006,7 +3027,7 @@
               e.select,
               t.contextItem,
               void 0,
-              C(t.variableScopes),
+              _(t.variableScopes),
               {
                 currentContext: t,
                 namespaceResolver: n,
@@ -3059,10 +3080,10 @@
             O(`${a}${r}`)(t, null)
           );
         }
-        function _(t, e, n) {
+        function C(t, e, n) {
           t[t.length - 1].set(e, n);
         }
-        function C(t) {
+        function _(t) {
           let e = {};
           for (let n of t) for (let [t, o] of n) e[t] = o;
           return e;
@@ -3148,7 +3169,7 @@
                       e.xpath,
                       t.contextItem,
                       void 0,
-                      C(t.variableScopes),
+                      _(t.variableScopes),
                       {
                         currentContext: t,
                         namespaceResolver: n,
@@ -3166,7 +3187,7 @@
                 e,
                 t.contextItem,
                 void 0,
-                C(t.variableScopes),
+                _(t.variableScopes),
                 s.evaluateXPath.STRINGS_TYPE,
                 {
                   currentContext: t,
@@ -3193,7 +3214,7 @@
               e.content,
               t.contextItem,
               void 0,
-              C(t.variableScopes),
+              _(t.variableScopes),
               s.evaluateXPath.ALL_RESULTS_TYPE,
               {
                 currentContext: t,
@@ -3274,6 +3295,6 @@
       if (void 0 !== a) return a.exports;
       var r = (e[o] = { exports: {} });
       return (t[o].call(r.exports, r, r.exports, n), r.exports);
-    })(431);
+    })(762);
   module.exports = n.transform;
 })();
