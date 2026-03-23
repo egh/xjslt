@@ -59,16 +59,16 @@ XJSLT can compile XSLT stylesheets into executable JavaScript code, which can th
 - `include`/`import`
 - `result-document`
 - `for-each-group`
-- 2212 passing tests in the XSLT test suite (https://github.com/w3c/xslt30-test) (2424 not passing)
+- 2596 passing tests in the XSLT test suite (https://github.com/w3c/xslt30-test) (2957 not passing)
 
 # Incompletely supported features
 
 - `function` basically working, with better typing TBD
 - `output` not all options supported
+- `number` basic support, not all options supported
 
 # TODO (not yet implemented)
 
-- [ ] `number`
 - [ ] `analyze-string` (depends on https://github.com/bwrrp/xspattern.js/issues/9)
 - [ ] tunneled parameters
 - [ ] … (probably other things I’m not aware of or forgot)
