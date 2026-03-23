@@ -60,16 +60,26 @@ import preprocessInclude from "./preprocess/include";
 import preprocessImport from "./preprocess/import";
 import preprocessStripWhitespace1 from "./preprocess/stripWhitespace1";
 import preprocessStripWhitespace2 from "./preprocess/stripWhitespace2";
+import preprocessUseWhen from "./preprocess/use-when";
 import preprocessErrorAnalysis from "./preprocess/error-analysis";
+import preprocessAttributeSet from "./preprocess/attribute-set";
 import {
   CompileContext,
   XSLT1_NSURI,
   XMLNS_NSURI,
   NodeType,
+  NumberFormat,
   OutputDefinition,
+  DecimalFormat,
+  DEFAULT_DECIMAL_FORMAT,
   xpathstring,
 } from "./definitions";
-import { mkOutputDefinition, mkResolver, sortSortable } from "./shared";
+import {
+  isAlphanumeric,
+  mkOutputDefinition,
+  mkResolver,
+  sortSortable,
+} from "./shared";
 
 /**
  * Functions to walk a DOM tree of an XSLT stylesheet and generate an
@@ -80,6 +90,7 @@ interface SimpleElement {
   name: string;
   hasChildren: boolean;
   arguments: Map<string, string | undefined>;
+  xpathArguments?: Set<string>;
 }
 
 function buildInResolver(prefix: string): string | null {
@@ -89,6 +100,61 @@ function buildInResolver(prefix: string): string | null {
   return null;
 }
 
+/** Rewrite xpaths to support any workarounds/hacks we need. */
+function hackXpath(
+  xpath: string | undefined | null,
+): string | undefined | null {
+  if (!xpath) {
+    return xpath;
+  }
+  // Override to use our own position, but only outside square brackets
+  // and not when preceded by / or ::
+  let result = "";
+  let depth = 0;
+  let i = 0;
+
+  while (i < xpath.length) {
+    const char = xpath[i];
+
+    if (char === "[") {
+      depth++;
+      result += char;
+      i++;
+    } else if (char === "]") {
+      depth--;
+      result += char;
+      i++;
+    } else if (depth === 0) {
+      // We're outside brackets, check for position() or last()
+      // But not if preceded by / or ::
+      const precededBySlash = i > 0 && xpath[i - 1] === "/";
+      const precededByDoubleColon = i > 1 && xpath.substring(i - 2, i) === "::";
+
+      if (!precededBySlash && !precededByDoubleColon) {
+        if (xpath.substring(i).startsWith("position()")) {
+          result += "positionx()";
+          i += "position()".length;
+        } else if (xpath.substring(i).startsWith("last()")) {
+          result += "lastx()";
+          i += "last()".length;
+        } else {
+          result += char;
+          i++;
+        }
+      } else {
+        result += char;
+        i++;
+      }
+    } else {
+      // Inside brackets, don't modify
+      result += char;
+      i++;
+    }
+  }
+
+  return result;
+}
+
 const simpleElements = new Map<string, SimpleElement>([
   ["copy", { name: "copy", arguments: new Map(), hasChildren: true }],
   [
@@ -96,6 +162,7 @@ const simpleElements = new Map<string, SimpleElement>([
     {
       name: "copyOf",
       arguments: new Map([["select", undefined]]),
+      xpathArguments: new Set(["select"]),
       hasChildren: true,
     },
   ],
@@ -105,6 +172,7 @@ const simpleElements = new Map<string, SimpleElement>([
     {
       name: "ifX",
       arguments: new Map([["test", undefined]]),
+      xpathArguments: new Set(["test"]),
       hasChildren: true,
     },
   ],
@@ -116,6 +184,7 @@ const simpleElements = new Map<string, SimpleElement>([
         ["select", undefined],
         ["terminate", "no"],
       ]),
+      xpathArguments: new Set(["select"]),
       hasChildren: true,
     },
   ],
@@ -124,6 +193,7 @@ const simpleElements = new Map<string, SimpleElement>([
     {
       name: "sequence",
       arguments: new Map([["select", undefined]]),
+      xpathArguments: new Set(["select"]),
       hasChildren: false,
     },
   ],
@@ -135,7 +205,7 @@ function compileApplyTemplatesNode(
 ) {
   const mode = expandQname(node.getAttribute("mode"), getNodeNS(node));
   const args = {
-    select: node.getAttribute("select") || "child::node()",
+    select: hackXpath(node.getAttribute("select") || "child::node()"),
     mode: mode || "#default",
     params: compileParams("with-param", node.childNodes, context),
     sortKeyComponents: compileSortKeyComponents(node.childNodes, context),
@@ -162,9 +232,40 @@ function compileFunctionNode(node: slimdom.Element, context: CompileContext) {
   ]);
 }
 
+/**
+ * Try to precompile an xpath.
+ * Returns an AST node for a compiled match function, or undefined literal if compilation fails.
+ */
+function tryCompilePattern(
+  pattern: string | null | undefined,
+  namespaces: object,
+): any {
+  if (!pattern) {
+    return mkLiteral(undefined);
+  }
+
+  const compiled = compileXPathToJavaScript(pattern, evaluateXPath.NODES_TYPE, {
+    namespaceResolver: mkResolver(namespaces),
+  });
+  let compiledFunc: any = mkLiteral(undefined);
+  // Apparently a bug in fontoxpath
+  if (compiled.isAstAccepted && !compiled.code.includes('"name-*"')) {
+    compiledFunc = {
+      type: "CallExpression",
+      callee: mkMember("xjslt", "compileMatchFunction"),
+      arguments: [mkLiteral(compiled.code)],
+      optional: false,
+    };
+  }
+  return toEstree({
+    xpath: mkLiteral(pattern),
+    compiled: compiledFunc,
+  });
+}
+
 function compileForEachNode(node: slimdom.Element, context: CompileContext) {
   const args = {
-    select: node.getAttribute("select"),
+    select: hackXpath(node.getAttribute("select")),
     sortKeyComponents: compileSortKeyComponents(node.childNodes, context),
     namespaces: getNodeNS(node),
   };
@@ -175,17 +276,139 @@ function compileForEachGroupNode(
   node: slimdom.Element,
   context: CompileContext,
 ) {
+  const namespaces = getNodeNS(node);
+
+  // Precompile patterns if possible
+  const groupStartingWith = tryCompilePattern(
+    node.getAttribute("group-starting-with"),
+    namespaces,
+  );
+  const groupEndingWith = tryCompilePattern(
+    node.getAttribute("group-ending-with"),
+    namespaces,
+  );
+
   return compileFuncallWithChildren(
     node,
     "forEachGroup",
     toEstree({
-      select: node.getAttribute("select"),
-      groupBy: node.getAttribute("group-by"),
+      select: hackXpath(node.getAttribute("select")),
+      groupBy: hackXpath(node.getAttribute("group-by")),
+      groupAdjacent: hackXpath(node.getAttribute("group-adjacent")),
+      groupStartingWith: groupStartingWith,
+      groupEndingWith: groupEndingWith,
       sortKeyComponents: compileSortKeyComponents(node.childNodes, context),
-      namespaces: getNodeNS(node),
+      namespaces: namespaces,
     }),
     context,
   );
+}
+
+/**
+ * Parse format tokens from a format string at compile time.
+ * The first token never has a separator.
+ */
+export function parseNumberFormat(format: string): NumberFormat {
+  let retval: NumberFormat = {
+    prefix: undefined,
+    suffix: undefined,
+    formats: [],
+  };
+  let currentAlpha = "";
+  let currentNonAlpha = "";
+  let inAlpha = false;
+
+  for (let i = 0; i < format.length; i++) {
+    const ch = format[i];
+    if (isAlphanumeric(ch)) {
+      if (inAlpha) {
+        // Continue building the current token
+        currentAlpha += ch;
+      } else {
+        // Transition from non-alpha -> alpha (starting a new token)
+        if (retval.formats.length === 0) {
+          // First token - what we've seen so far is the prefix
+          if (currentNonAlpha) {
+            retval.prefix = currentNonAlpha;
+          }
+          currentNonAlpha = "";
+        }
+        currentAlpha = ch;
+        inAlpha = true;
+      }
+    } else {
+      // Non-alphanumeric character found
+      if (inAlpha) {
+        // Ending a token - push it with its separator
+        retval.formats.push({
+          format: currentAlpha,
+          separator: currentNonAlpha || ".",
+        });
+        currentAlpha = "";
+        currentNonAlpha = "";
+        inAlpha = false;
+      }
+      currentNonAlpha += ch;
+    }
+  }
+
+  // Add the last token if we were in alpha mode
+  if (inAlpha && currentAlpha) {
+    retval.formats.push({
+      format: currentAlpha,
+      separator: currentNonAlpha || ".",
+    });
+  } else {
+    // Any remaining non-alpha text is the suffix
+    retval.suffix = currentNonAlpha || undefined;
+  }
+
+  if (retval.formats.length === 0) {
+    // Defaults per spec.
+    retval.prefix = retval.suffix;
+    retval.formats.push({ format: "1", separator: "." });
+  }
+
+  return retval;
+}
+
+function compileNumberNode(node: slimdom.Element, context: CompileContext) {
+  const namespaces = getNodeNS(node);
+  const format = node.getAttribute("format") || "1";
+
+  // Precompile patterns if possible
+  const count = tryCompilePattern(node.getAttribute("count"), namespaces);
+  const from = tryCompilePattern(node.getAttribute("from"), namespaces);
+
+  return compileFuncall("number", [
+    toEstree({
+      value: hackXpath(node.getAttribute("value")),
+      select: hackXpath(node.getAttribute("select")),
+      count: count,
+      from: from,
+      level: node.getAttribute("level") || "single",
+      format: parseNumberFormat(format),
+      lang: node.getAttribute("lang"),
+      letterValue: node.getAttribute("letter-value"),
+      ordinal: node.getAttribute("ordinal"),
+      groupingSeparator: node.getAttribute("grouping-separator"),
+      groupingSize: parseInt(node.getAttribute("grouping-size")),
+      namespaces: namespaces,
+    }),
+  ]);
+}
+
+function compilePerformSortNode(
+  node: slimdom.Element,
+  context: CompileContext,
+) {
+  return compileFuncall("performSort", [
+    toEstree({
+      select: hackXpath(node.getAttribute("select")),
+      sortKeyComponents: compileSortKeyComponents(node.childNodes, context),
+      namespaces: getNodeNS(node),
+    }),
+  ]);
 }
 
 function compileNextMatchNode(node: slimdom.Element, context: CompileContext) {
@@ -217,7 +440,7 @@ function compileVariableLike(node: slimdom.Element, context: CompileContext) {
   if (node.hasAttribute("select")) {
     return toEstree({
       name: name,
-      content: node.getAttribute("select"),
+      content: hackXpath(node.getAttribute("select")),
       namespaces: getNodeNS(node),
       as: as,
     });
@@ -261,7 +484,7 @@ function compileSortKeyComponents(nodes: any[], context: CompileContext) {
         sortKeyComponents.push(
           toEstree({
             ...args,
-            sortKey: node.getAttribute("select") || ".",
+            sortKey: hackXpath(node.getAttribute("select") || "."),
           }),
         );
       }
@@ -336,6 +559,7 @@ function compileFuncallWithChildren(
 function compileArgs(
   node: slimdom.Element,
   keyList: Map<string, string | undefined>,
+  xpathKeys: Set<string> = new Set(),
 ): ObjectExpression {
   var args = {};
   for (let [key, fallback] of keyList) {
@@ -343,7 +567,7 @@ function compileArgs(
     if (value === null) {
       value = fallback;
     }
-    args[key] = value;
+    args[key] = xpathKeys.has(key) ? hackXpath(value) : value;
   }
   args["namespaces"] = getNodeNS(node);
   return toEstree(args);
@@ -351,7 +575,7 @@ function compileArgs(
 
 function compileSimpleElement(node: slimdom.Element, context: CompileContext) {
   const what = simpleElements.get(node.localName);
-  const args = compileArgs(node, what.arguments);
+  const args = compileArgs(node, what.arguments, what.xpathArguments);
   if (what.hasChildren) {
     return compileFuncallWithChildren(node, what.name, args, context);
   } else {
@@ -366,7 +590,7 @@ function compileChooseNode(node: slimdom.Element, context: CompileContext) {
       if (childNode.localName === "when") {
         alternatives.push(
           toEstree({
-            test: childNode.getAttribute("test"),
+            test: hackXpath(childNode.getAttribute("test")),
             apply: mkArrowFun(
               compileSequenceConstructor(childNode.childNodes, context),
             ),
@@ -408,7 +632,9 @@ function compileWhitespaceDeclarationNode(
       .map((e) => {
         return toEstree({
           importPrecedence: node.getAttribute("import-precedence") || 1,
-          match: e,
+          match: toEstree({
+            xpath: mkLiteral(e),
+          }),
           preserve: preserve,
           namespaces: getNodeNS(node),
         });
@@ -416,14 +642,12 @@ function compileWhitespaceDeclarationNode(
   );
 }
 
-function mkResolverForNode(node: slimdom.Element): NamespaceResolver {
-  return (prefix: string) => {
-    return node.lookupNamespaceURI(prefix);
-  };
-}
-
 function skipAttribute(attr: slimdom.Attr): boolean {
   if (attr.namespaceURI == XMLNS_NSURI && attr.value === XSLT1_NSURI) {
+    return true;
+  }
+  // Skip XSLT attributes (like xsl:version) on literal result elements
+  if (attr.namespaceURI === XSLT1_NSURI) {
     return true;
   }
   return false;
@@ -482,6 +706,14 @@ export function getNodeNS(node: slimdom.Element, retval: object = undefined) {
       }
     }
   }
+
+  const xpathDefaultNs =
+    node.getAttribute("xpath-default-namespace") ||
+    node.getAttributeNS(XSLT1_NSURI, "xpath-default-namespace");
+  if (xpathDefaultNs !== null) {
+    retval["#xpath-default"] = xpathDefaultNs;
+  }
+
   return retval;
 }
 
@@ -492,12 +724,6 @@ export function compileTopLevelNode(
 ) {
   if (node.nodeType === NodeType.ELEMENT) {
     if (node.namespaceURI === XSLT1_NSURI) {
-      if (
-        node.hasAttribute("use-when") &&
-        !evaluateXPathToBoolean(node.getAttribute("use-when"))
-      ) {
-        return undefined;
-      }
       if (node.localName === "template") {
         return compileTemplateNode(node, context);
       } else if (node.localName === "variable") {
@@ -510,10 +736,11 @@ export function compileTopLevelNode(
         return compileFunctionNode(node, context);
       } else if (node.localName === "output") {
         return compileOutputNode(node);
+      } else if (node.localName === "decimal-format") {
+        return compileDecimalFormatNode(node);
       } else if (
         node.localName === "attribute-set" ||
         node.localName === "character-map" ||
-        node.localName === "decimal-format" ||
         node.localName === "import-schema" ||
         node.localName === "namespace-alias"
       ) {
@@ -523,7 +750,9 @@ export function compileTopLevelNode(
       } else if (node.localName === "strip-space") {
         return compileWhitespaceDeclarationNode(node, false, context);
       } else {
-        throw new Error("Found unexpected XSL element: " + node.tagName);
+        throw new Error(
+          "XTSE0010: Found unexpected XSL element: " + node.tagName,
+        );
       }
     }
   }
@@ -560,8 +789,37 @@ export function compileOutputNode(node: slimdom.Element) {
       },
     ]);
   } else {
-    return mkCall(mkMember("outputDefinitions", "set"), toEstree([name, tmp]));
+    return mkCall(mkMember("outputDefinitions", "set"), [
+      toEstree(name),
+      toEstree(tmp),
+    ]);
   }
+}
+
+export function compileDecimalFormatNode(node: slimdom.Element) {
+  const name = node.getAttribute("name") || "#default";
+  const attrs = Object.fromEntries(
+    Object.entries({
+      decimalSeparator: node.getAttribute("decimal-separator"),
+      digit: node.getAttribute("digit"),
+      groupingSeparator: node.getAttribute("grouping-separator"),
+      infinity: node.getAttribute("infinity"),
+      minusSign: node.getAttribute("minus-sign"),
+      nan: node.getAttribute("NaN"),
+      patternSeparator: node.getAttribute("pattern-separator"),
+      percent: node.getAttribute("percent"),
+      perMille: node.getAttribute("per-mille"),
+      zeroDigit: node.getAttribute("zero-digit"),
+    }).filter(([_, v]) => v !== null),
+  );
+  const fmt: DecimalFormat = {
+    ...DEFAULT_DECIMAL_FORMAT,
+    ...attrs,
+  };
+  return mkCall(mkMember("decimalFormats", "set"), [
+    toEstree(name),
+    toEstree(fmt),
+  ]);
 }
 
 export function compileSequenceConstructorNode(
@@ -598,12 +856,14 @@ export function compileSequenceConstructorNode(
         return compileForEachNode(node, context);
       } else if (node.localName === "for-each-group") {
         return compileForEachGroupNode(node, context);
+      } else if (node.localName === "perform-sort") {
+        return compilePerformSortNode(node, context);
       } else if (node.localName === "namespace") {
         return compileNamespaceNode(node, context);
       } else if (node.localName === "next-match") {
         return compileNextMatchNode(node, context);
       } else if (node.localName === "number") {
-        // TODO
+        return compileNumberNode(node, context);
       } else if (node.localName === "param") {
         // Handled by special case.
       } else if (node.localName === "processing-instruction") {
@@ -621,7 +881,9 @@ export function compileSequenceConstructorNode(
       } else if (node.localName === "value-of") {
         return compileValueOf(node, context);
       } else {
-        throw new Error("Found unexpected XSL element: " + node.tagName);
+        throw new Error(
+          "XTSE0010: Found unexpected XSL element: " + node.tagName,
+        );
       }
     } else {
       return compileLiteralElementNode(node, context);
@@ -649,7 +911,7 @@ function compileAttributeNode(node: slimdom.Element, context: CompileContext) {
     toEstree({
       name: compileAvt(node.getAttribute("name")),
       separator: compileAvt(node.getAttribute("separator")),
-      select: node.getAttribute("select"),
+      select: hackXpath(node.getAttribute("select")),
       namespace: compileAvt(node.getAttribute("namespace")),
       namespaces: getNodeNS(node),
     }),
@@ -665,7 +927,7 @@ function compileProcessingInstruction(
     node,
     "processingInstruction",
     toEstree({
-      select: node.getAttribute("select"),
+      select: hackXpath(node.getAttribute("select")),
       name: compileAvt(node.getAttribute("name")),
       namespaces: getNodeNS(node),
     }),
@@ -678,7 +940,7 @@ function compileNamespaceNode(node: slimdom.Element, context: CompileContext) {
     node,
     "namespace",
     toEstree({
-      select: node.getAttribute("select"),
+      select: hackXpath(node.getAttribute("select")),
       name: compileAvt(node.getAttribute("name")),
       namespaces: getNodeNS(node),
     }),
@@ -691,7 +953,7 @@ function compileCommentNode(node: slimdom.Element, context: CompileContext) {
     node,
     "comment",
     toEstree({
-      select: node.getAttribute("select"),
+      select: hackXpath(node.getAttribute("select")),
       namespaces: getNodeNS(node),
     }),
     context,
@@ -703,7 +965,7 @@ function compileValueOf(node: slimdom.Element, context: CompileContext) {
     node,
     "valueOf",
     toEstree({
-      select: node.getAttribute("select"),
+      select: hackXpath(node.getAttribute("select")),
       separator: compileAvt(node.getAttribute("separator")),
       namespaces: getNodeNS(node),
     }),
@@ -781,6 +1043,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             mkIdentifier("outputDefinitions"),
             mkNew(mkIdentifier("Map"), []),
           ),
+          mkLet(mkIdentifier("decimalFormats"), mkNew(mkIdentifier("Map"), [])),
           /* First compile the keys */
           ...compileNodeArray(
             evaluateXPathToNodes("./xsl:key", node, undefined, undefined, {
@@ -805,6 +1068,18 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             context,
             compileTopLevelNode,
           ),
+          /* Then the decimal formats */
+          ...compileNodeArray(
+            evaluateXPathToNodes(
+              "./xsl:decimal-format",
+              node,
+              undefined,
+              undefined,
+              { namespaceResolver: buildInResolver },
+            ),
+            context,
+            compileTopLevelNode,
+          ),
           /* Then compile the templates */
           ...compileNodeArray(
             evaluateXPathToNodes("./xsl:template", node, undefined, undefined, {
@@ -825,12 +1100,15 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               },
               resultDocuments: mkIdentifier("resultDocuments"),
               contextItem: mkIdentifier("document"),
+              contextList: mkArray([mkIdentifier("document")]),
+              position: mkLiteral(1),
               mode: mkMember("params", "initialMode"),
               templates: sortSortable(context.templates),
               variableScopes: [mkNew(mkIdentifier("Map"), [])],
               inputURL: mkMember("params", "inputURL"),
               keys: mkIdentifier("keys"),
               outputDefinitions: mkIdentifier("outputDefinitions"),
+              decimalFormats: mkIdentifier("decimalFormats"),
               patternMatchCache: mkNew(mkIdentifier("Map"), []),
               stylesheetParams: mkMember("params", "stylesheetParams"),
             }),
@@ -838,7 +1116,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
           /* Then everything else */
           ...compileNodeArray(
             evaluateXPathToNodes(
-              "./xsl:*[local-name()!='template' and local-name()!='key' and local-name()!='function' and local-name()!='output']",
+              "./xsl:*[local-name()!='template' and local-name()!='key' and local-name()!='function' and local-name()!='output' and local-name()!='decimal-format']",
               node,
               undefined,
               undefined,
@@ -917,24 +1195,10 @@ function resolveQname(name: string | null, namespaces: object) {
 function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
   let allowedParams = compileParams("param", node.childNodes, context);
   let namespaces = getNodeNS(node);
-  const match: string | undefined = node.getAttribute("match") || undefined;
-  let matchFunction: any = mkLiteral(undefined);
-  if (match) {
-    let compiled = compileXPathToJavaScript(match, evaluateXPath.NODES_TYPE, {
-      namespaceResolver: mkResolverForNode(node),
-    });
-    if (compiled.isAstAccepted) {
-      matchFunction = {
-        type: "CallExpression",
-        callee: mkMember("xjslt", "compileMatchFunction"),
-        arguments: [mkLiteral(compiled.code)],
-        optional: false,
-      };
-    }
-  }
+  const matchStr = node.getAttribute("match") || undefined;
+  const match = matchStr ? tryCompilePattern(matchStr, namespaces) : undefined;
   context.templates.push({
     match: match,
-    matchFunction: matchFunction,
     name: expandQname(node.getAttribute("name"), namespaces) || undefined,
     modes: (node.getAttribute("mode") || "#default")
       .split(" ")
@@ -1019,7 +1283,7 @@ export function compileAvtRaw(avt: string | undefined | null): any {
           throw new Error("XTSE0370");
         }
         // Ending xpath
-        retval = retval.concat(xpathOutput);
+        retval = retval.concat({ xpath: hackXpath(xpathOutput.xpath) });
         xpathOutput = { xpath: "" };
         inXpath = false;
       }
@@ -1079,6 +1343,7 @@ function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
     doc = preprocessSimplified(doc).get("#default").document;
   }
   let counter = 0;
+  let basePrecedence = 100;
   while (
     evaluateXPathToBoolean(
       "//xsl:include|//xsl:import",
@@ -1090,7 +1355,6 @@ function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
       },
     )
   ) {
-    let basePrecedence = 100;
     doc = preprocessInclude(doc, {
       inputURL: pathToFileURL(path),
     }).get("#default").document;
@@ -1102,10 +1366,12 @@ function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
     if (counter > 100) throw new Error("Import level too deep!");
     counter++;
   }
-  doc = preprocessErrorAnalysis(doc).get("#default").document;
   /* https://www.w3.org/TR/xslt20/#stylesheet-stripping */
+  doc = preprocessAttributeSet(doc).get("#default").document;
   doc = preprocessStripWhitespace1(doc).get("#default").document;
   doc = preprocessStripWhitespace2(doc).get("#default").document;
+  doc = preprocessUseWhen(doc).get("#default").document;
+  doc = preprocessErrorAnalysis(doc).get("#default").document;
   return doc;
 }
 

@@ -1,4 +1,4 @@
-<!-- Copyright (C) 2021-2024 Erik Hetzner -->
+<!-- Copyright (C) 2021-2026 Erik Hetzner -->
 
 <!-- This file is part of XJSLT. -->
 
@@ -18,8 +18,8 @@
 
 <xsl:stylesheet
     version="2.0"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  <xsl:param name="base-precedence"/>
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:xjslt="https://www.e6h.org/xjslt">
   
   <xsl:template match="/ | @* | node()">
      <xsl:copy>
@@ -27,18 +27,19 @@
      </xsl:copy>
    </xsl:template>
    
-   <xsl:template match="xsl:template">
-     <xsl:param name="import-precedence"/>
-     <xsl:copy>
-       <xsl:apply-templates select="@* | node()" />
-       <xsl:attribute namespace="https://www.e6h.org/xjslt" name="import-precedence" select="$import-precedence"/>
-     </xsl:copy>
+   <xsl:template match="xsl:*[@use-when]">
+     <xsl:if test="xjslt:evaluate(@use-when)">
+       <xsl:copy>
+         <xsl:apply-templates select="@* | node()" />
+       </xsl:copy>
+     </xsl:if>
    </xsl:template>
-     
-   <xsl:template match="xsl:import">
-     <xsl:variable name="doc" select="doc(@href)"/>
-     <xsl:apply-templates select="$doc/xsl:stylesheet/* | $doc/xsl:transform/*">
-       <xsl:with-param name="import-precedence" select="position() + $base-precedence"/>
-     </xsl:apply-templates>
+
+   <xsl:template match="*[namespace-uri() != 'http://www.w3.org/1999/XSL/Transform' and @xsl:use-when]">
+     <xsl:if test="xjslt:evaluate(@xsl:use-when)">
+       <xsl:copy>
+         <xsl:apply-templates select="@* | node()" />
+       </xsl:copy>
+     </xsl:if>
    </xsl:template>
 </xsl:stylesheet>

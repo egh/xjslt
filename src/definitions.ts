@@ -8,6 +8,7 @@ const DOC_NODE_OPT = String.raw`(document-node\()?`;
 export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
 export const XMLNS_NSURI = "http://www.w3.org/2000/xmlns/";
 export const XPATH_NSURI = "http://www.w3.org/2005/xpath-functions";
+export const XJSLT_NSURI = "https://www.e6h.org/xjslt";
 
 export const DEFAULT_PRIORITIES = new Map<RegExp, number>([
   [new RegExp(String.raw`^\s*/\s*$`), -0.5],
@@ -97,6 +98,12 @@ export interface OutputDefinition {
   standalone?: boolean | undefined;
 }
 
+export interface NumberFormat {
+  prefix?: string;
+  suffix?: string;
+  formats: Array<{ format: string; separator?: string }>;
+}
+
 export enum NodeType {
   ELEMENT = 1,
   ATTRIBUTE,
@@ -120,14 +127,13 @@ export interface VariableLike {
 }
 
 export interface Sortable {
-  match?: string;
+  match?: Xpath;
   importPrecedence: number;
   priority?: number;
   [propName: string]: unknown;
 }
 
 interface GenericTemplate extends Sortable {
-  matchFunction?: CompiledXPathFunction;
   name?: string;
   modes: string[];
   allowedParams: Array<VariableLike>;
@@ -141,7 +147,9 @@ export interface TemplateForCompilation extends GenericTemplate {
   apply: ArrowFunctionExpression;
 }
 
-export type SequenceConstructor = (context: DynamicContext) => void;
+export type SequenceConstructorWithReturn<T> = (context: DynamicContext) => T;
+
+export type SequenceConstructor = SequenceConstructorWithReturn<void>;
 
 export type VariableScope = Map<string, any>;
 
@@ -179,18 +187,21 @@ export interface DynamicContext {
   outputDocument: slimdom.Document;
   resultDocuments: Map<string, OutputResult>;
   append: Appender;
-  contextItem: any;
   mode: string;
   templates: Array<Template>;
   variableScopes: Array<VariableScope>;
   nextMatches?: Generator<Template>;
   inputURL: URL;
-  currentGroup?: any[];
-  currentGroupingKey?: string;
+  currentGroup?: NodeGroup;
   keys: Map<String, Key>;
   patternMatchCache: PatternMatchCache;
   outputDefinitions: Map<string, OutputDefinition>;
+  decimalFormats: Map<string, DecimalFormat>;
   stylesheetParams?: object;
+  // The actual context
+  contextItem: slimdom.Node;
+  contextList: slimdom.Node[];
+  position: number;
 }
 
 export interface CompileContext {
@@ -213,10 +224,7 @@ export interface xpathstring {
 
 export type AttributeValueTemplate = Array<string | xpathstring>;
 
-export type PatternMatchCache = Map<
-  string,
-  Map<slimdom.Node, Set<slimdom.Node>>
->;
+export type PatternMatchCache = Map<string, Map<slimdom.Node, slimdom.Node[]>>;
 
 export interface Key {
   match: string;
@@ -234,4 +242,64 @@ export interface Key {
     variableScopes: VariableScope[],
     value: any,
   ) => any;
+}
+
+export interface NodeGroup {
+  key: string;
+  nodes: slimdom.Node[];
+}
+
+export function isNodeGroup(value: any): value is NodeGroup {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof value.key === "string" &&
+    Array.isArray(value.nodes)
+  );
+}
+
+export function isNodeGroupArray(value: any): value is NodeGroup[] {
+  return Array.isArray(value) && (value.length === 0 || isNodeGroup(value[0]));
+}
+
+export interface Xpath {
+  xpath: string;
+  compiled?: CompiledXPathFunction;
+}
+
+export interface DecimalFormat {
+  decimalSeparator: string;
+  digit: string;
+  groupingSeparator: string;
+  infinity: string;
+  minusSign: string;
+  nan: string;
+  patternSeparator: string;
+  percent: string;
+  perMille: string;
+  zeroDigit: string;
+}
+
+export const DEFAULT_DECIMAL_FORMAT: DecimalFormat = {
+  decimalSeparator: ".",
+  digit: "#",
+  groupingSeparator: ",",
+  infinity: "Infinity",
+  minusSign: "-",
+  nan: "NaN",
+  patternSeparator: ";",
+  percent: "%",
+  perMille: "\u2030",
+  zeroDigit: "0",
+};
+
+export interface ParsedSubpicture {
+  prefix: string;
+  suffix: string;
+  integerMinDigits: number;
+  integerGroupSize?: number;
+  decimalMinDigits: number;
+  decimalMaxDigits: number;
+  isPercent: boolean;
+  isPerMille: boolean;
 }

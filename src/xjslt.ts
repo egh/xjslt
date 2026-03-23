@@ -19,20 +19,21 @@
  */
 
 import {
-  CompiledXPathFunction,
   createTypedValueFactory,
-  evaluateXPath,
-  evaluateXPathToString,
-  evaluateXPathToNodes,
-  evaluateXPathToBoolean,
   EvaluateXPath,
+  evaluateXPath,
+  evaluateXPathToBoolean,
+  evaluateXPathToNodes,
   evaluateXPathToNumber,
+  evaluateXPathToString,
   executeJavaScriptCompiledXPath,
+  IDomFacade,
   NamespaceResolver,
   registerCustomXPathFunction,
+  ValidValueSequence,
 } from "fontoxpath";
 import * as slimdom from "slimdom";
-import { registerFunctions } from "./functions";
+import { functionNameResolver, registerFunctions } from "./functions";
 import {
   XMLNS_NSURI,
   Appender,
@@ -42,17 +43,22 @@ import {
   Template,
   Constructor,
   DynamicContext,
+  isNodeGroupArray,
   Key,
+  NodeGroup,
   NodeType,
+  NumberFormat,
   OutputDefinition,
   OutputResult,
   SequenceConstructor,
+  SequenceConstructorWithReturn,
   SortKeyComponent,
   TransformParams,
   VariableLike,
   VariableScope,
   WhitespaceDeclaration,
   PatternMatchCache,
+  Xpath,
 } from "./definitions";
 import {
   compareSortable,
@@ -61,10 +67,15 @@ import {
   mkOutputDefinition,
   mkResolver,
   sortSortable,
+  zip,
 } from "./shared";
+import { formatNumber } from "./numbering";
 
 /* Depth first node visit */
-export function visitNodes(node: any, visit: (node: any) => void) {
+export function visitNodes(
+  node: slimdom.Node,
+  visit: (node: slimdom.Node) => void,
+) {
   visit(node);
   if (node.childNodes) {
     for (let childNode of node.childNodes) {
@@ -104,13 +115,12 @@ export class KeyImpl implements Key {
     variableScopes: VariableScope[],
   ): Map<any, any> {
     let docCache = new Map();
-    visitNodes(document, (node: any) => {
+    visitNodes(document, (node: slimdom.Node) => {
       if (typeof this.use === "string") {
         if (
           patternMatch(
             patternMatchCache,
-            this.match,
-            undefined,
+            { xpath: this.match },
             node,
             variableScopes,
             mkResolver(this.namespaces),
@@ -144,18 +154,18 @@ export class KeyImpl implements Key {
 
 function withCached<T>(
   cache: Map<string, Map<slimdom.Node, T>>,
-  pattern: string,
+  key: string,
   node: slimdom.Node,
   thunk: () => T,
 ): T {
-  if (!cache.has(pattern)) {
-    cache.set(pattern, new Map());
+  if (!cache.has(key)) {
+    cache.set(key, new Map());
   }
-  const cacheForPattern = cache.get(pattern);
-  if (!cacheForPattern.has(node)) {
-    cacheForPattern.set(node, thunk());
+  const cacheForKey = cache.get(key);
+  if (!cacheForKey.has(node)) {
+    cacheForKey.set(node, thunk());
   }
-  return cacheForPattern.get(node);
+  return cacheForKey.get(node);
 }
 
 const ELEMENT_ONLY_PATTERN = new RegExp(/^[a-z |-]+$/);
@@ -219,55 +229,69 @@ function fastSuccess(pattern: string, node: slimdom.Node) {
   return false;
 }
 
-/* Implementation of https://www.w3.org/TR/xslt20/#pattern-syntax */
-function patternMatch(
-  patternMatchCache: PatternMatchCache | undefined,
-  match: string,
-  matchFunction: CompiledXPathFunction | undefined,
+function patternMatchNodes(
+  patternMatchCache: PatternMatchCache,
+  match: Xpath,
   node: slimdom.Node,
   variableScopes: Array<VariableScope>,
-  nsResolver: NamespaceResolver,
-): boolean {
+  namespaceResolver: NamespaceResolver,
+): slimdom.Node[] | undefined {
   let checkContext = node;
+  while (checkContext) {
+    const matches = withCached(
+      patternMatchCache,
+      match.xpath,
+      checkContext,
+      (): slimdom.Node[] => {
+        if (match.compiled) {
+          return executeJavaScriptCompiledXPath(match.compiled, checkContext);
+        }
+        return evaluateXPathToNodes(
+          match.xpath,
+          checkContext,
+          undefined,
+          /* TODO: Only top level variables are applicable here, so top
+        level variables could be cached. */
+          mergeVariableScopes(variableScopes),
+          { namespaceResolver, functionNameResolver },
+        );
+      },
+    );
+    /* It counts as a match if the node we were testing against is in
+       the resulting node set. */
+    if (matches.indexOf(node) !== -1) {
+      return matches;
+    }
+    /* Match not found, continue up the tree */
+    checkContext =
+      checkContext.parentNode ||
+      (checkContext.nodeType === NodeType.ATTRIBUTE &&
+        (checkContext as slimdom.Attr).ownerElement);
+  }
+  return undefined;
+}
+/* Implementation of https://www.w3.org/TR/xslt20/#pattern-syntax */
+function patternMatch(
+  patternMatchCache: PatternMatchCache,
+  match: Xpath,
+  node: slimdom.Node,
+  variableScopes: Array<VariableScope>,
+  namespaceResolver: NamespaceResolver,
+): boolean {
   /* Using ancestors as the potential contexts */
-  if (node && !failFast(match, node)) {
-    if (fastSuccess(match, node)) {
+  if (node && !failFast(match.xpath, node)) {
+    if (fastSuccess(match.xpath, node)) {
       return true;
     } else {
-      while (checkContext) {
-        const matches = withCached(
+      return (
+        patternMatchNodes(
           patternMatchCache,
           match,
-          checkContext,
-          () => {
-            if (matchFunction) {
-              return new Set(
-                executeJavaScriptCompiledXPath(matchFunction, checkContext),
-              );
-            }
-            return new Set(
-              evaluateXPathToNodes(
-                match,
-                checkContext,
-                undefined,
-                /* TODO: Only top level variables are applicable here, so top
-            level variables could be cached. */
-                mergeVariableScopes(variableScopes),
-                { namespaceResolver: nsResolver },
-              ),
-            );
-          },
-        );
-        /* It counts as a match if the node we were testing against is in the resulting node set. */
-        if (matches.has(node)) {
-          return true;
-        }
-        /* Match not found, continue up the tree */
-        checkContext =
-          checkContext.parentNode ||
-          (checkContext.nodeType === NodeType.ATTRIBUTE &&
-            (checkContext as slimdom.Attr).ownerElement);
-      }
+          node,
+          variableScopes,
+          namespaceResolver,
+        ) !== undefined
+      );
     }
   }
   return false;
@@ -280,7 +304,7 @@ function patternMatch(
  */
 function* getTemplates(
   patternMatchCache: PatternMatchCache,
-  node: any,
+  node: slimdom.Node,
   templates: Array<Template>,
   variableScopes: Array<VariableScope>,
   mode: string,
@@ -293,7 +317,6 @@ function* getTemplates(
       patternMatch(
         patternMatchCache,
         template.match,
-        template.matchFunction,
         node,
         variableScopes,
         mkResolver(namespaces),
@@ -335,14 +358,14 @@ function mkBuiltInTemplates(namespaces: object): Array<Template> {
   /* Pre-sorted in order of default priority */
   return [
     {
-      match: "processing-instruction()|comment()",
+      match: { xpath: "processing-instruction()|comment()" },
       apply: (_context: DynamicContext) => {},
       allowedParams: [],
       modes: ["#all"],
       importPrecedence: Number.MAX_VALUE,
     },
     {
-      match: "text()|@*",
+      match: { xpath: "text()|@*" },
       apply: (context: DynamicContext) => {
         valueOf(
           context,
@@ -355,7 +378,7 @@ function mkBuiltInTemplates(namespaces: object): Array<Template> {
       importPrecedence: Number.MAX_VALUE,
     },
     {
-      match: "*|/",
+      match: { xpath: "*|/" },
       apply: (context: DynamicContext) => {
         applyTemplates(context, {
           select: "child::node()",
@@ -440,17 +463,17 @@ export function applyImports(
   }
 }
 
-function sortNodesHelper(
+function sortHelper<T extends slimdom.Node | NodeGroup>(
   context: DynamicContext,
-  nodes: any[],
+  things: T[],
   sort: SortKeyComponent,
   namespaceResolver: NamespaceResolver,
-): any[] {
-  let sorted: any[];
-  if (sort.dataType === "number" && typeof sort.sortKey === "string") {
-    sorted = sortNodesHelperNumeric(context, nodes, sort, namespaceResolver);
+): T[] {
+  let sorted: T[];
+  if (sort.dataType === "number") {
+    sorted = sortHelperNumeric(context, things, sort, namespaceResolver);
   } else {
-    sorted = sortNodesHelperText(context, nodes, sort, namespaceResolver);
+    sorted = sortHelperText(context, things, sort, namespaceResolver);
   }
   if (
     evaluateAttributeValueTemplate(context, sort.order, namespaceResolver) ===
@@ -461,66 +484,107 @@ function sortNodesHelper(
   return sorted;
 }
 
-function sortNodesHelperNumeric(
+function iterateNodesOrNodeGroups<T extends slimdom.Node | NodeGroup, U>(
+  things: T[],
   context: DynamicContext,
-  nodes: any[],
+  func: SequenceConstructorWithReturn<U>,
+): U[] {
+  if (things.length > 0) {
+    if (isNodeGroupArray(things)) {
+      return iterateNodeGroups(things, context, func);
+    } else {
+      return iterateNodes(things as slimdom.Node[], context, func);
+    }
+  }
+}
+
+function iterateNodes<T>(
+  contextList: slimdom.Node[],
+  context: DynamicContext,
+  func: SequenceConstructorWithReturn<T>,
+): T[] {
+  let position = 0;
+  return contextList.map((contextItem) => {
+    position++;
+    return func({ ...context, contextItem, contextList, position });
+  });
+}
+
+function iterateNodeGroups<T>(
+  nodeGroups: NodeGroup[],
+  context: DynamicContext,
+  func: SequenceConstructorWithReturn<T>,
+): T[] {
+  let position = 0;
+  return nodeGroups.map((group) => {
+    position++;
+    const newContext = {
+      ...context,
+      contextItem: group.nodes[0],
+      contextList: group.nodes,
+      currentGroup: group,
+      position,
+      variableScopes: extendScope(context.variableScopes),
+    };
+    return func(newContext);
+  });
+}
+
+function sortHelperNumeric<T extends slimdom.Node | NodeGroup>(
+  context: DynamicContext,
+  things: T[],
   sort: SortKeyComponent,
   namespaceResolver: NamespaceResolver,
-): any[] {
-  let keyed: { key: number; item: any }[] = [];
-  for (let node of nodes) {
-    let key = evaluateXPathToNumber(
-      `number(${sort.sortKey as string})`,
-      node,
-      undefined,
-      mergeVariableScopes(context.variableScopes),
-      { currentContext: context, namespaceResolver: namespaceResolver },
+): T[] {
+  const keys = iterateNodesOrNodeGroups(things, context, (context) => {
+    let key: number;
+    const text = constructSimpleContent(
+      context,
+      sort.sortKey,
+      namespaceResolver,
     );
+    key = Number(text);
+
     if (isNaN(key)) {
       key = Number.MIN_SAFE_INTEGER; // if we can't calculate a sort key, sort before everything
     }
-    keyed.push({
-      key: key,
-      item: node,
-    });
-  }
-  keyed.sort((a, b) => a.key - b.key);
-  return keyed.sort((a, b) => a.key - b.key).map((obj) => obj.item);
+    return key;
+  });
+  return zip(keys, things)
+    .sort((a, b) => a[0] - b[0])
+    .map((t) => t[1]);
 }
 
-function sortNodesHelperText(
+function sortHelperText<T extends slimdom.Node | NodeGroup>(
   context: DynamicContext,
-  nodes: any[],
+  things: T[],
   sort: SortKeyComponent,
   namespaceResolver: NamespaceResolver,
-): any[] {
-  let keyed: { key: string; item: any }[] = [];
-  for (let node of nodes) {
-    const newContext = { ...context, contextItem: node };
-    keyed.push({
-      key: constructSimpleContent(newContext, sort.sortKey, namespaceResolver),
-      item: node,
-    });
-  }
+): T[] {
+  const keys = iterateNodesOrNodeGroups(things, context, (context) => {
+    return constructSimpleContent(context, sort.sortKey, namespaceResolver);
+  });
   const lang =
     sort.lang &&
     evaluateAttributeValueTemplate(context, sort.lang, namespaceResolver);
   let collator = new Intl.Collator(lang).compare;
-  return keyed.sort((a, b) => collator(a.key, b.key)).map((obj) => obj.item);
+  return zip(keys, things)
+    .sort((a, b) => collator(a[0], b[0]))
+    .map((t) => t[1]);
 }
 
-export function sortNodes(
+export function sort<T extends slimdom.Node | NodeGroup>(
   context: DynamicContext,
-  nodes: any[],
+  things: T[],
   sorts: SortKeyComponent[],
   namespaceResolver: NamespaceResolver,
-): any[] {
+): T[] {
   if (sorts) {
     for (let sort of [...sorts].reverse()) {
-      nodes = sortNodesHelper(context, nodes, sort, namespaceResolver);
+      things = sortHelper(context, things, sort, namespaceResolver);
     }
   }
-  return nodes;
+  return things;
 }
 
 function getParam(
@@ -575,38 +639,37 @@ export function applyTemplates(
     sortKeyComponents: SortKeyComponent[];
   },
 ) {
-  const nsResolver = mkResolver(data.namespaces);
+  const namespaceResolver = mkResolver(data.namespaces);
   /* The nodes we want to apply templates on.*/
   const nodes = evaluateXPathToNodes(
     data.select,
     context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
-    { currentContext: context, namespaceResolver: nsResolver },
-  );
+    { currentContext: context, namespaceResolver, functionNameResolver },
+  ) as slimdom.Node[];
   let mode = data.mode || "#default";
   if (mode === "#current") {
     /* keep the current mode */
     mode = context.mode;
   }
-  for (let node of sortNodes(
+  const sorted = sort<slimdom.Node>(
     context,
     nodes,
     data.sortKeyComponents,
-    nsResolver,
-  )) {
-    /* for each node */
+    namespaceResolver,
+  );
+  iterateNodes(sorted, context, (context) => {
     processNode(
       {
         ...context,
         mode: mode,
-        contextItem: node,
         variableScopes: extendScope(context.variableScopes),
       },
       data.params,
       data.namespaces,
     );
-  }
+  });
 }
 
 export function callTemplate(
@@ -663,9 +726,10 @@ export function copy(
   const node = context.contextItem;
   let newNode: slimdom.Node;
   if (node.nodeType === NodeType.ELEMENT) {
+    const elem = node as slimdom.Element;
     newNode = context.outputDocument.createElementNS(
-      node.namespaceURI,
-      node.prefix ? `${node.prefix}:${node.localName}` : node.localName,
+      elem.namespaceURI,
+      elem.prefix ? `${elem.prefix}:${elem.localName}` : elem.localName,
     );
     // We maybe shouldn't do this, but in some cases we need to copy
     // nodes & their namespaces & retain the namespaces even if not a
@@ -673,12 +737,12 @@ export function copy(
     // <xsl:template match="foo:bar" xmlns:foo="...">
     //   <out/>
     // </xsl:template>
-    for (let attribute of node.attributes) {
+    for (let attribute of elem.attributes) {
       if (attribute.namespaceURI === XMLNS_NSURI) {
         const name = attribute.localName;
         (newNode as slimdom.Element).setAttributeNode(
           context.outputDocument.importNode(
-            node.getAttributeNodeNS(XMLNS_NSURI, name),
+            elem.getAttributeNodeNS(XMLNS_NSURI, name),
           ),
         );
       }
@@ -714,6 +778,7 @@ export function copyOf(
     {
       currentContext: context,
       namespaceResolver: mkResolver(data.namespaces),
+      functionNameResolver,
     },
   );
   for (let thing of things) {
@@ -798,22 +863,47 @@ export function extendScope(variableScopes: Array<VariableScope>) {
   return variableScopes.concat([new Map()]);
 }
 
-const wrapNumericSequence = createTypedValueFactory("xs:numeric*");
-const wrapStringSequence = createTypedValueFactory("xs:string*");
-const wrapItemSequence = createTypedValueFactory("item()*");
+let factories = new Map<
+  string,
+  (value: ValidValueSequence, domFacade: IDomFacade) => unknown
+>();
 
-function wrapValue(thing: any) {
-  /* wraps a value for fontoxpath */
-  if (Array.isArray(thing)) {
-    if (typeof thing[0] === "string") {
-      return wrapStringSequence(thing, null);
-    } else if (typeof thing[0] === "number") {
-      return wrapNumericSequence(thing, null);
-    } else {
-      return wrapItemSequence(thing, null);
+function getTypedValueFactory(valueType: string) {
+  if (!factories.has(valueType)) {
+    factories.set(valueType, createTypedValueFactory(valueType));
+  }
+  return factories.get(valueType);
+}
+
+/* Attempt to wrap a value. If `as` is provided, wrap as that,
+   otherwise provide a best guess. */
+export function wrapValue(thing: any, as?: string) {
+  // Empty array is always an empty sequence regardless of declared type
+  if (Array.isArray(thing) && thing.length === 0) {
+    return getTypedValueFactory("item()*")([], null);
+  }
+  if (as) {
+    try {
+      return getTypedValueFactory(as)(thing, null);
+    } catch {
+      /* let's try best guess */
     }
   }
-  return thing;
+
+  const isArray = Array.isArray(thing);
+  const testThing = isArray ? thing[0] : thing;
+  let bestGuess = "item()";
+  const arraySuffix = isArray ? "*" : "";
+  if (typeof testThing === "string") {
+    bestGuess = "xs:string";
+  } else if (typeof testThing === "number") {
+    if (Number.isInteger(testThing)) {
+      bestGuess = "xs:integer";
+    } else {
+      bestGuess = "xs:numeric";
+    }
+  }
+  return getTypedValueFactory(`${bestGuess}${arraySuffix}`)(thing, null);
 }
 
 export function setVariable(
@@ -821,7 +911,7 @@ export function setVariable(
   name: string,
   value: any,
 ) {
-  variableScopes[variableScopes.length - 1].set(name, wrapValue(value));
+  variableScopes[variableScopes.length - 1].set(name, value);
 }
 
 export function mergeVariableScopes(variableScopes: Array<VariableScope>) {
@@ -850,6 +940,7 @@ export function sequence(
     {
       currentContext: context,
       namespaceResolver: mkResolver(data.namespaces),
+      functionNameResolver,
     },
   );
   context.append(things);
@@ -858,8 +949,8 @@ export function sequence(
 export function buildNode(
   context: DynamicContext,
   data: { name: string; namespace?: string },
-): any {
-  let newNode: any;
+): slimdom.Element {
+  let newNode: slimdom.Element;
   if (data.namespace !== undefined && data.namespace !== null) {
     newNode = context.outputDocument.createElementNS(data.namespace, data.name);
   } else {
@@ -871,8 +962,8 @@ export function buildNode(
 export function buildAttributeNode(
   context: DynamicContext,
   data: { name: string; value: string; namespace?: string },
-): any {
-  let newNode: any;
+): slimdom.Attr {
+  let newNode: slimdom.Attr;
   if (data.namespace) {
     newNode = context.outputDocument.createAttributeNS(
       data.namespace,
@@ -1048,6 +1139,7 @@ export function ifX(
       {
         currentContext: context,
         namespaceResolver: mkResolver(data.namespaces),
+        functionNameResolver,
       },
     )
   ) {
@@ -1068,7 +1160,7 @@ export function choose(
         context.contextItem,
         undefined,
         mergeVariableScopes(context.variableScopes),
-        { currentContext: context },
+        { currentContext: context, functionNameResolver },
         // {"namespaceResolver": mkResolver(attributes.namespaces)}
       )
     ) {
@@ -1097,6 +1189,36 @@ export function document(
   });
 }
 
+export function performSort(
+  context: DynamicContext,
+  data: {
+    select: string;
+    namespaces: object;
+    sortKeyComponents: SortKeyComponent[];
+  },
+) {
+  const namespaceResolver = mkResolver(data.namespaces);
+  const nodeList = evaluateXPath(
+    data.select,
+    context.contextItem,
+    undefined,
+    mergeVariableScopes(context.variableScopes),
+    evaluateXPath.ALL_RESULTS_TYPE,
+    { currentContext: context, namespaceResolver, functionNameResolver },
+  ) as slimdom.Node[];
+  if (nodeList && Symbol.iterator in Object(nodeList)) {
+    const sorted = sort(
+      context,
+      nodeList,
+      data.sortKeyComponents,
+      namespaceResolver,
+    );
+    for (let node of sorted) {
+      context.append(node);
+    }
+  }
+}
+
 export function forEach(
   context: DynamicContext,
   data: {
@@ -1106,49 +1228,178 @@ export function forEach(
   },
   func: SequenceConstructor,
 ) {
-  const nsResolver = mkResolver(data.namespaces);
-  const nodeList = evaluateXPath(
+  const namespaceResolver = mkResolver(data.namespaces);
+  let nodeList = evaluateXPath(
     data.select,
     context.contextItem,
     undefined,
     mergeVariableScopes(context.variableScopes),
     evaluateXPath.ALL_RESULTS_TYPE,
-    { currentContext: context, namespaceResolver: nsResolver },
-  );
+    { currentContext: context, namespaceResolver, functionNameResolver },
+  ) as slimdom.Node[];
   if (nodeList && Symbol.iterator in Object(nodeList)) {
-    for (let node of sortNodes(
+    nodeList = sort(
       context,
       nodeList,
       data.sortKeyComponents,
-      nsResolver,
-    )) {
+      namespaceResolver,
+    );
+    iterateNodes(nodeList, context, (context) => {
       func({
         ...context,
-        contextItem: node,
         variableScopes: extendScope(context.variableScopes),
       });
-    }
+    });
   }
 }
 
 function groupBy(
   context: DynamicContext,
-  nodes: any[],
+  nodes: slimdom.Node[],
   groupBy: string,
-  nsResolver: NamespaceResolver,
-): Map<string, any[]> {
+  namespaceResolver: NamespaceResolver,
+): NodeGroup[] {
   const variables = mergeVariableScopes(context.variableScopes);
-  let retval = new Map<string, any[]>();
-  for (let node of nodes) {
-    const key = evaluateXPathToString(groupBy, node, undefined, variables, {
-      currentContext: context,
-      namespaceResolver: nsResolver,
-    });
-    if (!retval.has(key)) {
-      retval.set(key, []);
+  let retval: NodeGroup[] = [];
+  iterateNodes(nodes, context, (context) => {
+    const key = evaluateXPathToString(
+      groupBy,
+      context.contextItem,
+      undefined,
+      variables,
+      {
+        currentContext: context,
+        namespaceResolver,
+        functionNameResolver,
+      },
+    );
+    let group = retval.find((g) => g.key === key);
+    if (!group) {
+      group = { key: key, nodes: [] };
+      retval.push(group);
     }
-    retval.set(key, retval.get(key).concat(node));
+    group.nodes.push(context.contextItem);
+  });
+  return retval;
+}
+
+function finishGroup(
+  grouped: NodeGroup[],
+  currentGroup: slimdom.Node[],
+  key?: string,
+) {
+  if (currentGroup.length > 0) {
+    if (key === null) {
+      const groupNo = grouped.length + 1;
+      key = `group-${groupNo}`;
+    }
+    grouped.push({ key: key, nodes: currentGroup });
   }
+}
+
+function groupAdjacent(
+  context: DynamicContext,
+  nodes: slimdom.Node[],
+  groupAdjacent: string,
+  namespaceResolver: NamespaceResolver,
+): NodeGroup[] {
+  const variables = mergeVariableScopes(context.variableScopes);
+  let retval: NodeGroup[] = [];
+  let currentKey: string | null = null;
+  let currentGroup: slimdom.Node[] = [];
+
+  iterateNodes(nodes, context, (context) => {
+    const node = context.contextItem;
+    const key = evaluateXPathToString(
+      groupAdjacent,
+      node,
+      undefined,
+      variables,
+      {
+        currentContext: context,
+        namespaceResolver,
+        functionNameResolver,
+      },
+    );
+
+    if (key !== currentKey) {
+      finishGroup(retval, currentGroup, currentKey!);
+      currentKey = key;
+      currentGroup = [node];
+    } else {
+      // Add to current group
+      currentGroup.push(node);
+    }
+  });
+
+  // Last group
+  finishGroup(retval, currentGroup, currentKey!);
+
+  return retval;
+}
+
+function groupStartingWith(
+  context: DynamicContext,
+  nodes: slimdom.Node[],
+  pattern: Xpath,
+  namespaceResolver: NamespaceResolver,
+): NodeGroup[] {
+  let retval: NodeGroup[] = [];
+  let currentGroup: slimdom.Node[] = [];
+
+  iterateNodes(nodes, context, (context) => {
+    const node = context.contextItem;
+    const matches = patternMatch(
+      context.patternMatchCache,
+      pattern,
+      node,
+      context.variableScopes,
+      namespaceResolver,
+    );
+
+    if (matches) {
+      finishGroup(retval, currentGroup);
+      currentGroup = [];
+    }
+    currentGroup.push(node);
+  });
+
+  // Last group
+  finishGroup(retval, currentGroup);
+
+  return retval;
+}
+
+function groupEndingWith(
+  context: DynamicContext,
+  nodes: slimdom.Node[],
+  pattern: Xpath,
+  namespaceResolver: NamespaceResolver,
+): NodeGroup[] {
+  let retval: NodeGroup[] = [];
+  let currentGroup: slimdom.Node[] = [];
+
+  iterateNodes(nodes, context, (context) => {
+    const node = context.contextItem;
+    currentGroup.push(node);
+
+    const matches = patternMatch(
+      context.patternMatchCache,
+      pattern,
+      node,
+      context.variableScopes,
+      namespaceResolver,
+    );
+
+    if (matches) {
+      finishGroup(retval, currentGroup);
+      currentGroup = [];
+    }
+  });
+
+  // Last group
+  finishGroup(retval, currentGroup);
+
   return retval;
 }
 
@@ -1157,33 +1408,115 @@ export function forEachGroup(
   data: {
     select: string;
     groupBy?: string;
+    groupAdjacent?: string;
+    groupStartingWith?: Xpath;
+    groupEndingWith?: Xpath;
     namespaces: object;
     sortKeyComponents: SortKeyComponent[];
   },
   func: SequenceConstructor,
 ) {
-  const nsResolver = mkResolver(data.namespaces);
+  const namespaceResolver = mkResolver(data.namespaces);
   const variables = mergeVariableScopes(context.variableScopes);
   const nodeList = evaluateXPathToNodes(
     data.select,
     context.contextItem,
     undefined,
     variables,
-    { currentContext: context, namespaceResolver: nsResolver },
-  );
+    { currentContext: context, namespaceResolver, functionNameResolver },
+  ) as slimdom.Node[];
   if (nodeList && Symbol.iterator in Object(nodeList)) {
-    let groupedNodes = groupBy(context, nodeList, data.groupBy, nsResolver);
-    // TODO: sort
-    for (let [key, nodes] of groupedNodes) {
-      func({
-        ...context,
-        contextItem: nodes[0],
-        currentGroupingKey: key,
-        currentGroup: nodes,
-        variableScopes: extendScope(context.variableScopes),
-      });
+    let groupedNodes: NodeGroup[] = [];
+    if (data.groupBy) {
+      groupedNodes = groupBy(
+        context,
+        nodeList,
+        data.groupBy,
+        namespaceResolver,
+      );
+    } else if (data.groupAdjacent) {
+      groupedNodes = groupAdjacent(
+        context,
+        nodeList,
+        data.groupAdjacent,
+        namespaceResolver,
+      );
+    } else if (data.groupEndingWith) {
+      groupedNodes = groupEndingWith(
+        context,
+        nodeList,
+        data.groupEndingWith,
+        namespaceResolver,
+      );
+    } else if (data.groupStartingWith) {
+      groupedNodes = groupStartingWith(
+        context,
+        nodeList,
+        data.groupStartingWith,
+        namespaceResolver,
+      );
+    }
+    groupedNodes = sort(
+      context,
+      groupedNodes,
+      data.sortKeyComponents,
+      namespaceResolver,
+    );
+    iterateNodeGroups(groupedNodes, context, func);
+  }
+}
+
+export function number(
+  context: DynamicContext,
+  data: {
+    value?: string;
+    select?: string;
+    count?: Xpath;
+    from?: Xpath;
+    level: string;
+    format: NumberFormat;
+    lang?: string;
+    letterValue?: string;
+    ordinal?: string;
+    groupingSeparator?: string;
+    groupingSize?: number;
+    namespaces: object;
+  },
+) {
+  const namespaceResolver = mkResolver(data.namespaces);
+  const variables = mergeVariableScopes(context.variableScopes);
+
+  let numberValue: number;
+
+  // Determine the number to format
+  if (data.value) {
+    // Use the @value attribute
+    numberValue = evaluateXPathToNumber(
+      data.value,
+      context.contextItem,
+      undefined,
+      variables,
+      { currentContext: context, namespaceResolver, functionNameResolver },
+    );
+  } else if (data.level === "single") {
+    if (
+      data.value === undefined &&
+      data.select === undefined &&
+      data.count === undefined
+    ) {
+      // position
+      numberValue = context.position;
     }
   }
+
+  context.append(
+    formatNumber(
+      [numberValue],
+      data.format,
+      data.groupingSeparator,
+      data.groupingSize,
+    ),
+  );
 }
 
 export function mkNodeAppender(
@@ -1358,9 +1691,9 @@ function shouldStripSpace(
 ): boolean {
   let patternMatchCache: PatternMatchCache = new Map();
   for (const decl of whitespaceDeclarations) {
-    const nsResolver = mkResolver(decl.namespaces);
+    const namespaceResolver = mkResolver(decl.namespaces);
     if (
-      patternMatch(patternMatchCache, decl.match, null, node, [], nsResolver)
+      patternMatch(patternMatchCache, decl.match, node, [], namespaceResolver)
     ) {
       if (decl.preserve) {
         return false;
@@ -1374,16 +1707,19 @@ function shouldStripSpace(
 
 /* https://www.w3.org/TR/xslt20/#strip */
 export function stripSpace(
-  doc: any,
+  doc: slimdom.Node,
   whitespaceDeclarations: WhitespaceDeclaration[],
 ) {
   const ONLY_WHITESPACE = RegExp("^[ \n\r\t]+$");
   let toRemove = [];
-  function walkTree(node: any) {
+  function walkTree(node: slimdom.Node) {
     if (node.nodeType === NodeType.TEXT) {
       if (
         ONLY_WHITESPACE.test(node.textContent) &&
-        shouldStripSpace(node.parentNode, whitespaceDeclarations)
+        shouldStripSpace(
+          node.parentNode as slimdom.Element,
+          whitespaceDeclarations,
+        )
       ) {
         toRemove.push(node);
       }
@@ -1420,7 +1756,11 @@ export function evaluateAttributeValueTemplate(
           context.contextItem,
           undefined,
           mergeVariableScopes(context.variableScopes),
-          { currentContext: context, namespaceResolver: namespaceResolver },
+          {
+            currentContext: context,
+            namespaceResolver: namespaceResolver,
+            functionNameResolver,
+          },
         );
       }
     })
@@ -1452,7 +1792,11 @@ function constructSimpleContent(
       undefined,
       mergeVariableScopes(context.variableScopes),
       evaluateXPath.STRINGS_TYPE,
-      { currentContext: context, namespaceResolver: namespaceResolver },
+      {
+        currentContext: context,
+        namespaceResolver: namespaceResolver,
+        functionNameResolver,
+      },
     ).join(effectiveSeparator);
   } else {
     return extractText(
@@ -1464,23 +1808,38 @@ function constructSimpleContent(
 function evaluateVariableLike(
   context: DynamicContext,
   variable: VariableLike,
-): string | EvaluateXPath | slimdom.Document | slimdom.DocumentFragment {
+):
+  | string
+  | EvaluateXPath
+  | slimdom.Document
+  | slimdom.DocumentFragment
+  | unknown {
   if (typeof variable.content === "string") {
-    return evaluateXPath(
+    // Should this be an array type.
+    const asSeq = variable.as && variable.as.match(/[\+\*]$/);
+    let results: any = evaluateXPath(
       variable.content,
       context.contextItem,
       undefined,
       mergeVariableScopes(context.variableScopes),
-      evaluateXPath.ANY_TYPE,
+      evaluateXPath.ALL_RESULTS_TYPE,
       {
         currentContext: context,
         namespaceResolver: mkResolver(variable.namespaces),
+        functionNameResolver,
       },
     );
+    if (results.length === 1 && !asSeq) {
+      results = results[0];
+    }
+    return wrapValue(results, variable.as);
   } else if (variable.content == undefined) {
     return "";
   } else if (variable.as) {
-    return evaluateSequenceConstructorToArray(context, variable.content);
+    return wrapValue(
+      evaluateSequenceConstructorToArray(context, variable.content),
+      variable.as,
+    );
   } else {
     return evaluateSequenceConstructorInTemporaryTree(
       context,
@@ -1506,23 +1865,13 @@ function evaluateSequenceConstructorToArray(
   return output;
 }
 
-/**
- * Evaluate a sequence constructor in a temporary tree and return the
- * output document. Use for <xsl:attribute> and <xsl:variable>
- * https://www.w3.org/TR/xslt20/#temporary-trees
- */
-function evaluateSequenceConstructorInTemporaryTree(
+function withTemporaryTree(
   context: DynamicContext,
-  func: SequenceConstructor,
-): any {
+  f: (appender: Appender) => void,
+) {
   const fragment = context.outputDocument.createDocumentFragment();
-  func({
-    ...context,
-    append: mkNodeAppender(fragment),
-    outputDocument: context.outputDocument,
-    mode: "#default",
-    variableScopes: extendScope(context.variableScopes),
-  });
+  const appender = mkNodeAppender(fragment);
+  f(appender);
   /* If there is a single element child, return a document, which is more versatile. */
   if (fragment.childNodes.length === 1 && fragment.childElementCount === 1) {
     const doc = context.outputDocument.implementation.createDocument(
@@ -1537,14 +1886,34 @@ function evaluateSequenceConstructorInTemporaryTree(
 }
 
 /**
+ * Evaluate a sequence constructor in a temporary tree and return the
+ * output document. Use for <xsl:attribute> and <xsl:variable>
+ * https://www.w3.org/TR/xslt20/#temporary-trees
+ */
+function evaluateSequenceConstructorInTemporaryTree(
+  context: DynamicContext,
+  func: SequenceConstructor,
+): slimdom.Document | slimdom.DocumentFragment {
+  return withTemporaryTree(context, (appender: Appender) => {
+    func({
+      ...context,
+      append: appender,
+      outputDocument: context.outputDocument,
+      mode: "#default",
+      variableScopes: extendScope(context.variableScopes),
+    });
+  });
+}
+
+/**
  * Extract text content of a document.
  */
-function extractText(document: any): string[] {
+function extractText(document: slimdom.Node): string[] {
   let strs: string[] = [];
   /* https://www.w3.org/TR/xslt20/#creating-text-nodes */
   visitNodes(document, (node) => {
-    if (node.nodeType === NodeType.TEXT && node.data !== "") {
-      strs = strs.concat(node.data);
+    if (node.nodeType === NodeType.TEXT && (node as slimdom.Text).data !== "") {
+      strs = strs.concat((node as slimdom.Text).data);
     }
   });
   return strs;

@@ -13,6 +13,18 @@ export function parseYesNoOmit(input: string): boolean | undefined {
   }
 }
 
+/**
+ * https://www.w3.org/TR/xslt20/#convert
+ * Test if a character is alphanumeric according to Unicode categories:
+ * Nd (Decimal Number), Nl (Letter Number), No (Other Number),
+ * Lu (Uppercase Letter), Ll (Lowercase Letter), Lt (Titlecase Letter),
+ * Lm (Modifier Letter), Lo (Other Letter)
+ */
+export function isAlphanumeric(char: string): boolean {
+  // Test for Unicode number and letter categories
+  return /^[\p{Nd}\p{Nl}\p{No}\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}]$/u.test(char);
+}
+
 /* Make an output definition from strings. */
 export function mkOutputDefinition(data: {
   omitXmlDeclaration?: string;
@@ -30,7 +42,11 @@ export function mkOutputDefinition(data: {
 
 export function mkResolver(namespaces: object) {
   return (prefix: string): string | null => {
-    return namespaces[prefix];
+    // For empty prefix, check xpath-default-namespace first
+    if (prefix === "" && "#xpath-default" in namespaces) {
+      return (namespaces["#xpath-default"] as string) || null;
+    }
+    return namespaces[prefix] as string | null;
   };
 }
 
@@ -179,4 +195,14 @@ export function sortSortable<T extends Sortable>(
   templates.reverse();
   templates.sort(compareSortable);
   return templates;
+}
+
+export function zip<T, U>(arr1: T[], arr2: U[]): [T, U][] {
+  if (arr1 === undefined || arr2 === undefined) {
+    return [];
+  }
+  const minLength = Math.min(arr1.length, arr2.length);
+  return arr1.slice(0, minLength).map((element, index) => {
+    return [element, arr2[index]];
+  });
 }

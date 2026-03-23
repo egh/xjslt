@@ -139,8 +139,12 @@ export const toBeEquivalentDom: MatcherFunction<[b: unknown]> = function (
       pass: true,
     };
   } else {
+    const serializer = new slimdom.XMLSerializer();
+    const actualXml = serializer.serializeToString(a);
+    const expectedXml = serializer.serializeToString(b);
     return {
-      message: message,
+      message: () =>
+        `${message()}\n\nActual XML:\n${actualXml}\n\nExpected XML:\n${expectedXml}`,
       pass: false,
     };
   }

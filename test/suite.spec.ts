@@ -50,7 +50,7 @@ declare module "expect" {
 }
 
 const testSetDom = slimdom.parseXmlDocument(
-  readFileSync("xslt30-test/catalog.xml").toString(),
+  readFileSync(`${__dirname}/../xslt30-test/catalog.xml`).toString(),
 );
 
 function applicableTest(node) {
