@@ -68,7 +68,6 @@ XJSLT can compile XSLT stylesheets into executable JavaScript code, which can th
 
 # TODO (not yet implemented)
 
-- [ ] `attribute-set`
 - [ ] `number`
 - [ ] `analyze-string` (depends on https://github.com/bwrrp/xspattern.js/issues/9)
 - [ ] tunneled parameters

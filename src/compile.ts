@@ -62,6 +62,7 @@ import preprocessStripWhitespace1 from "./preprocess/stripWhitespace1";
 import preprocessStripWhitespace2 from "./preprocess/stripWhitespace2";
 import preprocessUseWhen from "./preprocess/use-when";
 import preprocessErrorAnalysis from "./preprocess/error-analysis";
+import preprocessAttributeSet from "./preprocess/attribute-set";
 import {
   CompileContext,
   XSLT1_NSURI,
@@ -1366,6 +1367,7 @@ function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
     counter++;
   }
   /* https://www.w3.org/TR/xslt20/#stylesheet-stripping */
+  doc = preprocessAttributeSet(doc).get("#default").document;
   doc = preprocessStripWhitespace1(doc).get("#default").document;
   doc = preprocessStripWhitespace2(doc).get("#default").document;
   doc = preprocessUseWhen(doc).get("#default").document;
