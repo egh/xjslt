@@ -181,8 +181,8 @@ export function compareSortable<T extends Sortable>(a: T, b: T): number {
   } else {
     // Higher priority comes first
     return (
-      (b.priority || computeDefaultPriority(b.match)) -
-      (a.priority || computeDefaultPriority(a.match))
+      (b.priority || computeDefaultPriority(b.match?.xpath)) -
+      (a.priority || computeDefaultPriority(a.match?.xpath))
     );
   }
 }
