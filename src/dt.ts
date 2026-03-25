@@ -160,9 +160,9 @@ function findMatchingRules<T>(tree: RuleTreeNode<T>, thing: T): Rule<T>[] {
     if (node.feature) {
       if (node.feature.matches(thing)) {
         traverse(node.left);
-      } else {
-        traverse(node.right);
       }
+      // right holds rules that don't require this feature — always check them
+      traverse(node.right);
     }
   }
   
