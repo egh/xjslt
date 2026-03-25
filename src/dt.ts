@@ -18,9 +18,8 @@
  * <https://www.gnu.org/licenses/>.
 1 */
 
-import { generate } from "astring";
-import { Expression, Identifier, Literal, MemberExpression, CallExpression, ArrayExpression, ConditionalExpression } from "estree";
-import { mkIdentifier, mkLiteral, mkMember, mkArray } from "./estree-util";
+import { Expression, ConditionalExpression } from "estree";
+import { mkLiteral, mkArray } from "./estree-util";
 
 /*
  * Defines a "Feature" that can be found on a type of Thing, which can
@@ -52,7 +51,9 @@ export class Rule<T> {
     this.features = features;
     this.name = name;
   }
-  toString() { return this.name; }
+  toString() {
+    return this.name;
+  }
 }
 
 class RuleTreeNode<T> {
@@ -60,7 +61,7 @@ class RuleTreeNode<T> {
   rules: Rule<T>[];
   left: RuleTreeNode<T> | null;
   right: RuleTreeNode<T> | null;
-  
+
   constructor(feature: Feature<T, any> | null = null, rules: Rule<T>[] = []) {
     this.feature = feature;
     this.rules = rules;
@@ -68,72 +69,84 @@ class RuleTreeNode<T> {
     this.right = null;
   }
   toString() {
-    const feature = this.feature ? this.feature.value : 'null';
-    const rules = this.rules.map(r=>r.toString());
+    const feature = this.feature ? this.feature.value : "null";
+    const rules = this.rules.map((r) => r.toString());
     return `RuleTreeNode(feature=${feature}, rules=[${rules}] left=${this.left}, right=${this.right})`;
   }
-  
-  generateCode(nodeParam: string = 'node'): Expression {
+
+  generateCode(nodeParam: string = "node"): Expression {
     if (this.rules.length > 0 && !this.feature) {
-      return mkArray(this.rules.map(rule => mkLiteral(rule.name)));
+      return mkArray(this.rules.map((rule) => mkLiteral(rule.name)));
     }
-    
+
     if (!this.feature) {
       return mkArray([]);
     }
-    
+
     const testExpression = this.feature.generateTest(nodeParam);
-    const leftExpression = this.left ? this.left.generateCode(nodeParam) : mkArray([]);
-    const rightExpression = this.right ? this.right.generateCode(nodeParam) : mkArray([]);
-    
+    const leftExpression = this.left
+      ? this.left.generateCode(nodeParam)
+      : mkArray([]);
+    const rightExpression = this.right
+      ? this.right.generateCode(nodeParam)
+      : mkArray([]);
+
     return {
-      type: 'ConditionalExpression',
+      type: "ConditionalExpression",
       test: testExpression,
       consequent: leftExpression,
-      alternate: rightExpression
+      alternate: rightExpression,
     } as ConditionalExpression;
   }
 }
 
-function buildRuleTree<T>(rules: Rule<T>[]): RuleTreeNode<T> {
+export function buildRuleTree<T>(rules: Rule<T>[]): RuleTreeNode<T> {
   if (rules.length === 0) {
     return new RuleTreeNode();
   }
-  
+
   const allFeatures = new Set<Feature<T, any>>();
   for (const rule of rules) {
     for (const feature of rule.features) {
       allFeatures.add(feature);
     }
   }
-  
+
   if (allFeatures.size === 0) {
     return new RuleTreeNode(null, rules);
   }
-  
+
   const bestFeature = Array.from(allFeatures)[0];
-  
+
   const matchingRules: Rule<T>[] = [];
   const nonMatchingRules: Rule<T>[] = [];
-  
+
   for (const rule of rules) {
-    if (rule.features.some(f => f.equals(bestFeature))) {
+    if (rule.features.some((f) => f.equals(bestFeature))) {
       matchingRules.push(rule);
     } else {
       nonMatchingRules.push(rule);
     }
   }
-  
+
   const node = new RuleTreeNode(bestFeature);
-  
+
   if (matchingRules.length > 0) {
-    const remainingFeatureRules = matchingRules.map(rule => 
-      new Rule(rule.name, rule.features.filter(f => !f.equals(bestFeature)))
+    const remainingFeatureRules = matchingRules.map(
+      (rule) =>
+        new Rule(
+          rule.name,
+          rule.features.filter((f) => !f.equals(bestFeature)),
+        ),
     );
-    
-    node.left = buildRuleTree(remainingFeatureRules.filter(rule => rule.features.length > 0));
-    
-    const fullyMatchedRules = matchingRules.filter((_, index) => remainingFeatureRules[index].features.length === 0);
+
+    node.left = buildRuleTree(
+      remainingFeatureRules.filter((rule) => rule.features.length > 0),
+    );
+
+    const fullyMatchedRules = matchingRules.filter(
+      (_, index) => remainingFeatureRules[index].features.length === 0,
+    );
     if (fullyMatchedRules.length > 0) {
       if (!node.left) {
         node.left = new RuleTreeNode();
@@ -141,22 +154,25 @@ function buildRuleTree<T>(rules: Rule<T>[]): RuleTreeNode<T> {
       node.left.rules = fullyMatchedRules;
     }
   }
-  
+
   if (nonMatchingRules.length > 0) {
     node.right = buildRuleTree(nonMatchingRules);
   }
-  
+
   return node;
 }
 
-function findMatchingRules<T>(tree: RuleTreeNode<T>, thing: T): Rule<T>[] {
+export function findMatchingRules<T>(
+  tree: RuleTreeNode<T>,
+  thing: T,
+): Rule<T>[] {
   const matchingRules: Rule<T>[] = [];
-  
+
   function traverse(node: RuleTreeNode<T> | null) {
     if (!node) return;
-    
+
     matchingRules.push(...node.rules);
-    
+
     if (node.feature) {
       if (node.feature.matches(thing)) {
         traverse(node.left);

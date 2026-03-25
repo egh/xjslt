@@ -16,13 +16,12 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with XJSLT. If not, see
  * <https://www.gnu.org/licenses/>.
-1 */
+ */
 
-import { generate } from "astring";
-import { Expression, Identifier, Literal, MemberExpression, CallExpression, ArrayExpression, ConditionalExpression } from "estree";
-import { mkIdentifier, mkLiteral, mkMember, mkArray } from "../src/estree-util";
-import { Feature, Rule } from "../src/dt";
-  
+import { Expression } from "estree";
+import { mkLiteral, mkMember } from "../src/estree-util";
+import { Feature, Rule, buildRuleTree, findMatchingRules } from "../src/dt";
+
 enum RankValue {
   Ace = 1,
   Two,
@@ -36,7 +35,7 @@ enum RankValue {
   Ten,
   Jack,
   Queen,
-  King
+  King,
 }
 
 type CardFeature = SuitFeature | RankFeature;
@@ -45,13 +44,13 @@ class SuitFeature extends Feature<Card, SuitValue> {
   matches(card: Card): boolean {
     return card.suit === this.value;
   }
-  
+
   generateTest(nodeParam: string): Expression {
     return {
-      type: 'BinaryExpression',
-      operator: '===',
-      left: mkMember(nodeParam, 'suit'),
-      right: mkLiteral(this.value)
+      type: "BinaryExpression",
+      operator: "===",
+      left: mkMember(nodeParam, "suit"),
+      right: mkLiteral(this.value),
     };
   }
 }
@@ -60,13 +59,13 @@ class RankFeature extends Feature<Card, RankValue> {
   matches(card: Card): boolean {
     return card.rank === this.value;
   }
-  
+
   generateTest(nodeParam: string): Expression {
     return {
-      type: 'BinaryExpression',
-      operator: '===',
-      left: mkMember(nodeParam, 'rank'),
-      right: mkLiteral(this.value)
+      type: "BinaryExpression",
+      operator: "===",
+      left: mkMember(nodeParam, "rank"),
+      right: mkLiteral(this.value),
     };
   }
 }
@@ -75,24 +74,109 @@ enum SuitValue {
   Spades = "Spades",
   Hearts = "Hearts",
   Diamonds = "Diamonds",
-  Clubs = "Clubs"
+  Clubs = "Clubs",
 }
-
 
 class Card {
   rank: RankValue;
   suit: SuitValue;
-  
+
   constructor(rank: RankValue, suit: SuitValue) {
     this.rank = rank;
     this.suit = suit;
   }
 }
 
-const rules = [
-  new Rule('clubs', [new SuitFeature(SuitValue.Clubs)]),
-  new Rule('10 spades', [new SuitFeature(SuitValue.Spades), new RankFeature(RankValue.Ten)]),
-  new Rule('spades', [new SuitFeature(SuitValue.Spades)]),
-  new Rule('10 of hearts', [new SuitFeature(SuitValue.Hearts), new RankFeature(RankValue.Ten)]),
-  new Rule('ace of hearts', [new SuitFeature(SuitValue.Hearts), new RankFeature(RankValue.Ace)]),
-];
+describe("generic rule tree tests", () => {
+  const rules = [
+    new Rule("clubs", [new SuitFeature(SuitValue.Clubs)]),
+    new Rule("10 spades", [
+      new SuitFeature(SuitValue.Spades),
+      new RankFeature(RankValue.Ten),
+    ]),
+    new Rule("spades", [new SuitFeature(SuitValue.Spades)]),
+    new Rule("10 of hearts", [
+      new SuitFeature(SuitValue.Hearts),
+      new RankFeature(RankValue.Ten),
+    ]),
+    new Rule("ace of hearts", [
+      new SuitFeature(SuitValue.Hearts),
+      new RankFeature(RankValue.Ace),
+    ]),
+    new Rule("10", [new RankFeature(RankValue.Ten)]),
+  ];
+  const ruleTree = buildRuleTree(rules);
+
+  describe("buildRuleTree", () => {
+    it("returns empty node for empty rules", () => {
+      const tree = buildRuleTree([]);
+      expect(tree.feature).toBeNull();
+      expect(tree.rules).toHaveLength(0);
+    });
+
+    it("returns node with rules for featureless rules", () => {
+      const tree = buildRuleTree([new Rule("any", []), new Rule("other", [])]);
+      expect(tree.feature).toBeNull();
+      expect(tree.rules).toHaveLength(2);
+      expect(tree.rules.map((r) => r.name)).toEqual(["any", "other"]);
+    });
+
+    it("builds a tree with a feature at the root", () => {
+      expect(ruleTree.feature).not.toBeNull();
+    });
+  });
+
+  describe("findMatchingRules", () => {
+    it("matches a clubs card to the clubs rule only", () => {
+      const matches = findMatchingRules(
+        ruleTree,
+        new Card(RankValue.King, SuitValue.Clubs),
+      );
+      expect(matches.map((r) => r.name)).toEqual(["clubs"]);
+    });
+
+    it("matches ten of spades to 10 spades and spades and 10", () => {
+      const matches = findMatchingRules(
+        ruleTree,
+        new Card(RankValue.Ten, SuitValue.Spades),
+      );
+      expect(matches.map((r) => r.name).sort()).toEqual(
+        ["10", "10 spades", "spades"].sort(),
+      );
+    });
+
+    it("matches a non-ten spades card to spades only", () => {
+      const matches = findMatchingRules(
+        ruleTree,
+        new Card(RankValue.King, SuitValue.Spades),
+      );
+      const names = expect(matches.map((r) => r.name)).toEqual(["spades"]);
+    });
+
+    it("matches ten of hearts to 10 of hearts and 10", () => {
+      const matches = findMatchingRules(
+        ruleTree,
+        new Card(RankValue.Ten, SuitValue.Hearts),
+      );
+      expect(matches.map((r) => r.name).sort()).toEqual(
+        ["10 of hearts", "10"].sort(),
+      );
+    });
+
+    it("matches ace of hearts to ace of hearts only", () => {
+      const matches = findMatchingRules(
+        ruleTree,
+        new Card(RankValue.Ace, SuitValue.Hearts),
+      );
+      expect(matches.map((r) => r.name)).toEqual(["ace of hearts"]);
+    });
+
+    it("returns no matches for a card with no matching rule", () => {
+      const matches = findMatchingRules(
+        ruleTree,
+        new Card(RankValue.King, SuitValue.Diamonds),
+      );
+      expect(matches).toHaveLength(0);
+    });
+  });
+});
