@@ -18,8 +18,12 @@
  * <https://www.gnu.org/licenses/>.
 1 */
 
-import { CallExpression, Expression, ConditionalExpression } from "estree";
-import { mkLiteral, mkMember, mkArray } from "./estree-util";
+import {
+  CallExpression,
+  Expression,
+  ConditionalExpression,
+  SpreadElement,
+} from "estree";
 
 /*
  * Defines a "Feature" that can be found on a type of Thing, which can
@@ -32,7 +36,6 @@ export abstract class Feature<ThingType, ValueType> {
     this.value = value;
   }
   abstract matches(thing: ThingType): boolean;
-  abstract generateTest(nodeParam: string): Expression;
   equals(other: Feature<any, any>): boolean {
     if (this.constructor !== other.constructor) {
       return false;
@@ -56,7 +59,7 @@ export class Rule<T> {
   }
 }
 
-class RuleTreeNode<T> {
+export class RuleTreeNode<T> {
   feature: Feature<T, any> | null;
   rules: Rule<T>[];
   left: RuleTreeNode<T> | null;
@@ -68,35 +71,11 @@ class RuleTreeNode<T> {
     this.left = null;
     this.right = null;
   }
+
   toString() {
     const feature = this.feature ? this.feature.value : "null";
     const rules = this.rules.map((r) => r.toString());
     return `RuleTreeNode(feature=${feature}, rules=[${rules}] left=${this.left}, right=${this.right})`;
-  }
-
-  generateCode(nodeParam: string = "node"): Expression {
-    if (this.rules.length > 0 && !this.feature) {
-      return mkArray(this.rules.map((rule) => mkLiteral(rule.name)));
-    }
-
-    if (!this.feature) {
-      return mkArray([]);
-    }
-
-    const testExpression = this.feature.generateTest(nodeParam);
-    const leftExpression = this.left
-      ? this.left.generateCode(nodeParam)
-      : mkArray([]);
-    const rightExpression = this.right
-      ? this.right.generateCode(nodeParam)
-      : mkArray([]);
-
-    return {
-      type: "ConditionalExpression",
-      test: testExpression,
-      consequent: leftExpression,
-      alternate: rightExpression,
-    } as ConditionalExpression;
   }
 }
 
@@ -185,74 +164,3 @@ export function findMatchingRules<T>(
   traverse(tree);
   return matchingRules;
 }
-
-class NamespaceFeature extends Feature<any, string | null> {
-  matches(node: any): boolean {
-    return node.namespaceURI === this.value;
-  }
-
-  generateTest(nodeParam: string): Expression {
-    return {
-      type: "BinaryExpression",
-      operator: "===",
-      left: mkMember(nodeParam, "namespaceURI"),
-      right: mkLiteral(this.value),
-    };
-  }
-}
-
-class NodeNameFeature extends Feature<any, string> {
-  matches(node: any): boolean {
-    return node.nodeName === this.value;
-  }
-
-  generateTest(nodeParam: string): Expression {
-    return {
-      type: "BinaryExpression",
-      operator: "===",
-      left: mkMember(nodeParam, "nodeName"),
-      right: mkLiteral(this.value),
-    };
-  }
-}
-
-class NodeTextFeature extends Feature<any, string | null> {
-  matches(node: any): boolean {
-    return node.textContent === this.value;
-  }
-
-  generateTest(nodeParam: string): Expression {
-    return {
-      type: "BinaryExpression",
-      operator: "===",
-      left: mkMember(nodeParam, "textContent"),
-      right: mkLiteral(this.value),
-    };
-  }
-}
-
-class AttributeFeature extends Feature<any, { name: string; value: string }> {
-  matches(element: any): boolean {
-    return element.getAttribute(this.value.name) === this.value.value;
-  }
-
-  generateTest(nodeParam: string): Expression {
-    return {
-      type: "BinaryExpression",
-      operator: "===",
-      left: {
-        type: "CallExpression",
-        callee: mkMember(nodeParam, "getAttribute"),
-        arguments: [mkLiteral(this.value.name)],
-        optional: false,
-      } as CallExpression,
-      right: mkLiteral(this.value.value),
-    };
-  }
-}
-
-export type XMLFeature =
-  | NamespaceFeature
-  | NodeNameFeature
-  | NodeTextFeature
-  | AttributeFeature;

@@ -18,9 +18,7 @@
  * <https://www.gnu.org/licenses/>.
  */
 
-import { buildRuleTree, Feature, Rule } from "./dt";
-import { Expression, CallExpression } from "estree";
-import { mkLiteral, mkMember } from "./estree-util";
+import { Feature } from "./dt";
 import { parseScript, evaluateXPath, NamespaceResolver } from "fontoxpath";
 import * as slimdom from "slimdom";
 
@@ -30,44 +28,17 @@ export class NamespaceFeature extends Feature<any, string | null> {
   matches(node: any): boolean {
     return node.namespaceURI === this.value;
   }
-
-  generateTest(nodeParam: string): Expression {
-    return {
-      type: "BinaryExpression",
-      operator: "===",
-      left: mkMember(nodeParam, "namespaceURI"),
-      right: mkLiteral(this.value),
-    };
-  }
 }
 
 export class NodeNameFeature extends Feature<any, string> {
   matches(node: any): boolean {
     return node.nodeName === this.value;
   }
-
-  generateTest(nodeParam: string): Expression {
-    return {
-      type: "BinaryExpression",
-      operator: "===",
-      left: mkMember(nodeParam, "nodeName"),
-      right: mkLiteral(this.value),
-    };
-  }
 }
 
 export class NodeTextFeature extends Feature<any, string | null> {
   matches(node: any): boolean {
     return node.textContent === this.value;
-  }
-
-  generateTest(nodeParam: string): Expression {
-    return {
-      type: "BinaryExpression",
-      operator: "===",
-      left: mkMember(nodeParam, "textContent"),
-      right: mkLiteral(this.value),
-    };
   }
 }
 
@@ -78,20 +49,6 @@ export class AttributeFeature extends Feature<
   matches(element: any): boolean {
     return element.getAttribute(this.value.name) === this.value.value;
   }
-
-  generateTest(nodeParam: string): Expression {
-    return {
-      type: "BinaryExpression",
-      operator: "===",
-      left: {
-        type: "CallExpression",
-        callee: mkMember(nodeParam, "getAttribute"),
-        arguments: [mkLiteral(this.value.name)],
-        optional: false,
-      } as CallExpression,
-      right: mkLiteral(this.value.value),
-    };
-  }
 }
 
 export type XMLFeature =
@@ -99,11 +56,6 @@ export type XMLFeature =
   | NodeNameFeature
   | NodeTextFeature
   | AttributeFeature;
-
-/** Return `Q{<XQX_NS>}localName` for use in XPath queries against the XQueryX AST. */
-function xqx(localName: string): string {
-  return `Q{${XQX_NS}}${localName}`;
-}
 
 /**
  * Parse an XPath 3 expression string with fontoxpath's parseScript and extract
