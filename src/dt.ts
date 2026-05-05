@@ -18,8 +18,8 @@
  * <https://www.gnu.org/licenses/>.
 1 */
 
-import { Expression, ConditionalExpression } from "estree";
-import { mkLiteral, mkArray } from "./estree-util";
+import { CallExpression, Expression, ConditionalExpression } from "estree";
+import { mkLiteral, mkMember, mkArray } from "./estree-util";
 
 /*
  * Defines a "Feature" that can be found on a type of Thing, which can
@@ -251,23 +251,5 @@ class AttributeFeature extends Feature<any, {name: string, value: string}> {
   }
 }
 
-type XMLFeature = NamespaceFeature | NodeNameFeature | NodeTextFeature | AttributeFeature;
-
-const xmlRules = [
-  new Rule<any>('div elements', [new NodeNameFeature('DIV')]),
-  new Rule<any>('span with class=highlight', [
-    new NodeNameFeature('SPAN'), 
-    new AttributeFeature({name: 'class', value: 'highlight'})
-  ]),
-  new Rule<any>('XHTML namespace elements', [new NamespaceFeature('http://www.w3.org/1999/xhtml')]),
-  new Rule<any>('elements with text "Hello"', [new NodeTextFeature('Hello')]),
-  new Rule<any>('p elements in XHTML', [
-    new NamespaceFeature('http://www.w3.org/1999/xhtml'),
-    new NodeNameFeature('P')
-  ])
-];
-
-const xmlTree = buildRuleTree(xmlRules);
-console.log('XML Tree:', xmlTree.toString());
-
+export type XMLFeature = NamespaceFeature | NodeNameFeature | NodeTextFeature | AttributeFeature;
 
