@@ -181,7 +181,7 @@ export function findMatchingRules<T>(
       traverse(node.right);
     }
   }
-  
+
   traverse(tree);
   return matchingRules;
 }
@@ -190,13 +190,13 @@ class NamespaceFeature extends Feature<any, string | null> {
   matches(node: any): boolean {
     return node.namespaceURI === this.value;
   }
-  
+
   generateTest(nodeParam: string): Expression {
     return {
-      type: 'BinaryExpression',
-      operator: '===',
-      left: mkMember(nodeParam, 'namespaceURI'),
-      right: mkLiteral(this.value)
+      type: "BinaryExpression",
+      operator: "===",
+      left: mkMember(nodeParam, "namespaceURI"),
+      right: mkLiteral(this.value),
     };
   }
 }
@@ -205,13 +205,13 @@ class NodeNameFeature extends Feature<any, string> {
   matches(node: any): boolean {
     return node.nodeName === this.value;
   }
-  
+
   generateTest(nodeParam: string): Expression {
     return {
-      type: 'BinaryExpression',
-      operator: '===',
-      left: mkMember(nodeParam, 'nodeName'),
-      right: mkLiteral(this.value)
+      type: "BinaryExpression",
+      operator: "===",
+      left: mkMember(nodeParam, "nodeName"),
+      right: mkLiteral(this.value),
     };
   }
 }
@@ -220,36 +220,39 @@ class NodeTextFeature extends Feature<any, string | null> {
   matches(node: any): boolean {
     return node.textContent === this.value;
   }
-  
+
   generateTest(nodeParam: string): Expression {
     return {
-      type: 'BinaryExpression',
-      operator: '===',
-      left: mkMember(nodeParam, 'textContent'),
-      right: mkLiteral(this.value)
+      type: "BinaryExpression",
+      operator: "===",
+      left: mkMember(nodeParam, "textContent"),
+      right: mkLiteral(this.value),
     };
   }
 }
 
-class AttributeFeature extends Feature<any, {name: string, value: string}> {
+class AttributeFeature extends Feature<any, { name: string; value: string }> {
   matches(element: any): boolean {
     return element.getAttribute(this.value.name) === this.value.value;
   }
-  
+
   generateTest(nodeParam: string): Expression {
     return {
-      type: 'BinaryExpression',
-      operator: '===',
+      type: "BinaryExpression",
+      operator: "===",
       left: {
-        type: 'CallExpression',
-        callee: mkMember(nodeParam, 'getAttribute'),
+        type: "CallExpression",
+        callee: mkMember(nodeParam, "getAttribute"),
         arguments: [mkLiteral(this.value.name)],
-        optional: false
+        optional: false,
       } as CallExpression,
-      right: mkLiteral(this.value.value)
+      right: mkLiteral(this.value.value),
     };
   }
 }
 
-export type XMLFeature = NamespaceFeature | NodeNameFeature | NodeTextFeature | AttributeFeature;
-
+export type XMLFeature =
+  | NamespaceFeature
+  | NodeNameFeature
+  | NodeTextFeature
+  | AttributeFeature;
