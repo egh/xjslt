@@ -26,8 +26,15 @@ import {
   NodeTextFeature,
 } from "../src/dt-xml";
 
-import { Rule, buildRuleTree, findMatchingRules } from "../src/dt";
+import {
+  Rule,
+  RuleTreeNode,
+  buildRuleTree,
+  findMatchingRules,
+  ruleTreeNodeToEstree,
+} from "../src/dt";
 import * as slimdom from "slimdom";
+import { generate } from "astring";
 
 const NS = "http://example.com/ns";
 const noNs = (_prefix: string) => null;
@@ -205,7 +212,6 @@ describe("finding rules", () => {
     ),
     new Rule<any>("p elements in ns", xpathToFeatures("ns:p", withNs)!),
   ];
-  console.log(xmlRules);
   const tree = buildRuleTree(xmlRules);
   const doc = new slimdom.Document();
 
@@ -222,7 +228,7 @@ describe("finding rules", () => {
   });
 
   test("span with class=highlight matches span rule and wildcard class rule", () => {
-    const el = doc.createElement("span") as any;
+    const el = doc.createElement("span");
     el.setAttribute("class", "highlight");
     expect(findMatchingRules(tree, el).map((r) => r.name)).toEqual([
       "span with class=highlight",
@@ -231,7 +237,7 @@ describe("finding rules", () => {
   });
 
   test("div with class=highlight matches div rule, div class rule, and wildcard class rule", () => {
-    const el = doc.createElement("div") as any;
+    const el = doc.createElement("div");
     el.setAttribute("class", "highlight");
     expect(findMatchingRules(tree, el).map((r) => r.name)).toEqual([
       "div elements",
@@ -248,7 +254,7 @@ describe("finding rules", () => {
   });
 
   test("arbitrary element with class=highlight matches only wildcard class rule", () => {
-    const el = doc.createElement("p") as any;
+    const el = doc.createElement("p");
     el.setAttribute("class", "highlight");
     expect(findMatchingRules(tree, el).map((r) => r.name)).toEqual([
       "* with class=highlight",
@@ -263,7 +269,7 @@ describe("finding rules", () => {
   });
 
   test("element with text 'hello' matches text rule only", () => {
-    const el = doc.createElement("p") as any;
+    const el = doc.createElement("p");
     el.appendChild(doc.createTextNode("hello"));
     expect(findMatchingRules(tree, el).map((r) => r.name)).toEqual([
       'elements with text "hello"',
@@ -271,7 +277,7 @@ describe("finding rules", () => {
   });
 
   test("div element with text 'hello' matches div and text rule", () => {
-    const el = doc.createElement("div") as any;
+    const el = doc.createElement("div");
     el.appendChild(doc.createTextNode("hello"));
     expect(findMatchingRules(tree, el).map((r) => r.name)).toEqual([
       "div elements",
@@ -291,5 +297,137 @@ describe("finding rules", () => {
   test("unrelated element matches no rules", () => {
     const el = doc.createElement("article");
     expect(findMatchingRules(tree, el).map((r) => r.name)).toEqual([]);
+  });
+});
+
+function evalSerializedTree(node: RuleTreeNode<any>): RuleTreeNode<any> {
+  const code = generate(ruleTreeNodeToEstree(node));
+  return new Function(
+    "RuleTreeNode",
+    "Rule",
+    "NamespaceFeature",
+    "NodeNameFeature",
+    "NodeTextFeature",
+    "AttributeFeature",
+    `return ${code}`,
+  )(
+    RuleTreeNode,
+    Rule,
+    NamespaceFeature,
+    NodeNameFeature,
+    NodeTextFeature,
+    AttributeFeature,
+  );
+}
+
+describe("serialize", () => {
+  test("NodeNameFeature", () => {
+    expect(generate(new NodeNameFeature("div").serialize())).toBe(
+      'new NodeNameFeature("div")',
+    );
+  });
+
+  test("NamespaceFeature", () => {
+    expect(
+      generate(new NamespaceFeature("http://example.com").serialize()),
+    ).toBe('new NamespaceFeature("http://example.com")');
+  });
+
+  test("NodeTextFeature", () => {
+    expect(generate(new NodeTextFeature("hello").serialize())).toBe(
+      'new NodeTextFeature("hello")',
+    );
+  });
+
+  test("AttributeFeature", () => {
+    expect(
+      generate(
+        new AttributeFeature({ name: "class", value: "foo" }).serialize(),
+      ),
+    ).toBe('new AttributeFeature({\n  "name": "class",\n  "value": "foo"\n})');
+  });
+});
+
+describe("xmlRuleTreeToEstree round-trip", () => {
+  const NS = "http://example.com/ns";
+  const withNs = (prefix: string) => (prefix === "ns" ? NS : null);
+  const doc = new slimdom.Document();
+
+  const rules = [
+    new Rule<any>("div elements", xpathToFeatures("div")!),
+    new Rule<any>(
+      "span with class=highlight",
+      xpathToFeatures("span[@class='highlight']")!,
+    ),
+    new Rule<any>(
+      "div with class=highlight",
+      xpathToFeatures("div[@class='highlight']")!,
+    ),
+    new Rule<any>(
+      "* with class=highlight",
+      xpathToFeatures("*[@class='highlight']")!,
+    ),
+    new Rule<any>("ns namespace elements", xpathToFeatures("ns:*", withNs)!),
+    new Rule<any>("p elements in ns", xpathToFeatures("ns:p", withNs)!),
+  ];
+
+  const original = buildRuleTree(rules);
+  let restored: RuleTreeNode<any>;
+
+  beforeAll(() => {
+    restored = evalSerializedTree(original);
+  });
+
+  test("empty tree serializes and restores", () => {
+    const empty = buildRuleTree([]);
+    const r = evalSerializedTree(empty);
+    expect(r.feature).toBeNull();
+    expect(r.rules).toHaveLength(0);
+    expect(r.left).toBeNull();
+    expect(r.right).toBeNull();
+  });
+
+  test("div element matches same rules", () => {
+    const el = doc.createElement("div");
+    expect(findMatchingRules(restored, el).map((r) => r.name)).toEqual(
+      findMatchingRules(original, el).map((r) => r.name),
+    );
+  });
+
+  test("span with class=highlight matches same rules", () => {
+    const el = doc.createElement("span");
+    el.setAttribute("class", "highlight");
+    expect(findMatchingRules(restored, el).map((r) => r.name)).toEqual(
+      findMatchingRules(original, el).map((r) => r.name),
+    );
+  });
+
+  test("div with class=highlight matches same rules", () => {
+    const el = doc.createElement("div");
+    el.setAttribute("class", "highlight");
+    expect(findMatchingRules(restored, el).map((r) => r.name)).toEqual(
+      findMatchingRules(original, el).map((r) => r.name),
+    );
+  });
+
+  test("element in ns matches same rules", () => {
+    const el = doc.createElementNS(NS, "ns:foo");
+    expect(findMatchingRules(restored, el).map((r) => r.name)).toEqual(
+      findMatchingRules(original, el).map((r) => r.name),
+    );
+  });
+
+  test("p in ns matches same rules", () => {
+    const el = doc.createElementNS(NS, "p");
+    expect(findMatchingRules(restored, el).map((r) => r.name)).toEqual(
+      findMatchingRules(original, el).map((r) => r.name),
+    );
+  });
+
+  test("unrelated element matches same rules", () => {
+    const el = doc.createElement("article");
+    expect(findMatchingRules(restored, el).map((r) => r.name)).toEqual(
+      findMatchingRules(original, el).map((r) => r.name),
+    );
   });
 });

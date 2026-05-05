@@ -18,12 +18,14 @@
  * <https://www.gnu.org/licenses/>.
 1 */
 
+import { Expression } from "estree";
 import {
-  CallExpression,
-  Expression,
-  ConditionalExpression,
-  SpreadElement,
-} from "estree";
+  mkArray,
+  mkIdentifier,
+  mkLiteral,
+  mkNew,
+  toEstree,
+} from "./estree-util";
 
 /*
  * Defines a "Feature" that can be found on a type of Thing, which can
@@ -36,6 +38,9 @@ export abstract class Feature<ThingType, ValueType> {
     this.value = value;
   }
   abstract matches(thing: ThingType): boolean;
+  serialize() {
+    return mkNew(mkIdentifier(this.constructor.name), [toEstree(this.value)]);
+  }
   equals(other: Feature<any, any>): boolean {
     if (this.constructor !== other.constructor) {
       return false;
@@ -65,11 +70,16 @@ export class RuleTreeNode<T> {
   left: RuleTreeNode<T> | null;
   right: RuleTreeNode<T> | null;
 
-  constructor(feature: Feature<T, any> | null = null, rules: Rule<T>[] = []) {
+  constructor(
+    feature: Feature<T, any> | null = null,
+    rules: Rule<T>[] = [],
+    left: RuleTreeNode<T> | null = null,
+    right: RuleTreeNode<T> | null = null,
+  ) {
     this.feature = feature;
     this.rules = rules;
-    this.left = null;
-    this.right = null;
+    this.left = left;
+    this.right = right;
   }
 
   toString() {
@@ -139,6 +149,22 @@ export function buildRuleTree<T>(rules: Rule<T>[]): RuleTreeNode<T> {
   }
 
   return node;
+}
+
+function ruleToEstree(rule: Rule<any>): Expression {
+  return mkNew(mkIdentifier("Rule"), [
+    mkLiteral(rule.name),
+    mkArray(rule.features.map((f) => f.serialize())),
+  ]);
+}
+
+export function ruleTreeNodeToEstree(node: RuleTreeNode<any>): Expression {
+  return mkNew(mkIdentifier("RuleTreeNode"), [
+    node.feature ? node.feature.serialize() : mkLiteral(null),
+    mkArray(node.rules.map((r) => ruleToEstree(r))),
+    node.left ? ruleTreeNodeToEstree(node.left) : mkLiteral(null),
+    node.right ? ruleTreeNodeToEstree(node.right) : mkLiteral(null),
+  ]);
 }
 
 export function findMatchingRules<T>(

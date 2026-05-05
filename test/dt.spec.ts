@@ -19,7 +19,13 @@
  */
 
 import { Expression } from "estree";
-import { mkLiteral, mkMember } from "../src/estree-util";
+import {
+  mkIdentifier,
+  mkLiteral,
+  mkMember,
+  mkNew,
+  toEstree,
+} from "../src/estree-util";
 import { Feature, Rule, buildRuleTree, findMatchingRules } from "../src/dt";
 
 enum RankValue {
@@ -44,14 +50,8 @@ class SuitFeature extends Feature<Card, SuitValue> {
   matches(card: Card): boolean {
     return card.suit === this.value;
   }
-
-  generateTest(nodeParam: string): Expression {
-    return {
-      type: "BinaryExpression",
-      operator: "===",
-      left: mkMember(nodeParam, "suit"),
-      right: mkLiteral(this.value),
-    };
+  serialize() {
+    return mkNew(mkIdentifier("SuitFeature"), [toEstree(this.value)]);
   }
 }
 
@@ -59,14 +59,8 @@ class RankFeature extends Feature<Card, RankValue> {
   matches(card: Card): boolean {
     return card.rank === this.value;
   }
-
-  generateTest(nodeParam: string): Expression {
-    return {
-      type: "BinaryExpression",
-      operator: "===",
-      left: mkMember(nodeParam, "rank"),
-      right: mkLiteral(this.value),
-    };
+  serialize() {
+    return mkNew(mkIdentifier("RankFeature"), [toEstree(this.value)]);
   }
 }
 
