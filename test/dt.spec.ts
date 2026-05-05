@@ -112,7 +112,7 @@ describe("generic rule tree tests", () => {
       const tree = buildRuleTree([new Rule("any", []), new Rule("other", [])]);
       expect(tree.feature).toBeNull();
       expect(tree.rules).toHaveLength(2);
-      expect(tree.rules.map((r) => r.name)).toEqual(["any", "other"]);
+      expect(tree.rules.map((r) => r.result)).toEqual(["any", "other"]);
     });
 
     it("builds a tree with a feature at the root", () => {
@@ -126,7 +126,7 @@ describe("generic rule tree tests", () => {
         ruleTree,
         new Card(RankValue.King, SuitValue.Clubs),
       );
-      expect(matches.map((r) => r.name)).toEqual(["clubs"]);
+      expect(matches).toEqual(["clubs"]);
     });
 
     it("matches ten of spades to 10 spades and spades and 10", () => {
@@ -134,9 +134,7 @@ describe("generic rule tree tests", () => {
         ruleTree,
         new Card(RankValue.Ten, SuitValue.Spades),
       );
-      expect(matches.map((r) => r.name).sort()).toEqual(
-        ["10", "10 spades", "spades"].sort(),
-      );
+      expect(matches.sort()).toEqual(["10", "10 spades", "spades"].sort());
     });
 
     it("matches a non-ten spades card to spades only", () => {
@@ -144,7 +142,7 @@ describe("generic rule tree tests", () => {
         ruleTree,
         new Card(RankValue.King, SuitValue.Spades),
       );
-      const names = expect(matches.map((r) => r.name)).toEqual(["spades"]);
+      const names = expect(matches).toEqual(["spades"]);
     });
 
     it("matches ten of hearts to 10 of hearts and 10", () => {
@@ -152,9 +150,7 @@ describe("generic rule tree tests", () => {
         ruleTree,
         new Card(RankValue.Ten, SuitValue.Hearts),
       );
-      expect(matches.map((r) => r.name).sort()).toEqual(
-        ["10 of hearts", "10"].sort(),
-      );
+      expect(matches.sort()).toEqual(["10 of hearts", "10"].sort());
     });
 
     it("matches ace of hearts to ace of hearts only", () => {
@@ -162,7 +158,7 @@ describe("generic rule tree tests", () => {
         ruleTree,
         new Card(RankValue.Ace, SuitValue.Hearts),
       );
-      expect(matches.map((r) => r.name)).toEqual(["ace of hearts"]);
+      expect(matches).toEqual(["ace of hearts"]);
     });
 
     it("returns no matches for a card with no matching rule", () => {

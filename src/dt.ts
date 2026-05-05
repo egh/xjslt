@@ -52,29 +52,33 @@ export abstract class Feature<ThingType, ValueType> {
   }
 }
 
-export class Rule<T> {
+/*
+  * Defines a Rule that maps a set of Features to a result. The result
+    can be used to store anything.
+ */
+export class Rule<T, U> {
   features: Feature<T, any>[];
-  name: string;
-  constructor(name: string, features: Feature<T, any>[]) {
+  result: U;
+  constructor(result: U, features: Feature<T, any>[]) {
+    this.result = result;
     this.features = features;
-    this.name = name;
   }
   toString() {
-    return this.name;
+    return `Rule(features=${this.features})`;
   }
 }
 
-export class RuleTreeNode<T> {
+export class RuleTreeNode<T, U> {
   feature: Feature<T, any> | null;
-  rules: Rule<T>[];
-  left: RuleTreeNode<T> | null;
-  right: RuleTreeNode<T> | null;
+  rules: Rule<T, U>[];
+  left: RuleTreeNode<T, U> | null;
+  right: RuleTreeNode<T, U> | null;
 
   constructor(
     feature: Feature<T, any> | null = null,
-    rules: Rule<T>[] = [],
-    left: RuleTreeNode<T> | null = null,
-    right: RuleTreeNode<T> | null = null,
+    rules: Rule<T, U>[] = [],
+    left: RuleTreeNode<T, U> | null = null,
+    right: RuleTreeNode<T, U> | null = null,
   ) {
     this.feature = feature;
     this.rules = rules;
@@ -89,7 +93,7 @@ export class RuleTreeNode<T> {
   }
 }
 
-export function buildRuleTree<T>(rules: Rule<T>[]): RuleTreeNode<T> {
+export function buildRuleTree<T, U>(rules: Rule<T, U>[]): RuleTreeNode<T, U> {
   if (rules.length === 0) {
     return new RuleTreeNode();
   }
@@ -107,8 +111,8 @@ export function buildRuleTree<T>(rules: Rule<T>[]): RuleTreeNode<T> {
 
   const bestFeature = Array.from(allFeatures)[0];
 
-  const matchingRules: Rule<T>[] = [];
-  const nonMatchingRules: Rule<T>[] = [];
+  const matchingRules: Rule<T, U>[] = [];
+  const nonMatchingRules: Rule<T, U>[] = [];
 
   for (const rule of rules) {
     if (rule.features.some((f) => f.equals(bestFeature))) {
@@ -118,13 +122,13 @@ export function buildRuleTree<T>(rules: Rule<T>[]): RuleTreeNode<T> {
     }
   }
 
-  const node = new RuleTreeNode(bestFeature);
+  const node = new RuleTreeNode<T, U>(bestFeature);
 
   if (matchingRules.length > 0) {
     const remainingFeatureRules = matchingRules.map(
       (rule) =>
         new Rule(
-          rule.name,
+          rule.result,
           rule.features.filter((f) => !f.equals(bestFeature)),
         ),
     );
@@ -151,14 +155,14 @@ export function buildRuleTree<T>(rules: Rule<T>[]): RuleTreeNode<T> {
   return node;
 }
 
-function ruleToEstree(rule: Rule<any>): Expression {
+function ruleToEstree(rule: Rule<any, any>): Expression {
   return mkNew(mkIdentifier("Rule"), [
-    mkLiteral(rule.name),
+    toEstree(rule.result),
     mkArray(rule.features.map((f) => f.serialize())),
   ]);
 }
 
-export function ruleTreeNodeToEstree(node: RuleTreeNode<any>): Expression {
+export function ruleTreeNodeToEstree(node: RuleTreeNode<any, any>): Expression {
   return mkNew(mkIdentifier("RuleTreeNode"), [
     node.feature ? node.feature.serialize() : mkLiteral(null),
     mkArray(node.rules.map((r) => ruleToEstree(r))),
@@ -167,19 +171,19 @@ export function ruleTreeNodeToEstree(node: RuleTreeNode<any>): Expression {
   ]);
 }
 
-export function findMatchingRules<T>(
-  tree: RuleTreeNode<T>,
-  thing: T,
-): Rule<T>[] {
-  const matchingRules: Rule<T>[] = [];
+export function findMatchingRules<T, U>(
+  tree: RuleTreeNode<T, U>,
+  thing_to_match: T,
+): U[] {
+  const matchingRules: Rule<T, U>[] = [];
 
-  function traverse(node: RuleTreeNode<T> | null) {
+  function traverse(node: RuleTreeNode<T, U> | null) {
     if (!node) return;
 
     matchingRules.push(...node.rules);
 
     if (node.feature) {
-      if (node.feature.matches(thing)) {
+      if (node.feature.matches(thing_to_match)) {
         traverse(node.left);
       }
       // right holds rules that don't require this feature — always check them
@@ -188,5 +192,5 @@ export function findMatchingRules<T>(
   }
 
   traverse(tree);
-  return matchingRules;
+  return matchingRules.map((r) => r.result);
 }
