@@ -50,6 +50,7 @@ import {
   NumberFormat,
   OutputDefinition,
   OutputResult,
+  RuleTreeNode,
   SequenceConstructor,
   SequenceConstructorWithReturn,
   SortKeyComponent,
@@ -59,17 +60,23 @@ import {
   WhitespaceDeclaration,
   PatternMatchCache,
   Xpath,
+  Rule,
 } from "./definitions";
 import {
   compareSortable,
-  computeDefaultPriority,
   determineNamespace,
   mkOutputDefinition,
   mkResolver,
-  sortSortable,
   zip,
 } from "./shared";
 import { formatNumber } from "./numbering";
+import { findMatchingRules } from "./dt";
+import {
+  NamespaceFeature,
+  NodeNameFeature,
+  NodeTextFeature,
+  AttributeFeature,
+} from "./dt-xml";
 
 /* Depth first node visit */
 export function visitNodes(
@@ -309,8 +316,10 @@ function* getTemplates(
   variableScopes: Array<VariableScope>,
   mode: string,
   namespaces: object,
+  ruleTree: RuleTreeNode<slimdom.Node, Template>,
+  stylesheetTemplateCount?: number,
 ): Generator<Template> {
-  for (let template of templates) {
+  for (let template of [...findMatchingRules(ruleTree, node), ...templates]) {
     if (
       template.match &&
       (template.modes[0] === "#all" || template.modes.includes(mode)) &&
@@ -407,6 +416,7 @@ export function processNode(
     context.variableScopes,
     context.mode,
     namespaces,
+    context.ruleTree,
   );
   const next = templates.next();
   if (!next.done) {
@@ -1979,3 +1989,12 @@ export function compileMatchFunction(matchFunction: string) {
 }
 
 registerFunctions();
+
+export {
+  AttributeFeature,
+  NamespaceFeature,
+  NodeNameFeature,
+  NodeTextFeature,
+  Rule,
+  RuleTreeNode,
+};

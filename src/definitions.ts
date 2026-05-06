@@ -1,6 +1,14 @@
 import { ArrowFunctionExpression } from "estree";
 import { CompiledXPathFunction } from "fontoxpath";
 import * as slimdom from "slimdom";
+import {
+  mkArray,
+  mkIdentifier,
+  mkLiteral,
+  mkNew,
+  toEstree,
+  mkMember,
+} from "./estree-util";
 
 const NC = String.raw`[^,:\(\)\*\[\]/]`; // Pretty much anything is a NCName
 const PATTERN_AXIS = String.raw`(child::|attribute::|@)?`;
@@ -195,6 +203,7 @@ export interface DynamicContext {
   currentGroup?: NodeGroup;
   keys: Map<String, Key>;
   patternMatchCache: PatternMatchCache;
+  ruleTree: RuleTreeNode<slimdom.Node, Template>;
   outputDefinitions: Map<string, OutputDefinition>;
   decimalFormats: Map<string, DecimalFormat>;
   stylesheetParams?: object;
@@ -207,6 +216,7 @@ export interface DynamicContext {
 export interface CompileContext {
   templates: Array<TemplateForCompilation>;
   whitespaceDeclarations: Array<Sortable>;
+  rules: Array<Rule<slimdom.Node, TemplateForCompilation>>;
 }
 
 export type Constructor = string | SequenceConstructor;
@@ -302,4 +312,87 @@ export interface ParsedSubpicture {
   decimalMaxDigits: number;
   isPercent: boolean;
   isPerMille: boolean;
+}
+
+/*
+ * Defines a "Feature" that can be found on a type of Thing, which can
+   have a value of type ValueType. For instance, a Feature<Card,
+   SuitValue>.
+ */
+export abstract class Feature<ThingType, ValueType> {
+  value: ValueType;
+  constructor(value: ValueType) {
+    this.value = value;
+  }
+  abstract matches(thing: ThingType): boolean;
+  serialize() {
+    return mkNew(mkMember("xjslt", this.constructor.name), [
+      toEstree(this.value),
+    ]);
+  }
+  equals(other: Feature<any, any>): boolean {
+    if (this.constructor !== other.constructor) {
+      return false;
+    }
+    if (this.value !== other.value) {
+      return false;
+    }
+    return true;
+  }
+}
+
+/*
+  * Defines a Rule that maps a set of Features to a result. The result
+    can be used to store anything.
+ */
+export class Rule<T, U> {
+  features: Feature<T, any>[];
+  result: U;
+  constructor(result: U, features: Feature<T, any>[]) {
+    this.result = result;
+    this.features = features;
+  }
+  serialize() {
+    return mkNew(mkMember("xjslt", "Rule"), [
+      toEstree(this.result),
+      mkArray(this.features.map((f) => f.serialize())),
+    ]);
+  }
+  toString() {
+    return `Rule(features=${this.features})`;
+  }
+}
+
+export class RuleTreeNode<T, U> {
+  feature: Feature<T, any> | null;
+  rules: Rule<T, U>[];
+  left: RuleTreeNode<T, U> | null;
+  right: RuleTreeNode<T, U> | null;
+
+  constructor(
+    feature: Feature<T, any> | null = null,
+    rules: Rule<T, U>[] = [],
+    left: RuleTreeNode<T, U> | null = null,
+    right: RuleTreeNode<T, U> | null = null,
+  ) {
+    this.feature = feature;
+    this.rules = rules;
+    this.left = left;
+    this.right = right;
+  }
+
+  serialize() {
+    return mkNew(mkMember("xjslt", "RuleTreeNode"), [
+      this.feature ? this.feature.serialize() : mkLiteral(null),
+      mkArray(this.rules.map((r) => r.serialize())),
+      this.left ? this.left.serialize() : mkLiteral(null),
+      this.right ? this.right.serialize() : mkLiteral(null),
+    ]);
+  }
+
+  toString() {
+    const feature = this.feature ? this.feature.value : "null";
+    const rules = this.rules.map((r) => r.toString());
+    return `RuleTreeNode(feature=${feature}, rules=[${rules}] left=${this.left}, right=${this.right})`;
+  }
 }

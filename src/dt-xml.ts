@@ -18,7 +18,7 @@
  * <https://www.gnu.org/licenses/>.
  */
 
-import { Feature } from "./dt";
+import { Feature } from "./definitions";
 import { parseScript, evaluateXPath, NamespaceResolver } from "fontoxpath";
 import * as slimdom from "slimdom";
 
@@ -80,6 +80,9 @@ export function xpathToFeatures(
   xpath: string,
   nsResolver?: NamespaceResolver,
 ): XMLFeature[] | undefined {
+  if (!xpath) {
+    return undefined;
+  }
   const ast = parseScript(
     xpath,
     { language: evaluateXPath.XPATH_3_1_LANGUAGE },

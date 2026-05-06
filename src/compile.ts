@@ -48,7 +48,6 @@ import {
   evaluateXPath,
   evaluateXPathToBoolean,
   evaluateXPathToNodes,
-  NamespaceResolver,
 } from "fontoxpath";
 import { readFileSync, writeFileSync, symlinkSync } from "fs";
 import { pathToFileURL } from "url";
@@ -73,6 +72,8 @@ import {
   DecimalFormat,
   DEFAULT_DECIMAL_FORMAT,
   xpathstring,
+  Rule,
+  TemplateForCompilation,
 } from "./definitions";
 import {
   isAlphanumeric,
@@ -80,6 +81,8 @@ import {
   mkResolver,
   sortSortable,
 } from "./shared";
+import { buildRuleTree } from "./dt";
+import { xpathToFeatures, XMLFeature } from "./dt-xml";
 
 /**
  * Functions to walk a DOM tree of an XSLT stylesheet and generate an
@@ -1006,7 +1009,11 @@ function compileSequenceConstructor(
 }
 
 export function compileStylesheetNode(node: slimdom.Element): Program {
-  let context: CompileContext = { templates: [], whitespaceDeclarations: [] };
+  let context: CompileContext = {
+    templates: [],
+    whitespaceDeclarations: [],
+    rules: [],
+  };
   return {
     type: "Program",
     sourceType: "module",
@@ -1106,6 +1113,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               templates: sortSortable(context.templates),
               variableScopes: [mkNew(mkIdentifier("Map"), [])],
               inputURL: mkMember("params", "inputURL"),
+              ruleTree: buildRuleTree(context.rules).serialize(),
               keys: mkIdentifier("keys"),
               outputDefinitions: mkIdentifier("outputDefinitions"),
               decimalFormats: mkIdentifier("decimalFormats"),
@@ -1197,7 +1205,8 @@ function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
   let namespaces = getNodeNS(node);
   const matchStr = node.getAttribute("match") || undefined;
   const match = matchStr ? tryCompilePattern(matchStr, namespaces) : undefined;
-  context.templates.push({
+  const features = xpathToFeatures(matchStr);
+  const template: TemplateForCompilation = {
     match: match,
     name: expandQname(node.getAttribute("name"), namespaces) || undefined,
     modes: (node.getAttribute("mode") || "#default")
@@ -1215,7 +1224,14 @@ function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
     namespaces: getNodeNS(node),
     priority: parseFloat(node.getAttribute("priority")) || undefined,
     importPrecedence: parseInt(node.getAttribute("import-precedence")) || 1,
-  });
+  };
+  if (features) {
+    context.rules.push(
+      new Rule<slimdom.Node, TemplateForCompilation>(template, features),
+    );
+  } else {
+    context.templates.push(template);
+  }
 }
 
 function compileKeyNode(
