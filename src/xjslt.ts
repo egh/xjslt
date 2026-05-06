@@ -319,7 +319,11 @@ function* getTemplates(
   ruleTree: RuleTreeNode<slimdom.Node, Template>,
   stylesheetTemplateCount?: number,
 ): Generator<Template> {
-  for (let template of [...findMatchingRules(ruleTree, node), ...templates]) {
+  for (let template of findMatchingRules(ruleTree, node)) {
+    // Guaranteed to match.
+    yield template;
+  }
+  for (let template of templates) {
     if (
       template.match &&
       (template.modes[0] === "#all" || template.modes.includes(mode)) &&
@@ -1990,11 +1994,4 @@ export function compileMatchFunction(matchFunction: string) {
 
 registerFunctions();
 
-export {
-  AttributeFeature,
-  NamespaceFeature,
-  NodeNameFeature,
-  NodeTextFeature,
-  Rule,
-  RuleTreeNode,
-};
+export { AttributeFeature, NamespaceFeature, NodeNameFeature, NodeTextFeature };
