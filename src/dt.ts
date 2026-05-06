@@ -94,21 +94,23 @@ export function findMatchingRules<T, U>(
   thing_to_match: T,
 ): U[] {
   const matchingRules: Rule<T, U>[] = [];
+  const stack: (RuleTreeNode<T, U> | null)[] = [tree];
 
-  function traverse(node: RuleTreeNode<T, U> | null) {
-    if (!node) return;
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (!node) continue;
 
     matchingRules.push(...node.rules);
 
     if (node.feature) {
-      if (node.feature.matches(thing_to_match)) {
-        traverse(node.left);
+      // right holds rules that don't require this feature — always
+      // check them
+      if (node.right) stack.push(node.right);
+      if (node.feature.matches(thing_to_match) && node.left) {
+        stack.push(node.left);
       }
-      // right holds rules that don't require this feature — always check them
-      traverse(node.right);
     }
   }
 
-  traverse(tree);
   return matchingRules.map((r) => r.result);
 }
