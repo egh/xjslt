@@ -26,7 +26,8 @@ import {
   mkNew,
   toEstree,
 } from "../src/estree-util";
-import { Feature, Rule, buildRuleTree, findMatchingRules } from "../src/dt";
+import { Feature, Rule } from "../src/definitions";
+import { buildRuleTree, findMatchingRules } from "../src/dt";
 
 enum RankValue {
   Ace = 1,
@@ -83,34 +84,46 @@ class Card {
 
 describe("generic rule tree tests", () => {
   const rules = [
-    new Rule("clubs", [new SuitFeature(SuitValue.Clubs)]),
-    new Rule("10 spades", [
-      new SuitFeature(SuitValue.Spades),
-      new RankFeature(RankValue.Ten),
-    ]),
-    new Rule("spades", [new SuitFeature(SuitValue.Spades)]),
-    new Rule("10 of hearts", [
-      new SuitFeature(SuitValue.Hearts),
-      new RankFeature(RankValue.Ten),
-    ]),
-    new Rule("ace of hearts", [
-      new SuitFeature(SuitValue.Hearts),
-      new RankFeature(RankValue.Ace),
-    ]),
-    new Rule("10", [new RankFeature(RankValue.Ten)]),
+    { result: "clubs", features: [new SuitFeature(SuitValue.Clubs)] },
+    {
+      result: "10 spades",
+      features: [
+        new SuitFeature(SuitValue.Spades),
+        new RankFeature(RankValue.Ten),
+      ],
+    },
+    { result: "spades", features: [new SuitFeature(SuitValue.Spades)] },
+    {
+      result: "10 of hearts",
+      features: [
+        new SuitFeature(SuitValue.Hearts),
+        new RankFeature(RankValue.Ten),
+      ],
+    },
+    {
+      result: "ace of hearts",
+      features: [
+        new SuitFeature(SuitValue.Hearts),
+        new RankFeature(RankValue.Ace),
+      ],
+    },
+    { result: "10", features: [new RankFeature(RankValue.Ten)] },
   ];
   const ruleTree = buildRuleTree(rules);
 
   describe("buildRuleTree", () => {
     it("returns empty node for empty rules", () => {
       const tree = buildRuleTree([]);
-      expect(tree.feature).toBeNull();
+      expect(tree.feature).toBeUndefined();
       expect(tree.rules).toHaveLength(0);
     });
 
     it("returns node with rules for featureless rules", () => {
-      const tree = buildRuleTree([new Rule("any", []), new Rule("other", [])]);
-      expect(tree.feature).toBeNull();
+      const tree = buildRuleTree([
+        { result: "any", features: [] },
+        { result: "other", features: [] },
+      ]);
+      expect(tree.feature).toBeUndefined();
       expect(tree.rules).toHaveLength(2);
       expect(tree.rules.map((r) => r.result)).toEqual(["any", "other"]);
     });

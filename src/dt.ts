@@ -18,7 +18,6 @@
  * <https://www.gnu.org/licenses/>.
 1 */
 
-import { Expression } from "estree";
 import {
   mkArray,
   mkIdentifier,
@@ -31,7 +30,7 @@ import { Feature, Rule, RuleTreeNode } from "./definitions";
 
 export function buildRuleTree<T, U>(rules: Rule<T, U>[]): RuleTreeNode<T, U> {
   if (rules.length === 0) {
-    return new RuleTreeNode();
+    return { rules };
   }
 
   const allFeatures = new Set<Feature<T, any>>();
@@ -42,7 +41,7 @@ export function buildRuleTree<T, U>(rules: Rule<T, U>[]): RuleTreeNode<T, U> {
   }
 
   if (allFeatures.size === 0) {
-    return new RuleTreeNode(null, rules);
+    return { rules };
   }
 
   const bestFeature = Array.from(allFeatures)[0];
@@ -58,16 +57,15 @@ export function buildRuleTree<T, U>(rules: Rule<T, U>[]): RuleTreeNode<T, U> {
     }
   }
 
-  const node = new RuleTreeNode<T, U>(bestFeature);
+  let node: RuleTreeNode<T, U> = { feature: bestFeature, rules: [] };
 
   if (matchingRules.length > 0) {
-    const remainingFeatureRules = matchingRules.map(
-      (rule) =>
-        new Rule(
-          rule.result,
-          rule.features.filter((f) => !f.equals(bestFeature)),
-        ),
-    );
+    const remainingFeatureRules = matchingRules.map((rule) => {
+      return {
+        ...rule,
+        features: rule.features.filter((f) => !f.equals(bestFeature)),
+      };
+    });
 
     node.left = buildRuleTree(
       remainingFeatureRules.filter((rule) => rule.features.length > 0),
@@ -78,7 +76,7 @@ export function buildRuleTree<T, U>(rules: Rule<T, U>[]): RuleTreeNode<T, U> {
     );
     if (fullyMatchedRules.length > 0) {
       if (!node.left) {
-        node.left = new RuleTreeNode();
+        node.left = { rules: [] };
       }
       node.left.rules = fullyMatchedRules;
     }

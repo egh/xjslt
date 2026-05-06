@@ -294,6 +294,9 @@ export function toEstree(thing: any) {
   if (Array.isArray(thing)) {
     return mkArray(thing.map((item) => toEstree(item)));
   }
+  if (typeof thing.serialize === "function") {
+    return thing.serialize();
+  }
   if (thingtype === "object") {
     if ("type" in thing) {
       // It's already in estree format (most likely)

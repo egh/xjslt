@@ -193,31 +193,31 @@ describe("xpathToFeatures", () => {
 
 describe("finding rules", () => {
   const xmlRules = [
-    new Rule<slimdom.Node, string>("div elements", xpathToFeatures("div")!),
-    new Rule<slimdom.Node, string>(
-      "span with class=highlight",
-      xpathToFeatures("span[@class='highlight']")!,
-    ),
-    new Rule<slimdom.Node, string>(
-      "div with class=highlight",
-      xpathToFeatures("div[@class='highlight']")!,
-    ),
-    new Rule<slimdom.Node, string>(
-      "* with class=highlight",
-      xpathToFeatures("*[@class='highlight']")!,
-    ),
-    new Rule<slimdom.Node, string>(
-      "ns namespace elements",
-      xpathToFeatures("ns:*", withNs)!,
-    ),
-    new Rule<slimdom.Node, string>(
-      'elements with text "hello"',
-      xpathToFeatures("*[.='hello']")!,
-    ),
-    new Rule<slimdom.Node, string>(
-      "p elements in ns",
-      xpathToFeatures("ns:p", withNs)!,
-    ),
+    { result: "div elements", features: xpathToFeatures("div")! },
+    {
+      result: "span with class=highlight",
+      features: xpathToFeatures("span[@class='highlight']")!,
+    },
+    {
+      result: "div with class=highlight",
+      features: xpathToFeatures("div[@class='highlight']")!,
+    },
+    {
+      result: "* with class=highlight",
+      features: xpathToFeatures("*[@class='highlight']")!,
+    },
+    {
+      result: "ns namespace elements",
+      features: xpathToFeatures("ns:*", withNs)!,
+    },
+    {
+      result: 'elements with text "hello"',
+      features: xpathToFeatures("*[.='hello']")!,
+    },
+    {
+      result: "p elements in ns",
+      features: xpathToFeatures("ns:p", withNs)!,
+    },
   ];
   const tree = buildRuleTree(xmlRules);
   const doc = new slimdom.Document();
@@ -353,27 +353,27 @@ describe("xmlRuleTreeToEstree round-trip", () => {
   const doc = new slimdom.Document();
 
   const rules = [
-    new Rule<slimdom.Node, string>("div elements", xpathToFeatures("div")!),
-    new Rule<slimdom.Node, string>(
-      "span with class=highlight",
-      xpathToFeatures("span[@class='highlight']")!,
-    ),
-    new Rule<slimdom.Node, string>(
-      "div with class=highlight",
-      xpathToFeatures("div[@class='highlight']")!,
-    ),
-    new Rule<slimdom.Node, string>(
-      "* with class=highlight",
-      xpathToFeatures("*[@class='highlight']")!,
-    ),
-    new Rule<slimdom.Node, string>(
-      "ns namespace elements",
-      xpathToFeatures("ns:*", withNs)!,
-    ),
-    new Rule<slimdom.Node, string>(
-      "p elements in ns",
-      xpathToFeatures("ns:p", withNs)!,
-    ),
+    { result: "div elements", features: xpathToFeatures("div")! },
+    {
+      result: "span with class=highlight",
+      features: xpathToFeatures("span[@class='highlight']")!,
+    },
+    {
+      result: "div with class=highlight",
+      features: xpathToFeatures("div[@class='highlight']")!,
+    },
+    {
+      result: "* with class=highlight",
+      features: xpathToFeatures("*[@class='highlight']")!,
+    },
+    {
+      result: "ns namespace elements",
+      features: xpathToFeatures("ns:*", withNs)!,
+    },
+    {
+      result: "p elements in ns",
+      features: xpathToFeatures("ns:p", withNs)!,
+    },
   ];
 
   const original = buildRuleTree(rules);

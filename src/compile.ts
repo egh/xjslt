@@ -1113,7 +1113,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               templates: sortSortable(context.templates),
               variableScopes: [mkNew(mkIdentifier("Map"), [])],
               inputURL: mkMember("params", "inputURL"),
-              ruleTree: buildRuleTree(context.rules).serialize(),
+              ruleTree: toEstree(buildRuleTree(context.rules)),
               keys: mkIdentifier("keys"),
               outputDefinitions: mkIdentifier("outputDefinitions"),
               decimalFormats: mkIdentifier("decimalFormats"),
@@ -1226,9 +1226,7 @@ function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
     importPrecedence: parseInt(node.getAttribute("import-precedence")) || 1,
   };
   if (features) {
-    context.rules.push(
-      new Rule<slimdom.Node, TemplateForCompilation>(template, features),
-    );
+    context.rules.push({ result: template, features });
   } else {
     context.templates.push(template);
   }

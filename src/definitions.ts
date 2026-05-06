@@ -345,54 +345,14 @@ export abstract class Feature<ThingType, ValueType> {
   * Defines a Rule that maps a set of Features to a result. The result
     can be used to store anything.
  */
-export class Rule<T, U> {
+export interface Rule<T, U> {
   features: Feature<T, any>[];
   result: U;
-  constructor(result: U, features: Feature<T, any>[]) {
-    this.result = result;
-    this.features = features;
-  }
-  serialize() {
-    return mkNew(mkMember("xjslt", "Rule"), [
-      toEstree(this.result),
-      mkArray(this.features.map((f) => f.serialize())),
-    ]);
-  }
-  toString() {
-    return `Rule(features=${this.features})`;
-  }
 }
 
-export class RuleTreeNode<T, U> {
-  feature: Feature<T, any> | null;
+export interface RuleTreeNode<T, U> {
+  feature?: Feature<T, any>;
   rules: Rule<T, U>[];
-  left: RuleTreeNode<T, U> | null;
-  right: RuleTreeNode<T, U> | null;
-
-  constructor(
-    feature: Feature<T, any> | null = null,
-    rules: Rule<T, U>[] = [],
-    left: RuleTreeNode<T, U> | null = null,
-    right: RuleTreeNode<T, U> | null = null,
-  ) {
-    this.feature = feature;
-    this.rules = rules;
-    this.left = left;
-    this.right = right;
-  }
-
-  serialize() {
-    return mkNew(mkMember("xjslt", "RuleTreeNode"), [
-      this.feature ? this.feature.serialize() : mkLiteral(null),
-      mkArray(this.rules.map((r) => r.serialize())),
-      this.left ? this.left.serialize() : mkLiteral(null),
-      this.right ? this.right.serialize() : mkLiteral(null),
-    ]);
-  }
-
-  toString() {
-    const feature = this.feature ? this.feature.value : "null";
-    const rules = this.rules.map((r) => r.toString());
-    return `RuleTreeNode(feature=${feature}, rules=[${rules}] left=${this.left}, right=${this.right})`;
-  }
+  left?: RuleTreeNode<T, U>;
+  right?: RuleTreeNode<T, U>;
 }
