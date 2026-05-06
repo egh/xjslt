@@ -12,7 +12,10 @@
     "check": "jest && prettier -c src/ test/",
     "prepare": "tsc && chmod +x dist/cli.js"
   },
-  "exports": "./dist/xjslt.js",
+  "exports": {
+    ".": "./dist/xjslt.js",
+    "./compile": "./dist/compile.js"
+  },
   "bin": {
     "xjslt": "./dist/cli.js"
   },

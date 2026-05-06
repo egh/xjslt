@@ -31,6 +31,7 @@ import {
 } from "../src/xjslt";
 import {
   buildStylesheet,
+  compile,
   compileAvtRaw,
   compileSequenceConstructorNode,
   compileTopLevelNode,
@@ -63,14 +64,14 @@ declare module "expect" {
 }
 const serializer = new slimdom.XMLSerializer();
 
-function makeSimpleTransform(match: string, template: string) {
+async function makeSimpleTransform(match: string, template: string) {
   return makeTransform(`
 <xsl:template match="${match}">
 ${template}
 </xsl:template>`);
 }
 
-function makeTransform(body: string) {
+async function makeTransform(body: string) {
   const tempfile = path.join(tmpdir(), "temp.xsl");
   writeFileSync(
     tempfile,
@@ -83,7 +84,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 ${body}
 </xsl:stylesheet>`,
   );
-  const transform = buildStylesheet(tempfile);
+  const transform = await buildStylesheet(tempfile);
   unlinkSync(tempfile);
   return transform;
 }
@@ -291,8 +292,8 @@ test("compileTemplateNode", () => {
   );
 });
 
-test("compileStylesheetNode", () => {
-  const transform = buildStylesheet(`${__dirname}/simple2.xslt`);
+test("compileStylesheetNode", async () => {
+  const transform = await buildStylesheet(`${__dirname}/simple2.xslt`);
   expect(
     slimdom.serializeToWellFormedString(
       transform(
@@ -300,6 +301,22 @@ test("compileStylesheetNode", () => {
           readFileSync(`${__dirname}/simple.xml`, "utf-8"),
         ),
         new slimdom.Document(),
+      ).get("#default").document,
+    ),
+  ).toEqual(readFileSync(`${__dirname}/simple2.out`, "utf-8"));
+});
+
+test("compile", async () => {
+  const xslt = slimdom.parseXmlDocument(
+    readFileSync(`${__dirname}/simple2.xslt`, "utf-8"),
+  );
+  const transform = await compile(xslt);
+  expect(
+    slimdom.serializeToWellFormedString(
+      transform(
+        slimdom.parseXmlDocument(
+          readFileSync(`${__dirname}/simple.xml`, "utf-8"),
+        ),
       ).get("#default").document,
     ),
   ).toEqual(readFileSync(`${__dirname}/simple2.out`, "utf-8"));
@@ -339,8 +356,8 @@ test("evaluateAttributeValueTemplate", () => {
   ).toEqual("");
 });
 
-test("elementNode", () => {
-  const transform = makeSimpleTransform(
+test("elementNode", async () => {
+  const transform = await makeSimpleTransform(
     "//Author",
     "<xsl:element name='test-{local-name()}'>Hi!</xsl:element>",
   );
@@ -352,8 +369,8 @@ test("elementNode", () => {
   );
 });
 
-test("attributeNode", () => {
-  const transform = makeSimpleTransform(
+test("attributeNode", async () => {
+  const transform = await makeSimpleTransform(
     "//Author",
     "<test><xsl:attribute name='test-{local-name()}'><xsl:value-of select='text()'/></xsl:attribute></test>",
   );
@@ -365,8 +382,8 @@ test("attributeNode", () => {
   );
 });
 
-test("literalElementAttributeEvaluation", () => {
-  const transform = makeSimpleTransform(
+test("literalElementAttributeEvaluation", async () => {
+  const transform = await makeSimpleTransform(
     "//Author",
     "<test name='test-{local-name()}'><xsl:value-of select='text()'/></test>",
   );
@@ -378,8 +395,8 @@ test("literalElementAttributeEvaluation", () => {
   ).toEqual("Mr. Foo");
 });
 
-test("variableShadowing", () => {
-  const transform = makeSimpleTransform(
+test("variableShadowing", async () => {
+  const transform = await makeSimpleTransform(
     "//Author",
     "<test><xsl:variable name='test' select='text()'/><xsl:value-of select='$test'/></test>",
   );
@@ -391,8 +408,8 @@ test("variableShadowing", () => {
   );
 });
 
-test("call with param", () => {
-  const transform = makeTransform(
+test("call with param", async () => {
+  const transform = await makeTransform(
     `
   <xsl:template name="temp">
     <xsl:param name="foo">default</xsl:param>
@@ -411,8 +428,8 @@ test("call with param", () => {
   );
 });
 
-test("param shadowed by variable", () => {
-  const transform = makeTransform(
+test("param shadowed by variable", async () => {
+  const transform = await makeTransform(
     `
   <xsl:template name="temp">
     <xsl:param name="foo">default</xsl:param>
@@ -432,8 +449,8 @@ test("param shadowed by variable", () => {
   );
 });
 
-test("toplevel param", () => {
-  const transform = makeTransform(
+test("toplevel param", async () => {
+  const transform = await makeTransform(
     `
     <xsl:param name="foo">toplevel</xsl:param>
   <xsl:template name="temp">
@@ -450,8 +467,8 @@ test("toplevel param", () => {
   );
 });
 
-test("call with param defaults", () => {
-  const transform = makeTransform(
+test("call with param defaults", async () => {
+  const transform = await makeTransform(
     `
   <xsl:template name="temp">
     <xsl:param name="foo">default</xsl:param>
@@ -469,8 +486,8 @@ test("call with param defaults", () => {
   );
 });
 
-test("template mode", () => {
-  const transform = makeTransform(
+test("template mode", async () => {
+  const transform = await makeTransform(
     `
   <xsl:template match="Author" mode="foo">
     FOO <xsl:value-of select="."/>
@@ -489,8 +506,8 @@ test("template mode", () => {
   expect(str).toMatch(/.*FOO Mr. Bar/);
 });
 
-test("text node", () => {
-  const transform = makeSimpleTransform(
+test("text node", async () => {
+  const transform = await makeSimpleTransform(
     "//Author",
     `<li><xsl:text>
 -</xsl:text><xsl:value-of select="."/></li>`,

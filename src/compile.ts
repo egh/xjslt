@@ -1330,7 +1330,7 @@ function compileAvt(avt: string | null) {
   }
 }
 
-function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
+async function preprocess(doc: slimdom.Document, inputURL?: URL): Promise<slimdom.Document> {
   if (
     !evaluateXPathToBoolean(
       "/xsl:stylesheet|/xsl:transform",
@@ -1356,10 +1356,10 @@ function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
     )
   ) {
     doc = preprocessInclude(doc, {
-      inputURL: pathToFileURL(path),
+      inputURL: inputURL,
     }).get("#default").document;
     doc = preprocessImport(doc, {
-      inputURL: pathToFileURL(path),
+      inputURL: inputURL,
       stylesheetParams: { "base-precedence": basePrecedence },
     }).get("#default").document;
     basePrecedence += 100;
@@ -1375,7 +1375,54 @@ function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
   return doc;
 }
 
-export function compileStylesheet(xsltPath: string) {
+/**
+ * Compile an XSLT stylesheet document into a callable transform function.
+ *
+ * Unlike `buildStylesheet`, this API accepts an already-parsed document and
+ * executes the compiled JavaScript in-memory — no temporary files or symlinks
+ * are created.
+ *
+ * @param xslt - The XSLT stylesheet as a parsed slimdom Document.
+ * @param inputURL - Base URL used to resolve relative `xsl:include` /
+ *   `xsl:import` hrefs. Pass `pathToFileURL(stylesheetPath)` when the
+ *   stylesheet lives on disk, or omit it if the stylesheet has no includes.
+ * @returns A transform function with the signature
+ *   `(document, params?) => Map<string, OutputResult>`.
+ *   The `"#default"` key holds the primary output document.
+ *
+ * @example
+ * ```ts
+ * import * as slimdom from "slimdom";
+ * import { compile } from "xjslt/compile";
+ * import { serialize } from "xjslt";
+ *
+ * const xslt = slimdom.parseXmlDocument(`
+ *   <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+ *     <xsl:template match="/">
+ *       <result><xsl:value-of select="/doc/title"/></result>
+ *     </xsl:template>
+ *   </xsl:stylesheet>
+ * `);
+ *
+ * const transform = await compile(xslt);
+ *
+ * const input = slimdom.parseXmlDocument("<doc><title>Hello</title></doc>");
+ * const output = transform(input).get("#default");
+ * console.log(serialize(output)); // <result>Hello</result>
+ * ```
+ */
+export async function compile(
+  xslt: slimdom.Document,
+  inputURL?: URL,
+) {
+  const xsltDoc = await preprocess(xslt, inputURL);
+  const code = generate(compileStylesheetNode(xsltDoc.documentElement));
+  const m: { exports: { transform?: Function } } = { exports: {} };
+  new Function("require", "module", code)(require, m);
+  return m.exports.transform;
+}
+
+export async function compileStylesheet(xsltPath: string) {
   let slimdom_path = require.resolve("slimdom").split(path.sep);
   let root_dir = path.join(
     "/",
@@ -1392,9 +1439,9 @@ export function compileStylesheet(xsltPath: string) {
   );
   symlinkSync(path.join(root_dir, "dist"), path.join(tempdir, "dist"));
   var tempfile = path.join(tempdir, "transform.js");
-  let xsltDoc = preprocess(
+  const xsltDoc = await preprocess(
     slimdom.parseXmlDocument(readFileSync(xsltPath).toString()),
-    xsltPath,
+    pathToFileURL(xsltPath),
   );
   writeFileSync(
     tempfile,
@@ -1408,8 +1455,8 @@ export function compileStylesheet(xsltPath: string) {
  * Build a stylesheet. Returns a function that will take an input DOM
  * document and return an output DOM document.
  */
-export function buildStylesheet(xsltPath: string) {
-  const tempfile = compileStylesheet(xsltPath);
+export async function buildStylesheet(xsltPath: string) {
+  const tempfile = await compileStylesheet(xsltPath);
   let transform = require(tempfile);
   // console.log(readFileSync(tempfile).toString());
   return transform.transform;

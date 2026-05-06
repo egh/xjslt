@@ -46,6 +46,37 @@ XJSLT can compile XSLT stylesheets into executable JavaScript code, which can th
 - `npm run start`
 - Visit http://localhost:8787/?url=https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml
 
+## Programmatic API (Node.js)
+
+Use `compile` from `xjslt/compile` to build a transform function directly in
+Node.js without writing any files to disk. The stylesheet is passed as a parsed
+document, and the returned function can be called immediately.
+
+```ts
+import * as slimdom from "slimdom";
+import { pathToFileURL } from "url";
+import { readFileSync } from "fs";
+import { compile } from "xjslt/compile";
+import { serialize } from "xjslt";
+
+// Parse the stylesheet (pass its file URL so xsl:include/import can resolve)
+const stylesheetPath = "jats-html.xsl";
+const xslt = slimdom.parseXmlDocument(readFileSync(stylesheetPath, "utf-8"));
+const transform = await compile(xslt, pathToFileURL(stylesheetPath));
+
+// Transform an XML document
+const input = slimdom.parseXmlDocument(readFileSync("article.xml", "utf-8"));
+const results = transform(input);
+console.log(serialize(results.get("#default")));
+```
+
+If the stylesheet has no `xsl:include` or `xsl:import` directives you can omit
+the `inputURL` argument:
+
+```ts
+const transform = await compile(xslt);
+```
+
 # Supported features
 
 - `if`/`choose/when/otherwise` - conditional evaluation
