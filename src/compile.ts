@@ -587,17 +587,18 @@ function compileSimpleElement(node: slimdom.Element, context: CompileContext) {
 function compileChooseNode(node: slimdom.Element, context: CompileContext) {
   let alternatives = [];
   for (let childNode of node.childNodes) {
-    if (childNode instanceof slimdom.Element) {
-      if (childNode.localName === "when") {
+    if (childNode.nodeType === node.ELEMENT_NODE) {
+      const childElement = childNode as slimdom.Element;
+      if (childElement.localName === "when") {
         alternatives.push(
           toEstree({
-            test: hackXpath(childNode.getAttribute("test")),
+            test: hackXpath(childElement.getAttribute("test")),
             apply: mkArrowFun(
-              compileSequenceConstructor(childNode.childNodes, context),
+              compileSequenceConstructor(childElement.childNodes, context),
             ),
           }),
         );
-      } else if (childNode.localName === "otherwise") {
+      } else if (childElement.localName === "otherwise") {
         alternatives.push(
           toEstree({
             apply: mkArrowFun(
@@ -975,7 +976,7 @@ function compileValueOf(node: slimdom.Element, context: CompileContext) {
 }
 
 function compileTextNode(node: slimdom.Element) {
-  if (node instanceof slimdom.Element && node.childElementCount > 0) {
+  if (node.nodeType === node.ELEMENT_NODE && node.childElementCount > 0) {
     throw new Error("XTSE0010 element found as child of xsl:text");
   }
   return mkCallWithContext(mkMember("xjslt", "text"), [
@@ -1363,7 +1364,7 @@ async function preprocess(
   ) {
     if (!inputURL && !readDocument) {
       throw new Error(
-        'The transform contains xsl:include or xsl:import but no readDocument callback was provided. Pass a readDocument callback to compile() to resolve imports without the filesystem.'
+        "The transform contains xsl:include or xsl:import but no readDocument callback was provided. Pass a readDocument callback to compile() to resolve imports without the filesystem.",
       );
     }
     doc = preprocessInclude(doc, {
@@ -1482,7 +1483,9 @@ export async function compileStylesheet(xsltPath: string) {
  * Build a stylesheet. Returns a function that will take an input DOM
  * document and return an output DOM document.
  */
-export async function buildStylesheet(xsltPath: string): Promise<StylesheetTransform> {
+export async function buildStylesheet(
+  xsltPath: string,
+): Promise<StylesheetTransform> {
   const tempfile = await compileStylesheet(xsltPath);
   let transform = require(tempfile);
   // console.log(readFileSync(tempfile).toString());
