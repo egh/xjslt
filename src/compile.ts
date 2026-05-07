@@ -43,6 +43,7 @@ import {
   Statement,
 } from "estree";
 import * as slimdom from "slimdom";
+import * as xjslt from "./xjslt";
 import {
   compileXPathToJavaScript,
   evaluateXPath,
@@ -1007,13 +1008,16 @@ function compileSequenceConstructor(
   return compileNodeArray(nodes, context, compileSequenceConstructorNode);
 }
 
-export function compileStylesheetNode(node: slimdom.Element): Program {
+export function compileStylesheetNode(
+  node: slimdom.Element,
+  injectDeps = false,
+): Program {
   let context: CompileContext = { templates: [], whitespaceDeclarations: [] };
   return {
     type: "Program",
     sourceType: "module",
     body: [
-      ...mkImportsNode(),
+      ...(injectDeps ? [] : mkImportsNode()),
       mkFun(
         mkIdentifier("transform"),
         [mkIdentifier("document"), mkIdentifier("params")],
@@ -1431,9 +1435,9 @@ export async function compile(
   readDocument?: (uri: string) => slimdom.Document,
 ): Promise<StylesheetTransform> {
   const xsltDoc = await preprocess(xslt, undefined, readDocument);
-  const code = generate(compileStylesheetNode(xsltDoc.documentElement));
+  const code = generate(compileStylesheetNode(xsltDoc.documentElement, true));
   const m: { exports: { transform?: StylesheetTransform } } = { exports: {} };
-  new Function("require", "module", code)(require, m);
+  new Function("xjslt", "module", code)(xjslt, m);
   return m.exports.transform;
 }
 
