@@ -51,7 +51,7 @@ import {
   NamespaceResolver,
 } from "fontoxpath";
 import { readFileSync, writeFileSync, symlinkSync } from "fs";
-import { pathToFileURL } from "url";
+import { pathToFileURL, fileURLToPath } from "url";
 import * as path from "path";
 import { tmpdir } from "os";
 import { mkdtempSync } from "fs";
@@ -73,6 +73,7 @@ import {
   DecimalFormat,
   DEFAULT_DECIMAL_FORMAT,
   xpathstring,
+  StylesheetTransform,
 } from "./definitions";
 import {
   isAlphanumeric,
@@ -1106,6 +1107,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               templates: sortSortable(context.templates),
               variableScopes: [mkNew(mkIdentifier("Map"), [])],
               inputURL: mkMember("params", "inputURL"),
+              readDocument: mkMember("params", "readDocument"),
               keys: mkIdentifier("keys"),
               outputDefinitions: mkIdentifier("outputDefinitions"),
               decimalFormats: mkIdentifier("decimalFormats"),
@@ -1330,7 +1332,11 @@ function compileAvt(avt: string | null) {
   }
 }
 
-async function preprocess(doc: slimdom.Document, inputURL?: URL): Promise<slimdom.Document> {
+async function preprocess(
+  doc: slimdom.Document,
+  inputURL?: URL,
+  readDocument?: (uri: string) => slimdom.Document,
+): Promise<slimdom.Document> {
   if (
     !evaluateXPathToBoolean(
       "/xsl:stylesheet|/xsl:transform",
@@ -1355,11 +1361,18 @@ async function preprocess(doc: slimdom.Document, inputURL?: URL): Promise<slimdo
       },
     )
   ) {
+    if (!inputURL && !readDocument) {
+      throw new Error(
+        'The transform contains xsl:include or xsl:import but no readDocument callback was provided. Pass a readDocument callback to compile() to resolve imports without the filesystem.'
+      );
+    }
     doc = preprocessInclude(doc, {
       inputURL: inputURL,
+      readDocument: readDocument,
     }).get("#default").document;
     doc = preprocessImport(doc, {
       inputURL: inputURL,
+      readDocument: readDocument,
       stylesheetParams: { "base-precedence": basePrecedence },
     }).get("#default").document;
     basePrecedence += 100;
@@ -1383,9 +1396,10 @@ async function preprocess(doc: slimdom.Document, inputURL?: URL): Promise<slimdo
  * are created.
  *
  * @param xslt - The XSLT stylesheet as a parsed slimdom Document.
- * @param inputURL - Base URL used to resolve relative `xsl:include` /
- *   `xsl:import` hrefs. Pass `pathToFileURL(stylesheetPath)` when the
- *   stylesheet lives on disk, or omit it if the stylesheet has no includes.
+ * @param readDocument - Optional callback to resolve `xsl:include` /
+ *   `xsl:import` hrefs without touching the filesystem. Receives the resolved
+ *   URI (absolute when a base is known, otherwise the raw href) and must
+ *   return a parsed slimdom Document. Also used at runtime for `doc()` calls.
  * @returns A transform function with the signature
  *   `(document, params?) => Map<string, OutputResult>`.
  *   The `"#default"` key holds the primary output document.
@@ -1413,13 +1427,24 @@ async function preprocess(doc: slimdom.Document, inputURL?: URL): Promise<slimdo
  */
 export async function compile(
   xslt: slimdom.Document,
-  inputURL?: URL,
-) {
-  const xsltDoc = await preprocess(xslt, inputURL);
+  readDocument?: (uri: string) => slimdom.Document,
+): Promise<StylesheetTransform> {
+  const xsltDoc = await preprocess(xslt, undefined, readDocument);
   const code = generate(compileStylesheetNode(xsltDoc.documentElement));
-  const m: { exports: { transform?: Function } } = { exports: {} };
+  const m: { exports: { transform?: StylesheetTransform } } = { exports: {} };
   new Function("require", "module", code)(require, m);
   return m.exports.transform;
+}
+
+function mkFsReadDocument(): (uri: string) => slimdom.Document {
+  return (uri: string) => {
+    if (uri.startsWith("file:")) {
+      return slimdom.parseXmlDocument(
+        readFileSync(fileURLToPath(new URL(uri))).toString(),
+      );
+    }
+    return undefined;
+  };
 }
 
 export async function compileStylesheet(xsltPath: string) {
@@ -1439,9 +1464,11 @@ export async function compileStylesheet(xsltPath: string) {
   );
   symlinkSync(path.join(root_dir, "dist"), path.join(tempdir, "dist"));
   var tempfile = path.join(tempdir, "transform.js");
+  const xsltURL = pathToFileURL(xsltPath);
   const xsltDoc = await preprocess(
     slimdom.parseXmlDocument(readFileSync(xsltPath).toString()),
-    pathToFileURL(xsltPath),
+    xsltURL,
+    mkFsReadDocument(),
   );
   writeFileSync(
     tempfile,
@@ -1455,7 +1482,7 @@ export async function compileStylesheet(xsltPath: string) {
  * Build a stylesheet. Returns a function that will take an input DOM
  * document and return an output DOM document.
  */
-export async function buildStylesheet(xsltPath: string) {
+export async function buildStylesheet(xsltPath: string): Promise<StylesheetTransform> {
   const tempfile = await compileStylesheet(xsltPath);
   let transform = require(tempfile);
   // console.log(readFileSync(tempfile).toString());

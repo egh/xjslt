@@ -300,7 +300,6 @@ test("compileStylesheetNode", async () => {
         slimdom.parseXmlDocument(
           readFileSync(`${__dirname}/simple.xml`, "utf-8"),
         ),
-        new slimdom.Document(),
       ).get("#default").document,
     ),
   ).toEqual(readFileSync(`${__dirname}/simple2.out`, "utf-8"));
@@ -320,6 +319,92 @@ test("compile", async () => {
       ).get("#default").document,
     ),
   ).toEqual(readFileSync(`${__dirname}/simple2.out`, "utf-8"));
+});
+
+test("compile with readDocument for xsl:include", async () => {
+  const included = slimdom.parseXmlDocument(`
+    <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+      <xsl:template match="item">
+        <found><xsl:value-of select="."/></found>
+      </xsl:template>
+    </xsl:stylesheet>`);
+
+  const xslt = slimdom.parseXmlDocument(`
+    <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+      <xsl:include href="included.xsl"/>
+      <xsl:template match="/">
+        <xsl:apply-templates select="/root/item"/>
+      </xsl:template>
+    </xsl:stylesheet>`);
+
+  const readDocument = (uri: string) => {
+    if (uri === "included.xsl") return included;
+    throw new Error(`Unexpected URI: ${uri}`);
+  };
+
+  const transform = await compile(xslt, readDocument);
+  const result = slimdom.serializeToWellFormedString(
+    transform(slimdom.parseXmlDocument("<root><item>hello</item></root>")).get(
+      "#default",
+    ).document,
+  );
+  expect(result).toEqual("<found>hello</found>");
+});
+
+test("compile with readDocument for xsl:import", async () => {
+  const imported = slimdom.parseXmlDocument(`
+    <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+      <xsl:template match="item">
+        <base><xsl:value-of select="."/></base>
+      </xsl:template>
+    </xsl:stylesheet>`);
+
+  const xslt = slimdom.parseXmlDocument(`
+    <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+      <xsl:import href="base.xsl"/>
+      <xsl:template match="/">
+        <xsl:apply-templates select="/root/item"/>
+      </xsl:template>
+    </xsl:stylesheet>`);
+
+  const readDocument = (uri: string) => {
+    if (uri === "base.xsl") return imported;
+    throw new Error(`Unexpected URI: ${uri}`);
+  };
+
+  const transform = await compile(xslt, readDocument);
+  const result = slimdom.serializeToWellFormedString(
+    transform(slimdom.parseXmlDocument("<root><item>world</item></root>")).get(
+      "#default",
+    ).document,
+  );
+  expect(result).toEqual("<base>world</base>");
+});
+
+test("compile with readDocument for runtime doc()", async () => {
+  const docs = new Map([
+    ["data.xml", slimdom.parseXmlDocument("<data><value>42</value></data>")],
+  ]);
+
+  const xslt = slimdom.parseXmlDocument(`
+    <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+      <xsl:template match="/">
+        <result><xsl:value-of select="doc('data.xml')/data/value"/></result>
+      </xsl:template>
+    </xsl:stylesheet>`);
+
+  const readDocument = (uri: string) => {
+    if (docs.has(uri)) return docs.get(uri);
+    throw new Error(`Unexpected URI: ${uri}`);
+  };
+
+  const transform = await compile(xslt, readDocument);
+  const result = slimdom.serializeToWellFormedString(
+    transform(slimdom.parseXmlDocument("<root/>"), { readDocument }).get(
+      "#default",
+    ).document,
+  );
+  expect(result).toEqual("<result>42</result>");
 });
 
 test("evaluateAttributeValueTemplate", () => {
@@ -361,7 +446,7 @@ test("elementNode", async () => {
     "//Author",
     "<xsl:element name='test-{local-name()}'>Hi!</xsl:element>",
   );
-  const results = transform(document, new slimdom.Document()).get(
+  const results = transform(document).get(
     "#default",
   ).document;
   expect(evaluateXPathToString("/root/test-Author[1]/text()", results)).toEqual(
@@ -374,7 +459,7 @@ test("attributeNode", async () => {
     "//Author",
     "<test><xsl:attribute name='test-{local-name()}'><xsl:value-of select='text()'/></xsl:attribute></test>",
   );
-  const results = transform(document, new slimdom.Document()).get(
+  const results = transform(document).get(
     "#default",
   ).document;
   expect(evaluateXPathToString("/root/test[1]/@test-Author", results)).toEqual(
@@ -387,7 +472,7 @@ test("literalElementAttributeEvaluation", async () => {
     "//Author",
     "<test name='test-{local-name()}'><xsl:value-of select='text()'/></test>",
   );
-  const results = transform(document, new slimdom.Document()).get(
+  const results = transform(document).get(
     "#default",
   ).document;
   expect(
@@ -400,7 +485,7 @@ test("variableShadowing", async () => {
     "//Author",
     "<test><xsl:variable name='test' select='text()'/><xsl:value-of select='$test'/></test>",
   );
-  const results = transform(document, new slimdom.Document()).get(
+  const results = transform(document).get(
     "#default",
   ).document;
   expect(evaluateXPathToString("/root/test[1]/text()", results)).toEqual(

@@ -54,27 +54,21 @@ document, and the returned function can be called immediately.
 
 ```ts
 import * as slimdom from "slimdom";
-import { pathToFileURL } from "url";
 import { readFileSync } from "fs";
 import { compile } from "xjslt/compile";
-import { serialize } from "xjslt";
 
-// Parse the stylesheet (pass its file URL so xsl:include/import can resolve)
 const stylesheetPath = "jats-html.xsl";
 const xslt = slimdom.parseXmlDocument(readFileSync(stylesheetPath, "utf-8"));
-const transform = await compile(xslt, pathToFileURL(stylesheetPath));
+const transform = await compile(xslt);
 
 // Transform an XML document
 const input = slimdom.parseXmlDocument(readFileSync("article.xml", "utf-8"));
 const results = transform(input);
-console.log(serialize(results.get("#default")));
-```
+const resultDocument = results.get("#default");
 
-If the stylesheet has no `xsl:include` or `xsl:import` directives you can omit
-the `inputURL` argument:
+const xml = slimdom.serializeToWellFormedString(resultDocument);
 
-```ts
-const transform = await compile(xslt);
+console.log(xml);
 ```
 
 # Supported features

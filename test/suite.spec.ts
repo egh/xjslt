@@ -309,15 +309,15 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
           if (filepath) {
             inputURL = pathToFileURL(filepath).toString();
           }
-          const tester = () => {
+          const tester = async () => {
             expect(
               evaluateXPathToBoolean("count(./*) = 1 ", resultNode),
             ).toBeTruthy();
+            const transform = await buildStylesheet(stylesheetFile);
             checkResult(
               rootDir,
               evaluateXPathToNodes("./*", resultNode)[0],
               () => {
-                const transform = buildStylesheet(stylesheetFile);
                 return transform(environment || new slimdom.Document(), {
                   inputURL: inputURL,
                   initialMode: initialMode,

@@ -1,6 +1,6 @@
 (() => {
   var t = {
-      851(t, e, n) {
+      280(t, e, n) {
         (n(898), n(594));
         let o = n(821);
         function a(t, e) {
@@ -1859,6 +1859,7 @@
               ],
               variableScopes: [new Map()],
               inputURL: e.inputURL,
+              readDocument: e.readDocument,
               keys: a,
               outputDefinitions: r,
               decimalFormats: s,
@@ -2573,78 +2574,13 @@
       },
       472(t, e, n) {
         "use strict";
-        var o,
-          a =
-            (this && this.__createBinding) ||
-            (Object.create
-              ? function (t, e, n, o) {
-                  void 0 === o && (o = n);
-                  var a = Object.getOwnPropertyDescriptor(e, n);
-                  ((a &&
-                    !("get" in a
-                      ? !e.__esModule
-                      : a.writable || a.configurable)) ||
-                    (a = {
-                      enumerable: !0,
-                      get: function () {
-                        return e[n];
-                      },
-                    }),
-                    Object.defineProperty(t, o, a));
-                }
-              : function (t, e, n, o) {
-                  (void 0 === o && (o = n), (t[o] = e[n]));
-                }),
-          r =
-            (this && this.__setModuleDefault) ||
-            (Object.create
-              ? function (t, e) {
-                  Object.defineProperty(t, "default", {
-                    enumerable: !0,
-                    value: e,
-                  });
-                }
-              : function (t, e) {
-                  t.default = e;
-                }),
-          s =
-            (this && this.__importStar) ||
-            ((o = function (t) {
-              return (
-                (o =
-                  Object.getOwnPropertyNames ||
-                  function (t) {
-                    var e = [];
-                    for (var n in t)
-                      Object.prototype.hasOwnProperty.call(t, n) &&
-                        (e[e.length] = n);
-                    return e;
-                  }),
-                o(t)
-              );
-            }),
-            function (t) {
-              if (t && t.__esModule) return t;
-              var e = {};
-              if (null != t)
-                for (var n = o(t), s = 0; s < n.length; s++)
-                  "default" !== n[s] && a(e, t, n[s]);
-              return (r(e, t), e);
-            });
         (Object.defineProperty(e, "__esModule", { value: !0 }),
           (e.urlToDom = function (t, e) {
-            const n = t.inputURL ? (0, c.resolve)(t.inputURL.toString(), e) : e;
-            return n.startsWith("file:")
-              ? i.parseXmlDocument(
-                  (0, m.readFileSync)(
-                    (0, c.fileURLToPath)(new URL(n)),
-                  ).toString(),
-                )
-              : void 0;
+            if (!t.readDocument) return;
+            const n = t.inputURL ? (0, o.resolve)(t.inputURL.toString(), e) : e;
+            return t.readDocument(n);
           }));
-        const c = n(16),
-          m = n(896),
-          i = s(n(898));
+        const o = n(16);
       },
       821(t, e, n) {
         "use strict";
@@ -2810,7 +2746,7 @@
             );
             for (let e of o) t.append(e);
           }),
-          (e.valueOf = P),
+          (e.valueOf = D),
           (e.message = function (t, e, n) {
             const o = z(t, e.select || n, (0, p.mkResolver)(e.namespaces));
             if ("yes" === e.terminate) throw new Error(o);
@@ -2820,14 +2756,14 @@
             t.append(z(t, n, (0, p.mkResolver)(e.namespaces), [""]));
           }),
           (e.variable = function (t, e) {
-            $(t.variableScopes, e.name, B(t, e));
+            O(t.variableScopes, e.name, B(t, e));
           }),
           (e.param = function (t, e) {
-            $(t.variableScopes, e.name, t.stylesheetParams[e.name] || B(t, e));
+            O(t.variableScopes, e.name, t.stylesheetParams[e.name] || B(t, e));
           }),
-          (e.extendScope = D),
-          (e.wrapValue = F),
-          (e.setVariable = $),
+          (e.extendScope = P),
+          (e.wrapValue = $),
+          (e.setVariable = O),
           (e.mergeVariableScopes = C),
           (e.literalText = function (t, e) {
             t.append(e);
@@ -2847,20 +2783,20 @@
             );
             t.append(n);
           }),
-          (e.buildNode = _),
-          (e.buildAttributeNode = U),
+          (e.buildNode = U),
+          (e.buildAttributeNode = _),
           (e.literalElement = function (t, e, n) {
-            let o = _(t, { name: e.name, namespace: e.namespace });
+            let o = U(t, { name: e.name, namespace: e.namespace });
             const a = (0, p.mkResolver)(e.namespaces);
             for (let n of e.attributes) {
               const e = Y(t, n.value, a),
-                r = U(t, { name: n.name, namespace: n.namespace, value: e });
+                r = _(t, { name: n.name, namespace: n.namespace, value: e });
               o.setAttributeNode(r);
             }
             const r = t.append(o);
             n(
               Object.assign(Object.assign({}, t), {
-                variableScopes: D(t.variableScopes),
+                variableScopes: P(t.variableScopes),
                 append: r || t.append,
               }),
             );
@@ -2869,7 +2805,7 @@
             const o = (0, p.mkResolver)(e.namespaces),
               a = Y(t, e.name, o),
               [r, s] = (0, p.determineNamespace)(a, o, Y(t, e.namespace, o)),
-              c = U(t, {
+              c = _(t, {
                 name: a,
                 namespace: r,
                 value: z(t, e.select || n, o, e.separator),
@@ -2893,7 +2829,7 @@
             const o = (0, p.mkResolver)(e.namespaces),
               a = Y(t, e.name, o),
               r = z(t, e.select || n, o, [""]),
-              s = U(t, {
+              s = _(t, {
                 name: `xmlns:${a}`,
                 namespace: l.XMLNS_NSURI,
                 value: r,
@@ -2904,7 +2840,7 @@
             const o = (0, p.mkResolver)(e.namespaces);
             let a = Y(t, e.name, o),
               r = Y(t, e.namespace, o),
-              s = _(t, {
+              s = U(t, {
                 name: a,
                 namespace: (0, p.determineNamespace)(
                   a,
@@ -2915,7 +2851,7 @@
             const c = t.append(s);
             n(
               Object.assign(Object.assign({}, t), {
-                variableScopes: D(t.variableScopes),
+                variableScopes: P(t.variableScopes),
                 append: c || t.append,
               }),
             );
@@ -2963,7 +2899,7 @@
                 outputDocument: o,
                 append: a,
                 mode: "#default",
-                variableScopes: D(t.variableScopes),
+                variableScopes: P(t.variableScopes),
               }),
             );
           }),
@@ -3006,7 +2942,7 @@
               N(a, t, (t) => {
                 n(
                   Object.assign(Object.assign({}, t), {
-                    variableScopes: D(t.variableScopes),
+                    variableScopes: P(t.variableScopes),
                   }),
                 );
               }));
@@ -3412,7 +3348,7 @@
                   {
                     match: { xpath: "text()|@*" },
                     apply: (e) => {
-                      P(e, { select: ".", namespaces: t }, () => {});
+                      D(e, { select: ".", namespaces: t }, () => {});
                     },
                     allowedParams: [],
                     modes: ["#all"],
@@ -3507,7 +3443,7 @@
               contextList: t.nodes,
               currentGroup: t,
               position: o,
-              variableScopes: D(e.variableScopes),
+              variableScopes: P(e.variableScopes),
             });
             return n(a);
           });
@@ -3520,10 +3456,10 @@
           for (let n of e) if (n.name === t) return n;
         }
         function X(t, e, n) {
-          let o = D(e.variableScopes);
+          let o = P(e.variableScopes);
           for (let a of t.allowedParams) {
             let t = L(a.name, n);
-            void 0 !== t ? $(o, t.name, B(e, t)) : $(o, a.name, B(e, a));
+            void 0 !== t ? O(o, t.name, B(e, t)) : O(o, a.name, B(e, a));
           }
           return t.apply(
             Object.assign(Object.assign({}, e), { variableScopes: o }),
@@ -3548,33 +3484,33 @@
               y(
                 Object.assign(Object.assign({}, t), {
                   mode: a,
-                  variableScopes: D(t.variableScopes),
+                  variableScopes: P(t.variableScopes),
                 }),
                 e.params,
                 e.namespaces,
               );
             }));
         }
-        function P(t, e, n) {
+        function D(t, e, n) {
           t.append(
             z(t, e.select || n, (0, p.mkResolver)(e.namespaces), e.separator),
           );
         }
-        function D(t) {
+        function P(t) {
           return t.concat([new Map()]);
         }
         let M = new Map();
-        function O(t) {
+        function F(t) {
           return (
             M.has(t) || M.set(t, (0, c.createTypedValueFactory)(t)),
             M.get(t)
           );
         }
-        function F(t, e) {
-          if (Array.isArray(t) && 0 === t.length) return O("item()*")([], null);
+        function $(t, e) {
+          if (Array.isArray(t) && 0 === t.length) return F("item()*")([], null);
           if (e)
             try {
-              return O(e)(t, null);
+              return F(e)(t, null);
             } catch (t) {}
           const n = Array.isArray(t),
             o = n ? t[0] : t;
@@ -3585,10 +3521,10 @@
               ? (a = "xs:string")
               : "number" == typeof o &&
                 (a = Number.isInteger(o) ? "xs:integer" : "xs:numeric"),
-            O(`${a}${r}`)(t, null)
+            F(`${a}${r}`)(t, null)
           );
         }
-        function $(t, e, n) {
+        function O(t, e, n) {
           t[t.length - 1].set(e, n);
         }
         function C(t) {
@@ -3596,7 +3532,7 @@
           for (let n of t) for (let [t, o] of n) e[t] = o;
           return e;
         }
-        function _(t, e) {
+        function U(t, e) {
           let n;
           return (
             (n =
@@ -3606,7 +3542,7 @@
             n
           );
         }
-        function U(t, e) {
+        function _(t, e) {
           let n;
           return (
             (n = e.namespace
@@ -3730,12 +3666,12 @@
                 functionNameResolver: i.functionNameResolver,
               },
             );
-            return (1 !== o.length || n || (o = o[0]), F(o, e.as));
+            return (1 !== o.length || n || (o = o[0]), $(o, e.as));
           }
           return null == e.content
             ? ""
             : e.as
-              ? F(
+              ? $(
                   (function (t, e) {
                     let n = [];
                     return (
@@ -3743,7 +3679,7 @@
                         Object.assign(Object.assign({}, t), {
                           append: k(n),
                           mode: "#default",
-                          variableScopes: D(t.variableScopes),
+                          variableScopes: P(t.variableScopes),
                         }),
                       ),
                       1 === n.length ? n[0] : n
@@ -3773,7 +3709,7 @@
                 append: n,
                 outputDocument: t.outputDocument,
                 mode: "#default",
-                variableScopes: D(t.variableScopes),
+                variableScopes: P(t.variableScopes),
               }),
             );
           });
@@ -3788,10 +3724,6 @@
         "use strict";
         t.exports = require("slimdom");
       },
-      896(t) {
-        "use strict";
-        t.exports = require("fs");
-      },
       16(t) {
         "use strict";
         t.exports = require("url");
@@ -3803,6 +3735,6 @@
       if (void 0 !== a) return a.exports;
       var r = (e[o] = { exports: {} });
       return (t[o].call(r.exports, r, r.exports, n), r.exports);
-    })(851);
+    })(280);
   module.exports = n.transform;
 })();
