@@ -991,11 +991,16 @@ export function attribute(
 ) {
   const resolver = mkResolver(data.namespaces);
   const name = evaluateAttributeValueTemplate(context, data.name, resolver);
-  const [ns, _] = determineNamespace(
-    name,
+  const explicitNamespace = evaluateAttributeValueTemplate(
+    context,
+    data.namespace,
     resolver,
-    evaluateAttributeValueTemplate(context, data.namespace, resolver),
   );
+  // Unprefixed attribute names are in no namespace per XML Namespaces spec —
+  // the default namespace does not apply to attributes.
+  const [ns, _] = name.includes(":")
+    ? determineNamespace(name, resolver, explicitNamespace)
+    : [explicitNamespace, name];
   const value = constructSimpleContent(
     context,
     data.select || func,

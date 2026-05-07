@@ -12,7 +12,10 @@
     "check": "jest && prettier -c src/ test/",
     "prepare": "tsc && chmod +x dist/cli.js"
   },
-  "exports": "./dist/xjslt.js",
+  "exports": {
+    ".": "./dist/xjslt.js",
+    "./compile": "./dist/compile.js"
+  },
   "bin": {
     "xjslt": "./dist/cli.js"
   },
@@ -27,6 +30,7 @@
     "@types/jest": "*",
     "jest": "*",
     "jest-simple-dot-reporter": "*",
+    "prettier": "^3.8.3",
     "ts-jest": "*",
     "ts-node": "*",
     "typescript": "*"

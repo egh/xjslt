@@ -1,6 +1,6 @@
 (() => {
   var e = {
-      858(e, t, n) {
+      828(e, t, n) {
         (n(898), n(594));
         let o = n(821);
         function r(e, t) {
@@ -65,6 +65,7 @@
               ],
               variableScopes: [new Map()],
               inputURL: t.inputURL,
+              readDocument: t.readDocument,
               keys: r,
               outputDefinitions: a,
               decimalFormats: s,
@@ -779,78 +780,13 @@
       },
       472(e, t, n) {
         "use strict";
-        var o,
-          r =
-            (this && this.__createBinding) ||
-            (Object.create
-              ? function (e, t, n, o) {
-                  void 0 === o && (o = n);
-                  var r = Object.getOwnPropertyDescriptor(t, n);
-                  ((r &&
-                    !("get" in r
-                      ? !t.__esModule
-                      : r.writable || r.configurable)) ||
-                    (r = {
-                      enumerable: !0,
-                      get: function () {
-                        return t[n];
-                      },
-                    }),
-                    Object.defineProperty(e, o, r));
-                }
-              : function (e, t, n, o) {
-                  (void 0 === o && (o = n), (e[o] = t[n]));
-                }),
-          a =
-            (this && this.__setModuleDefault) ||
-            (Object.create
-              ? function (e, t) {
-                  Object.defineProperty(e, "default", {
-                    enumerable: !0,
-                    value: t,
-                  });
-                }
-              : function (e, t) {
-                  e.default = t;
-                }),
-          s =
-            (this && this.__importStar) ||
-            ((o = function (e) {
-              return (
-                (o =
-                  Object.getOwnPropertyNames ||
-                  function (e) {
-                    var t = [];
-                    for (var n in e)
-                      Object.prototype.hasOwnProperty.call(e, n) &&
-                        (t[t.length] = n);
-                    return t;
-                  }),
-                o(e)
-              );
-            }),
-            function (e) {
-              if (e && e.__esModule) return e;
-              var t = {};
-              if (null != e)
-                for (var n = o(e), s = 0; s < n.length; s++)
-                  "default" !== n[s] && r(t, e, n[s]);
-              return (a(t, e), t);
-            });
         (Object.defineProperty(t, "__esModule", { value: !0 }),
           (t.urlToDom = function (e, t) {
-            const n = e.inputURL ? (0, i.resolve)(e.inputURL.toString(), t) : t;
-            return n.startsWith("file:")
-              ? u.parseXmlDocument(
-                  (0, c.readFileSync)(
-                    (0, i.fileURLToPath)(new URL(n)),
-                  ).toString(),
-                )
-              : void 0;
+            if (!e.readDocument) return;
+            const n = e.inputURL ? (0, o.resolve)(e.inputURL.toString(), t) : t;
+            return e.readDocument(n);
           }));
-        const i = n(16),
-          c = n(896),
-          u = s(n(898));
+        const o = n(16);
       },
       821(e, t, n) {
         "use strict";
@@ -1031,8 +967,8 @@
           (t.param = function (e, t) {
             U(e.variableScopes, t.name, e.stylesheetParams[t.name] || G(e, t));
           }),
-          (t.extendScope = O),
-          (t.wrapValue = X),
+          (t.extendScope = D),
+          (t.wrapValue = O),
           (t.setVariable = U),
           (t.mergeVariableScopes = _),
           (t.literalText = function (e, t) {
@@ -1066,7 +1002,7 @@
             const a = e.append(o);
             n(
               Object.assign(Object.assign({}, e), {
-                variableScopes: O(e.variableScopes),
+                variableScopes: D(e.variableScopes),
                 append: a || e.append,
               }),
             );
@@ -1121,7 +1057,7 @@
             const i = e.append(s);
             n(
               Object.assign(Object.assign({}, e), {
-                variableScopes: O(e.variableScopes),
+                variableScopes: D(e.variableScopes),
                 append: i || e.append,
               }),
             );
@@ -1169,7 +1105,7 @@
                 outputDocument: o,
                 append: r,
                 mode: "#default",
-                variableScopes: O(e.variableScopes),
+                variableScopes: D(e.variableScopes),
               }),
             );
           }),
@@ -1212,7 +1148,7 @@
               y(r, e, (e) => {
                 n(
                   Object.assign(Object.assign({}, e), {
-                    variableScopes: O(e.variableScopes),
+                    variableScopes: D(e.variableScopes),
                   }),
                 );
               }));
@@ -1713,7 +1649,7 @@
               contextList: e.nodes,
               currentGroup: e,
               position: o,
-              variableScopes: O(t.variableScopes),
+              variableScopes: D(t.variableScopes),
             });
             return n(r);
           });
@@ -1726,7 +1662,7 @@
           for (let n of t) if (n.name === e) return n;
         }
         function I(e, t, n) {
-          let o = O(t.variableScopes);
+          let o = D(t.variableScopes);
           for (let r of e.allowedParams) {
             let e = $(r.name, n);
             void 0 !== e ? U(o, e.name, G(t, e)) : U(o, r.name, G(t, r));
@@ -1754,7 +1690,7 @@
               x(
                 Object.assign(Object.assign({}, e), {
                   mode: r,
-                  variableScopes: O(e.variableScopes),
+                  variableScopes: D(e.variableScopes),
                 }),
                 t.params,
                 t.namespaces,
@@ -1766,21 +1702,21 @@
             J(e, t.select || n, (0, p.mkResolver)(t.namespaces), t.separator),
           );
         }
-        function O(e) {
+        function D(e) {
           return e.concat([new Map()]);
         }
         let M = new Map();
-        function D(e) {
+        function X(e) {
           return (
             M.has(e) || M.set(e, (0, i.createTypedValueFactory)(e)),
             M.get(e)
           );
         }
-        function X(e, t) {
-          if (Array.isArray(e) && 0 === e.length) return D("item()*")([], null);
+        function O(e, t) {
+          if (Array.isArray(e) && 0 === e.length) return X("item()*")([], null);
           if (t)
             try {
-              return D(t)(e, null);
+              return X(t)(e, null);
             } catch (e) {}
           const n = Array.isArray(e),
             o = n ? e[0] : e;
@@ -1791,7 +1727,7 @@
               ? (r = "xs:string")
               : "number" == typeof o &&
                 (r = Number.isInteger(o) ? "xs:integer" : "xs:numeric"),
-            D(`${r}${a}`)(e, null)
+            X(`${r}${a}`)(e, null)
           );
         }
         function U(e, t, n) {
@@ -1936,12 +1872,12 @@
                 functionNameResolver: u.functionNameResolver,
               },
             );
-            return (1 !== o.length || n || (o = o[0]), X(o, t.as));
+            return (1 !== o.length || n || (o = o[0]), O(o, t.as));
           }
           return null == t.content
             ? ""
             : t.as
-              ? X(
+              ? O(
                   (function (e, t) {
                     let n = [];
                     return (
@@ -1949,7 +1885,7 @@
                         Object.assign(Object.assign({}, e), {
                           append: F(n),
                           mode: "#default",
-                          variableScopes: O(e.variableScopes),
+                          variableScopes: D(e.variableScopes),
                         }),
                       ),
                       1 === n.length ? n[0] : n
@@ -1979,7 +1915,7 @@
                 append: n,
                 outputDocument: e.outputDocument,
                 mode: "#default",
-                variableScopes: O(e.variableScopes),
+                variableScopes: D(e.variableScopes),
               }),
             );
           });
@@ -1994,10 +1930,6 @@
         "use strict";
         e.exports = require("slimdom");
       },
-      896(e) {
-        "use strict";
-        e.exports = require("fs");
-      },
       16(e) {
         "use strict";
         e.exports = require("url");
@@ -2009,6 +1941,6 @@
       if (void 0 !== r) return r.exports;
       var a = (t[o] = { exports: {} });
       return (e[o].call(a.exports, a, a.exports, n), a.exports);
-    })(858);
+    })(828);
   module.exports = n.transform;
 })();

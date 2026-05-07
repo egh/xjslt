@@ -43,6 +43,7 @@ import {
   Statement,
 } from "estree";
 import * as slimdom from "slimdom";
+import * as xjslt from "./xjslt";
 import {
   compileXPathToJavaScript,
   evaluateXPath,
@@ -51,7 +52,7 @@ import {
   NamespaceResolver,
 } from "fontoxpath";
 import { readFileSync, writeFileSync, symlinkSync } from "fs";
-import { pathToFileURL } from "url";
+import { pathToFileURL, fileURLToPath } from "url";
 import * as path from "path";
 import { tmpdir } from "os";
 import { mkdtempSync } from "fs";
@@ -73,6 +74,7 @@ import {
   DecimalFormat,
   DEFAULT_DECIMAL_FORMAT,
   xpathstring,
+  StylesheetTransform,
 } from "./definitions";
 import {
   isAlphanumeric,
@@ -586,17 +588,18 @@ function compileSimpleElement(node: slimdom.Element, context: CompileContext) {
 function compileChooseNode(node: slimdom.Element, context: CompileContext) {
   let alternatives = [];
   for (let childNode of node.childNodes) {
-    if (childNode instanceof slimdom.Element) {
-      if (childNode.localName === "when") {
+    if (childNode.nodeType === node.ELEMENT_NODE) {
+      const childElement = childNode as slimdom.Element;
+      if (childElement.localName === "when") {
         alternatives.push(
           toEstree({
-            test: hackXpath(childNode.getAttribute("test")),
+            test: hackXpath(childElement.getAttribute("test")),
             apply: mkArrowFun(
-              compileSequenceConstructor(childNode.childNodes, context),
+              compileSequenceConstructor(childElement.childNodes, context),
             ),
           }),
         );
-      } else if (childNode.localName === "otherwise") {
+      } else if (childElement.localName === "otherwise") {
         alternatives.push(
           toEstree({
             apply: mkArrowFun(
@@ -974,7 +977,7 @@ function compileValueOf(node: slimdom.Element, context: CompileContext) {
 }
 
 function compileTextNode(node: slimdom.Element) {
-  if (node instanceof slimdom.Element && node.childElementCount > 0) {
+  if (node.nodeType === node.ELEMENT_NODE && node.childElementCount > 0) {
     throw new Error("XTSE0010 element found as child of xsl:text");
   }
   return mkCallWithContext(mkMember("xjslt", "text"), [
@@ -1005,13 +1008,16 @@ function compileSequenceConstructor(
   return compileNodeArray(nodes, context, compileSequenceConstructorNode);
 }
 
-export function compileStylesheetNode(node: slimdom.Element): Program {
+export function compileStylesheetNode(
+  node: slimdom.Element,
+  injectDeps = false,
+): Program {
   let context: CompileContext = { templates: [], whitespaceDeclarations: [] };
   return {
     type: "Program",
     sourceType: "module",
     body: [
-      ...mkImportsNode(),
+      ...(injectDeps ? [] : mkImportsNode()),
       mkFun(
         mkIdentifier("transform"),
         [mkIdentifier("document"), mkIdentifier("params")],
@@ -1106,6 +1112,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               templates: sortSortable(context.templates),
               variableScopes: [mkNew(mkIdentifier("Map"), [])],
               inputURL: mkMember("params", "inputURL"),
+              readDocument: mkMember("params", "readDocument"),
               keys: mkIdentifier("keys"),
               outputDefinitions: mkIdentifier("outputDefinitions"),
               decimalFormats: mkIdentifier("decimalFormats"),
@@ -1330,7 +1337,11 @@ function compileAvt(avt: string | null) {
   }
 }
 
-function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
+async function preprocess(
+  doc: slimdom.Document,
+  inputURL?: URL,
+  readDocument?: (uri: string) => slimdom.Document,
+): Promise<slimdom.Document> {
   if (
     !evaluateXPathToBoolean(
       "/xsl:stylesheet|/xsl:transform",
@@ -1355,11 +1366,18 @@ function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
       },
     )
   ) {
+    if (!inputURL && !readDocument) {
+      throw new Error(
+        "The transform contains xsl:include or xsl:import but no readDocument callback was provided. Pass a readDocument callback to compile() to resolve imports without the filesystem.",
+      );
+    }
     doc = preprocessInclude(doc, {
-      inputURL: pathToFileURL(path),
+      inputURL: inputURL,
+      readDocument: readDocument,
     }).get("#default").document;
     doc = preprocessImport(doc, {
-      inputURL: pathToFileURL(path),
+      inputURL: inputURL,
+      readDocument: readDocument,
       stylesheetParams: { "base-precedence": basePrecedence },
     }).get("#default").document;
     basePrecedence += 100;
@@ -1375,7 +1393,66 @@ function preprocess(doc: slimdom.Document, path: string): slimdom.Document {
   return doc;
 }
 
-export function compileStylesheet(xsltPath: string) {
+/**
+ * Compile an XSLT stylesheet document into a callable transform function.
+ *
+ * Unlike `buildStylesheet`, this API accepts an already-parsed document and
+ * executes the compiled JavaScript in-memory — no temporary files or symlinks
+ * are created.
+ *
+ * @param xslt - The XSLT stylesheet as a parsed slimdom Document.
+ * @param readDocument - Optional callback to resolve `xsl:include` /
+ *   `xsl:import` hrefs without touching the filesystem. Receives the resolved
+ *   URI (absolute when a base is known, otherwise the raw href) and must
+ *   return a parsed slimdom Document. Also used at runtime for `doc()` calls.
+ * @returns A transform function with the signature
+ *   `(document, params?) => Map<string, OutputResult>`.
+ *   The `"#default"` key holds the primary output document.
+ *
+ * @example
+ * ```ts
+ * import * as slimdom from "slimdom";
+ * import { compile } from "xjslt/compile";
+ * import { serialize } from "xjslt";
+ *
+ * const xslt = slimdom.parseXmlDocument(`
+ *   <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+ *     <xsl:template match="/">
+ *       <result><xsl:value-of select="/doc/title"/></result>
+ *     </xsl:template>
+ *   </xsl:stylesheet>
+ * `);
+ *
+ * const transform = await compile(xslt);
+ *
+ * const input = slimdom.parseXmlDocument("<doc><title>Hello</title></doc>");
+ * const output = transform(input).get("#default");
+ * console.log(serialize(output)); // <result>Hello</result>
+ * ```
+ */
+export async function compile(
+  xslt: slimdom.Document,
+  readDocument?: (uri: string) => slimdom.Document,
+): Promise<StylesheetTransform> {
+  const xsltDoc = await preprocess(xslt, undefined, readDocument);
+  const code = generate(compileStylesheetNode(xsltDoc.documentElement, true));
+  const m: { exports: { transform?: StylesheetTransform } } = { exports: {} };
+  new Function("xjslt", "module", code)(xjslt, m);
+  return m.exports.transform;
+}
+
+function mkFsReadDocument(): (uri: string) => slimdom.Document {
+  return (uri: string) => {
+    if (uri.startsWith("file:")) {
+      return slimdom.parseXmlDocument(
+        readFileSync(fileURLToPath(new URL(uri))).toString(),
+      );
+    }
+    return undefined;
+  };
+}
+
+export async function compileStylesheet(xsltPath: string) {
   let slimdom_path = require.resolve("slimdom").split(path.sep);
   let root_dir = path.join(
     "/",
@@ -1392,9 +1469,11 @@ export function compileStylesheet(xsltPath: string) {
   );
   symlinkSync(path.join(root_dir, "dist"), path.join(tempdir, "dist"));
   var tempfile = path.join(tempdir, "transform.js");
-  let xsltDoc = preprocess(
+  const xsltURL = pathToFileURL(xsltPath);
+  const xsltDoc = await preprocess(
     slimdom.parseXmlDocument(readFileSync(xsltPath).toString()),
-    xsltPath,
+    xsltURL,
+    mkFsReadDocument(),
   );
   writeFileSync(
     tempfile,
@@ -1408,8 +1487,10 @@ export function compileStylesheet(xsltPath: string) {
  * Build a stylesheet. Returns a function that will take an input DOM
  * document and return an output DOM document.
  */
-export function buildStylesheet(xsltPath: string) {
-  const tempfile = compileStylesheet(xsltPath);
+export async function buildStylesheet(
+  xsltPath: string,
+): Promise<StylesheetTransform> {
+  const tempfile = await compileStylesheet(xsltPath);
   let transform = require(tempfile);
   // console.log(readFileSync(tempfile).toString());
   return transform.transform;
