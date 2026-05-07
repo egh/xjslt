@@ -30,6 +30,7 @@
     "@types/jest": "*",
     "jest": "*",
     "jest-simple-dot-reporter": "*",
+    "prettier": "^3.8.3",
     "ts-jest": "*",
     "ts-node": "*",
     "typescript": "*"
