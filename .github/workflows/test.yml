@@ -1,0 +1,35 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout xslt30-test
+        uses: actions/checkout@v4
+        with:
+          repository: w3c/xslt30-test
+          path: xslt30-test
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile preprocessors
+        run: npm run build-preprocessors
+
+      - name: Run tests
+        run: npm test
