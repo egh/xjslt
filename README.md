@@ -98,6 +98,23 @@ console.log(xml);
 - [ ] tunneled parameters
 - [ ] … (probably other things I’m not aware of or forgot)
 
+# Running tests
+
+The test suite includes both unit tests and a subset of the [W3C XSLT 3.0 test suite](https://github.com/w3c/xslt30-test). To run tests:
+
+1. Clone the W3C test suite into the project root:
+   ```
+   git clone --depth=1 https://github.com/w3c/xslt30-test.git
+   ```
+2. Build (including preprocessors):
+   ```
+   npm run build-preprocessors
+   ```
+3. Run tests:
+   ```
+   npm test
+   ```
+
 # Contributing
 
 - Some functionality, including import and include, is implemented in terms of preprocessors: xslt stylesheets that are applied to the xslt stylesheet itself before it is compiled. If you make changes that impact these preprocessors, you will need to run `npm run build-preprocessors` to recompile them.
