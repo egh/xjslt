@@ -1242,7 +1242,6 @@ export const KNOWN_SPEC_FAILURES = [
   "namespace-3201",
   "namespace-3203",
   "namespace-3301",
-  "namespace-3306",
   "namespace-3308",
   "namespace-3309",
   "namespace-3314",
