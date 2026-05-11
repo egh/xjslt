@@ -1225,7 +1225,12 @@ function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
     priority: parseFloat(node.getAttribute("priority")) || undefined,
     importPrecedence: parseInt(node.getAttribute("import-precedence")) || 1,
   };
-  if (features && template.modes.length === 1 && template.modes[0] === "#default") {
+  if (
+    features &&
+    !template.name &&
+    template.modes.length === 1 &&
+    template.modes[0] === "#default"
+  ) {
     context.rules.push({ result: template, features });
   } else {
     context.templates.push(template);

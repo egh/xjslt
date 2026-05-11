@@ -60,13 +60,13 @@ import {
   WhitespaceDeclaration,
   PatternMatchCache,
   Xpath,
-  Rule,
 } from "./definitions";
 import {
   compareSortable,
   determineNamespace,
   mkOutputDefinition,
   mkResolver,
+  sortSortable,
   zip,
 } from "./shared";
 import { formatNumber } from "./numbering";
@@ -305,7 +305,23 @@ function patternMatch(
 }
 
 /**
- * Find the template that should be used to process a node.
+ * Return matching "rule" based templates.
+ *
+ * @returns The template, or undefined if none can be found to match this node.
+ */
+function* getTemplatesFromRules(
+  node: slimdom.Node,
+  ruleTree: RuleTreeNode<slimdom.Node, Template>,
+): Generator<Template> {
+  for (let template of sortSortable(findMatchingRules(ruleTree, node))) {
+    // Guaranteed to match.
+    yield template;
+  }
+}
+
+/**
+ * Find the template that should be used to process a node from the
+   list of templates that don't have "rules".
  *
  * @returns The template, or undefined if none can be found to match this node.
  */
@@ -316,13 +332,7 @@ function* getTemplates(
   variableScopes: Array<VariableScope>,
   mode: string,
   namespaces: object,
-  ruleTree: RuleTreeNode<slimdom.Node, Template>,
-  stylesheetTemplateCount?: number,
 ): Generator<Template> {
-  for (let template of findMatchingRules(ruleTree, node)) {
-    // Guaranteed to match.
-    yield template;
-  }
   for (let template of templates) {
     if (
       template.match &&
@@ -413,15 +423,19 @@ export function processNode(
   params: VariableLike[],
   namespaces: object,
 ) {
-  let templates = getTemplates(
+  let ruleTemplates = getTemplatesFromRules(
+    context.contextItem,
+    context.ruleTree,
+  );
+  let nonRuleTemplates = getTemplates(
     context.patternMatchCache,
     context.contextItem,
     context.templates.concat(mkBuiltInTemplates(namespaces)),
     context.variableScopes,
     context.mode,
     namespaces,
-    context.ruleTree,
   );
+  let templates = mergeTemplateGenerators(ruleTemplates, nonRuleTemplates);
   const next = templates.next();
   if (!next.done) {
     evaluateTemplate(
@@ -712,7 +726,7 @@ export function functionX(
   },
   func: SequenceConstructor,
 ) {
-  const signature = data.params.map((p) => "item()");
+  const signature = data.params.map((_) => "item()");
   const variableNames = data.params.map((p) => p.name);
   registerCustomXPathFunction(
     { namespaceURI: data.namespace, localName: data.name },
