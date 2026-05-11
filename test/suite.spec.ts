@@ -163,15 +163,15 @@ function checkAssertXml(rootDir: string, node: any, transformed: any) {
   );
 }
 
-function checkResult(rootDir, node, thunk: () => Map<string, OutputResult>) {
+async function checkResult(rootDir, node, thunk: () => Promise<Map<string, OutputResult>>) {
   if (node.localName == "all-of") {
-    return () => {
+    return async () => {
       for (let childNode of evaluateXPathToNodes("./*", node)) {
-        checkResult(rootDir, childNode, thunk)();
+        (await checkResult(rootDir, childNode, thunk))();
       }
     };
   } else if (node.localName === "any-of") {
-    return () => {
+    return async () => {
       let lastCheck;
       for (let childNode of evaluateXPathToNodes("./*", node)) {
         /* hack to work with any of these results */
@@ -184,32 +184,36 @@ function checkResult(rootDir, node, thunk: () => Map<string, OutputResult>) {
       lastCheck();
     };
   } else if (node.localName === "assert-xml") {
-    return () => {
-      const dom = thunk().get("#default").document;
+    return async () => {
+      const tmp = await thunk();
+      const dom = tmp.get("#default").document;
       checkAssertXml(rootDir, node, dom);
     };
   } else if (node.localName === "assert") {
-    return () => {
+    return async () => {
       const assert = evaluateXPathToString(".", node);
+      const tmp = await thunk();
       expect(
-        evaluateXPathToBoolean(assert, thunk().get("#default").document),
+        evaluateXPathToBoolean(assert, tmp.get("#default").document),
       ).toBeTruthy();
     };
   } else if (node.localName === "assert-count") {
-    return () => {
+    return async () => {
       const count = evaluateXPathToNumber(".", node);
+      const tmp = await thunk();
       expect(
-        evaluateXPathToNumber("count(.)", thunk().get("#default").document),
+        evaluateXPathToNumber("count(.)", tmp.get("#default").document),
       ).toEqual(count);
     };
   } else if (node.localName === "serialization-matches") {
-    return () => {
-      expect(serialize(thunk().get("#default") as OutputResult)).toXSMatch(
+    return async () => {
+      const tmp = await thunk();
+      expect(serialize(tmp.get("#default") as OutputResult)).toXSMatch(
         evaluateXPathToString(".", node),
       );
     };
   } else if (node.localName === "error") {
-    return () => {
+    return async () => {
       expect(thunk).toThrow(evaluateXPathToString("@code", node));
     };
   } else if (node.localName === "assert-result-document") {
@@ -217,27 +221,27 @@ function checkResult(rootDir, node, thunk: () => Map<string, OutputResult>) {
     const newResults = new Map<string, OutputResult>([
       [
         "#default",
-        thunk().get(evaluateXPathToString("@uri", node)) as OutputResult,
+        (await thunk()).get(evaluateXPathToString("@uri", node)) as OutputResult,
       ],
     ]);
-    return () => {
+    return async () => {
       checkResult(
         rootDir,
         evaluateXPathToNodes("./*", node)[0],
-        () => newResults,
+        async () => newResults,
       );
     };
   } else if (node.localName === "assert-string-value") {
     // TODO: not sure what this is?
-    return () => {};
+    return async () => {};
   } else if (node.localName === "assert-serialization") {
     // TODO: depends on non-xml output?
-    return () => {};
+    return async () => {};
   } else if (node.localName === "assert-message") {
     // TODO: depends on messages
-    return () => {};
+    return async () => {};
   } else {
-    return () => {
+    return async () => {
       // TODO support assert-result-document, assert-string-value, error
       expect(node.localName).toEqual("");
     };
@@ -313,18 +317,18 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
             expect(
               evaluateXPathToBoolean("count(./*) = 1 ", resultNode),
             ).toBeTruthy();
-            const transform = await buildStylesheet(stylesheetFile);
-            checkResult(
+            (await checkResult(
               rootDir,
               evaluateXPathToNodes("./*", resultNode)[0],
-              () => {
+              async () => {
+                const transform = await buildStylesheet(stylesheetFile);
                 return transform(environment || new slimdom.Document(), {
                   inputURL: inputURL,
                   initialMode: initialMode,
                   stylesheetParams: stylesheetParams,
                 });
               },
-            )();
+            ))();
           };
 
           if (KNOWN_SPEC_FAILURES.includes(testName)) {
