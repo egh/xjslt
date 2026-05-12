@@ -314,10 +314,13 @@ function patternMatch(
 function* getTemplatesFromRules(
   node: slimdom.Node,
   ruleTree: RuleTreeNode<slimdom.Node, Template>,
+  mode: string,
 ): Generator<Template> {
-  for (let template of sortSortable(findMatchingRules(ruleTree, node))) {
-    // Guaranteed to match.
-    yield template;
+  if (mode === "#default") {
+    for (let template of sortSortable(findMatchingRules(ruleTree, node))) {
+      // Guaranteed to match.
+      yield template;
+    }
   }
 }
 
@@ -439,6 +442,7 @@ export function processNode(
   let ruleTemplates = getTemplatesFromRules(
     context.contextItem,
     context.ruleTree,
+    context.mode,
   );
   let nonRuleTemplates = getTemplates(
     context.patternMatchCache,
