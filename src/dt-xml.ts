@@ -217,8 +217,8 @@ function visitXqx(
     }
     for (const child of node.childNodes.slice(1)) {
       visitXqx(child, features, nsResolver, {
-        level: context.level + 1,
         ...context,
+        level: context.level + 1,
       });
     }
   } else if (name === "nameTest") {

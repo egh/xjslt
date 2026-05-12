@@ -125,6 +125,10 @@ describe("xpathToFeatures", () => {
         new NodeTextFeature("hello"),
       ]);
     });
+
+    test("child predicate with wildcard parent", () => {
+      expect(xpathToFeatures("*[foo]", noNs)).toEqual(undefined);
+    });
   });
 
   describe("unsupported patterns return undefined", () => {
