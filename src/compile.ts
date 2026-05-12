@@ -1013,6 +1013,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
     templates: [],
     whitespaceDeclarations: [],
     rules: [],
+    declarationCounter: 0,
   };
   return {
     type: "Program",
@@ -1223,6 +1224,7 @@ function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
     ),
     namespaces: getNodeNS(node),
     priority: parseFloat(node.getAttribute("priority")) || undefined,
+    declarationOrder: ++context.declarationCounter,
     importPrecedence: parseInt(node.getAttribute("import-precedence")) || 1,
   };
   if (

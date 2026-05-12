@@ -395,6 +395,7 @@ function mkBuiltInTemplates(namespaces: object): Array<Template> {
       allowedParams: [],
       modes: ["#all"],
       importPrecedence: Number.MAX_VALUE,
+      declarationOrder: Number.MIN_VALUE,
     },
     {
       match: { xpath: "text()|@*" },
@@ -408,6 +409,7 @@ function mkBuiltInTemplates(namespaces: object): Array<Template> {
       allowedParams: [],
       modes: ["#all"],
       importPrecedence: Number.MAX_VALUE,
+      declarationOrder: Number.MIN_VALUE,
     },
     {
       match: { xpath: "*|/" },
@@ -423,6 +425,7 @@ function mkBuiltInTemplates(namespaces: object): Array<Template> {
       allowedParams: [],
       modes: ["#all"],
       importPrecedence: Number.MAX_VALUE,
+      declarationOrder: Number.MIN_VALUE,
     },
   ];
 }

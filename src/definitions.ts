@@ -139,6 +139,7 @@ export interface Sortable {
   importPrecedence: number;
   priority?: number;
   [propName: string]: unknown;
+  declarationOrder: number;
 }
 
 interface GenericTemplate extends Sortable {
@@ -217,6 +218,7 @@ export interface CompileContext {
   templates: Array<TemplateForCompilation>;
   whitespaceDeclarations: Array<Sortable>;
   rules: Array<Rule<slimdom.Node, TemplateForCompilation>>;
+  declarationCounter: number;
 }
 
 export type Constructor = string | SequenceConstructor;

@@ -180,10 +180,15 @@ export function compareSortable<T extends Sortable>(a: T, b: T): number {
     return importResult;
   } else {
     // Higher priority comes first
-    return (
+    const priorityResult =
       (b.priority || computeDefaultPriority(b.match?.xpath)) -
-      (a.priority || computeDefaultPriority(a.match?.xpath))
-    );
+      (a.priority || computeDefaultPriority(a.match?.xpath));
+    if (priorityResult !== 0) {
+      return priorityResult;
+    } else {
+      // Higher declaration order comes first
+      return b.declarationOrder - a.declarationOrder;
+    }
   }
 }
 
@@ -191,8 +196,6 @@ export function sortSortable<T extends Sortable>(
   templates: Array<T>,
 ): Array<T> {
   /* https://www.w3.org/TR/xslt20/#conflict */
-  // Last declared is first priority.
-  templates.reverse();
   templates.sort(compareSortable);
   return templates;
 }
