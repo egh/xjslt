@@ -72,10 +72,11 @@ import {
 import { formatNumber } from "./numbering";
 import { findMatchingRules } from "./dt";
 import {
+  AttributeFeature,
   NamespaceFeature,
   NodeNameFeature,
   NodeTextFeature,
-  AttributeFeature,
+  NodeTypeFeature,
 } from "./dt-xml";
 
 /* Depth first node visit */
@@ -2020,4 +2021,10 @@ export function compileMatchFunction(matchFunction: string) {
 
 registerFunctions();
 
-export { AttributeFeature, NamespaceFeature, NodeNameFeature, NodeTextFeature };
+export {
+  AttributeFeature,
+  NamespaceFeature,
+  NodeNameFeature,
+  NodeTextFeature,
+  NodeTypeFeature,
+};

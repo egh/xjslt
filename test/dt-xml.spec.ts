@@ -25,6 +25,7 @@ import {
   AttributeFeature,
   NodeTextFeature,
   XMLFeature,
+  NodeTypeFeature,
 } from "../src/dt-xml";
 
 import type { Rule, RuleTreeNode } from "../src/definitions";
@@ -40,16 +41,20 @@ describe("xpathToFeatures", () => {
   describe("supported patterns", () => {
     test("element name", () => {
       expect(xpathToFeatures("div", noNs)).toEqual([
+        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
         new NodeNameFeature("div"),
       ]);
     });
 
-    test("wildcard * yields no features", () => {
-      expect(xpathToFeatures("*", noNs)).toEqual([]);
+    test("wildcard * yields single node type feature", () => {
+      expect(xpathToFeatures("*", noNs)).toEqual([
+        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
+      ]);
     });
 
     test("element with attribute predicate", () => {
       expect(xpathToFeatures('div[@class="foo"]', noNs)).toEqual([
+        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
         new NodeNameFeature("div"),
         new AttributeFeature({ name: "class", value: "foo" }),
       ]);
@@ -57,6 +62,7 @@ describe("xpathToFeatures", () => {
 
     test("element with multiple attribute predicates", () => {
       expect(xpathToFeatures('div[@class="foo" and @id="bar"]', noNs)).toEqual([
+        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
         new NodeNameFeature("div"),
         new AttributeFeature({ name: "class", value: "foo" }),
         new AttributeFeature({ name: "id", value: "bar" }),
@@ -65,6 +71,7 @@ describe("xpathToFeatures", () => {
 
     test("namespace-prefixed element", () => {
       expect(xpathToFeatures("ns:p", withNs)).toEqual([
+        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
         new NodeNameFeature("p"),
         new NamespaceFeature(NS),
       ]);
@@ -72,6 +79,7 @@ describe("xpathToFeatures", () => {
 
     test("namespace-prefixed element with attribute predicate", () => {
       expect(xpathToFeatures('ns:p[@id="x"]', withNs)).toEqual([
+        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
         new NodeNameFeature("p"),
         new NamespaceFeature(NS),
         new AttributeFeature({ name: "id", value: "x" }),
@@ -80,6 +88,7 @@ describe("xpathToFeatures", () => {
 
     test("Q{uri} namespace syntax", () => {
       expect(xpathToFeatures(`Q{${NS}}div`, noNs)).toEqual([
+        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
         new NodeNameFeature("div"),
         new NamespaceFeature(NS),
       ]);
@@ -87,18 +96,21 @@ describe("xpathToFeatures", () => {
 
     test("namespace wildcard ns:*", () => {
       expect(xpathToFeatures("ns:*", withNs)).toEqual([
+        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
         new NamespaceFeature(NS),
       ]);
     });
 
     test("descendant shorthand //elem", () => {
       expect(xpathToFeatures("//div", noNs)).toEqual([
+        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
         new NodeNameFeature("div"),
       ]);
     });
 
     test("descendant shorthand with namespace //ns:elem", () => {
       expect(xpathToFeatures("//ns:p", withNs)).toEqual([
+        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
         new NodeNameFeature("p"),
         new NamespaceFeature(NS),
       ]);
@@ -106,6 +118,7 @@ describe("xpathToFeatures", () => {
 
     test("context item text predicate [.='value']", () => {
       expect(xpathToFeatures('div[.="hello"]', noNs)).toEqual([
+        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
         new NodeNameFeature("div"),
         new NodeTextFeature("hello"),
       ]);
@@ -113,6 +126,7 @@ describe("xpathToFeatures", () => {
 
     test("text() predicate [text()='value']", () => {
       expect(xpathToFeatures('div[text()="hello"]', noNs)).toEqual([
+        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
         new NodeNameFeature("div"),
         new NodeTextFeature("hello"),
       ]);
@@ -120,6 +134,7 @@ describe("xpathToFeatures", () => {
 
     test("text predicate combined with attribute predicate", () => {
       expect(xpathToFeatures('div[@class="foo"][.="hello"]', noNs)).toEqual([
+        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
         new NodeNameFeature("div"),
         new AttributeFeature({ name: "class", value: "foo" }),
         new NodeTextFeature("hello"),

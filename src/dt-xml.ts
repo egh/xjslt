@@ -24,38 +24,56 @@ import * as slimdom from "slimdom";
 
 const XQX_NS = "http://www.w3.org/2005/XQueryX";
 
-export class NamespaceFeature extends Feature<any, string | null> {
-  matches(node: any): boolean {
-    return node.namespaceURI === this.value;
+export class NamespaceFeature extends Feature<slimdom.Node, string | null> {
+  matches(node: slimdom.Node): boolean {
+    if (node.nodeType !== slimdom.Node.ELEMENT_NODE) {
+      return false;
+    } else {
+      return (node as slimdom.Element).namespaceURI === this.value;
+    }
   }
 }
 
-export class NodeNameFeature extends Feature<any, string> {
-  matches(node: any): boolean {
+export class NodeTypeFeature extends Feature<slimdom.Node, number | null> {
+  matches(node: slimdom.Node): boolean {
+    return node.nodeType === this.value;
+  }
+}
+
+export class NodeNameFeature extends Feature<slimdom.Node, string> {
+  matches(node: slimdom.Node): boolean {
     return node.nodeName === this.value;
   }
 }
 
-export class NodeTextFeature extends Feature<any, string | null> {
-  matches(node: any): boolean {
+export class NodeTextFeature extends Feature<slimdom.Node, string | null> {
+  matches(node: slimdom.Node): boolean {
     return node.textContent === this.value;
   }
 }
 
 export class AttributeFeature extends Feature<
-  any,
+  slimdom.Node,
   { name: string; value: string }
 > {
-  matches(element: any): boolean {
-    return element.getAttribute(this.value.name) === this.value.value;
+  matches(element: slimdom.Node): boolean {
+    if (element.nodeType !== slimdom.Node.ELEMENT_NODE) {
+      return false;
+    } else {
+      return (
+        (element as slimdom.Element).getAttribute(this.value.name) ===
+        this.value.value
+      );
+    }
   }
 }
 
 export type XMLFeature =
+  | AttributeFeature
   | NamespaceFeature
   | NodeNameFeature
   | NodeTextFeature
-  | AttributeFeature;
+  | NodeTypeFeature;
 
 /**
  * Parse an XPath 3 expression string with fontoxpath's parseScript and extract
@@ -164,7 +182,8 @@ function extractFeaturesFromAst(
   const features: XMLFeature[] = [];
   try {
     visitXqx(ast, features, nsResolver, { level: 0 });
-    return features;
+    // Only works for elements right now
+    return [new NodeTypeFeature(slimdom.Node.ELEMENT_NODE), ...features];
   } catch (err: any) {
     return undefined;
   }
