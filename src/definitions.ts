@@ -135,7 +135,6 @@ export interface VariableLike {
 }
 
 export interface Sortable {
-  match?: Xpath;
   importPrecedence: number;
   priority?: number;
   [propName: string]: unknown;
@@ -145,6 +144,7 @@ export interface Sortable {
 interface GenericTemplate extends Sortable {
   name?: string;
   modes: string[];
+  match?: Xpath;
   allowedParams: Array<VariableLike>;
 }
 
@@ -183,6 +183,7 @@ export interface ChooseAlternative {
 
 export interface WhitespaceDeclaration extends Sortable {
   preserve: boolean;
+  match?: Xpath;
   namespaces: {};
 }
 

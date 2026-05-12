@@ -76,6 +76,7 @@ import {
   TemplateForCompilation,
 } from "./definitions";
 import {
+  computeDefaultPriority,
   isAlphanumeric,
   mkOutputDefinition,
   mkResolver,
@@ -1223,7 +1224,9 @@ function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
       ),
     ),
     namespaces: getNodeNS(node),
-    priority: parseFloat(node.getAttribute("priority")) || undefined,
+    priority:
+      parseFloat(node.getAttribute("priority")) ||
+      computeDefaultPriority(matchStr),
     declarationOrder: ++context.declarationCounter,
     importPrecedence: parseInt(node.getAttribute("import-precedence")) || 1,
   };

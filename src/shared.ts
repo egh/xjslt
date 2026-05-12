@@ -180,9 +180,7 @@ export function compareSortable<T extends Sortable>(a: T, b: T): number {
     return importResult;
   } else {
     // Higher priority comes first
-    const priorityResult =
-      (b.priority || computeDefaultPriority(b.match?.xpath)) -
-      (a.priority || computeDefaultPriority(a.match?.xpath));
+    const priorityResult = b.priority - a.priority;
     if (priorityResult !== 0) {
       return priorityResult;
     } else {
