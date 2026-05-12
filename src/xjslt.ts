@@ -305,9 +305,10 @@ function patternMatch(
 }
 
 /**
- * Return matching "rule" based templates.
+ * Yield templates that match a node via the rule tree.
  *
- * @returns The template, or undefined if none can be found to match this node.
+ * @param node - The context node to match against.
+ * @param ruleTree - The compiled rule tree for the stylesheet.
  */
 function* getTemplatesFromRules(
   node: slimdom.Node,
@@ -320,10 +321,18 @@ function* getTemplatesFromRules(
 }
 
 /**
- * Find the template that should be used to process a node from the
-   list of templates that don't have "rules".
+ * Yield templates that match a node via pattern evaluation.
  *
- * @returns The template, or undefined if none can be found to match this node.
+ * Used for templates that could not be found via the rule tree. Each
+ * template's match pattern is evaluated against the node at runtime, filtered
+ * by mode.
+ *
+ * @param patternMatchCache - Cache of previously evaluated pattern matches.
+ * @param node - The context node to match against.
+ * @param templates - Candidate templates to test, including built-in templates.
+ * @param variableScopes - In-scope variable bindings for pattern evaluation.
+ * @param mode - The current template mode (e.g. `"#default"`).
+ * @param namespaces - Namespace prefix-to-URI bindings for XPath evaluation.
  */
 function* getTemplates(
   patternMatchCache: PatternMatchCache,
