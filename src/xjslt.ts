@@ -310,6 +310,7 @@ function patternMatch(
  *
  * @param node - The context node to match against.
  * @param ruleTree - The compiled rule tree for the stylesheet.
+ * @param mode - The current template mode (e.g. `"#default"`).
  */
 function* getTemplatesFromRules(
   node: slimdom.Node,
