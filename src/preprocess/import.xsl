@@ -34,6 +34,14 @@
        <xsl:attribute namespace="https://www.e6h.org/xjslt" name="import-precedence" select="$import-precedence"/>
      </xsl:copy>
    </xsl:template>
+
+   <xsl:template match="xsl:strip-space | xsl:preserve-space">
+     <xsl:param name="import-precedence"/>
+     <xsl:copy>
+       <xsl:apply-templates select="@* | node()" />
+       <xsl:attribute namespace="https://www.e6h.org/xjslt" name="import-precedence" select="$import-precedence"/>
+     </xsl:copy>
+   </xsl:template>
      
    <xsl:template match="xsl:import">
      <xsl:variable name="doc" select="doc(@href)"/>
