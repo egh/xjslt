@@ -634,14 +634,17 @@ function compileWhitespaceDeclarationNode(
       .getAttribute("elements")
       .split(/[\n\r\t ]+/)
       .map((e) => {
-        return toEstree({
-          importPrecedence: node.getAttribute("import-precedence") || 1,
+        return {
+          importPrecedence:
+            parseInt(node.getAttribute("import-precedence")) || 1,
           match: toEstree({
             xpath: mkLiteral(e),
           }),
           preserve: preserve,
           namespaces: getNodeNS(node),
-        });
+          priority: computeDefaultPriority(e),
+          declarationOrder: ++context.declarationCounter,
+        };
       }),
   );
 }

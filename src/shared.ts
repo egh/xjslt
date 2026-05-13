@@ -194,8 +194,7 @@ export function sortSortable<T extends Sortable>(
   templates: Array<T>,
 ): Array<T> {
   /* https://www.w3.org/TR/xslt20/#conflict */
-  templates.sort(compareSortable);
-  return templates;
+  return templates.sort(compareSortable);
 }
 
 export function zip<T, U>(arr1: T[], arr2: U[]): [T, U][] {
