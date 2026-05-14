@@ -18,15 +18,37 @@
  * <https://www.gnu.org/licenses/>.
  */
 
+import { mkMember, mkNew, toEstree } from "./estree-util";
+
 import { Feature } from "./definitions";
 import { parseScript, evaluateXPath, NamespaceResolver } from "fontoxpath";
 import * as slimdom from "slimdom";
 
 const XQX_NS = "http://www.w3.org/2005/XQueryX";
 
-export class NamespaceFeature extends Feature<slimdom.Node, string | null> {
+type NodeExtractor = (node: slimdom.Node) => slimdom.Node | undefined;
+
+export function selfNode(node: slimdom.Node): slimdom.Node {
+  return node;
+}
+
+abstract class NodeFeature<T> extends Feature<slimdom.Node, T> {
+  nodeExtractor: NodeExtractor;
+  constructor(nodeExtractor: NodeExtractor, value: T) {
+    super(value);
+    this.nodeExtractor = nodeExtractor;
+  }
+  serialize() {
+    return mkNew(mkMember("xjslt", this.constructor.name), [
+      toEstree(this.nodeExtractor),
+      toEstree(this.value),
+    ]);
+  }
+}
+
+export class NodeNamespaceFeature extends NodeFeature<string | null> {
   matches(node: slimdom.Node): boolean {
-    if (node.nodeType !== slimdom.Node.ELEMENT_NODE) {
+    if (this.nodeExtractor(node)?.nodeType !== slimdom.Node.ELEMENT_NODE) {
       return false;
     } else {
       return (node as slimdom.Element).namespaceURI === this.value;
@@ -34,34 +56,35 @@ export class NamespaceFeature extends Feature<slimdom.Node, string | null> {
   }
 }
 
-export class NodeTypeFeature extends Feature<slimdom.Node, number | null> {
+export class NodeTypeFeature extends NodeFeature<number | null> {
   matches(node: slimdom.Node): boolean {
-    return node.nodeType === this.value;
+    return this.nodeExtractor(node)?.nodeType === this.value;
   }
 }
 
-export class NodeNameFeature extends Feature<slimdom.Node, string> {
+export class NodeNameFeature extends NodeFeature<string> {
   matches(node: slimdom.Node): boolean {
-    return node.nodeName === this.value;
+    return this.nodeExtractor(node)?.nodeName === this.value;
   }
 }
 
-export class NodeTextFeature extends Feature<slimdom.Node, string | null> {
+export class NodeTextFeature extends NodeFeature<string | null> {
   matches(node: slimdom.Node): boolean {
-    return node.textContent === this.value;
+    return this.nodeExtractor(node)?.textContent === this.value;
   }
 }
 
-export class AttributeFeature extends Feature<
-  slimdom.Node,
-  { name: string; value: string }
-> {
-  matches(element: slimdom.Node): boolean {
-    if (element.nodeType !== slimdom.Node.ELEMENT_NODE) {
+export class NodeAttributeFeature extends NodeFeature<{
+  name: string;
+  value: string;
+}> {
+  matches(node: slimdom.Node): boolean {
+    const realNode = this.nodeExtractor(node);
+    if (realNode.nodeType !== slimdom.Node.ELEMENT_NODE) {
       return false;
     } else {
       return (
-        (element as slimdom.Element).getAttribute(this.value.name) ===
+        (realNode as slimdom.Element).getAttribute(this.value.name) ===
         this.value.value
       );
     }
@@ -69,9 +92,9 @@ export class AttributeFeature extends Feature<
 }
 
 export type XMLFeature =
-  | AttributeFeature
-  | NamespaceFeature
+  | NodeAttributeFeature
   | NodeNameFeature
+  | NodeNamespaceFeature
   | NodeTextFeature
   | NodeTypeFeature;
 
@@ -183,7 +206,10 @@ function extractFeaturesFromAst(
   try {
     visitXqx(ast, features, nsResolver, { level: 0 });
     // Only works for elements right now
-    return [new NodeTypeFeature(slimdom.Node.ELEMENT_NODE), ...features];
+    return [
+      new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE),
+      ...features,
+    ];
   } catch (err: any) {
     return undefined;
   }
@@ -242,21 +268,21 @@ function visitXqx(
     }
   } else if (name === "nameTest") {
     const localName = node.textContent;
-    if (localName) features.push(new NodeNameFeature(localName));
+    if (localName) features.push(new NodeNameFeature(selfNode, localName));
     const prefix = node.getAttributeNS(XQX_NS, "prefix");
     if (prefix) {
       const ns = nsResolver?.(prefix);
       if (!ns) throw new ExtractFeatureError(`unresolved ns prefix: ${ns}`);
-      features.push(new NamespaceFeature(ns));
+      features.push(new NodeNamespaceFeature(selfNode, ns));
     }
     const uri = node.getAttributeNS(XQX_NS, "URI");
-    if (uri) features.push(new NamespaceFeature(uri));
+    if (uri) features.push(new NodeNamespaceFeature(selfNode, uri));
   } else if (name === "Wildcard") {
     const ncName = firstXqxChild(node, "NCName");
     if (ncName) {
       const ns = nsResolver?.(ncName.textContent ?? "");
       if (!ns) throw new ExtractFeatureError(`unresolved ns prefix: ${ns}`);
-      features.push(new NamespaceFeature(ns));
+      features.push(new NodeNamespaceFeature(selfNode, ns));
     }
     // Basic wildcard, matches all elements
   } else if (name === "equalOp") {
@@ -291,17 +317,17 @@ function extractEqualsOpPredicate(
   if (attrStep) {
     const attrName = firstXqxChild(attrStep, "nameTest")?.textContent;
     if (!attrName) return undefined;
-    return new AttributeFeature({ name: attrName, value });
+    return new NodeAttributeFeature(selfNode, { name: attrName, value });
   }
 
   // Case 2: . = 'value'  (context item expression)
   if (firstXqxChild(firstOp, "contextItemExpr")) {
-    return new NodeTextFeature(value);
+    return new NodeTextFeature(selfNode, value);
   }
 
   // Case 3: text() = 'value'  (child text node)
   if (findXqxDescendant(firstOp, "textTest")) {
-    return new NodeTextFeature(value);
+    return new NodeTextFeature(selfNode, value);
   }
 
   return undefined;

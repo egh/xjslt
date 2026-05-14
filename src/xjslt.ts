@@ -72,8 +72,9 @@ import {
 import { formatNumber } from "./numbering";
 import { findMatchingRules } from "./dt";
 import {
-  AttributeFeature,
-  NamespaceFeature,
+  selfNode,
+  NodeAttributeFeature,
+  NodeNamespaceFeature,
   NodeNameFeature,
   NodeTextFeature,
   NodeTypeFeature,
@@ -2027,8 +2028,9 @@ export function compileMatchFunction(matchFunction: string) {
 registerFunctions();
 
 export {
-  AttributeFeature,
-  NamespaceFeature,
+  selfNode,
+  NodeAttributeFeature,
+  NodeNamespaceFeature,
   NodeNameFeature,
   NodeTextFeature,
   NodeTypeFeature,

@@ -297,6 +297,9 @@ export function toEstree(thing: any) {
   if (typeof thing.serialize === "function") {
     return thing.serialize();
   }
+  if (typeof thing === "function") {
+    return mkMember("xjslt", thing.name);
+  }
   if (thingtype === "object") {
     if ("type" in thing) {
       // It's already in estree format (most likely)

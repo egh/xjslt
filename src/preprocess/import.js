@@ -1,6 +1,6 @@
 (() => {
   var e = {
-      585(e, t, n) {
+      986(e, t, n) {
         (n(898), n(594));
         let r = n(821);
         function o(e, t) {
@@ -419,107 +419,145 @@
               return (a(t, e), t);
             });
         (Object.defineProperty(t, "__esModule", { value: !0 }),
-          (t.AttributeFeature =
+          (t.NodeAttributeFeature =
             t.NodeTextFeature =
             t.NodeNameFeature =
             t.NodeTypeFeature =
-            t.NamespaceFeature =
+            t.NodeNamespaceFeature =
               void 0),
+          (t.selfNode = m),
           (t.xpathToFeatures = function (e, t) {
             if (e)
               return (function (e, t) {
                 const n = [];
                 try {
                   return (
-                    T(e, n, t, { level: 0 }),
-                    [new m(u.Node.ELEMENT_NODE), ...n]
+                    E(e, n, t, { level: 0 }),
+                    [new g(m, l.Node.ELEMENT_NODE), ...n]
                   );
                 } catch (e) {
                   return;
                 }
               })(
-                (0, c.parseScript)(
+                (0, u.parseScript)(
                   e,
-                  { language: c.evaluateXPath.XPATH_3_1_LANGUAGE },
-                  new u.Document(),
+                  { language: u.evaluateXPath.XPATH_3_1_LANGUAGE },
+                  new l.Document(),
                 ),
                 t,
               );
           }));
-        const i = n(712),
-          c = n(594),
-          u = s(n(898)),
-          l = "http://www.w3.org/2005/XQueryX";
-        class p extends i.Feature {
+        const i = n(953),
+          c = n(712),
+          u = n(594),
+          l = s(n(898)),
+          p = "http://www.w3.org/2005/XQueryX";
+        function m(e) {
+          return e;
+        }
+        class d extends c.Feature {
+          constructor(e, t) {
+            (super(t), (this.nodeExtractor = e));
+          }
+          serialize() {
+            return (0, i.mkNew)(
+              (0, i.mkMember)("xjslt", this.constructor.name),
+              [
+                (0, i.toEstree)(this.nodeExtractor),
+                (0, i.toEstree)(this.value),
+              ],
+            );
+          }
+        }
+        class f extends d {
           matches(e) {
+            var t;
             return (
-              e.nodeType === u.Node.ELEMENT_NODE &&
+              (null === (t = this.nodeExtractor(e)) || void 0 === t
+                ? void 0
+                : t.nodeType) === l.Node.ELEMENT_NODE &&
               e.namespaceURI === this.value
             );
           }
         }
-        t.NamespaceFeature = p;
-        class m extends i.Feature {
+        t.NodeNamespaceFeature = f;
+        class g extends d {
           matches(e) {
-            return e.nodeType === this.value;
-          }
-        }
-        t.NodeTypeFeature = m;
-        class d extends i.Feature {
-          matches(e) {
-            return e.nodeName === this.value;
-          }
-        }
-        t.NodeNameFeature = d;
-        class f extends i.Feature {
-          matches(e) {
-            return e.textContent === this.value;
-          }
-        }
-        t.NodeTextFeature = f;
-        class g extends i.Feature {
-          matches(e) {
+            var t;
             return (
-              e.nodeType === u.Node.ELEMENT_NODE &&
-              e.getAttribute(this.value.name) === this.value.value
+              (null === (t = this.nodeExtractor(e)) || void 0 === t
+                ? void 0
+                : t.nodeType) === this.value
             );
           }
         }
-        function h(e) {
+        t.NodeTypeFeature = g;
+        class h extends d {
+          matches(e) {
+            var t;
+            return (
+              (null === (t = this.nodeExtractor(e)) || void 0 === t
+                ? void 0
+                : t.nodeName) === this.value
+            );
+          }
+        }
+        t.NodeNameFeature = h;
+        class x extends d {
+          matches(e) {
+            var t;
+            return (
+              (null === (t = this.nodeExtractor(e)) || void 0 === t
+                ? void 0
+                : t.textContent) === this.value
+            );
+          }
+        }
+        t.NodeTextFeature = x;
+        class v extends d {
+          matches(e) {
+            const t = this.nodeExtractor(e);
+            return (
+              t.nodeType === l.Node.ELEMENT_NODE &&
+              t.getAttribute(this.value.name) === this.value.value
+            );
+          }
+        }
+        function N(e) {
           return (
             (function (e) {
               return 1 === e.nodeType;
-            })(e) && e.namespaceURI === l
+            })(e) && e.namespaceURI === p
           );
         }
-        function x(e, t) {
-          return h(e) && e.localName === t;
+        function y(e, t) {
+          return N(e) && e.localName === t;
         }
-        function v(e, t) {
-          for (const n of e.childNodes) if (x(n, t)) return n;
+        function w(e, t) {
+          for (const n of e.childNodes) if (y(n, t)) return n;
         }
-        function N(e, t, n) {
+        function T(e, t, n) {
           for (const r of e.childNodes) {
-            if (!h(r)) continue;
-            if (x(r, t) && (!n || n(r))) return r;
-            const e = N(r, t, n);
+            if (!N(r)) continue;
+            if (y(r, t) && (!n || n(r))) return r;
+            const e = T(r, t, n);
             if (e) return e;
           }
         }
-        function y(e) {
+        function b(e) {
           var t;
           return (
             "descendant-or-self" ===
-              (null === (t = v(e, "xpathAxis")) || void 0 === t
+              (null === (t = w(e, "xpathAxis")) || void 0 === t
                 ? void 0
-                : t.textContent) && !!v(e, "anyKindTest")
+                : t.textContent) && !!w(e, "anyKindTest")
           );
         }
-        t.AttributeFeature = g;
-        class w extends Error {}
-        function T(e, t, n, r) {
+        t.NodeAttributeFeature = v;
+        class S extends Error {}
+        function E(e, t, n, r) {
           var o, a;
-          if (!h(e)) return;
+          if (!N(e)) return;
           const s = e.localName;
           if (
             "module" === s ||
@@ -530,21 +568,21 @@
             "firstOperand" === s ||
             "secondOperand" === s
           )
-            for (const o of e.childNodes) T(o, t, n, r);
+            for (const o of e.childNodes) E(o, t, n, r);
           else if ("pathExpr" === s) {
-            const o = e.childNodes.filter((e) => x(e, "stepExpr"));
-            if (0 === o.length) throw new w();
-            for (const e of o.slice(0, -1)) if (!y(e)) throw new w();
-            T(o[o.length - 1], t, n, r);
+            const o = e.childNodes.filter((e) => y(e, "stepExpr"));
+            if (0 === o.length) throw new S();
+            for (const e of o.slice(0, -1)) if (!b(e)) throw new S();
+            E(o[o.length - 1], t, n, r);
           } else if ("stepExpr" === s) {
             const a =
-              null === (o = v(e, "xpathAxis")) || void 0 === o
+              null === (o = w(e, "xpathAxis")) || void 0 === o
                 ? void 0
                 : o.textContent;
-            if ("child" !== a) throw new w(`unsupported axis: ${a}`);
-            if (r.level > 0) throw new w("Too many child axes.");
+            if ("child" !== a) throw new S(`unsupported axis: ${a}`);
+            if (r.level > 0) throw new S("Too many child axes.");
             for (const o of e.childNodes.slice(1))
-              T(
+              E(
                 o,
                 t,
                 n,
@@ -552,61 +590,61 @@
               );
           } else if ("nameTest" === s) {
             const r = e.textContent;
-            r && t.push(new d(r));
-            const o = e.getAttributeNS(l, "prefix");
+            r && t.push(new h(m, r));
+            const o = e.getAttributeNS(p, "prefix");
             if (o) {
               const e = null == n ? void 0 : n(o);
-              if (!e) throw new w(`unresolved ns prefix: ${e}`);
-              t.push(new p(e));
+              if (!e) throw new S(`unresolved ns prefix: ${e}`);
+              t.push(new f(m, e));
             }
-            const a = e.getAttributeNS(l, "URI");
-            a && t.push(new p(a));
+            const a = e.getAttributeNS(p, "URI");
+            a && t.push(new f(m, a));
           } else if ("Wildcard" === s) {
-            const r = v(e, "NCName");
+            const r = w(e, "NCName");
             if (r) {
               const e =
                 null == n
                   ? void 0
                   : n(null !== (a = r.textContent) && void 0 !== a ? a : "");
-              if (!e) throw new w(`unresolved ns prefix: ${e}`);
-              t.push(new p(e));
+              if (!e) throw new S(`unresolved ns prefix: ${e}`);
+              t.push(new f(m, e));
             }
           } else {
-            if ("equalOp" !== s) throw new w();
+            if ("equalOp" !== s) throw new S();
             {
-              const n = v(e, "firstOperand"),
-                r = v(e, "secondOperand");
-              if (!n || !r) throw new w();
-              const o = b(n, r) || b(r, n);
-              if (!o) throw new w();
+              const n = w(e, "firstOperand"),
+                r = w(e, "secondOperand");
+              if (!n || !r) throw new S();
+              const o = R(n, r) || R(r, n);
+              if (!o) throw new S();
               t.push(o);
             }
           }
         }
-        function b(e, t) {
+        function R(e, t) {
           var n, r;
-          const o = N(t, "value");
+          const o = T(t, "value");
           if (!o) return;
           const a = null !== (n = o.textContent) && void 0 !== n ? n : "",
-            s = N(e, "stepExpr", (e) => {
+            s = T(e, "stepExpr", (e) => {
               var t;
               return (
                 "attribute" ===
-                (null === (t = v(e, "xpathAxis")) || void 0 === t
+                (null === (t = w(e, "xpathAxis")) || void 0 === t
                   ? void 0
                   : t.textContent)
               );
             });
           if (s) {
             const e =
-              null === (r = v(s, "nameTest")) || void 0 === r
+              null === (r = w(s, "nameTest")) || void 0 === r
                 ? void 0
                 : r.textContent;
             if (!e) return;
-            return new g({ name: e, value: a });
+            return new v(m, { name: e, value: a });
           }
-          return v(e, "contextItemExpr") || N(e, "textTest")
-            ? new f(a)
+          return w(e, "contextItemExpr") || T(e, "textTest")
+            ? new x(m, a)
             : void 0;
         }
       },
@@ -671,6 +709,15 @@
           return { type: "Literal", value: (e = null == e ? void 0 : e) };
         }
         function a(e, t) {
+          return {
+            type: "MemberExpression",
+            object: r(e),
+            property: r(t),
+            computed: !1,
+            optional: !1,
+          };
+        }
+        function s(e, t) {
           return (
             t || (t = e),
             {
@@ -691,10 +738,10 @@
             }
           );
         }
-        function s(e) {
+        function i(e) {
           return { type: "ArrayExpression", elements: e };
         }
-        function i(e, t, n) {
+        function c(e, t, n) {
           return {
             type: "VariableDeclaration",
             declarations: [{ type: "VariableDeclarator", id: e, init: t }],
@@ -752,18 +799,10 @@
             ];
           }),
           (t.mkImportsNode = function () {
-            return [a("slimdom"), a("fontoxpath"), a("xjslt", "xjslt")];
+            return [s("slimdom"), s("fontoxpath"), s("xjslt", "xjslt")];
           }),
           (t.mkLiteral = o),
-          (t.mkMember = function (e, t) {
-            return {
-              type: "MemberExpression",
-              object: r(e),
-              property: r(t),
-              computed: !1,
-              optional: !1,
-            };
-          }),
+          (t.mkMember = a),
           (t.mkObject = function (e) {
             let t = [];
             for (let n in e)
@@ -778,8 +817,8 @@
               });
             return { type: "ObjectExpression", properties: t };
           }),
-          (t.mkRequire = a),
-          (t.mkArray = s),
+          (t.mkRequire = s),
+          (t.mkArray = i),
           (t.mkReturn = function (e) {
             return { type: "ReturnStatement", argument: e };
           }),
@@ -787,12 +826,12 @@
             return { type: "BlockStatement", body: e };
           }),
           (t.mkLet = function (e, t) {
-            return i(e, t, "let");
+            return c(e, t, "let");
           }),
           (t.mkConst = function (e, t) {
-            return i(e, t, "const");
+            return c(e, t, "const");
           }),
-          (t.mkVariableDeclaration = i),
+          (t.mkVariableDeclaration = c),
           (t.mkNew = function (e, t) {
             return { type: "NewExpression", callee: e, arguments: t };
           }),
@@ -804,27 +843,29 @@
               "boolean" === n
               ? o(t)
               : Array.isArray(t)
-                ? s(t.map((t) => e(t)))
+                ? i(t.map((t) => e(t)))
                 : "function" == typeof t.serialize
                   ? t.serialize()
-                  : "object" === n
-                    ? "type" in t
-                      ? t
-                      : (function (t) {
-                          let n = [];
-                          for (let r in t)
-                            n.push({
-                              type: "Property",
-                              method: !1,
-                              shorthand: !1,
-                              computed: !1,
-                              key: e(r),
-                              value: e(t[r]),
-                              kind: "init",
-                            });
-                          return { type: "ObjectExpression", properties: n };
-                        })(t)
-                    : void 0;
+                  : "function" == typeof t
+                    ? a("xjslt", t.name)
+                    : "object" === n
+                      ? "type" in t
+                        ? t
+                        : (function (t) {
+                            let n = [];
+                            for (let r in t)
+                              n.push({
+                                type: "Property",
+                                method: !1,
+                                shorthand: !1,
+                                computed: !1,
+                                key: e(r),
+                                value: e(t[r]),
+                                kind: "init",
+                              });
+                            return { type: "ObjectExpression", properties: n };
+                          })(t)
+                      : void 0;
           }));
       },
       379(e, t, n) {
@@ -1542,8 +1583,9 @@
           (t.NodeTypeFeature =
             t.NodeTextFeature =
             t.NodeNameFeature =
-            t.NamespaceFeature =
-            t.AttributeFeature =
+            t.NodeNamespaceFeature =
+            t.NodeAttributeFeature =
+            t.selfNode =
             t.KeyImpl =
               void 0),
           (t.visitNodes = g),
@@ -2139,16 +2181,22 @@
           const o = e.get(t);
           return (o.has(n) || o.set(n, r()), o.get(n));
         }
-        (Object.defineProperty(t, "AttributeFeature", {
+        (Object.defineProperty(t, "selfNode", {
           enumerable: !0,
           get: function () {
-            return f.AttributeFeature;
+            return f.selfNode;
           },
         }),
-          Object.defineProperty(t, "NamespaceFeature", {
+          Object.defineProperty(t, "NodeAttributeFeature", {
             enumerable: !0,
             get: function () {
-              return f.NamespaceFeature;
+              return f.NodeAttributeFeature;
+            },
+          }),
+          Object.defineProperty(t, "NodeNamespaceFeature", {
+            enumerable: !0,
+            get: function () {
+              return f.NodeNamespaceFeature;
             },
           }),
           Object.defineProperty(t, "NodeNameFeature", {
@@ -2339,13 +2387,13 @@
               t,
             );
         }
-        function R(e, t, n, r) {
+        function E(e, t, n, r) {
           let o;
           return (
             (o =
               "number" === n.dataType
                 ? (function (e, t, n, r) {
-                    const o = E(t, e, (e) => {
+                    const o = R(t, e, (e) => {
                       let t;
                       const o = Y(e, n.sortKey, r);
                       return (
@@ -2359,7 +2407,7 @@
                       .map((e) => e[1]);
                   })(e, t, n, r)
                 : (function (e, t, n, r) {
-                    const o = E(t, e, (e) => Y(e, n.sortKey, r)),
+                    const o = R(t, e, (e) => Y(e, n.sortKey, r)),
                       a = n.lang && B(e, n.lang, r);
                     let s = new Intl.Collator(a).compare;
                     return (0, p.zip)(o, t)
@@ -2370,7 +2418,7 @@
             o
           );
         }
-        function E(e, t, n) {
+        function R(e, t, n) {
           if (e.length > 0)
             return (0, l.isNodeGroupArray)(e) ? O(e, t, n) : I(e, t, n);
         }
@@ -2404,7 +2452,7 @@
           });
         }
         function $(e, t, n, r) {
-          if (n) for (let o of [...n].reverse()) t = R(e, t, o, r);
+          if (n) for (let o of [...n].reverse()) t = E(e, t, o, r);
           return t;
         }
         function P(e, t) {
@@ -2694,6 +2742,6 @@
       if (void 0 !== o) return o.exports;
       var a = (t[r] = { exports: {} });
       return (e[r].call(a.exports, a, a.exports, n), a.exports);
-    })(585);
+    })(986);
   module.exports = n.transform;
 })();

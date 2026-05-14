@@ -19,12 +19,12 @@
  */
 
 import {
+  selfNode,
   xpathToFeatures,
   NodeNameFeature,
-  NamespaceFeature,
-  AttributeFeature,
+  NodeNamespaceFeature,
+  NodeAttributeFeature,
   NodeTextFeature,
-  XMLFeature,
   NodeTypeFeature,
 } from "../src/dt-xml";
 
@@ -41,103 +41,103 @@ describe("xpathToFeatures", () => {
   describe("supported patterns", () => {
     test("element name", () => {
       expect(xpathToFeatures("div", noNs)).toEqual([
-        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
-        new NodeNameFeature("div"),
+        new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE),
+        new NodeNameFeature(selfNode, "div"),
       ]);
     });
 
     test("wildcard * yields single node type feature", () => {
       expect(xpathToFeatures("*", noNs)).toEqual([
-        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
+        new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE),
       ]);
     });
 
     test("element with attribute predicate", () => {
       expect(xpathToFeatures('div[@class="foo"]', noNs)).toEqual([
-        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
-        new NodeNameFeature("div"),
-        new AttributeFeature({ name: "class", value: "foo" }),
+        new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE),
+        new NodeNameFeature(selfNode, "div"),
+        new NodeAttributeFeature(selfNode, { name: "class", value: "foo" }),
       ]);
     });
 
     test("element with multiple attribute predicates", () => {
       expect(xpathToFeatures('div[@class="foo" and @id="bar"]', noNs)).toEqual([
-        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
-        new NodeNameFeature("div"),
-        new AttributeFeature({ name: "class", value: "foo" }),
-        new AttributeFeature({ name: "id", value: "bar" }),
+        new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE),
+        new NodeNameFeature(selfNode, "div"),
+        new NodeAttributeFeature(selfNode, { name: "class", value: "foo" }),
+        new NodeAttributeFeature(selfNode, { name: "id", value: "bar" }),
       ]);
     });
 
     test("namespace-prefixed element", () => {
       expect(xpathToFeatures("ns:p", withNs)).toEqual([
-        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
-        new NodeNameFeature("p"),
-        new NamespaceFeature(NS),
+        new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE),
+        new NodeNameFeature(selfNode, "p"),
+        new NodeNamespaceFeature(selfNode, NS),
       ]);
     });
 
     test("namespace-prefixed element with attribute predicate", () => {
       expect(xpathToFeatures('ns:p[@id="x"]', withNs)).toEqual([
-        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
-        new NodeNameFeature("p"),
-        new NamespaceFeature(NS),
-        new AttributeFeature({ name: "id", value: "x" }),
+        new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE),
+        new NodeNameFeature(selfNode, "p"),
+        new NodeNamespaceFeature(selfNode, NS),
+        new NodeAttributeFeature(selfNode, { name: "id", value: "x" }),
       ]);
     });
 
     test("Q{uri} namespace syntax", () => {
       expect(xpathToFeatures(`Q{${NS}}div`, noNs)).toEqual([
-        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
-        new NodeNameFeature("div"),
-        new NamespaceFeature(NS),
+        new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE),
+        new NodeNameFeature(selfNode, "div"),
+        new NodeNamespaceFeature(selfNode, NS),
       ]);
     });
 
     test("namespace wildcard ns:*", () => {
       expect(xpathToFeatures("ns:*", withNs)).toEqual([
-        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
-        new NamespaceFeature(NS),
+        new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE),
+        new NodeNamespaceFeature(selfNode, NS),
       ]);
     });
 
     test("descendant shorthand //elem", () => {
       expect(xpathToFeatures("//div", noNs)).toEqual([
-        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
-        new NodeNameFeature("div"),
+        new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE),
+        new NodeNameFeature(selfNode, "div"),
       ]);
     });
 
     test("descendant shorthand with namespace //ns:elem", () => {
       expect(xpathToFeatures("//ns:p", withNs)).toEqual([
-        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
-        new NodeNameFeature("p"),
-        new NamespaceFeature(NS),
+        new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE),
+        new NodeNameFeature(selfNode, "p"),
+        new NodeNamespaceFeature(selfNode, NS),
       ]);
     });
 
     test("context item text predicate [.='value']", () => {
       expect(xpathToFeatures('div[.="hello"]', noNs)).toEqual([
-        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
-        new NodeNameFeature("div"),
-        new NodeTextFeature("hello"),
+        new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE),
+        new NodeNameFeature(selfNode, "div"),
+        new NodeTextFeature(selfNode, "hello"),
       ]);
     });
 
     test("text() predicate [text()='value']", () => {
       expect(xpathToFeatures('div[text()="hello"]', noNs)).toEqual([
-        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
-        new NodeNameFeature("div"),
-        new NodeTextFeature("hello"),
+        new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE),
+        new NodeNameFeature(selfNode, "div"),
+        new NodeTextFeature(selfNode, "hello"),
       ]);
     });
 
     test("text predicate combined with attribute predicate", () => {
       expect(xpathToFeatures('div[@class="foo"][.="hello"]', noNs)).toEqual([
-        new NodeTypeFeature(slimdom.Node.ELEMENT_NODE),
-        new NodeNameFeature("div"),
-        new AttributeFeature({ name: "class", value: "foo" }),
-        new NodeTextFeature("hello"),
+        new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE),
+        new NodeNameFeature(selfNode, "div"),
+        new NodeAttributeFeature(selfNode, { name: "class", value: "foo" }),
+        new NodeTextFeature(selfNode, "hello"),
       ]);
     });
 
@@ -313,30 +313,37 @@ describe("finding rules", () => {
 
 describe("serialize", () => {
   test("NodeNameFeature", () => {
-    expect(generate(new NodeNameFeature("div").serialize())).toBe(
-      'new xjslt.NodeNameFeature("div")',
+    expect(generate(new NodeNameFeature(selfNode, "div").serialize())).toBe(
+      'new xjslt.NodeNameFeature(xjslt.selfNode, "div")',
     );
   });
 
-  test("NamespaceFeature", () => {
+  test("NodeNamespaceFeature", () => {
     expect(
-      generate(new NamespaceFeature("http://example.com").serialize()),
-    ).toBe('new xjslt.NamespaceFeature("http://example.com")');
+      generate(
+        new NodeNamespaceFeature(selfNode, "http://example.com").serialize(),
+      ),
+    ).toBe(
+      'new xjslt.NodeNamespaceFeature(xjslt.selfNode, "http://example.com")',
+    );
   });
 
   test("NodeTextFeature", () => {
-    expect(generate(new NodeTextFeature("hello").serialize())).toBe(
-      'new xjslt.NodeTextFeature("hello")',
+    expect(generate(new NodeTextFeature(selfNode, "hello").serialize())).toBe(
+      'new xjslt.NodeTextFeature(xjslt.selfNode, "hello")',
     );
   });
 
-  test("AttributeFeature", () => {
+  test("NodeAttributeFeature", () => {
     expect(
       generate(
-        new AttributeFeature({ name: "class", value: "foo" }).serialize(),
+        new NodeAttributeFeature(selfNode, {
+          name: "class",
+          value: "foo",
+        }).serialize(),
       ),
     ).toBe(
-      'new xjslt.AttributeFeature({\n  "name": "class",\n  "value": "foo"\n})',
+      'new xjslt.NodeAttributeFeature(xjslt.selfNode, {\n  "name": "class",\n  "value": "foo"\n})',
     );
   });
 });
