@@ -449,7 +449,7 @@ export function processNode(
   let nonRuleTemplates = getTemplates(
     context.patternMatchCache,
     context.contextItem,
-    context.templates.concat(mkBuiltInTemplates(namespaces)),
+    context.templates.concat(context.builtInTemplates),
     context.variableScopes,
     context.mode,
     namespaces,
@@ -2023,6 +2023,10 @@ export function compileMatchFunction(matchFunction: string) {
     // Not allowed in some contexts, so just return undefined.
     return undefined;
   }
+}
+
+export function initialize(context: DynamicContext, namespaces: object) {
+  context.builtInTemplates = mkBuiltInTemplates(namespaces);
 }
 
 registerFunctions();

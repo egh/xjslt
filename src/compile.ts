@@ -1138,6 +1138,9 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             context,
             compileTopLevelNode,
           ),
+          mkCallWithContext(mkMember("xjslt", "initialize"), [
+            toEstree(getNodeNS(node)),
+          ]),
           mkCall(mkMember("xjslt", "stripSpace"), [
             mkIdentifier("document"),
             toEstree(sortSortable(context.whitespaceDeclarations)),

@@ -207,6 +207,7 @@ export interface DynamicContext {
   patternMatchCache: PatternMatchCache;
   ruleTree: RuleTreeNode<slimdom.Node, Template>;
   outputDefinitions: Map<string, OutputDefinition>;
+  builtInTemplates: Array<Template>;
   decimalFormats: Map<string, DecimalFormat>;
   stylesheetParams?: object;
   // The actual context
