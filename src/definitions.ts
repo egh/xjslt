@@ -18,6 +18,8 @@ export const XMLNS_NSURI = "http://www.w3.org/2000/xmlns/";
 export const XPATH_NSURI = "http://www.w3.org/2005/xpath-functions";
 export const XJSLT_NSURI = "https://www.e6h.org/xjslt";
 
+export type TemplateIndex = number;
+
 export const DEFAULT_PRIORITIES = new Map<RegExp, number>([
   [new RegExp(String.raw`^\s*/\s*$`), -0.5],
   [new RegExp(String.raw`^\s*\*\s*$`), -0.5],
@@ -205,9 +207,11 @@ export interface DynamicContext {
   currentGroup?: NodeGroup;
   keys: Map<String, Key>;
   patternMatchCache: PatternMatchCache;
-  ruleTree: RuleTreeNode<slimdom.Node, Template>;
+  ruleTree: RuleTreeNode<slimdom.Node, TemplateIndex>;
+  nonRuleTemplateIndexes: Array<TemplateIndex>;
+  nonRuleTemplates: Array<Template>;
+  namedTemplates: Map<string, TemplateIndex>;
   outputDefinitions: Map<string, OutputDefinition>;
-  builtInTemplates: Array<Template>;
   decimalFormats: Map<string, DecimalFormat>;
   stylesheetParams?: object;
   // The actual context
@@ -217,10 +221,12 @@ export interface DynamicContext {
 }
 
 export interface CompileContext {
+  declarationCounter: number;
+  namedTemplates: Map<string, TemplateIndex>;
+  nonRuleTemplates: Array<TemplateIndex>;
+  rules: Array<Rule<slimdom.Node, TemplateIndex>>;
   templates: Array<TemplateForCompilation>;
   whitespaceDeclarations: Array<Sortable>;
-  rules: Array<Rule<slimdom.Node, TemplateForCompilation>>;
-  declarationCounter: number;
 }
 
 export type Constructor = string | SequenceConstructor;

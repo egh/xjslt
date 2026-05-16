@@ -76,6 +76,7 @@ import {
   TemplateForCompilation,
 } from "./definitions";
 import {
+  compareSortable,
   computeDefaultPriority,
   isAlphanumeric,
   mkOutputDefinition,
@@ -1014,10 +1015,12 @@ function compileSequenceConstructor(
 
 export function compileStylesheetNode(node: slimdom.Element): Program {
   let context: CompileContext = {
+    declarationCounter: 0,
+    namedTemplates: new Map(),
+    nonRuleTemplates: [],
+    rules: [],
     templates: [],
     whitespaceDeclarations: [],
-    rules: [],
-    declarationCounter: 0,
   };
   return {
     type: "Program",
@@ -1115,7 +1118,11 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               contextList: mkArray([mkIdentifier("document")]),
               position: mkLiteral(1),
               mode: mkMember("params", "initialMode"),
-              templates: sortSortable(context.templates),
+              templates: context.templates,
+              nonRuleTemplateIndexes: context.nonRuleTemplates.sort((a, b) =>
+                compareSortable(context.templates[a], context.templates[b]),
+              ),
+              namedTemplates: toEstree(context.namedTemplates),
               variableScopes: [mkNew(mkIdentifier("Map"), [])],
               inputURL: mkMember("params", "inputURL"),
               ruleTree: toEstree(buildRuleTree(context.rules)),
@@ -1126,6 +1133,9 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               stylesheetParams: mkMember("params", "stylesheetParams"),
             }),
           ),
+          mkCallWithContext(mkMember("xjslt", "initialize"), [
+            toEstree(getNodeNS(node)),
+          ]),
           /* Then everything else */
           ...compileNodeArray(
             evaluateXPathToNodes(
@@ -1138,9 +1148,6 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
             context,
             compileTopLevelNode,
           ),
-          mkCallWithContext(mkMember("xjslt", "initialize"), [
-            toEstree(getNodeNS(node)),
-          ]),
           mkCall(mkMember("xjslt", "stripSpace"), [
             mkIdentifier("document"),
             toEstree(sortSortable(context.whitespaceDeclarations)),
@@ -1236,15 +1243,20 @@ function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
     declarationOrder: ++context.declarationCounter,
     importPrecedence: parseInt(node.getAttribute("import-precedence")) || 1,
   };
+  context.templates.push(template);
+  const index = context.templates.length - 1;
+  if (template.name) {
+    context.namedTemplates.set(template.name, index);
+  }
   if (
     features &&
     !template.name &&
     template.modes.length === 1 &&
     template.modes[0] === "#default"
   ) {
-    context.rules.push({ result: template, features });
-  } else {
-    context.templates.push(template);
+    context.rules.push({ result: index, features });
+  } else if (match) {
+    context.nonRuleTemplates.push(index);
   }
 }
 

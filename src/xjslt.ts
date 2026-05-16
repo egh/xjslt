@@ -54,6 +54,7 @@ import {
   SequenceConstructor,
   SequenceConstructorWithReturn,
   SortKeyComponent,
+  TemplateIndex,
   TransformParams,
   VariableLike,
   VariableScope,
@@ -315,11 +316,13 @@ function patternMatch(
  */
 function* getTemplatesFromRules(
   node: slimdom.Node,
-  ruleTree: RuleTreeNode<slimdom.Node, Template>,
+  ruleTree: RuleTreeNode<slimdom.Node, TemplateIndex>,
+  templates: Array<Template>,
   mode: string,
 ): Generator<Template> {
   if (mode === "#default") {
-    for (let template of sortSortable(findMatchingRules(ruleTree, node))) {
+    const found = findMatchingRules(ruleTree, node).map((i) => templates[i]);
+    for (let template of sortSortable(found)) {
       // Guaranteed to match.
       yield template;
     }
@@ -444,12 +447,13 @@ export function processNode(
   let ruleTemplates = getTemplatesFromRules(
     context.contextItem,
     context.ruleTree,
+    context.templates,
     context.mode,
   );
   let nonRuleTemplates = getTemplates(
     context.patternMatchCache,
     context.contextItem,
-    context.templates.concat(context.builtInTemplates),
+    context.nonRuleTemplates,
     context.variableScopes,
     context.mode,
     namespaces,
@@ -727,10 +731,13 @@ export function callTemplate(
     namespaces: object;
   },
 ) {
-  for (let template of context.templates) {
-    if (template.name !== undefined && data.name === template.name) {
-      return evaluateTemplate(template, context, data.params);
-    }
+  const templateIndex = context.namedTemplates.get(data.name);
+  if (templateIndex !== undefined) {
+    return evaluateTemplate(
+      context.templates[templateIndex],
+      context,
+      data.params,
+    );
   }
   throw new Error(`Cannot find a template named ${data.name}`);
 }
@@ -2026,7 +2033,9 @@ export function compileMatchFunction(matchFunction: string) {
 }
 
 export function initialize(context: DynamicContext, namespaces: object) {
-  context.builtInTemplates = mkBuiltInTemplates(namespaces);
+  context.nonRuleTemplates = context.nonRuleTemplateIndexes
+    .map((i) => context.templates[i])
+    .concat(mkBuiltInTemplates(namespaces));
 }
 
 registerFunctions();
