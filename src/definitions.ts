@@ -144,7 +144,6 @@ export interface Sortable {
 }
 
 interface GenericTemplate extends Sortable {
-  name?: string;
   modes: string[];
   match?: Xpath;
   allowedParams: Array<VariableLike>;

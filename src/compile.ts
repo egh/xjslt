@@ -1231,9 +1231,9 @@ function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
   const matchStr = node.getAttribute("match") || undefined;
   const match = matchStr ? tryCompilePattern(matchStr, namespaces) : undefined;
   const features = xpathToFeatures(matchStr);
+  const name = expandQname(node.getAttribute("name"), namespaces) || undefined;
   const template: TemplateForCompilation = {
     match: match,
-    name: expandQname(node.getAttribute("name"), namespaces) || undefined,
     modes: (node.getAttribute("mode") || "#default")
       .split(" ")
       .filter((s) => s !== "")
@@ -1255,21 +1255,20 @@ function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
   };
   context.templates.push(template);
   const index = context.templates.length - 1;
-  if (template.name) {
-    if (!context.namedTemplates.has(template.name)) {
-      context.namedTemplates.set(template.name, [index]);
+  if (name) {
+    if (!context.namedTemplates.has(name)) {
+      context.namedTemplates.set(name, [index]);
     } else {
-      let templates = context.namedTemplates.get(template.name);
+      let templates = context.namedTemplates.get(name);
       templates.push(index);
       templates.sort((a, b) =>
         compareSortable(context.templates[a], context.templates[b]),
       );
-      context.namedTemplates.set(template.name, templates);
+      context.namedTemplates.set(name, templates);
     }
   }
   if (
     features &&
-    !template.name &&
     template.modes.length === 1 &&
     template.modes[0] === "#default"
   ) {
