@@ -222,7 +222,7 @@ export interface DynamicContext {
 
 export interface CompileContext {
   declarationCounter: number;
-  namedTemplates: Map<string, TemplateIndex>;
+  namedTemplates: Map<string, Array<TemplateIndex>>;
   nonRuleTemplates: Array<TemplateIndex>;
   rules: Array<Rule<slimdom.Node, TemplateIndex>>;
   templates: Array<TemplateForCompilation>;

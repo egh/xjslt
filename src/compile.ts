@@ -74,6 +74,7 @@ import {
   xpathstring,
   Rule,
   TemplateForCompilation,
+  TemplateIndex,
 } from "./definitions";
 import {
   compareSortable,
@@ -1013,6 +1014,15 @@ function compileSequenceConstructor(
   return compileNodeArray(nodes, context, compileSequenceConstructorNode);
 }
 
+/** Only one named template "wins" - the highest priority one. Map the array to the first element. */
+function buildNamedTemplates(
+  namedTemplates: Map<string, Array<TemplateIndex>>,
+) {
+  const retval = new Map(
+    Array.from(namedTemplates).map(([key, value]) => [key, value[0]]),
+  );
+  return toEstree(retval);
+}
 export function compileStylesheetNode(node: slimdom.Element): Program {
   let context: CompileContext = {
     declarationCounter: 0,
@@ -1122,7 +1132,7 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               nonRuleTemplateIndexes: context.nonRuleTemplates.sort((a, b) =>
                 compareSortable(context.templates[a], context.templates[b]),
               ),
-              namedTemplates: toEstree(context.namedTemplates),
+              namedTemplates: buildNamedTemplates(context.namedTemplates),
               variableScopes: [mkNew(mkIdentifier("Map"), [])],
               inputURL: mkMember("params", "inputURL"),
               ruleTree: toEstree(buildRuleTree(context.rules)),
@@ -1246,7 +1256,16 @@ function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
   context.templates.push(template);
   const index = context.templates.length - 1;
   if (template.name) {
-    context.namedTemplates.set(template.name, index);
+    if (!context.namedTemplates.has(template.name)) {
+      context.namedTemplates.set(template.name, [index]);
+    } else {
+      let templates = context.namedTemplates.get(template.name);
+      templates.push(index);
+      templates.sort((a, b) =>
+        compareSortable(context.templates[a], context.templates[b]),
+      );
+      context.namedTemplates.set(template.name, templates);
+    }
   }
   if (
     features &&
