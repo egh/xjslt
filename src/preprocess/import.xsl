@@ -18,6 +18,7 @@
 
 <xsl:stylesheet
     version="2.0"
+    xmlns:xjslt="https://www.e6h.org/xjslt"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:param name="base-precedence"/>
   
@@ -45,8 +46,12 @@
      
    <xsl:template match="xsl:import">
      <xsl:variable name="doc" select="doc(@href)"/>
-     <xsl:apply-templates select="$doc/xsl:stylesheet/* | $doc/xsl:transform/*">
-       <xsl:with-param name="import-precedence" select="position() + $base-precedence"/>
-     </xsl:apply-templates>
+     <xsl:variable name="use-when" select="$doc/xsl:stylesheet/@use-when | $doc/xsl:transform/@use-when"/>
+     <!-- special use-when processing for imports only -->
+     <xsl:if test="not($use-when) or xjslt:evaluate($use-when)">
+       <xsl:apply-templates select="$doc/xsl:stylesheet/* | $doc/xsl:transform/*">
+         <xsl:with-param name="import-precedence" select="position() + $base-precedence"/>
+       </xsl:apply-templates>
+     </xsl:if>
    </xsl:template>
 </xsl:stylesheet>

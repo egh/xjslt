@@ -18,6 +18,7 @@
 
 <xsl:stylesheet
     version="2.0"
+    xmlns:xjslt="https://www.e6h.org/xjslt"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
    <xsl:template match="/ | @* | node()">
      <xsl:copy>
@@ -26,6 +27,10 @@
    </xsl:template>
    <xsl:template match="xsl:include">
      <xsl:variable name="doc" select="doc(@href)"/>
-     <xsl:apply-templates select="$doc/xsl:stylesheet/* | $doc/xsl:transform/*"/>
+     <xsl:variable name="use-when" select="$doc/xsl:stylesheet/@use-when | $doc/xsl:transform/@use-when"/>
+     <!-- special use-when processing for includes only -->
+     <xsl:if test="not($use-when) or xjslt:evaluate($use-when)">
+       <xsl:apply-templates select="$doc/xsl:stylesheet/* | $doc/xsl:transform/*"/>
+     </xsl:if>
    </xsl:template>
 </xsl:stylesheet>
