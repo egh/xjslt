@@ -1,6 +1,6 @@
 (() => {
   var t = {
-      914(t, e, n) {
+      389(t, e, n) {
         (n(898), n(594));
         let o = n(821);
         function r(t, e) {
@@ -2122,6 +2122,7 @@
                 results: [],
                 left: { results: [2] },
               },
+              readDocument: e.readDocument,
               keys: r,
               outputDefinitions: a,
               decimalFormats: c,
@@ -2151,16 +2152,16 @@
             e.XMLNS_NSURI =
             e.XSLT1_NSURI =
               void 0),
-          (e.isNodeGroup = i),
+          (e.isNodeGroup = m),
           (e.isNodeGroupArray = function (t) {
-            return Array.isArray(t) && (0 === t.length || i(t[0]));
+            return Array.isArray(t) && (0 === t.length || m(t[0]));
           }));
         const o = n(953),
           r = String.raw`[^,:\(\)\*\[\]/]`,
           a = String.raw`(child::|attribute::|@)?`,
           c = String.raw`(document-node\()?`;
         var s;
-        function i(t) {
+        function m(t) {
           return (
             "object" == typeof t &&
             null !== t &&
@@ -2349,23 +2350,23 @@
                   return;
                 }
               })(
-                (0, m.parseScript)(
+                (0, i.parseScript)(
                   t,
-                  { language: m.evaluateXPath.XPATH_3_1_LANGUAGE },
+                  { language: i.evaluateXPath.XPATH_3_1_LANGUAGE },
                   new l.Document(),
                 ),
                 e,
               );
           }));
         const s = n(953),
-          i = n(712),
-          m = n(594),
+          m = n(712),
+          i = n(594),
           l = c(n(898)),
           p = "http://www.w3.org/2005/XQueryX";
         function u(t) {
           return t;
         }
-        class d extends i.Feature {
+        class d extends m.Feature {
           constructor(t, e) {
             (super(e), (this.nodeExtractor = t));
           }
@@ -2652,14 +2653,14 @@
         function s(t) {
           return { type: "ArrayExpression", elements: t };
         }
-        function i(t, e, n) {
+        function m(t, e, n) {
           return {
             type: "VariableDeclaration",
             declarations: [{ type: "VariableDeclarator", id: t, init: e }],
             kind: n,
           };
         }
-        function m(t, e) {
+        function i(t, e) {
           return { type: "NewExpression", callee: t, arguments: e };
         }
         (Object.defineProperty(e, "__esModule", { value: !0 }),
@@ -2740,13 +2741,13 @@
             return { type: "BlockStatement", body: t };
           }),
           (e.mkLet = function (t, e) {
-            return i(t, e, "let");
+            return m(t, e, "let");
           }),
           (e.mkConst = function (t, e) {
-            return i(t, e, "const");
+            return m(t, e, "const");
           }),
-          (e.mkVariableDeclaration = i),
-          (e.mkNew = m),
+          (e.mkVariableDeclaration = m),
+          (e.mkNew = i),
           (e.toEstree = function t(e) {
             const n = typeof e;
             return null == e ||
@@ -2762,7 +2763,7 @@
                     ? a("xjslt", e.name)
                     : "object" === n
                       ? e instanceof Map
-                        ? m(o("Map"), [t(Array.from(e.entries()))])
+                        ? i(o("Map"), [t(Array.from(e.entries()))])
                         : "type" in e
                           ? e
                           : (function (e) {
@@ -2809,7 +2810,7 @@
                 { namespaceURI: r.XJSLT_NSURI, localName: "doc" },
                 ["xs:string"],
                 "document-node()",
-                i,
+                m,
               ),
               (0, o.registerCustomXPathFunction)(
                 {
@@ -2818,7 +2819,7 @@
                 },
                 [],
                 "xs:string?",
-                m,
+                i,
               ),
               (0, o.registerCustomXPathFunction)(
                 { namespaceURI: r.XJSLT_NSURI, localName: "current-group" },
@@ -2914,10 +2915,10 @@
         function s({ currentContext: t }) {
           return t.contextItem;
         }
-        function i({ currentContext: t }, e) {
+        function m({ currentContext: t }, e) {
           return (0, c.urlToDom)(t, e);
         }
-        function m({ currentContext: t }) {
+        function i({ currentContext: t }) {
           return t.currentGroup.key;
         }
         function l({ currentContext: t }) {
@@ -2990,16 +2991,16 @@
         }
         function T({ currentContext: t }, e, n, o) {
           var c, s;
-          const i = o || "#default",
-            m =
+          const m = o || "#default",
+            i =
               null !==
                 (s =
                   null === (c = t.decimalFormats) || void 0 === c
                     ? void 0
-                    : c.get(i)) && void 0 !== s
+                    : c.get(m)) && void 0 !== s
                 ? s
                 : r.DEFAULT_DECIMAL_FORMAT;
-          return (0, a.formatNumberWithPicture)(e, n, m);
+          return (0, a.formatNumberWithPicture)(e, n, i);
         }
         const h = [
           "base-uri",
@@ -3027,8 +3028,8 @@
           (e.toAlphabeticUpper = e.toAlphabetic = void 0),
           (e.groupNumeric = c),
           (e.toNumeric = s),
-          (e.mkToAlphabetic = i),
-          (e.toRoman = m),
+          (e.mkToAlphabetic = m),
+          (e.toRoman = i),
           (e.formatWithToken = l),
           (e.formatNumber = function (t, e, n, o) {
             const r = [];
@@ -3047,20 +3048,20 @@
             if (isNaN(t)) return n.nan;
             if (!isFinite(t)) return (t < 0 ? n.minusSign : "") + n.infinity;
             const a = e.split(n.patternSeparator);
-            let i;
+            let m;
             if (t < 0)
-              if (a.length > 1) i = p(a[1], n);
+              if (a.length > 1) m = p(a[1], n);
               else {
                 const t = p(a[0], n);
-                i = Object.assign(Object.assign({}, t), {
+                m = Object.assign(Object.assign({}, t), {
                   prefix: `${n.minusSign}${t.prefix || ""}`,
                 });
               }
-            else i = p(a[0], n);
+            else m = p(a[0], n);
             return (function (t, e, n) {
               var a;
               e.isPercent ? (t *= 100) : e.isPerMille && (t *= 1e3);
-              const i = (0, o.evaluateXPathToNumber)(
+              const m = (0, o.evaluateXPathToNumber)(
                 "round-half-to-even($number, $precision)",
                 void 0,
                 void 0,
@@ -3069,23 +3070,23 @@
                   precision: (0, r.wrapValue)(e.decimalMaxDigits, "xs:integer"),
                 },
               );
-              let m = c(
-                  s(Math.trunc(i), e.integerMinDigits),
+              let i = c(
+                  s(Math.trunc(m), e.integerMinDigits),
                   n.groupingSeparator,
                   e.integerGroupSize,
                 ),
                 l =
-                  null !== (a = i.toString().split(".")[1]) && void 0 !== a
+                  null !== (a = m.toString().split(".")[1]) && void 0 !== a
                     ? a
                     : "";
               for (; l.length < e.decimalMinDigits; ) l += "0";
               const p = l.length > 0 ? n.decimalSeparator : "",
                 d = n.zeroDigit.codePointAt(0);
               return (
-                48 !== d && ((m = u(m, d)), (l = u(l, d))),
-                `${e.prefix}${m}${p}${l}${e.suffix}`
+                48 !== d && ((i = u(i, d)), (l = u(l, d))),
+                `${e.prefix}${i}${p}${l}${e.suffix}`
               );
-            })(Math.abs(t), i, n);
+            })(Math.abs(t), m, n);
           }));
         const o = n(594),
           r = n(821),
@@ -3108,7 +3109,7 @@
         function s(t, e) {
           return t.toString().padStart(e, "0");
         }
-        function i(t, e) {
+        function m(t, e) {
           const n = e - t + 1,
             o = [...Array(n)].map((e, n) => String.fromCodePoint(t + n));
           return function (t) {
@@ -3119,7 +3120,7 @@
             return e;
           };
         }
-        function m(t) {
+        function i(t) {
           const e = new Map([
             [1e3, "m"],
             [900, "cm"],
@@ -3146,8 +3147,8 @@
           if (/0*1/.test(n)) return c(s(t, n.length), o, r);
           if ("A" === n) return (0, e.toAlphabeticUpper)(t) || "";
           if ("a" === n) return (0, e.toAlphabetic)(t) || "";
-          if ("I" === n) return m(t).toUpperCase();
-          if ("i" === n) return m(t);
+          if ("I" === n) return i(t).toUpperCase();
+          if ("i" === n) return i(t);
           for (const e of a) {
             if (49 === e) continue;
             const a = e - 1;
@@ -3167,9 +3168,9 @@
             a = e.groupingSeparator;
           let c = 0,
             s = !1,
-            i = !1;
-          function m() {
-            if (s || i)
+            m = !1;
+          function i() {
+            if (s || m)
               throw new Error(
                 "XTDE1310: Multiple percent/per-mille characters.",
               );
@@ -3177,8 +3178,8 @@
           function l() {
             let a = "";
             for (; c < t.length && t[c] !== n && t[c] !== o && t[c] !== r; )
-              (t[c] === e.percent && (m(), (s = !0)),
-                t[c] === e.perMille && (m(), (i = !0)),
+              (t[c] === e.percent && (i(), (s = !0)),
+                t[c] === e.perMille && (i(), (m = !0)),
                 (a += t[c++]));
             return a;
           }
@@ -3223,7 +3224,7 @@
             decimalMinDigits: I,
             decimalMaxDigits: w,
             isPercent: s,
-            isPerMille: i,
+            isPerMille: m,
           };
         }
         function u(t, e) {
@@ -3234,7 +3235,7 @@
             })
             .join("");
         }
-        ((e.toAlphabetic = i(97, 122)), (e.toAlphabeticUpper = i(65, 90)));
+        ((e.toAlphabetic = m(97, 122)), (e.toAlphabeticUpper = m(65, 90)));
       },
       777(t, e) {
         "use strict";
@@ -3287,9 +3288,9 @@
             for (let [t, n] of s) if (t.test(e)) return n;
             return 0.5;
           }),
-          (e.compareSortable = i),
+          (e.compareSortable = m),
           (e.sortSortable = function (t) {
-            return t.sort(i);
+            return t.sort(m);
           }),
           (e.zip = function (t, e) {
             if (void 0 === t || void 0 === e) return [];
@@ -3352,7 +3353,7 @@
             [new RegExp(String.raw`^\s*${a}\*:${r}+\s*$`), -0.25],
             [new RegExp(String.raw`^\s*${a}${r}+\s*$`), 0],
           ]);
-        function i(t, e) {
+        function m(t, e) {
           const n = t.importPrecedence - e.importPrecedence;
           if (0 !== n) return n;
           {
@@ -3363,78 +3364,13 @@
       },
       472(t, e, n) {
         "use strict";
-        var o,
-          r =
-            (this && this.__createBinding) ||
-            (Object.create
-              ? function (t, e, n, o) {
-                  void 0 === o && (o = n);
-                  var r = Object.getOwnPropertyDescriptor(e, n);
-                  ((r &&
-                    !("get" in r
-                      ? !e.__esModule
-                      : r.writable || r.configurable)) ||
-                    (r = {
-                      enumerable: !0,
-                      get: function () {
-                        return e[n];
-                      },
-                    }),
-                    Object.defineProperty(t, o, r));
-                }
-              : function (t, e, n, o) {
-                  (void 0 === o && (o = n), (t[o] = e[n]));
-                }),
-          a =
-            (this && this.__setModuleDefault) ||
-            (Object.create
-              ? function (t, e) {
-                  Object.defineProperty(t, "default", {
-                    enumerable: !0,
-                    value: e,
-                  });
-                }
-              : function (t, e) {
-                  t.default = e;
-                }),
-          c =
-            (this && this.__importStar) ||
-            ((o = function (t) {
-              return (
-                (o =
-                  Object.getOwnPropertyNames ||
-                  function (t) {
-                    var e = [];
-                    for (var n in t)
-                      Object.prototype.hasOwnProperty.call(t, n) &&
-                        (e[e.length] = n);
-                    return e;
-                  }),
-                o(t)
-              );
-            }),
-            function (t) {
-              if (t && t.__esModule) return t;
-              var e = {};
-              if (null != t)
-                for (var n = o(t), c = 0; c < n.length; c++)
-                  "default" !== n[c] && r(e, t, n[c]);
-              return (a(e, t), e);
-            });
         (Object.defineProperty(e, "__esModule", { value: !0 }),
           (e.urlToDom = function (t, e) {
-            const n = t.inputURL ? (0, s.resolve)(t.inputURL.toString(), e) : e;
-            return n.startsWith("file:")
-              ? m.parseXmlDocument(
-                  (0, i.readFileSync)(
-                    (0, s.fileURLToPath)(new URL(n)),
-                  ).toString(),
-                )
-              : void 0;
+            if (!t.readDocument) return;
+            const n = t.inputURL ? (0, o.resolve)(t.inputURL.toString(), e) : e;
+            return t.readDocument(n);
           }));
-        const s = n(16),
-          i = n(896),
-          m = c(n(898));
+        const o = n(16);
       },
       821(t, e, n) {
         "use strict";
@@ -3545,7 +3481,7 @@
                 {
                   currentContext: t,
                   namespaceResolver: n,
-                  functionNameResolver: m.functionNameResolver,
+                  functionNameResolver: i.functionNameResolver,
                 },
               );
             let r = e.mode || "#default";
@@ -3628,7 +3564,7 @@
               {
                 currentContext: t,
                 namespaceResolver: (0, p.mkResolver)(e.namespaces),
-                functionNameResolver: m.functionNameResolver,
+                functionNameResolver: i.functionNameResolver,
               },
             );
             for (let e of o) t.append(e);
@@ -3653,7 +3589,7 @@
             U(t.variableScopes, e.name, t.stylesheetParams[e.name] || G(t, e));
           }),
           (e.extendScope = P),
-          (e.wrapValue = C),
+          (e.wrapValue = _),
           (e.setVariable = U),
           (e.mergeVariableScopes = A),
           (e.literalText = function (t, e) {
@@ -3669,7 +3605,7 @@
               {
                 currentContext: t,
                 namespaceResolver: (0, p.mkResolver)(e.namespaces),
-                functionNameResolver: m.functionNameResolver,
+                functionNameResolver: i.functionNameResolver,
               },
             );
             t.append(n);
@@ -3695,13 +3631,16 @@
           (e.attribute = function (t, e, n) {
             const o = (0, p.mkResolver)(e.namespaces),
               r = z(t, e.name, o),
-              [a, c] = (0, p.determineNamespace)(r, o, z(t, e.namespace, o)),
-              s = j(t, {
+              a = z(t, e.namespace, o),
+              [c, s] = r.includes(":")
+                ? (0, p.determineNamespace)(r, o, a)
+                : [a, r],
+              m = j(t, {
                 name: r,
-                namespace: a,
+                namespace: c,
                 value: q(t, e.select || n, o, e.separator),
               });
-            t.append(s);
+            t.append(m);
           }),
           (e.processingInstruction = function (t, e, n) {
             const o = z(t, e.name, (0, p.mkResolver)(e.namespaces)),
@@ -3756,7 +3695,7 @@
               {
                 currentContext: t,
                 namespaceResolver: (0, p.mkResolver)(e.namespaces),
-                functionNameResolver: m.functionNameResolver,
+                functionNameResolver: i.functionNameResolver,
               },
             ) && n(t);
           }),
@@ -3771,7 +3710,7 @@
                   A(t.variableScopes),
                   {
                     currentContext: t,
-                    functionNameResolver: m.functionNameResolver,
+                    functionNameResolver: i.functionNameResolver,
                   },
                 )
               )
@@ -3805,7 +3744,7 @@
                 {
                   currentContext: t,
                   namespaceResolver: n,
-                  functionNameResolver: m.functionNameResolver,
+                  functionNameResolver: i.functionNameResolver,
                 },
               );
             if (o && Symbol.iterator in Object(o)) {
@@ -3824,7 +3763,7 @@
               {
                 currentContext: t,
                 namespaceResolver: o,
-                functionNameResolver: m.functionNameResolver,
+                functionNameResolver: i.functionNameResolver,
               },
             );
             r &&
@@ -3849,7 +3788,7 @@
                 {
                   currentContext: t,
                   namespaceResolver: o,
-                  functionNameResolver: m.functionNameResolver,
+                  functionNameResolver: i.functionNameResolver,
                 },
               );
             if (a && Symbol.iterator in Object(a)) {
@@ -3868,7 +3807,7 @@
                           {
                             currentContext: t,
                             namespaceResolver: o,
-                            functionNameResolver: m.functionNameResolver,
+                            functionNameResolver: i.functionNameResolver,
                           },
                         );
                         let c = a.find((t) => t.key === e);
@@ -3883,20 +3822,20 @@
                       const r = A(t.variableScopes);
                       let a = [],
                         c = null,
-                        i = [];
+                        m = [];
                       return (
                         X(e, t, (t) => {
                           const e = t.contextItem,
                             l = (0, s.evaluateXPathToString)(n, e, void 0, r, {
                               currentContext: t,
                               namespaceResolver: o,
-                              functionNameResolver: m.functionNameResolver,
+                              functionNameResolver: i.functionNameResolver,
                             });
                           l !== c
-                            ? (k(a, i, c), (c = l), (i = [e]))
-                            : i.push(e);
+                            ? (k(a, m, c), (c = l), (m = [e]))
+                            : m.push(e);
                         }),
-                        k(a, i, c),
+                        k(a, m, c),
                         a
                       );
                     })(t, a, e.groupAdjacent, o))
@@ -3957,7 +3896,7 @@
                   {
                     currentContext: t,
                     namespaceResolver: n,
-                    functionNameResolver: m.functionNameResolver,
+                    functionNameResolver: i.functionNameResolver,
                   },
                 ))
               : "single" === e.level &&
@@ -3995,26 +3934,26 @@
                 Object.assign({}, a ? t.outputDefinitions.get(a) : {}),
                 c,
               ),
-              i = r(e.href);
-            let m = null;
+              m = r(e.href);
+            let i = null;
             if (
               ((s.doctypePublic || s.doctypeSystem) &&
-                (m = t.outputDocument.implementation.createDocumentType(
+                (i = t.outputDocument.implementation.createDocumentType(
                   "out",
                   s.doctypePublic || "",
                   s.doctypeSystem || "",
                 )),
-              i)
+              m)
             ) {
               const e = t.outputDocument.implementation.createDocument(
                 null,
                 null,
-                m,
-              );
-              if (t.resultDocuments.has(i))
-                throw new Error(`XTDE1490: ${i} is a duplicate`);
-              (t.resultDocuments.set(
                 i,
+              );
+              if (t.resultDocuments.has(m))
+                throw new Error(`XTDE1490: ${m} is a duplicate`);
+              (t.resultDocuments.set(
+                m,
                 Object.assign(Object.assign({}, s), { document: e }),
               ),
                 n(
@@ -4026,11 +3965,11 @@
             } else {
               if (t.outputDocument.documentElement) throw new Error("XTDE1490");
               let e = t.outputDocument;
-              (m &&
+              (i &&
                 ((e = t.outputDocument.implementation.createDocument(
                   null,
                   null,
-                  m,
+                  i,
                 )),
                 (t.outputDocument = e),
                 (t.append = Y(e))),
@@ -4064,7 +4003,7 @@
           }),
           (e.evaluateAttributeValueTemplate = z),
           (e.serialize = function (t) {
-            const e = new i.XMLSerializer();
+            const e = new m.XMLSerializer();
             if (!0 !== t.omitXmlDeclaration) {
               let e = new Map([
                 ["version", "1.0"],
@@ -4106,8 +4045,8 @@
           }),
           (e.initialize = function (t, e) {}));
         const s = n(594),
-          i = c(n(898)),
-          m = n(379),
+          m = c(n(898)),
+          i = n(379),
           l = n(712),
           p = n(777),
           u = n(845),
@@ -4243,7 +4182,7 @@
                             A(o),
                             {
                               namespaceResolver: r,
-                              functionNameResolver: m.functionNameResolver,
+                              functionNameResolver: i.functionNameResolver,
                             },
                           ),
                     );
@@ -4277,8 +4216,8 @@
                 ("#all" === t.modes[0] || t.modes.includes(o)) && (yield t);
             })(t.contextItem, t.ruleTree, t.templates, t.mode),
             r = (function* (t, e, n, o, r, a, c) {
-              for (let [s, i] of n) {
-                const n = o[i];
+              for (let [s, m] of n) {
+                const n = o[m];
                 s &&
                   ("#all" === n.modes[0] || n.modes.includes(a)) &&
                   E(t, s, e, r, (0, p.mkResolver)(c)) &&
@@ -4387,17 +4326,17 @@
           return t.concat([new Map()]);
         }
         let M = new Map();
-        function _(t) {
+        function C(t) {
           return (
             M.has(t) || M.set(t, (0, s.createTypedValueFactory)(t)),
             M.get(t)
           );
         }
-        function C(t, e) {
-          if (Array.isArray(t) && 0 === t.length) return _("item()*")([], null);
+        function _(t, e) {
+          if (Array.isArray(t) && 0 === t.length) return C("item()*")([], null);
           if (e)
             try {
-              return _(e)(t, null);
+              return C(e)(t, null);
             } catch (t) {}
           const n = Array.isArray(t),
             o = n ? t[0] : t;
@@ -4408,7 +4347,7 @@
               ? (r = "xs:string")
               : "number" == typeof o &&
                 (r = Number.isInteger(o) ? "xs:integer" : "xs:numeric"),
-            _(`${r}${a}`)(t, null)
+            C(`${r}${a}`)(t, null)
           );
         }
         function U(t, e, n) {
@@ -4504,7 +4443,7 @@
                       {
                         currentContext: t,
                         namespaceResolver: n,
-                        functionNameResolver: m.functionNameResolver,
+                        functionNameResolver: i.functionNameResolver,
                       },
                     ),
               )
@@ -4523,7 +4462,7 @@
                 {
                   currentContext: t,
                   namespaceResolver: n,
-                  functionNameResolver: m.functionNameResolver,
+                  functionNameResolver: i.functionNameResolver,
                 },
               ).join(r)
             : (function (t) {
@@ -4550,15 +4489,15 @@
               {
                 currentContext: t,
                 namespaceResolver: (0, p.mkResolver)(e.namespaces),
-                functionNameResolver: m.functionNameResolver,
+                functionNameResolver: i.functionNameResolver,
               },
             );
-            return (1 !== o.length || n || (o = o[0]), C(o, e.as));
+            return (1 !== o.length || n || (o = o[0]), _(o, e.as));
           }
           return null == e.content
             ? ""
             : e.as
-              ? C(
+              ? _(
                   (function (t, e) {
                     let n = [];
                     return (
@@ -4601,7 +4540,7 @@
             );
           });
         }
-        (0, m.registerFunctions)();
+        (0, i.registerFunctions)();
       },
       594(t) {
         "use strict";
@@ -4610,10 +4549,6 @@
       898(t) {
         "use strict";
         t.exports = require("slimdom");
-      },
-      896(t) {
-        "use strict";
-        t.exports = require("fs");
       },
       16(t) {
         "use strict";
@@ -4626,6 +4561,6 @@
       if (void 0 !== r) return r.exports;
       var a = (e[o] = { exports: {} });
       return (t[o].call(a.exports, a, a.exports, n), a.exports);
-    })(914);
+    })(389);
   module.exports = n.transform;
 })();
