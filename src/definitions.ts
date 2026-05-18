@@ -1,6 +1,14 @@
 import { ArrowFunctionExpression } from "estree";
 import { CompiledXPathFunction } from "fontoxpath";
 import * as slimdom from "slimdom";
+import {
+  mkArray,
+  mkIdentifier,
+  mkLiteral,
+  mkNew,
+  toEstree,
+  mkMember,
+} from "./estree-util";
 
 const NC = String.raw`[^,:\(\)\*\[\]/]`; // Pretty much anything is a NCName
 const PATTERN_AXIS = String.raw`(child::|attribute::|@)?`;
@@ -9,6 +17,8 @@ export const XSLT1_NSURI = "http://www.w3.org/1999/XSL/Transform";
 export const XMLNS_NSURI = "http://www.w3.org/2000/xmlns/";
 export const XPATH_NSURI = "http://www.w3.org/2005/xpath-functions";
 export const XJSLT_NSURI = "https://www.e6h.org/xjslt";
+
+export type TemplateIndex = number;
 
 export const DEFAULT_PRIORITIES = new Map<RegExp, number>([
   [new RegExp(String.raw`^\s*/\s*$`), -0.5],
@@ -127,16 +137,15 @@ export interface VariableLike {
 }
 
 export interface Sortable {
-  match?: Xpath;
   importPrecedence: number;
   priority?: number;
-  [propName: string]: unknown;
+  declarationOrder: number;
 }
 
 interface GenericTemplate extends Sortable {
-  name?: string;
   modes: string[];
   allowedParams: Array<VariableLike>;
+  namespaces: object;
 }
 
 export interface Template extends GenericTemplate {
@@ -174,6 +183,7 @@ export interface ChooseAlternative {
 
 export interface WhitespaceDeclaration extends Sortable {
   preserve: boolean;
+  match?: Xpath;
   namespaces: {};
 }
 
@@ -195,6 +205,10 @@ export interface DynamicContext {
   currentGroup?: NodeGroup;
   keys: Map<String, Key>;
   patternMatchCache: PatternMatchCache;
+  ruleTree: RuleTreeNode<slimdom.Node, TemplateIndex>;
+  nonRuleTemplateIndexes: Array<[Xpath, TemplateIndex]>;
+  nonRuleTemplates: Array<[Xpath, Template]>;
+  namedTemplates: Map<string, TemplateIndex>;
   outputDefinitions: Map<string, OutputDefinition>;
   decimalFormats: Map<string, DecimalFormat>;
   stylesheetParams?: object;
@@ -205,6 +219,10 @@ export interface DynamicContext {
 }
 
 export interface CompileContext {
+  declarationCounter: number;
+  namedTemplates: Map<string, Array<TemplateIndex>>;
+  nonRuleTemplates: Array<[Xpath, TemplateIndex]>;
+  rules: Array<Rule<slimdom.Node, TemplateIndex>>;
   templates: Array<TemplateForCompilation>;
   whitespaceDeclarations: Array<Sortable>;
 }
@@ -302,4 +320,47 @@ export interface ParsedSubpicture {
   decimalMaxDigits: number;
   isPercent: boolean;
   isPerMille: boolean;
+}
+
+/*
+ * Defines a "Feature" that can be found on a type of Thing, which can
+   have a value of type ValueType. For instance, a Feature<Card,
+   SuitValue>.
+ */
+export abstract class Feature<ThingType, ValueType> {
+  value: ValueType;
+  constructor(value: ValueType) {
+    this.value = value;
+  }
+  abstract matches(thing: ThingType): boolean;
+  serialize() {
+    return mkNew(mkMember("xjslt", this.constructor.name), [
+      toEstree(this.value),
+    ]);
+  }
+  equals(other: Feature<any, any>): boolean {
+    if (this.constructor !== other.constructor) {
+      return false;
+    }
+    if (this.value !== other.value) {
+      return false;
+    }
+    return true;
+  }
+}
+
+/*
+  * Defines a Rule that maps a set of Features to a result. The result
+    can be used to store anything.
+ */
+export interface Rule<T, U> {
+  features: Feature<T, any>[];
+  result: U;
+}
+
+export interface RuleTreeNode<T, U> {
+  feature?: Feature<T, any>;
+  results: U[];
+  left?: RuleTreeNode<T, U>;
+  right?: RuleTreeNode<T, U>;
 }

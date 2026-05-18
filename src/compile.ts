@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Erik Hetzner
+ * Copyright (C) 2021-2026 Erik Hetzner
  *
  * This file is part of XJSLT.
  *
@@ -48,7 +48,6 @@ import {
   evaluateXPath,
   evaluateXPathToBoolean,
   evaluateXPathToNodes,
-  NamespaceResolver,
 } from "fontoxpath";
 import { readFileSync, writeFileSync, symlinkSync } from "fs";
 import { pathToFileURL } from "url";
@@ -73,13 +72,20 @@ import {
   DecimalFormat,
   DEFAULT_DECIMAL_FORMAT,
   xpathstring,
+  Rule,
+  TemplateForCompilation,
+  TemplateIndex,
 } from "./definitions";
 import {
+  compareSortable,
+  computeDefaultPriority,
   isAlphanumeric,
   mkOutputDefinition,
   mkResolver,
   sortSortable,
 } from "./shared";
+import { buildRuleTree } from "./dt";
+import { xpathToFeatures, XMLFeature } from "./dt-xml";
 
 /**
  * Functions to walk a DOM tree of an XSLT stylesheet and generate an
@@ -630,14 +636,17 @@ function compileWhitespaceDeclarationNode(
       .getAttribute("elements")
       .split(/[\n\r\t ]+/)
       .map((e) => {
-        return toEstree({
-          importPrecedence: node.getAttribute("import-precedence") || 1,
+        return {
+          importPrecedence:
+            parseInt(node.getAttribute("import-precedence")) || 1,
           match: toEstree({
             xpath: mkLiteral(e),
           }),
           preserve: preserve,
           namespaces: getNodeNS(node),
-        });
+          priority: computeDefaultPriority(e),
+          declarationOrder: ++context.declarationCounter,
+        };
       }),
   );
 }
@@ -1005,8 +1014,25 @@ function compileSequenceConstructor(
   return compileNodeArray(nodes, context, compileSequenceConstructorNode);
 }
 
+/** Only one named template "wins" - the highest priority one. Map the array to the first element. */
+function buildNamedTemplates(
+  namedTemplates: Map<string, Array<TemplateIndex>>,
+) {
+  const retval = new Map(
+    Array.from(namedTemplates).map(([key, value]) => [key, value[0]]),
+  );
+  return toEstree(retval);
+}
 export function compileStylesheetNode(node: slimdom.Element): Program {
-  let context: CompileContext = { templates: [], whitespaceDeclarations: [] };
+  let context: CompileContext = {
+    declarationCounter: 0,
+    namedTemplates: new Map(),
+    nonRuleTemplates: [],
+    rules: [],
+    templates: [],
+    whitespaceDeclarations: [],
+  };
+  setupBuiltinTemplates(context, getNodeNS(node));
   return {
     type: "Program",
     sourceType: "module",
@@ -1103,9 +1129,17 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               contextList: mkArray([mkIdentifier("document")]),
               position: mkLiteral(1),
               mode: mkMember("params", "initialMode"),
-              templates: sortSortable(context.templates),
+              templates: context.templates,
+              nonRuleTemplateIndexes: context.nonRuleTemplates.sort((a, b) =>
+                compareSortable(
+                  context.templates[a[1]],
+                  context.templates[b[1]],
+                ),
+              ),
+              namedTemplates: buildNamedTemplates(context.namedTemplates),
               variableScopes: [mkNew(mkIdentifier("Map"), [])],
               inputURL: mkMember("params", "inputURL"),
+              ruleTree: toEstree(buildRuleTree(context.rules)),
               keys: mkIdentifier("keys"),
               outputDefinitions: mkIdentifier("outputDefinitions"),
               decimalFormats: mkIdentifier("decimalFormats"),
@@ -1113,6 +1147,9 @@ export function compileStylesheetNode(node: slimdom.Element): Program {
               stylesheetParams: mkMember("params", "stylesheetParams"),
             }),
           ),
+          mkCallWithContext(mkMember("xjslt", "initialize"), [
+            toEstree(getNodeNS(node)),
+          ]),
           /* Then everything else */
           ...compileNodeArray(
             evaluateXPathToNodes(
@@ -1192,14 +1229,45 @@ function resolveQname(name: string | null, namespaces: object) {
   return [undefined, name];
 }
 
+function setupTemplate(
+  name: string,
+  matchStr: string,
+  context: CompileContext,
+  template: TemplateForCompilation,
+) {
+  const index = context.templates.length;
+  context.templates.push(template);
+  if (name) {
+    if (!context.namedTemplates.has(name)) {
+      context.namedTemplates.set(name, [index]);
+    } else {
+      let templates = context.namedTemplates.get(name);
+      templates.push(index);
+      templates.sort((a, b) =>
+        compareSortable(context.templates[a], context.templates[b]),
+      );
+      context.namedTemplates.set(name, templates);
+    }
+  }
+  if (matchStr !== undefined) {
+    for (const subMatch of matchStr.split("|").map((s) => s.trim())) {
+      const features: XMLFeature[] = xpathToFeatures(subMatch);
+      if (features) {
+        context.rules.push({ result: index, features });
+      } else {
+        const match = tryCompilePattern(subMatch, template.namespaces);
+        context.nonRuleTemplates.push([match, index]);
+      }
+    }
+  }
+}
+
 function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
   let allowedParams = compileParams("param", node.childNodes, context);
   let namespaces = getNodeNS(node);
   const matchStr = node.getAttribute("match") || undefined;
-  const match = matchStr ? tryCompilePattern(matchStr, namespaces) : undefined;
-  context.templates.push({
-    match: match,
-    name: expandQname(node.getAttribute("name"), namespaces) || undefined,
+  const name = expandQname(node.getAttribute("name"), namespaces) || undefined;
+  const template: TemplateForCompilation = {
     modes: (node.getAttribute("mode") || "#default")
       .split(" ")
       .filter((s) => s !== "")
@@ -1212,9 +1280,58 @@ function compileTemplateNode(node: slimdom.Element, context: CompileContext) {
         compileSequenceConstructorNode,
       ),
     ),
-    namespaces: getNodeNS(node),
-    priority: parseFloat(node.getAttribute("priority")) || undefined,
+    namespaces: namespaces,
+    priority:
+      parseFloat(node.getAttribute("priority")) ||
+      computeDefaultPriority(matchStr),
+    declarationOrder: ++context.declarationCounter,
     importPrecedence: parseInt(node.getAttribute("import-precedence")) || 1,
+  };
+  setupTemplate(name, matchStr, context, template);
+}
+
+function setupBuiltinTemplates(context: CompileContext, namespaces: object) {
+  setupTemplate(undefined, "processing-instruction()|comment()", context, {
+    apply: mkArrowFun([]),
+    allowedParams: [],
+    modes: ["#all"],
+    namespaces: namespaces,
+    importPrecedence: Number.MAX_VALUE,
+    declarationOrder: Number.MIN_VALUE,
+  });
+  setupTemplate(undefined, "text()|@*", context, {
+    apply: mkArrowFun([
+      mkCallWithContext(mkMember("xjslt", "valueOf"), [
+        toEstree({
+          select: ".",
+          separator: undefined,
+          namespaces: namespaces,
+        }),
+      ]),
+    ]),
+    allowedParams: [],
+    modes: ["#all"],
+    namespaces: namespaces,
+    importPrecedence: Number.MAX_VALUE,
+    declarationOrder: Number.MIN_VALUE,
+  });
+  setupTemplate(undefined, "*|/", context, {
+    apply: mkArrowFun([
+      mkCallWithContext(mkMember("xjslt", "applyTemplates"), [
+        toEstree({
+          select: "child::node()",
+          params: [],
+          mode: "#current",
+          namespaces: namespaces,
+          sortKeyComponents: [],
+        }),
+      ]),
+    ]),
+    allowedParams: [],
+    modes: ["#all"],
+    namespaces: namespaces,
+    importPrecedence: Number.MAX_VALUE,
+    declarationOrder: Number.MIN_VALUE,
   });
 }
 

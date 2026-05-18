@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Erik Hetzner
+ * Copyright (C) 2021-2026 Erik Hetzner
  *
  * This file is part of XJSLT.
  *
@@ -294,7 +294,18 @@ export function toEstree(thing: any) {
   if (Array.isArray(thing)) {
     return mkArray(thing.map((item) => toEstree(item)));
   }
+  if (typeof thing.serialize === "function") {
+    return thing.serialize();
+  }
+  if (thingtype === "function") {
+    return mkMember("xjslt", thing.name);
+  }
   if (thingtype === "object") {
+    if (thing instanceof Map) {
+      return mkNew(mkIdentifier("Map"), [
+        toEstree(Array.from(thing.entries())),
+      ]);
+    }
     if ("type" in thing) {
       // It's already in estree format (most likely)
       return thing;

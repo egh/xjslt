@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Erik Hetzner
+ * Copyright (C) 2021-2026 Erik Hetzner
  *
  * This file is part of XJSLT.
  *
@@ -50,9 +50,11 @@ import {
   NumberFormat,
   OutputDefinition,
   OutputResult,
+  RuleTreeNode,
   SequenceConstructor,
   SequenceConstructorWithReturn,
   SortKeyComponent,
+  TemplateIndex,
   TransformParams,
   VariableLike,
   VariableScope,
@@ -61,12 +63,23 @@ import {
   Xpath,
 } from "./definitions";
 import {
+  compareSortable,
   determineNamespace,
   mkOutputDefinition,
   mkResolver,
+  sortSortable,
   zip,
 } from "./shared";
 import { formatNumber } from "./numbering";
+import { findMatchingRules } from "./dt";
+import {
+  selfNode,
+  NodeAttributeFeature,
+  NodeNamespaceFeature,
+  NodeNameFeature,
+  NodeTextFeature,
+  NodeTypeFeature,
+} from "./dt-xml";
 
 /* Depth first node visit */
 export function visitNodes(
@@ -295,25 +308,57 @@ function patternMatch(
 }
 
 /**
- * Find the template that should be used to process a node.
+ * Yield templates that match a node via the rule tree.
  *
- * @returns The template, or undefined if none can be found to match this node.
+ * @param node - The context node to match against.
+ * @param ruleTree - The compiled rule tree for the stylesheet.
+ * @param mode - The current template mode (e.g. `"#default"`).
+ */
+function* getTemplatesFromRules(
+  node: slimdom.Node,
+  ruleTree: RuleTreeNode<slimdom.Node, TemplateIndex>,
+  templates: Array<Template>,
+  mode: string,
+): Generator<Template> {
+  const found = findMatchingRules(ruleTree, node).map((i) => templates[i]);
+  for (let template of sortSortable(found)) {
+    if (template.modes[0] === "#all" || template.modes.includes(mode)) {
+      yield template;
+    }
+  }
+}
+
+/**
+ * Yield templates that match a node via pattern evaluation.
+ *
+ * Used for templates that could not be found via the rule tree. Each
+ * template's match pattern is evaluated against the node at runtime, filtered
+ * by mode.
+ *
+ * @param patternMatchCache - Cache of previously evaluated pattern matches.
+ * @param node - The context node to match against.
+ * @param templates - Candidate templates to test, including built-in templates.
+ * @param variableScopes - In-scope variable bindings for pattern evaluation.
+ * @param mode - The current template mode (e.g. `"#default"`).
+ * @param namespaces - Namespace prefix-to-URI bindings for XPath evaluation.
  */
 function* getTemplates(
   patternMatchCache: PatternMatchCache,
   node: slimdom.Node,
+  nonRuleTemplates: Array<[Xpath, TemplateIndex]>,
   templates: Array<Template>,
   variableScopes: Array<VariableScope>,
   mode: string,
   namespaces: object,
 ): Generator<Template> {
-  for (let template of templates) {
+  for (let [match, templateIndex] of nonRuleTemplates) {
+    const template = templates[templateIndex];
     if (
-      template.match &&
+      match &&
       (template.modes[0] === "#all" || template.modes.includes(mode)) &&
       patternMatch(
         patternMatchCache,
-        template.match,
+        match,
         node,
         variableScopes,
         mkResolver(namespaces),
@@ -324,45 +369,43 @@ function* getTemplates(
   }
 }
 
-function mkBuiltInTemplates(namespaces: object): Array<Template> {
-  /* Pre-sorted in order of default priority */
-  return [
-    {
-      match: { xpath: "processing-instruction()|comment()" },
-      apply: (_context: DynamicContext) => {},
-      allowedParams: [],
-      modes: ["#all"],
-      importPrecedence: Number.MAX_VALUE,
-    },
-    {
-      match: { xpath: "text()|@*" },
-      apply: (context: DynamicContext) => {
-        valueOf(
-          context,
-          { select: ".", namespaces: namespaces },
-          () => undefined,
-        );
-      },
-      allowedParams: [],
-      modes: ["#all"],
-      importPrecedence: Number.MAX_VALUE,
-    },
-    {
-      match: { xpath: "*|/" },
-      apply: (context: DynamicContext) => {
-        applyTemplates(context, {
-          select: "child::node()",
-          params: [],
-          mode: "#current",
-          namespaces: namespaces,
-          sortKeyComponents: [],
-        });
-      },
-      allowedParams: [],
-      modes: ["#all"],
-      importPrecedence: Number.MAX_VALUE,
-    },
-  ];
+export function* dedupGenerator(gen: Generator<Template>): Generator<Template> {
+  let seen = new Set<Template>();
+  let next = gen.next();
+  while (!next.done) {
+    if (!seen.has(next.value)) {
+      yield next.value;
+      seen.add(next.value);
+    }
+    next = gen.next();
+  }
+}
+
+export function* mergeTemplateGenerators(
+  gena: Generator<Template>,
+  genb: Generator<Template>,
+) {
+  let items = [gena.next(), genb.next()];
+  while (!items[0].done || !items[1].done) {
+    if (items[0].done) {
+      /* a is finished, just serve b*/
+      yield items[1].value;
+      items[1] = genb.next();
+    } else if (items[1].done) {
+      /* b is finished, just serve a*/
+      yield items[0].value;
+      items[0] = gena.next();
+    } else {
+      /* If a comes first, yield it, otherwise yield b. */
+      if (compareSortable(items[0].value, items[1].value) < 0) {
+        yield items[0].value;
+        items[0] = gena.next();
+      } else {
+        yield items[1].value;
+        items[1] = genb.next();
+      }
+    }
+  }
 }
 
 export function processNode(
@@ -370,13 +413,23 @@ export function processNode(
   params: VariableLike[],
   namespaces: object,
 ) {
-  let templates = getTemplates(
+  let ruleTemplates = getTemplatesFromRules(
+    context.contextItem,
+    context.ruleTree,
+    context.templates,
+    context.mode,
+  );
+  let nonRuleTemplates = getTemplates(
     context.patternMatchCache,
     context.contextItem,
-    context.templates.concat(mkBuiltInTemplates(namespaces)),
+    context.nonRuleTemplateIndexes,
+    context.templates,
     context.variableScopes,
     context.mode,
     namespaces,
+  );
+  let templates = dedupGenerator(
+    mergeTemplateGenerators(ruleTemplates, nonRuleTemplates),
   );
   const next = templates.next();
   if (!next.done) {
@@ -650,10 +703,13 @@ export function callTemplate(
     namespaces: object;
   },
 ) {
-  for (let template of context.templates) {
-    if (template.name !== undefined && data.name === template.name) {
-      return evaluateTemplate(template, context, data.params);
-    }
+  const templateIndex = context.namedTemplates.get(data.name);
+  if (templateIndex !== undefined) {
+    return evaluateTemplate(
+      context.templates[templateIndex],
+      context,
+      data.params,
+    );
   }
   throw new Error(`Cannot find a template named ${data.name}`);
 }
@@ -668,7 +724,7 @@ export function functionX(
   },
   func: SequenceConstructor,
 ) {
-  const signature = data.params.map((p) => "item()");
+  const signature = data.params.map((_) => "item()");
   const variableNames = data.params.map((p) => p.name);
   registerCustomXPathFunction(
     { namespaceURI: data.namespace, localName: data.name },
@@ -1948,4 +2004,15 @@ export function compileMatchFunction(matchFunction: string) {
   }
 }
 
+export function initialize(context: DynamicContext, namespaces: object) {}
+
 registerFunctions();
+
+export {
+  selfNode,
+  NodeAttributeFeature,
+  NodeNamespaceFeature,
+  NodeNameFeature,
+  NodeTextFeature,
+  NodeTypeFeature,
+};
