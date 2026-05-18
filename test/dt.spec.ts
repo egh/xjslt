@@ -115,7 +115,7 @@ describe("generic rule tree tests", () => {
     it("returns empty node for empty rules", () => {
       const tree = buildRuleTree([]);
       expect(tree.feature).toBeUndefined();
-      expect(tree.rules).toHaveLength(0);
+      expect(tree.results).toHaveLength(0);
     });
 
     it("returns node with rules for featureless rules", () => {
@@ -124,8 +124,8 @@ describe("generic rule tree tests", () => {
         { result: "other", features: [] },
       ]);
       expect(tree.feature).toBeUndefined();
-      expect(tree.rules).toHaveLength(2);
-      expect(tree.rules.map((r) => r.result)).toEqual(["any", "other"]);
+      expect(tree.results).toHaveLength(2);
+      expect(tree.results).toEqual(["any", "other"]);
     });
 
     it("builds a tree with a feature at the root", () => {

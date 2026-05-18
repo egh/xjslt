@@ -30,7 +30,7 @@ import { Feature, Rule, RuleTreeNode } from "./definitions";
 
 export function buildRuleTree<T, U>(rules: Rule<T, U>[]): RuleTreeNode<T, U> {
   if (rules.length === 0) {
-    return { rules };
+    return { results: [] };
   }
 
   const allFeatures = new Set<Feature<T, any>>();
@@ -41,7 +41,7 @@ export function buildRuleTree<T, U>(rules: Rule<T, U>[]): RuleTreeNode<T, U> {
   }
 
   if (allFeatures.size === 0) {
-    return { rules };
+    return { results: rules.map((rule) => rule.result) };
   }
 
   const bestFeature = Array.from(allFeatures)[0];
@@ -57,7 +57,7 @@ export function buildRuleTree<T, U>(rules: Rule<T, U>[]): RuleTreeNode<T, U> {
     }
   }
 
-  let node: RuleTreeNode<T, U> = { feature: bestFeature, rules: [] };
+  let node: RuleTreeNode<T, U> = { feature: bestFeature, results: [] };
 
   if (matchingRules.length > 0) {
     const remainingFeatureRules = matchingRules.map((rule) => {
@@ -76,9 +76,9 @@ export function buildRuleTree<T, U>(rules: Rule<T, U>[]): RuleTreeNode<T, U> {
     );
     if (fullyMatchedRules.length > 0) {
       if (!node.left) {
-        node.left = { rules: [] };
+        node.left = { results: [] };
       }
-      node.left.rules = fullyMatchedRules;
+      node.left.results = fullyMatchedRules.map((rule) => rule.result);
     }
   }
 
@@ -93,14 +93,14 @@ export function findMatchingRules<T, U>(
   tree: RuleTreeNode<T, U>,
   thing_to_match: T,
 ): U[] {
-  const matchingRules: Rule<T, U>[] = [];
+  const results: U[] = [];
   const stack: (RuleTreeNode<T, U> | null)[] = [tree];
 
   while (stack.length > 0) {
     const node = stack.pop();
     if (!node) continue;
 
-    matchingRules.push(...node.rules);
+    results.push(...node.results);
 
     if (node.feature) {
       // right holds rules that don't require this feature — always
@@ -112,5 +112,5 @@ export function findMatchingRules<T, U>(
     }
   }
 
-  return matchingRules.map((r) => r.result);
+  return results;
 }

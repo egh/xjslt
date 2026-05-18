@@ -360,7 +360,7 @@ export interface Rule<T, U> {
 
 export interface RuleTreeNode<T, U> {
   feature?: Feature<T, any>;
-  rules: Rule<T, U>[];
+  results: U[];
   left?: RuleTreeNode<T, U>;
   right?: RuleTreeNode<T, U>;
 }
