@@ -1,6 +1,6 @@
 (() => {
   var t = {
-      26(t, e, n) {
+      833(t, e, n) {
         (n(898), n(594));
         let o = n(821);
         function r(t, e) {
@@ -9,8 +9,8 @@
           n.set("#default", { document: e.outputDocument });
           let r = new Map(),
             a = new Map(),
-            s = new Map(),
-            c = {
+            c = new Map(),
+            s = {
               outputDocument: e.outputDocument,
               append: o.mkNodeAppender(e.outputNode),
               resultDocuments: n,
@@ -20,12 +20,1177 @@
               mode: e.initialMode,
               templates: [
                 {
-                  match: {
-                    xpath:
-                      "xsl:*/@*[not(namespace-uri()) or namespace-uri() = 'http://www.w3.org/1999/XSL/Transform']",
-                    compiled: void 0,
+                  apply: (t) => {},
+                  allowedParams: [],
+                  modes: ["#all"],
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  importPrecedence: 17976931348623157e292,
+                  declarationOrder: 5e-324,
+                },
+                {
+                  apply: (t) => {
+                    o.valueOf(t, {
+                      select: ".",
+                      separator: void 0,
+                      namespaces: {
+                        xsl: "http://www.w3.org/1999/XSL/Transform",
+                      },
+                    });
                   },
-                  name: void 0,
+                  allowedParams: [],
+                  modes: ["#all"],
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  importPrecedence: 17976931348623157e292,
+                  declarationOrder: 5e-324,
+                },
+                {
+                  apply: (t) => {
+                    o.applyTemplates(t, {
+                      select: "child::node()",
+                      params: [],
+                      mode: "#current",
+                      namespaces: {
+                        xsl: "http://www.w3.org/1999/XSL/Transform",
+                      },
+                      sortKeyComponents: [],
+                    });
+                  },
+                  allowedParams: [],
+                  modes: ["#all"],
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  importPrecedence: 17976931348623157e292,
+                  declarationOrder: 5e-324,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.copy(
+                      t,
+                      {
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.applyTemplates(t, {
+                          select: "@* | node()",
+                          mode: "#default",
+                          params: [],
+                          sortKeyComponents: [],
+                          namespaces: {
+                            xsl: "http://www.w3.org/1999/XSL/Transform",
+                          },
+                        });
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: -0.25,
+                  declarationOrder: 1,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    (o.ifX(
+                      t,
+                      {
+                        test: "@select and (node() or text()) ",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.message(
+                          t,
+                          {
+                            select: void 0,
+                            terminate: "yes",
+                            namespaces: {
+                              xsl: "http://www.w3.org/1999/XSL/Transform",
+                            },
+                          },
+                          (t) => {
+                            (o.literalText(
+                              t,
+                              "XTSE0620: Variable or parameter ",
+                            ),
+                              o.valueOf(
+                                t,
+                                {
+                                  select: "@name",
+                                  separator: void 0,
+                                  namespaces: {
+                                    xsl: "http://www.w3.org/1999/XSL/Transform",
+                                  },
+                                },
+                                (t) => {},
+                              ),
+                              o.literalText(
+                                t,
+                                " has both @select and children.",
+                              ));
+                          },
+                        );
+                      },
+                    ),
+                      o.nextMatch(t, {
+                        params: [],
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      }));
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 2,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    (o.ifX(
+                      t,
+                      {
+                        test: "not(@match) and (@mode or @priority)",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.message(
+                          t,
+                          {
+                            select: void 0,
+                            terminate: "yes",
+                            namespaces: {
+                              xsl: "http://www.w3.org/1999/XSL/Transform",
+                            },
+                          },
+                          (t) => {
+                            o.literalText(
+                              t,
+                              "XTSE0500: An xsl:template element that has no match attribute must have no mode attribute and no priority attribute.",
+                            );
+                          },
+                        );
+                      },
+                    ),
+                      o.ifX(
+                        t,
+                        {
+                          test: "not(@match) and not(@name)",
+                          namespaces: {
+                            xsl: "http://www.w3.org/1999/XSL/Transform",
+                          },
+                        },
+                        (t) => {
+                          o.message(
+                            t,
+                            {
+                              select: void 0,
+                              terminate: "yes",
+                              namespaces: {
+                                xsl: "http://www.w3.org/1999/XSL/Transform",
+                              },
+                            },
+                            (t) => {
+                              o.literalText(
+                                t,
+                                "XTSE0500: An xsl:template element must have either a match attribute or a name attribute, or both.",
+                              );
+                            },
+                          );
+                        },
+                      ),
+                      o.ifX(
+                        t,
+                        {
+                          test: "@priority and not(number(@priority) = number(@priority))",
+                          namespaces: {
+                            xsl: "http://www.w3.org/1999/XSL/Transform",
+                          },
+                        },
+                        (t) => {
+                          o.message(
+                            t,
+                            {
+                              select: void 0,
+                              terminate: "yes",
+                              namespaces: {
+                                xsl: "http://www.w3.org/1999/XSL/Transform",
+                              },
+                            },
+                            (t) => {
+                              o.literalText(
+                                t,
+                                "XTSE0505: The @priority attribute of xsl:template must be a number.",
+                              );
+                            },
+                          );
+                        },
+                      ),
+                      o.nextMatch(t, {
+                        params: [],
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      }));
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 3,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:template only allowed at the top level.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 4,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    (o.ifX(
+                      t,
+                      {
+                        test: "preceding-sibling::*[not(self::xsl:param)]",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.message(
+                          t,
+                          {
+                            select: void 0,
+                            terminate: "yes",
+                            namespaces: {
+                              xsl: "http://www.w3.org/1999/XSL/Transform",
+                            },
+                          },
+                          (t) => {
+                            o.literalText(
+                              t,
+                              "XTSE0010: xsl:params must not be preceded by other elements",
+                            );
+                          },
+                        );
+                      },
+                    ),
+                      o.nextMatch(t, {
+                        params: [],
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      }));
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 5,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:apply-imports may not appear inside xsl:for-each or xsl:for-each-group.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 6,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:call-template requires a @name attribute.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 7,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:if requires a @test attribute.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 8,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:for-each requires a @select attribute.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 9,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:choose must contain at least one xsl:when child element.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 10,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:otherwise must be the last child of xsl:choose.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 11,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:when may only appear as a child of xsl:choose.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 12,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:otherwise may only appear as a child of xsl:choose.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 13,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:when requires a @test attribute.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 14,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:element requires a @name attribute.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 15,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:attribute requires a @name attribute.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 16,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:namespace requires a @name attribute.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 17,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0910: xsl:processing-instruction requires a @name attribute.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 18,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:copy-of requires a @select attribute.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 19,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          'XTSE1120: The @level attribute of xsl:number must be "single", "multiple", or "any".',
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 20,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    (o.ifX(
+                      t,
+                      {
+                        test: "not(@select)",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.message(
+                          t,
+                          {
+                            select: void 0,
+                            terminate: "yes",
+                            namespaces: {
+                              xsl: "http://www.w3.org/1999/XSL/Transform",
+                            },
+                          },
+                          (t) => {
+                            o.literalText(
+                              t,
+                              "XTSE1290: xsl:for-each-group requires a @select attribute.",
+                            );
+                          },
+                        );
+                      },
+                    ),
+                      o.ifX(
+                        t,
+                        {
+                          test: "not(@group-by) and not(@group-adjacent) and not(@group-starting-with) and not(@group-ending-with)",
+                          namespaces: {
+                            xsl: "http://www.w3.org/1999/XSL/Transform",
+                          },
+                        },
+                        (t) => {
+                          o.message(
+                            t,
+                            {
+                              select: void 0,
+                              terminate: "yes",
+                              namespaces: {
+                                xsl: "http://www.w3.org/1999/XSL/Transform",
+                              },
+                            },
+                            (t) => {
+                              o.literalText(
+                                t,
+                                "XTSE1295: xsl:for-each-group must have one of @group-by, @group-adjacent, @group-starting-with, or @group-ending-with.",
+                              );
+                            },
+                          );
+                        },
+                      ),
+                      o.nextMatch(t, {
+                        params: [],
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      }));
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 21,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:function requires a @name attribute.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 22,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:sort is not allowed in this context.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 23,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:sort must precede all other children of xsl:for-each.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 24,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:stylesheet/xsl:transform requires a @version attribute.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 25,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:variable/xsl:with-param requires a @name attribute.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 26,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:param requires a @name attribute.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 27,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:param is not allowed in this context.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 28,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:key requires a @match attribute.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 29,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:attribute-set requires a @name attribute.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 30,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:attribute-set may only contain xsl:attribute elements.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 31,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:attribute-set may not contain text content.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 32,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:strip-space/xsl:preserve-space requires an @elements attribute.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 33,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:call-template may only contain xsl:with-param children.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 34,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:apply-templates may only contain xsl:sort and xsl:with-param children.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 35,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:apply-imports may only contain xsl:with-param children.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 36,
+                  importPrecedence: 1,
+                },
+                {
+                  modes: ["#default"],
+                  allowedParams: [],
+                  apply: (t) => {
+                    o.message(
+                      t,
+                      {
+                        select: void 0,
+                        terminate: "yes",
+                        namespaces: {
+                          xsl: "http://www.w3.org/1999/XSL/Transform",
+                        },
+                      },
+                      (t) => {
+                        o.literalText(
+                          t,
+                          "XTSE0010: xsl:choose may not contain text content.",
+                        );
+                      },
+                    );
+                  },
+                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
+                  priority: 0.5,
+                  declarationOrder: 37,
+                  importPrecedence: 1,
+                },
+                {
                   modes: ["#default"],
                   allowedParams: [],
                   apply: (t) => {
@@ -528,1385 +1693,445 @@
                   declarationOrder: 38,
                   importPrecedence: 1,
                 },
-                {
-                  match: {
+              ],
+              nonRuleTemplateIndexes: [
+                [
+                  {
+                    xpath:
+                      "xsl:*/@*[not(namespace-uri()) or namespace-uri() = 'http://www.w3.org/1999/XSL/Transform']",
+                    compiled: void 0,
+                  },
+                  40,
+                ],
+                [
+                  {
                     xpath: "xsl:choose[text()[normalize-space(.)]]",
                     compiled: void 0,
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:choose may not contain text content.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 37,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  39,
+                ],
+                [
+                  {
                     xpath: "xsl:apply-imports/xsl:*[not(self::xsl:with-param)]",
                     compiled: void 0,
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:apply-imports may only contain xsl:with-param children.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 36,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  38,
+                ],
+                [
+                  {
                     xpath:
                       "xsl:apply-templates/xsl:*[not(self::xsl:sort) and not(self::xsl:with-param)]",
                     compiled: void 0,
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:apply-templates may only contain xsl:sort and xsl:with-param children.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 35,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  37,
+                ],
+                [
+                  {
                     xpath: "xsl:call-template/xsl:*[not(self::xsl:with-param)]",
                     compiled: void 0,
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:call-template may only contain xsl:with-param children.",
-                        );
-                      },
-                    );
+                  36,
+                ],
+                [
+                  {
+                    xpath: "xsl:strip-space[not(@elements)]",
+                    compiled: o.compileMatchFunction(
+                      '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-strip-space");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-strip-space")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "strip-space" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-elements") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "elements" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
+                    ),
                   },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 34,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
-                    xpath:
-                      "xsl:strip-space[not(@elements)] | xsl:preserve-space[not(@elements)]",
-                    compiled: void 0,
+                  35,
+                ],
+                [
+                  {
+                    xpath: "xsl:preserve-space[not(@elements)]",
+                    compiled: o.compileMatchFunction(
+                      '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-preserve-space");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-preserve-space")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "preserve-space" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-elements") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "elements" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
+                    ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:strip-space/xsl:preserve-space requires an @elements attribute.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 33,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  35,
+                ],
+                [
+                  {
                     xpath: "xsl:attribute-set[text()[normalize-space(.)]]",
                     compiled: void 0,
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:attribute-set may not contain text content.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 32,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  34,
+                ],
+                [
+                  {
                     xpath: "xsl:attribute-set/*[not(self::xsl:attribute)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes0 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-attribute-set");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-attribute-set")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "attribute-set" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tfor (let contextItem2 = domFacade.getFirstChild(contextItem1, "type-1");\n\t\t\t\t\t\t\tcontextItem2;\n\t\t\t\t\t\t\tcontextItem2 = domFacade.getNextSibling(contextItem2, "type-1")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem2.nodeType\n\t\t\t\t\t\t&& contextItem2.nodeType === /*ELEMENT_NODE*/ 1 && (function () {\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\treturn !!!((contextItem2.nodeType\n\t\t\t\t\t\t&& (contextItem2.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem2.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem2.localName === "attribute" && (contextItem2.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null)) ? contextItem2 : null);\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem2;\n\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes0(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:attribute-set may only contain xsl:attribute elements.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 31,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  33,
+                ],
+                [
+                  {
                     xpath: "xsl:attribute-set[not(@name)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-attribute-set");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-attribute-set")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "attribute-set" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-name") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "name" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:attribute-set requires a @name attribute.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 30,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  32,
+                ],
+                [
+                  {
                     xpath: "xsl:key[not(@match)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-key");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-key")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "key" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-match") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "match" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:key requires a @match attribute.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 29,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  31,
+                ],
+                [
+                  {
                     xpath:
                       "xsl:param[not(parent::xsl:stylesheet or parent::xsl:transform or parent::xsl:template or parent::xsl:function)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes4 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-param");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-param")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "param" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tconst contextItem3 = domFacade.getParentNode(contextItem2, "name-stylesheet");\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (contextItem3 && contextItem3.nodeType\n\t\t\t\t\t\t&& contextItem3.nodeType === /*ELEMENT_NODE*/ 1 && contextItem3.localName === "stylesheet" && (contextItem3.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null)) {\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t\t}\n\t\t});\nconst nodes1 = (function* (contextItem4) {\n\t\t\t\n\t\t\tconst contextItem5 = domFacade.getParentNode(contextItem4, "name-transform");\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (contextItem5 && contextItem5.nodeType\n\t\t\t\t\t\t&& contextItem5.nodeType === /*ELEMENT_NODE*/ 1 && contextItem5.localName === "transform" && (contextItem5.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null)) {\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\tyield contextItem5;\n\t\t\t\t\t\t}\n\t\t});\nconst nodes2 = (function* (contextItem6) {\n\t\t\t\n\t\t\tconst contextItem7 = domFacade.getParentNode(contextItem6, "name-template");\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (contextItem7 && contextItem7.nodeType\n\t\t\t\t\t\t&& contextItem7.nodeType === /*ELEMENT_NODE*/ 1 && contextItem7.localName === "template" && (contextItem7.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null)) {\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\tyield contextItem7;\n\t\t\t\t\t\t}\n\t\t});\nconst nodes3 = (function* (contextItem8) {\n\t\t\t\n\t\t\tconst contextItem9 = domFacade.getParentNode(contextItem8, "name-function");\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (contextItem9 && contextItem9.nodeType\n\t\t\t\t\t\t&& contextItem9.nodeType === /*ELEMENT_NODE*/ 1 && contextItem9.localName === "function" && (contextItem9.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null)) {\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\tyield contextItem9;\n\t\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !(((!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})() || !!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes1(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})()) || !!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes2(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})()) || !!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes3(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})());\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes4(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:param is not allowed in this context.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 28,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  30,
+                ],
+                [
+                  {
                     xpath: "xsl:param[not(@name)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-param");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-param")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "param" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-name") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "name" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:param requires a @name attribute.",
-                        );
-                      },
-                    );
+                  29,
+                ],
+                [
+                  {
+                    xpath: "xsl:variable[not(@name)]",
+                    compiled: o.compileMatchFunction(
+                      '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-variable");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-variable")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "variable" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-name") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "name" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
+                    ),
                   },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 27,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
-                    xpath:
-                      "xsl:variable[not(@name)] | xsl:with-param[not(@name)]",
-                    compiled: void 0,
+                  28,
+                ],
+                [
+                  {
+                    xpath: "xsl:with-param[not(@name)]",
+                    compiled: o.compileMatchFunction(
+                      '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-with-param");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-with-param")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "with-param" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-name") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "name" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
+                    ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:variable/xsl:with-param requires a @name attribute.",
-                        );
-                      },
-                    );
+                  28,
+                ],
+                [
+                  {
+                    xpath: "xsl:stylesheet[not(@version)]",
+                    compiled: o.compileMatchFunction(
+                      '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-stylesheet");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-stylesheet")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "stylesheet" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-version") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "version" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
+                    ),
                   },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 26,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
-                    xpath:
-                      "xsl:stylesheet[not(@version)] | xsl:transform[not(@version)]",
-                    compiled: void 0,
+                  27,
+                ],
+                [
+                  {
+                    xpath: "xsl:transform[not(@version)]",
+                    compiled: o.compileMatchFunction(
+                      '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-transform");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-transform")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "transform" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-version") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "version" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
+                    ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:stylesheet/xsl:transform requires a @version attribute.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 25,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  27,
+                ],
+                [
+                  {
                     xpath:
                       "xsl:for-each/xsl:sort[preceding-sibling::*[not(self::xsl:sort)]]",
                     compiled: void 0,
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:sort must precede all other children of xsl:for-each.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 24,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  26,
+                ],
+                [
+                  {
                     xpath:
                       "xsl:sort[not(parent::xsl:apply-templates or parent::xsl:for-each or parent::xsl:for-each-group or parent::xsl:perform-sort)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes4 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-sort");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-sort")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "sort" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tconst contextItem3 = domFacade.getParentNode(contextItem2, "name-apply-templates");\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (contextItem3 && contextItem3.nodeType\n\t\t\t\t\t\t&& contextItem3.nodeType === /*ELEMENT_NODE*/ 1 && contextItem3.localName === "apply-templates" && (contextItem3.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null)) {\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t\t}\n\t\t});\nconst nodes1 = (function* (contextItem4) {\n\t\t\t\n\t\t\tconst contextItem5 = domFacade.getParentNode(contextItem4, "name-for-each");\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (contextItem5 && contextItem5.nodeType\n\t\t\t\t\t\t&& contextItem5.nodeType === /*ELEMENT_NODE*/ 1 && contextItem5.localName === "for-each" && (contextItem5.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null)) {\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\tyield contextItem5;\n\t\t\t\t\t\t}\n\t\t});\nconst nodes2 = (function* (contextItem6) {\n\t\t\t\n\t\t\tconst contextItem7 = domFacade.getParentNode(contextItem6, "name-for-each-group");\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (contextItem7 && contextItem7.nodeType\n\t\t\t\t\t\t&& contextItem7.nodeType === /*ELEMENT_NODE*/ 1 && contextItem7.localName === "for-each-group" && (contextItem7.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null)) {\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\tyield contextItem7;\n\t\t\t\t\t\t}\n\t\t});\nconst nodes3 = (function* (contextItem8) {\n\t\t\t\n\t\t\tconst contextItem9 = domFacade.getParentNode(contextItem8, "name-perform-sort");\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (contextItem9 && contextItem9.nodeType\n\t\t\t\t\t\t&& contextItem9.nodeType === /*ELEMENT_NODE*/ 1 && contextItem9.localName === "perform-sort" && (contextItem9.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null)) {\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\tyield contextItem9;\n\t\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !(((!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})() || !!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes1(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})()) || !!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes2(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})()) || !!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes3(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})());\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes4(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:sort is not allowed in this context.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 23,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  25,
+                ],
+                [
+                  {
                     xpath: "xsl:function[not(@name)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-function");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-function")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "function" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-name") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "name" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:function requires a @name attribute.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 22,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  24,
+                ],
+                [
+                  {
                     xpath: "xsl:for-each-group",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes0 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-for-each-group");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-for-each-group")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "for-each-group" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes0(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    (o.ifX(
-                      t,
-                      {
-                        test: "not(@select)",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.message(
-                          t,
-                          {
-                            select: void 0,
-                            terminate: "yes",
-                            namespaces: {
-                              xsl: "http://www.w3.org/1999/XSL/Transform",
-                            },
-                          },
-                          (t) => {
-                            o.literalText(
-                              t,
-                              "XTSE1290: xsl:for-each-group requires a @select attribute.",
-                            );
-                          },
-                        );
-                      },
-                    ),
-                      o.ifX(
-                        t,
-                        {
-                          test: "not(@group-by) and not(@group-adjacent) and not(@group-starting-with) and not(@group-ending-with)",
-                          namespaces: {
-                            xsl: "http://www.w3.org/1999/XSL/Transform",
-                          },
-                        },
-                        (t) => {
-                          o.message(
-                            t,
-                            {
-                              select: void 0,
-                              terminate: "yes",
-                              namespaces: {
-                                xsl: "http://www.w3.org/1999/XSL/Transform",
-                              },
-                            },
-                            (t) => {
-                              o.literalText(
-                                t,
-                                "XTSE1295: xsl:for-each-group must have one of @group-by, @group-adjacent, @group-starting-with, or @group-ending-with.",
-                              );
-                            },
-                          );
-                        },
-                      ),
-                      o.nextMatch(t, {
-                        params: [],
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      }));
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 21,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  23,
+                ],
+                [
+                  {
                     xpath:
                       "xsl:number[@level and not(@level = ('single', 'multiple', 'any'))]",
                     compiled: void 0,
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          'XTSE1120: The @level attribute of xsl:number must be "single", "multiple", or "any".',
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 20,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  22,
+                ],
+                [
+                  {
                     xpath: "xsl:copy-of[not(@select)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-copy-of");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-copy-of")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "copy-of" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-select") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "select" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:copy-of requires a @select attribute.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 19,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  21,
+                ],
+                [
+                  {
                     xpath: "xsl:processing-instruction[not(@name)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-processing-instruction");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-processing-instruction")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "processing-instruction" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-name") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "name" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0910: xsl:processing-instruction requires a @name attribute.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 18,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  20,
+                ],
+                [
+                  {
                     xpath: "xsl:namespace[not(@name)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-namespace");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-namespace")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "namespace" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-name") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "name" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:namespace requires a @name attribute.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 17,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  19,
+                ],
+                [
+                  {
                     xpath: "xsl:attribute[not(@name)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-attribute");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-attribute")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "attribute" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-name") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "name" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:attribute requires a @name attribute.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 16,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  18,
+                ],
+                [
+                  {
                     xpath: "xsl:element[not(@name)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-element");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-element")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "element" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-name") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "name" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:element requires a @name attribute.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 15,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  17,
+                ],
+                [
+                  {
                     xpath: "xsl:when[not(@test)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-when");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-when")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "when" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-test") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "test" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:when requires a @test attribute.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 14,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  16,
+                ],
+                [
+                  {
                     xpath: "xsl:otherwise[not(parent::xsl:choose)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-otherwise");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-otherwise")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "otherwise" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tconst contextItem3 = domFacade.getParentNode(contextItem2, "name-choose");\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (contextItem3 && contextItem3.nodeType\n\t\t\t\t\t\t&& contextItem3.nodeType === /*ELEMENT_NODE*/ 1 && contextItem3.localName === "choose" && (contextItem3.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null)) {\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:otherwise may only appear as a child of xsl:choose.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 13,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  15,
+                ],
+                [
+                  {
                     xpath: "xsl:when[not(parent::xsl:choose)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-when");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-when")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "when" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tconst contextItem3 = domFacade.getParentNode(contextItem2, "name-choose");\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (contextItem3 && contextItem3.nodeType\n\t\t\t\t\t\t&& contextItem3.nodeType === /*ELEMENT_NODE*/ 1 && contextItem3.localName === "choose" && (contextItem3.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null)) {\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:when may only appear as a child of xsl:choose.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 12,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  14,
+                ],
+                [
+                  {
                     xpath: "xsl:choose/xsl:otherwise[following-sibling::*]",
                     compiled: void 0,
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:otherwise must be the last child of xsl:choose.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 11,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  13,
+                ],
+                [
+                  {
                     xpath: "xsl:choose[not(xsl:when)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-choose");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-choose")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "choose" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (let contextItem3 = domFacade.getFirstChild(contextItem2, "name-when");\n\t\t\t\t\t\t\tcontextItem3;\n\t\t\t\t\t\t\tcontextItem3 = domFacade.getNextSibling(contextItem3, "name-when")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& contextItem3.nodeType === /*ELEMENT_NODE*/ 1 && contextItem3.localName === "when" && (contextItem3.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:choose must contain at least one xsl:when child element.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 10,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  12,
+                ],
+                [
+                  {
                     xpath: "xsl:for-each[not(@select)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-for-each");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-for-each")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "for-each" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-select") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "select" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:for-each requires a @select attribute.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 9,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  11,
+                ],
+                [
+                  {
                     xpath: "xsl:if[not(@test)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-if");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-if")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "if" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-test") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "test" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:if requires a @test attribute.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 8,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  10,
+                ],
+                [
+                  {
                     xpath: "xsl:call-template[not(@name)]",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes1 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-call-template");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-call-template")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "call-template" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null) && (function () {\n\t\t\t\t\t\t\tconst nodes0 = (function* (contextItem2) {\n\t\t\t\n\t\t\tfor (const contextItem3 of (contextItem2 && contextItem2.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem2, "name-name") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem3.nodeType\n\t\t\t\t\t\t&& (contextItem3.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem3.nodeType === /*ATTRIBUTE_NODE*/ 2) && contextItem3.localName === "name" && (contextItem3.namespaceURI || null) === ((contextItem3.nodeType === /*ELEMENT_NODE*/ 1 ? null : null) || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem3;\n\t\t\t\t\t}\n\t\t});\n\t\t\t\t\t\t\treturn !!!(function () {\n\t\t\t\t\t\t\tconst { done, value } = nodes0(contextItem1).next();\n\t\t\t\t\t\t\treturn done ? null : value;\n\t\t\t\t\t\t})();\n\t\t\t\t\t\t})())) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes1(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:call-template requires a @name attribute.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 7,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
-                    xpath:
-                      "xsl:for-each//xsl:apply-imports | xsl:for-each-group//xsl:apply-imports",
+                  9,
+                ],
+                [
+                  {
+                    xpath: "xsl:for-each//xsl:apply-imports",
                     compiled: void 0,
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:apply-imports may not appear inside xsl:for-each or xsl:for-each-group.",
-                        );
-                      },
-                    );
+                  8,
+                ],
+                [
+                  {
+                    xpath: "xsl:for-each-group//xsl:apply-imports",
+                    compiled: void 0,
                   },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 6,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  8,
+                ],
+                [
+                  {
                     xpath: "xsl:template/xsl:param",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes0 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-template");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-template")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "template" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tfor (let contextItem2 = domFacade.getFirstChild(contextItem1, "name-param");\n\t\t\t\t\t\t\tcontextItem2;\n\t\t\t\t\t\t\tcontextItem2 = domFacade.getNextSibling(contextItem2, "name-param")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem2.nodeType\n\t\t\t\t\t\t&& contextItem2.nodeType === /*ELEMENT_NODE*/ 1 && contextItem2.localName === "param" && (contextItem2.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem2;\n\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes0(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    (o.ifX(
-                      t,
-                      {
-                        test: "preceding-sibling::*[not(self::xsl:param)]",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.message(
-                          t,
-                          {
-                            select: void 0,
-                            terminate: "yes",
-                            namespaces: {
-                              xsl: "http://www.w3.org/1999/XSL/Transform",
-                            },
-                          },
-                          (t) => {
-                            o.literalText(
-                              t,
-                              "XTSE0010: xsl:params must not be preceded by other elements",
-                            );
-                          },
-                        );
-                      },
-                    ),
-                      o.nextMatch(t, {
-                        params: [],
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      }));
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 5,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  7,
+                ],
+                [
+                  {
                     xpath: "xsl:template/xsl:template",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes0 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-template");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-template")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "template" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tfor (let contextItem2 = domFacade.getFirstChild(contextItem1, "name-template");\n\t\t\t\t\t\t\tcontextItem2;\n\t\t\t\t\t\t\tcontextItem2 = domFacade.getNextSibling(contextItem2, "name-template")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem2.nodeType\n\t\t\t\t\t\t&& contextItem2.nodeType === /*ELEMENT_NODE*/ 1 && contextItem2.localName === "template" && (contextItem2.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem2;\n\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes0(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.message(
-                      t,
-                      {
-                        select: void 0,
-                        terminate: "yes",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.literalText(
-                          t,
-                          "XTSE0010: xsl:template only allowed at the top level.",
-                        );
-                      },
-                    );
-                  },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 4,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
+                  6,
+                ],
+                [
+                  {
                     xpath: "xsl:template",
                     compiled: o.compileMatchFunction(
                       '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes0 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-template");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-template")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "template" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes0(contextItem));}\n//# sourceURL=generated.js',
                     ),
                   },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    (o.ifX(
-                      t,
-                      {
-                        test: "not(@match) and (@mode or @priority)",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.message(
-                          t,
-                          {
-                            select: void 0,
-                            terminate: "yes",
-                            namespaces: {
-                              xsl: "http://www.w3.org/1999/XSL/Transform",
-                            },
-                          },
-                          (t) => {
-                            o.literalText(
-                              t,
-                              "XTSE0500: An xsl:template element that has no match attribute must have no mode attribute and no priority attribute.",
-                            );
-                          },
-                        );
-                      },
+                  5,
+                ],
+                [
+                  {
+                    xpath: "xsl:variable",
+                    compiled: o.compileMatchFunction(
+                      '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes0 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-variable");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-variable")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "variable" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes0(contextItem));}\n//# sourceURL=generated.js',
                     ),
-                      o.ifX(
-                        t,
-                        {
-                          test: "not(@match) and not(@name)",
-                          namespaces: {
-                            xsl: "http://www.w3.org/1999/XSL/Transform",
-                          },
-                        },
-                        (t) => {
-                          o.message(
-                            t,
-                            {
-                              select: void 0,
-                              terminate: "yes",
-                              namespaces: {
-                                xsl: "http://www.w3.org/1999/XSL/Transform",
-                              },
-                            },
-                            (t) => {
-                              o.literalText(
-                                t,
-                                "XTSE0500: An xsl:template element must have either a match attribute or a name attribute, or both.",
-                              );
-                            },
-                          );
-                        },
-                      ),
-                      o.ifX(
-                        t,
-                        {
-                          test: "@priority and not(number(@priority) = number(@priority))",
-                          namespaces: {
-                            xsl: "http://www.w3.org/1999/XSL/Transform",
-                          },
-                        },
-                        (t) => {
-                          o.message(
-                            t,
-                            {
-                              select: void 0,
-                              terminate: "yes",
-                              namespaces: {
-                                xsl: "http://www.w3.org/1999/XSL/Transform",
-                              },
-                            },
-                            (t) => {
-                              o.literalText(
-                                t,
-                                "XTSE0505: The @priority attribute of xsl:template must be a number.",
-                              );
-                            },
-                          );
-                        },
-                      ),
-                      o.nextMatch(t, {
-                        params: [],
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      }));
                   },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 3,
-                  importPrecedence: 1,
-                },
-                {
-                  match: {
-                    xpath: "xsl:variable | xsl:with-param",
-                    compiled: void 0,
-                  },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    (o.ifX(
-                      t,
-                      {
-                        test: "@select and (node() or text()) ",
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.message(
-                          t,
-                          {
-                            select: void 0,
-                            terminate: "yes",
-                            namespaces: {
-                              xsl: "http://www.w3.org/1999/XSL/Transform",
-                            },
-                          },
-                          (t) => {
-                            (o.literalText(
-                              t,
-                              "XTSE0620: Variable or parameter ",
-                            ),
-                              o.valueOf(
-                                t,
-                                {
-                                  select: "@name",
-                                  separator: void 0,
-                                  namespaces: {
-                                    xsl: "http://www.w3.org/1999/XSL/Transform",
-                                  },
-                                },
-                                (t) => {},
-                              ),
-                              o.literalText(
-                                t,
-                                " has both @select and children.",
-                              ));
-                          },
-                        );
-                      },
+                  4,
+                ],
+                [
+                  {
+                    xpath: "xsl:with-param",
+                    compiled: o.compileMatchFunction(
+                      '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes0 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "name-with-param");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "name-with-param")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& contextItem1.nodeType === /*ELEMENT_NODE*/ 1 && contextItem1.localName === "with-param" && (contextItem1.namespaceURI || null) === (("http://www.w3.org/1999/XSL/Transform") || null))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes0(contextItem));}\n//# sourceURL=generated.js',
                     ),
-                      o.nextMatch(t, {
-                        params: [],
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      }));
                   },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: 0.5,
-                  declarationOrder: 2,
-                  importPrecedence: 1,
-                },
-                {
-                  match: { xpath: "/ | @* | node()", compiled: void 0 },
-                  name: void 0,
-                  modes: ["#default"],
-                  allowedParams: [],
-                  apply: (t) => {
-                    o.copy(
-                      t,
-                      {
-                        namespaces: {
-                          xsl: "http://www.w3.org/1999/XSL/Transform",
-                        },
-                      },
-                      (t) => {
-                        o.applyTemplates(t, {
-                          select: "@* | node()",
-                          mode: "#default",
-                          params: [],
-                          sortKeyComponents: [],
-                          namespaces: {
-                            xsl: "http://www.w3.org/1999/XSL/Transform",
-                          },
-                        });
-                      },
-                    );
+                  4,
+                ],
+                [
+                  {
+                    xpath: "/",
+                    compiled: o.compileMatchFunction(
+                      '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes0 = (function* (contextItem0) {\n\t\t\tconst root0 = (function () {\n\t\t\t\tlet n = contextItem0;\n\t\t\t\twhile (n.nodeType !== /*DOCUMENT_NODE*/9) {\n\t\t\t\t\tn = domFacade.getParentNode(n);\n\t\t\t\t\tif (n === null) {\n\t\t\t\t\t\tthrow new Error(\'XPDY0050: the root node of the context node is not a document node.\');\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\treturn n;\n\t\t\t})();\n\t\t\tyield root0;\n\t\t});\n\t\treturn Array.from(nodes0(contextItem));}\n//# sourceURL=generated.js',
+                    ),
                   },
-                  namespaces: { xsl: "http://www.w3.org/1999/XSL/Transform" },
-                  priority: -0.25,
-                  declarationOrder: 1,
-                  importPrecedence: 1,
-                },
+                  3,
+                ],
+                [
+                  {
+                    xpath: "@*",
+                    compiled: o.compileMatchFunction(
+                      '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes0 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (const contextItem1 of (contextItem0 && contextItem0.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem0, "type-2") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& (contextItem1.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem1.nodeType === /*ATTRIBUTE_NODE*/ 2))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes0(contextItem));}\n//# sourceURL=generated.js',
+                    ),
+                  },
+                  3,
+                ],
+                [
+                  {
+                    xpath: "node()",
+                    compiled: o.compileMatchFunction(
+                      '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes0 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0);\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1)) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(!!contextItem1.nodeType)) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes0(contextItem));}\n//# sourceURL=generated.js',
+                    ),
+                  },
+                  3,
+                ],
+                [{ xpath: "processing-instruction()", compiled: void 0 }, 0],
+                [{ xpath: "comment()", compiled: void 0 }, 0],
+                [
+                  {
+                    xpath: "text()",
+                    compiled: o.compileMatchFunction(
+                      '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes0 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (let contextItem1 = domFacade.getFirstChild(contextItem0, "type-3");\n\t\t\t\t\t\t\tcontextItem1;\n\t\t\t\t\t\t\tcontextItem1 = domFacade.getNextSibling(contextItem1, "type-3")) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!((contextItem1.nodeType === /*TEXT_NODE*/ 3 ||\n\t\t\t\tcontextItem1.nodeType === /* CDATA_SECTION_NODE */ 4))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes0(contextItem));}\n//# sourceURL=generated.js',
+                    ),
+                  },
+                  1,
+                ],
+                [
+                  {
+                    xpath: "@*",
+                    compiled: o.compileMatchFunction(
+                      '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes0 = (function* (contextItem0) {\n\t\t\t\n\t\t\tfor (const contextItem1 of (contextItem0 && contextItem0.nodeType === /*ELEMENT_NODE*/ 1 ? domFacade.getAllAttributes(contextItem0, "type-2") : [])) {\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (!(contextItem1.nodeType\n\t\t\t\t\t\t&& (contextItem1.nodeType === /*ELEMENT_NODE*/ 1\n\t\t\t\t\t\t|| contextItem1.nodeType === /*ATTRIBUTE_NODE*/ 2))) {\n\t\t\t\t\t\t\tcontinue;\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\tyield contextItem1;\n\t\t\t\t\t}\n\t\t});\n\t\treturn Array.from(nodes0(contextItem));}\n//# sourceURL=generated.js',
+                    ),
+                  },
+                  1,
+                ],
+                [
+                  {
+                    xpath: "/",
+                    compiled: o.compileMatchFunction(
+                      '\n\treturn (contextItem, domFacade, runtimeLib, options) => {\n\t\tconst {\n\t\t\terrXPDY0002,\n\t\t} = runtimeLib;\n\t\tif (!contextItem) {\n\t\t\tthrow errXPDY0002("Context is needed to evaluate the given path expression.");\n\t\t}\n\n\t\tif (!contextItem.nodeType) {\n\t\t\tthrow new Error("Context item must be subtype of node().");\n\t\t}\n\t\t\n\t\tconst nodes0 = (function* (contextItem0) {\n\t\t\tconst root0 = (function () {\n\t\t\t\tlet n = contextItem0;\n\t\t\t\twhile (n.nodeType !== /*DOCUMENT_NODE*/9) {\n\t\t\t\t\tn = domFacade.getParentNode(n);\n\t\t\t\t\tif (n === null) {\n\t\t\t\t\t\tthrow new Error(\'XPDY0050: the root node of the context node is not a document node.\');\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\treturn n;\n\t\t\t})();\n\t\t\tyield root0;\n\t\t});\n\t\treturn Array.from(nodes0(contextItem));}\n//# sourceURL=generated.js',
+                    ),
+                  },
+                  2,
+                ],
               ],
+              namedTemplates: new Map([]),
               variableScopes: [new Map()],
               inputURL: e.inputURL,
-              ruleTree: { rules: [] },
+              ruleTree: {
+                feature: new o.NodeTypeFeature(o.selfNode, 1),
+                results: [],
+                left: { results: [2] },
+              },
               keys: r,
               outputDefinitions: a,
-              decimalFormats: s,
+              decimalFormats: c,
               patternMatchCache: new Map(),
               stylesheetParams: e.stylesheetParams,
             };
           return (
+            o.initialize(s, { xsl: "http://www.w3.org/1999/XSL/Transform" }),
             o.stripSpace(t, []),
-            o.processNode(c, [], {
+            o.processNode(s, [], {
               xsl: "http://www.w3.org/1999/XSL/Transform",
             }),
             n
@@ -1933,8 +2158,8 @@
         const o = n(953),
           r = String.raw`[^,:\(\)\*\[\]/]`,
           a = String.raw`(child::|attribute::|@)?`,
-          s = String.raw`(document-node\()?`;
-        var c;
+          c = String.raw`(document-node\()?`;
+        var s;
         function i(t) {
           return (
             "object" == typeof t &&
@@ -1950,42 +2175,42 @@
           (e.DEFAULT_PRIORITIES = new Map([
             [new RegExp(String.raw`^\s*/\s*$`), -0.5],
             [new RegExp(String.raw`^\s*\*\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${s}${a}processing-instruction`), 0],
-            [new RegExp(String.raw`^\s*${s}${a}element\(\*?\)\)?\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${s}${a}attribute\(\*?\)\)?\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${s}${a}element\(${r}+\)\)?\s*$`), 0],
+            [new RegExp(String.raw`^\s*${c}${a}processing-instruction`), 0],
+            [new RegExp(String.raw`^\s*${c}${a}element\(\*?\)\)?\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*${c}${a}attribute\(\*?\)\)?\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*${c}${a}element\(${r}+\)\)?\s*$`), 0],
             [
-              new RegExp(String.raw`^\s*${s}${a}element\(\*,\s*${r}+\)\)?\s*$`),
+              new RegExp(String.raw`^\s*${c}${a}element\(\*,\s*${r}+\)\)?\s*$`),
               0,
             ],
-            [new RegExp(String.raw`^\s*${s}${a}attribute\(${r}+\)\)?\s*$`), 0],
+            [new RegExp(String.raw`^\s*${c}${a}attribute\(${r}+\)\)?\s*$`), 0],
             [
               new RegExp(
-                String.raw`^\s*${s}${a}attribute\(\*,\s*${r}+\)\)?\s*$`,
+                String.raw`^\s*${c}${a}attribute\(\*,\s*${r}+\)\)?\s*$`,
               ),
               0,
             ],
             [
               new RegExp(
-                String.raw`^\s*${s}${a}element\(${r}+,\s*${r}+\)\)?\s*$`,
+                String.raw`^\s*${c}${a}element\(${r}+,\s*${r}+\)\)?\s*$`,
               ),
               0.25,
             ],
             [
               new RegExp(
-                String.raw`^\s*${s}${a}attribute\(${r}+,\s*${r}+\)\)?\s*$`,
+                String.raw`^\s*${c}${a}attribute\(${r}+,\s*${r}+\)\)?\s*$`,
               ),
               0.25,
             ],
             [
               new RegExp(
-                String.raw`^\s*${s}${a}schema-element\(${r}+\)\)?\s*$`,
+                String.raw`^\s*${c}${a}schema-element\(${r}+\)\)?\s*$`,
               ),
               0.25,
             ],
             [
               new RegExp(
-                String.raw`^\s*${s}${a}schema-attribute\(${r}+\)\)?\s*$`,
+                String.raw`^\s*${c}${a}schema-attribute\(${r}+\)\)?\s*$`,
               ),
               0.25,
             ],
@@ -2013,7 +2238,7 @@
               (t[(t.DOCUMENT_TYPE = 10)] = "DOCUMENT_TYPE"),
               (t[(t.DOCUMENT_FRAGMENT = 11)] = "DOCUMENT_FRAGMENT"),
               (t[(t.NOTATION = 12)] = "NOTATION"));
-          })(c || (e.NodeType = c = {})),
+          })(s || (e.NodeType = s = {})),
           (e.DEFAULT_DECIMAL_FORMAT = {
             decimalSeparator: ".",
             digit: "#",
@@ -2079,7 +2304,7 @@
               : function (t, e) {
                   t.default = e;
                 }),
-          s =
+          c =
             (this && this.__importStar) ||
             ((o = function (t) {
               return (
@@ -2099,8 +2324,8 @@
               if (t && t.__esModule) return t;
               var e = {};
               if (null != t)
-                for (var n = o(t), s = 0; s < n.length; s++)
-                  "default" !== n[s] && r(e, t, n[s]);
+                for (var n = o(t), c = 0; c < n.length; c++)
+                  "default" !== n[c] && r(e, t, n[c]);
               return (a(e, t), e);
             });
         (Object.defineProperty(e, "__esModule", { value: !0 }),
@@ -2118,24 +2343,24 @@
                 try {
                   return (
                     b(t, n, e, { level: 0 }),
-                    [new f(u, m.Node.ELEMENT_NODE), ...n]
+                    [new f(u, l.Node.ELEMENT_NODE), ...n]
                   );
                 } catch (t) {
                   return;
                 }
               })(
-                (0, l.parseScript)(
+                (0, m.parseScript)(
                   t,
-                  { language: l.evaluateXPath.XPATH_3_1_LANGUAGE },
-                  new m.Document(),
+                  { language: m.evaluateXPath.XPATH_3_1_LANGUAGE },
+                  new l.Document(),
                 ),
                 e,
               );
           }));
-        const c = n(953),
+        const s = n(953),
           i = n(712),
-          l = n(594),
-          m = s(n(898)),
+          m = n(594),
+          l = c(n(898)),
           p = "http://www.w3.org/2005/XQueryX";
         function u(t) {
           return t;
@@ -2145,11 +2370,11 @@
             (super(e), (this.nodeExtractor = t));
           }
           serialize() {
-            return (0, c.mkNew)(
-              (0, c.mkMember)("xjslt", this.constructor.name),
+            return (0, s.mkNew)(
+              (0, s.mkMember)("xjslt", this.constructor.name),
               [
-                (0, c.toEstree)(this.nodeExtractor),
-                (0, c.toEstree)(this.value),
+                (0, s.toEstree)(this.nodeExtractor),
+                (0, s.toEstree)(this.value),
               ],
             );
           }
@@ -2160,7 +2385,7 @@
             return (
               (null === (e = this.nodeExtractor(t)) || void 0 === e
                 ? void 0
-                : e.nodeType) === m.Node.ELEMENT_NODE &&
+                : e.nodeType) === l.Node.ELEMENT_NODE &&
               t.namespaceURI === this.value
             );
           }
@@ -2177,7 +2402,7 @@
           }
         }
         e.NodeTypeFeature = f;
-        class w extends d {
+        class I extends d {
           matches(t) {
             var e;
             return (
@@ -2187,8 +2412,8 @@
             );
           }
         }
-        e.NodeNameFeature = w;
-        class h extends d {
+        e.NodeNameFeature = I;
+        class w extends d {
           matches(t) {
             var e;
             return (
@@ -2198,17 +2423,17 @@
             );
           }
         }
-        e.NodeTextFeature = h;
-        class I extends d {
+        e.NodeTextFeature = w;
+        class T extends d {
           matches(t) {
             const e = this.nodeExtractor(t);
             return (
-              e.nodeType === m.Node.ELEMENT_NODE &&
+              e.nodeType === l.Node.ELEMENT_NODE &&
               e.getAttribute(this.value.name) === this.value.value
             );
           }
         }
-        function T(t) {
+        function h(t) {
           return (
             (function (t) {
               return 1 === t.nodeType;
@@ -2216,14 +2441,14 @@
           );
         }
         function y(t, e) {
-          return T(t) && t.localName === e;
+          return h(t) && t.localName === e;
         }
         function g(t, e) {
           for (const n of t.childNodes) if (y(n, e)) return n;
         }
         function E(t, e, n) {
           for (const o of t.childNodes) {
-            if (!T(o)) continue;
+            if (!h(o)) continue;
             if (y(o, e) && (!n || n(o))) return o;
             const t = E(o, e, n);
             if (t) return t;
@@ -2238,28 +2463,28 @@
                 : e.textContent) && !!g(t, "anyKindTest")
           );
         }
-        e.NodeAttributeFeature = I;
+        e.NodeAttributeFeature = T;
         class v extends Error {}
         function b(t, e, n, o) {
           var r, a;
-          if (!T(t)) return;
-          const s = t.localName;
+          if (!h(t)) return;
+          const c = t.localName;
           if (
-            "module" === s ||
-            "mainModule" === s ||
-            "predicates" === s ||
-            "queryBody" === s ||
-            "andOp" === s ||
-            "firstOperand" === s ||
-            "secondOperand" === s
+            "module" === c ||
+            "mainModule" === c ||
+            "predicates" === c ||
+            "queryBody" === c ||
+            "andOp" === c ||
+            "firstOperand" === c ||
+            "secondOperand" === c
           )
             for (const r of t.childNodes) b(r, e, n, o);
-          else if ("pathExpr" === s) {
+          else if ("pathExpr" === c) {
             const r = t.childNodes.filter((t) => y(t, "stepExpr"));
             if (0 === r.length) throw new v();
             for (const t of r.slice(0, -1)) if (!N(t)) throw new v();
             b(r[r.length - 1], e, n, o);
-          } else if ("stepExpr" === s) {
+          } else if ("stepExpr" === c) {
             const a =
               null === (r = g(t, "xpathAxis")) || void 0 === r
                 ? void 0
@@ -2273,9 +2498,9 @@
                 n,
                 Object.assign(Object.assign({}, o), { level: o.level + 1 }),
               );
-          } else if ("nameTest" === s) {
+          } else if ("nameTest" === c) {
             const o = t.textContent;
-            o && e.push(new w(u, o));
+            o && e.push(new I(u, o));
             const r = t.getAttributeNS(p, "prefix");
             if (r) {
               const t = null == n ? void 0 : n(r);
@@ -2284,7 +2509,7 @@
             }
             const a = t.getAttributeNS(p, "URI");
             a && e.push(new x(u, a));
-          } else if ("Wildcard" === s) {
+          } else if ("Wildcard" === c) {
             const o = g(t, "NCName");
             if (o) {
               const t =
@@ -2295,7 +2520,7 @@
               e.push(new x(u, t));
             }
           } else {
-            if ("equalOp" !== s) throw new v();
+            if ("equalOp" !== c) throw new v();
             {
               const n = g(t, "firstOperand"),
                 o = g(t, "secondOperand");
@@ -2311,7 +2536,7 @@
           const r = E(e, "value");
           if (!r) return;
           const a = null !== (n = r.textContent) && void 0 !== n ? n : "",
-            s = E(t, "stepExpr", (t) => {
+            c = E(t, "stepExpr", (t) => {
               var e;
               return (
                 "attribute" ===
@@ -2320,16 +2545,16 @@
                   : e.textContent)
               );
             });
-          if (s) {
+          if (c) {
             const t =
-              null === (o = g(s, "nameTest")) || void 0 === o
+              null === (o = g(c, "nameTest")) || void 0 === o
                 ? void 0
                 : o.textContent;
             if (!t) return;
-            return new I(u, { name: t, value: a });
+            return new T(u, { name: t, value: a });
           }
           return g(t, "contextItemExpr") || E(t, "textTest")
-            ? new h(u, a)
+            ? new w(u, a)
             : void 0;
         }
       },
@@ -2337,28 +2562,29 @@
         "use strict";
         (Object.defineProperty(e, "__esModule", { value: !0 }),
           (e.buildRuleTree = function t(e) {
-            if (0 === e.length) return { rules: e };
+            if (0 === e.length) return { results: [] };
             const n = new Set();
             for (const t of e) for (const e of t.features) n.add(e);
-            if (0 === n.size) return { rules: e };
+            if (0 === n.size) return { results: e.map((t) => t.result) };
             const o = Array.from(n)[0],
               r = [],
               a = [];
             for (const t of e)
               t.features.some((t) => t.equals(o)) ? r.push(t) : a.push(t);
-            let s = { feature: o, rules: [] };
+            let c = { feature: o, results: [] };
             if (r.length > 0) {
               const e = r.map((t) =>
                 Object.assign(Object.assign({}, t), {
                   features: t.features.filter((t) => !t.equals(o)),
                 }),
               );
-              s.left = t(e.filter((t) => t.features.length > 0));
+              c.left = t(e.filter((t) => t.features.length > 0));
               const n = r.filter((t, n) => 0 === e[n].features.length);
               n.length > 0 &&
-                (s.left || (s.left = { rules: [] }), (s.left.rules = n));
+                (c.left || (c.left = { results: [] }),
+                (c.left.results = n.map((t) => t.result)));
             }
-            return (a.length > 0 && (s.right = t(a)), s);
+            return (a.length > 0 && (c.right = t(a)), c);
           }),
           (e.findMatchingRules = function (t, e) {
             const n = [],
@@ -2366,12 +2592,12 @@
             for (; o.length > 0; ) {
               const t = o.pop();
               t &&
-                (n.push(...t.rules),
+                (n.push(...t.results),
                 t.feature &&
                   (t.right && o.push(t.right),
                   t.feature.matches(e) && t.left && o.push(t.left)));
             }
-            return n.map((t) => t.result);
+            return n;
           }));
       },
       953(t, e) {
@@ -2402,7 +2628,7 @@
             optional: !1,
           };
         }
-        function s(t, e) {
+        function c(t, e) {
           return (
             e || (e = t),
             {
@@ -2423,7 +2649,7 @@
             }
           );
         }
-        function c(t) {
+        function s(t) {
           return { type: "ArrayExpression", elements: t };
         }
         function i(t, e, n) {
@@ -2432,6 +2658,9 @@
             declarations: [{ type: "VariableDeclarator", id: t, init: e }],
             kind: n,
           };
+        }
+        function m(t, e) {
+          return { type: "NewExpression", callee: t, arguments: e };
         }
         (Object.defineProperty(e, "__esModule", { value: !0 }),
           (e.mkArrowFun = function (t) {
@@ -2484,7 +2713,7 @@
             ];
           }),
           (e.mkImportsNode = function () {
-            return [s("slimdom"), s("fontoxpath"), s("xjslt", "xjslt")];
+            return [c("slimdom"), c("fontoxpath"), c("xjslt", "xjslt")];
           }),
           (e.mkLiteral = r),
           (e.mkMember = a),
@@ -2502,8 +2731,8 @@
               });
             return { type: "ObjectExpression", properties: e };
           }),
-          (e.mkRequire = s),
-          (e.mkArray = c),
+          (e.mkRequire = c),
+          (e.mkArray = s),
           (e.mkReturn = function (t) {
             return { type: "ReturnStatement", argument: t };
           }),
@@ -2517,9 +2746,7 @@
             return i(t, e, "const");
           }),
           (e.mkVariableDeclaration = i),
-          (e.mkNew = function (t, e) {
-            return { type: "NewExpression", callee: t, arguments: e };
-          }),
+          (e.mkNew = m),
           (e.toEstree = function t(e) {
             const n = typeof e;
             return null == e ||
@@ -2528,28 +2755,33 @@
               "boolean" === n
               ? r(e)
               : Array.isArray(e)
-                ? c(e.map((e) => t(e)))
+                ? s(e.map((e) => t(e)))
                 : "function" == typeof e.serialize
                   ? e.serialize()
-                  : "function" == typeof e
+                  : "function" === n
                     ? a("xjslt", e.name)
                     : "object" === n
-                      ? "type" in e
-                        ? e
-                        : (function (e) {
-                            let n = [];
-                            for (let o in e)
-                              n.push({
-                                type: "Property",
-                                method: !1,
-                                shorthand: !1,
-                                computed: !1,
-                                key: t(o),
-                                value: t(e[o]),
-                                kind: "init",
-                              });
-                            return { type: "ObjectExpression", properties: n };
-                          })(e)
+                      ? e instanceof Map
+                        ? m(o("Map"), [t(Array.from(e.entries()))])
+                        : "type" in e
+                          ? e
+                          : (function (e) {
+                              let n = [];
+                              for (let o in e)
+                                n.push({
+                                  type: "Property",
+                                  method: !1,
+                                  shorthand: !1,
+                                  computed: !1,
+                                  key: t(o),
+                                  value: t(e[o]),
+                                  kind: "init",
+                                });
+                              return {
+                                type: "ObjectExpression",
+                                properties: n,
+                              };
+                            })(e)
                       : void 0;
           }));
       },
@@ -2562,7 +2794,7 @@
               { namespaceURI: r.XJSLT_NSURI, localName: "current" },
               [],
               "item()",
-              c,
+              s,
             ),
               (0, o.registerCustomXPathFunction)(
                 {
@@ -2586,13 +2818,13 @@
                 },
                 [],
                 "xs:string?",
-                l,
+                m,
               ),
               (0, o.registerCustomXPathFunction)(
                 { namespaceURI: r.XJSLT_NSURI, localName: "current-group" },
                 [],
                 "item()*",
-                m,
+                l,
               ),
               (0, o.registerCustomXPathFunction)(
                 { namespaceURI: r.XJSLT_NSURI, localName: "positionx" },
@@ -2622,13 +2854,13 @@
                 { namespaceURI: r.XJSLT_NSURI, localName: "base-uri" },
                 [],
                 "xs:string?",
-                w,
+                I,
               ),
               (0, o.registerCustomXPathFunction)(
                 { namespaceURI: r.XJSLT_NSURI, localName: "base-uri" },
                 ["node()?"],
                 "xs:string?",
-                w,
+                I,
               ),
               (0, o.registerCustomXPathFunction)(
                 { namespaceURI: r.XJSLT_NSURI, localName: "evaluate" },
@@ -2654,41 +2886,41 @@
                 { namespaceURI: r.XJSLT_NSURI, localName: "normalize-unicode" },
                 ["xs:string?"],
                 "xs:string",
-                (t, e) => h(0, e, "NFC"),
+                (t, e) => w(0, e, "NFC"),
               ),
               (0, o.registerCustomXPathFunction)(
                 { namespaceURI: r.XJSLT_NSURI, localName: "normalize-unicode" },
                 ["xs:string?", "xs:string"],
                 "xs:string",
-                h,
+                w,
               ),
               (0, o.registerCustomXPathFunction)(
                 { namespaceURI: r.XJSLT_NSURI, localName: "format-number" },
                 ["xs:numeric", "xs:string"],
                 "xs:string",
-                I,
+                T,
               ),
               (0, o.registerCustomXPathFunction)(
                 { namespaceURI: r.XJSLT_NSURI, localName: "format-number" },
                 ["xs:numeric", "xs:string", "xs:string"],
                 "xs:string",
-                I,
+                T,
               ));
           }));
         const o = n(594),
           r = n(712),
           a = n(845),
-          s = n(472);
-        function c({ currentContext: t }) {
+          c = n(472);
+        function s({ currentContext: t }) {
           return t.contextItem;
         }
         function i({ currentContext: t }, e) {
-          return (0, s.urlToDom)(t, e);
-        }
-        function l({ currentContext: t }) {
-          return t.currentGroup.key;
+          return (0, c.urlToDom)(t, e);
         }
         function m({ currentContext: t }) {
+          return t.currentGroup.key;
+        }
+        function l({ currentContext: t }) {
           return t.currentGroup.nodes;
         }
         function p({ currentContext: t }) {
@@ -2707,10 +2939,10 @@
             keys: o,
             contextItem: r,
             variableScopes: a,
-            patternMatchCache: s,
+            patternMatchCache: c,
           } = t;
           if (!o.has(e)) throw new Error("XTDE1260");
-          return o.get(e).lookup(s, r.ownerDocument, a, n) || [];
+          return o.get(e).lookup(c, r.ownerDocument, a, n) || [];
         }
         function f(t, e) {
           return "version" === e.split(":")[1]
@@ -2730,7 +2962,7 @@
                       ? "no"
                       : "";
         }
-        function w({ currentContext: t }, e) {
+        function I({ currentContext: t }, e) {
           const n = void 0 !== e ? e : t.contextItem;
           if (!n) return null;
           let o = n;
@@ -2749,27 +2981,27 @@
           for (const t of r) a = URL.parse(t, a) || t;
           return a;
         }
-        function h(t, e, n) {
+        function w(t, e, n) {
           if (null == e) return "";
           const o = n.toUpperCase().replace("-", "");
           if (!["NFC", "NFD", "NFKC", "NFKD"].includes(o))
             throw new Error("FOCH0003: Normalization form not supported.");
           return e.normalize(o);
         }
-        function I({ currentContext: t }, e, n, o) {
-          var s, c;
+        function T({ currentContext: t }, e, n, o) {
+          var c, s;
           const i = o || "#default",
-            l =
+            m =
               null !==
-                (c =
-                  null === (s = t.decimalFormats) || void 0 === s
+                (s =
+                  null === (c = t.decimalFormats) || void 0 === c
                     ? void 0
-                    : s.get(i)) && void 0 !== c
-                ? c
+                    : c.get(i)) && void 0 !== s
+                ? s
                 : r.DEFAULT_DECIMAL_FORMAT;
-          return (0, a.formatNumberWithPicture)(e, n, l);
+          return (0, a.formatNumberWithPicture)(e, n, m);
         }
-        const T = [
+        const h = [
           "base-uri",
           "current",
           "current-group",
@@ -2784,7 +3016,7 @@
           "system-property",
         ];
         function y({ prefix: t, localName: e }, n) {
-          return (t && "fn" !== t) || !T.includes(e)
+          return (t && "fn" !== t) || !h.includes(e)
             ? null
             : { namespaceURI: r.XJSLT_NSURI, localName: e };
         }
@@ -2793,20 +3025,20 @@
         "use strict";
         (Object.defineProperty(e, "__esModule", { value: !0 }),
           (e.toAlphabeticUpper = e.toAlphabetic = void 0),
-          (e.groupNumeric = s),
-          (e.toNumeric = c),
+          (e.groupNumeric = c),
+          (e.toNumeric = s),
           (e.mkToAlphabetic = i),
-          (e.toRoman = l),
-          (e.formatWithToken = m),
+          (e.toRoman = m),
+          (e.formatWithToken = l),
           (e.formatNumber = function (t, e, n, o) {
             const r = [];
             e.prefix && r.push(e.prefix);
             for (let a = 0; a < t.length; a++) {
-              const s = Math.min(a, e.formats.length - 1),
-                c = e.formats[s];
-              if (!c) throw new Error("No number format found");
-              (c.separator && 0 !== a && r.push(c.separator),
-                r.push(m(t[a], c.format, n, o)));
+              const c = Math.min(a, e.formats.length - 1),
+                s = e.formats[c];
+              if (!s) throw new Error("No number format found");
+              (s.separator && 0 !== a && r.push(s.separator),
+                r.push(l(t[a], s.format, n, o)));
             }
             return (e.suffix && r.push(e.suffix), r.join(""));
           }),
@@ -2837,21 +3069,21 @@
                   precision: (0, r.wrapValue)(e.decimalMaxDigits, "xs:integer"),
                 },
               );
-              let l = s(
-                  c(Math.trunc(i), e.integerMinDigits),
+              let m = c(
+                  s(Math.trunc(i), e.integerMinDigits),
                   n.groupingSeparator,
                   e.integerGroupSize,
                 ),
-                m =
+                l =
                   null !== (a = i.toString().split(".")[1]) && void 0 !== a
                     ? a
                     : "";
-              for (; m.length < e.decimalMinDigits; ) m += "0";
-              const p = m.length > 0 ? n.decimalSeparator : "",
+              for (; l.length < e.decimalMinDigits; ) l += "0";
+              const p = l.length > 0 ? n.decimalSeparator : "",
                 d = n.zeroDigit.codePointAt(0);
               return (
-                48 !== d && ((l = u(l, d)), (m = u(m, d))),
-                `${e.prefix}${l}${p}${m}${e.suffix}`
+                48 !== d && ((m = u(m, d)), (l = u(l, d))),
+                `${e.prefix}${m}${p}${l}${e.suffix}`
               );
             })(Math.abs(t), i, n);
           }));
@@ -2866,14 +3098,14 @@
             73041, 73121, 92769, 93009, 120783, 120793, 120803, 120813, 120823,
             125265,
           ];
-        function s(t, e, n) {
+        function c(t, e, n) {
           if (!e || !n || t.length <= n) return t;
           const o = [];
           let r = t;
           for (; r.length > n; ) (o.unshift(r.slice(-n)), (r = r.slice(0, -n)));
           return (r && o.unshift(r), o.join(e));
         }
-        function c(t, e) {
+        function s(t, e) {
           return t.toString().padStart(e, "0");
         }
         function i(t, e) {
@@ -2887,7 +3119,7 @@
             return e;
           };
         }
-        function l(t) {
+        function m(t) {
           const e = new Map([
             [1e3, "m"],
             [900, "cm"],
@@ -2909,13 +3141,13 @@
           for (const [t, r] of e) for (; o >= t; ) ((n += r), (o -= t));
           return n;
         }
-        function m(t, n, o, r) {
+        function l(t, n, o, r) {
           if (isNaN(t) || !isFinite(t)) return "";
-          if (/0*1/.test(n)) return s(c(t, n.length), o, r);
+          if (/0*1/.test(n)) return c(s(t, n.length), o, r);
           if ("A" === n) return (0, e.toAlphabeticUpper)(t) || "";
           if ("a" === n) return (0, e.toAlphabetic)(t) || "";
-          if ("I" === n) return l(t).toUpperCase();
-          if ("i" === n) return l(t);
+          if ("I" === n) return m(t).toUpperCase();
+          if ("i" === n) return m(t);
           for (const e of a) {
             if (49 === e) continue;
             const a = e - 1;
@@ -2924,73 +3156,73 @@
                 `${String.fromCharCode(a)}*${String.fromCharCode(e)}`,
               ).test(n)
             )
-              return s(u(c(t, n.length), a), o, r);
+              return c(u(s(t, n.length), a), o, r);
           }
-          return s(c(t, n.length), o, r);
+          return c(s(t, n.length), o, r);
         }
         function p(t, e) {
           const n = e.zeroDigit,
             o = e.digit,
             r = e.decimalSeparator,
             a = e.groupingSeparator;
-          let s = 0,
-            c = !1,
+          let c = 0,
+            s = !1,
             i = !1;
-          function l() {
-            if (c || i)
+          function m() {
+            if (s || i)
               throw new Error(
                 "XTDE1310: Multiple percent/per-mille characters.",
               );
           }
-          function m() {
+          function l() {
             let a = "";
-            for (; s < t.length && t[s] !== n && t[s] !== o && t[s] !== r; )
-              (t[s] === e.percent && (l(), (c = !0)),
-                t[s] === e.perMille && (l(), (i = !0)),
-                (a += t[s++]));
+            for (; c < t.length && t[c] !== n && t[c] !== o && t[c] !== r; )
+              (t[c] === e.percent && (m(), (s = !0)),
+                t[c] === e.perMille && (m(), (i = !0)),
+                (a += t[c++]));
             return a;
           }
-          const p = m();
+          const p = l();
           let u,
             d = 0,
             x = 0,
             f = -1;
-          for (; s < t.length && t[s] !== r; ) {
-            const e = t[s];
+          for (; c < t.length && t[c] !== r; ) {
+            const e = t[c];
             if (e === n) (d++, x++);
             else if (e === o) x++;
             else {
               if (e !== a) break;
               f = x;
             }
-            s++;
+            c++;
           }
           f >= 0 && (u = x - f);
-          let w = 0,
-            h = 0;
-          if (s < t.length && t[s] === r)
-            for (s++; s < t.length; ) {
-              const e = t[s];
-              if (e === n) (w++, h++);
+          let I = 0,
+            w = 0;
+          if (c < t.length && t[c] === r)
+            for (c++; c < t.length; ) {
+              const e = t[c];
+              if (e === n) (I++, w++);
               else {
                 if (e !== o) break;
-                h++;
+                w++;
               }
-              s++;
+              c++;
             }
-          const I = m();
-          if (s < t.length)
+          const T = l();
+          if (c < t.length)
             throw new Error(
-              `XTDE1310: Active characters after picture string suffix: ${t.slice(s)}`,
+              `XTDE1310: Active characters after picture string suffix: ${t.slice(c)}`,
             );
           return {
             prefix: p,
-            suffix: I,
+            suffix: T,
             integerMinDigits: Math.max(d, 1),
             integerGroupSize: u,
-            decimalMinDigits: w,
-            decimalMaxDigits: h,
-            isPercent: c,
+            decimalMinDigits: I,
+            decimalMaxDigits: w,
+            isPercent: s,
             isPerMille: i,
           };
         }
@@ -3052,7 +3284,7 @@
                   .filter((t) => "" !== t)
                   .map((e) => t(e)),
               );
-            for (let [t, n] of c) if (t.test(e)) return n;
+            for (let [t, n] of s) if (t.test(e)) return n;
             return 0.5;
           }),
           (e.compareSortable = i),
@@ -3066,46 +3298,46 @@
           }));
         const r = String.raw`[^,:\(\)\*\[\]/]`,
           a = String.raw`(child::|attribute::|@)?`,
-          s = String.raw`(document-node\()?`,
-          c = new Map([
+          c = String.raw`(document-node\()?`,
+          s = new Map([
             [new RegExp(String.raw`^\s*/\s*$`), -0.5],
             [new RegExp(String.raw`^\s*\*\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${s}${a}processing-instruction`), 0],
-            [new RegExp(String.raw`^\s*${s}${a}element\(\*?\)\)?\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${s}${a}attribute\(\*?\)\)?\s*$`), -0.5],
-            [new RegExp(String.raw`^\s*${s}${a}element\(${r}+\)\)?\s*$`), 0],
+            [new RegExp(String.raw`^\s*${c}${a}processing-instruction`), 0],
+            [new RegExp(String.raw`^\s*${c}${a}element\(\*?\)\)?\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*${c}${a}attribute\(\*?\)\)?\s*$`), -0.5],
+            [new RegExp(String.raw`^\s*${c}${a}element\(${r}+\)\)?\s*$`), 0],
             [
-              new RegExp(String.raw`^\s*${s}${a}element\(\*,\s*${r}+\)\)?\s*$`),
+              new RegExp(String.raw`^\s*${c}${a}element\(\*,\s*${r}+\)\)?\s*$`),
               0,
             ],
-            [new RegExp(String.raw`^\s*${s}${a}attribute\(${r}+\)\)?\s*$`), 0],
+            [new RegExp(String.raw`^\s*${c}${a}attribute\(${r}+\)\)?\s*$`), 0],
             [
               new RegExp(
-                String.raw`^\s*${s}${a}attribute\(\*,\s*${r}+\)\)?\s*$`,
+                String.raw`^\s*${c}${a}attribute\(\*,\s*${r}+\)\)?\s*$`,
               ),
               0,
             ],
             [
               new RegExp(
-                String.raw`^\s*${s}${a}element\(${r}+,\s*${r}+\)\)?\s*$`,
+                String.raw`^\s*${c}${a}element\(${r}+,\s*${r}+\)\)?\s*$`,
               ),
               0.25,
             ],
             [
               new RegExp(
-                String.raw`^\s*${s}${a}attribute\(${r}+,\s*${r}+\)\)?\s*$`,
+                String.raw`^\s*${c}${a}attribute\(${r}+,\s*${r}+\)\)?\s*$`,
               ),
               0.25,
             ],
             [
               new RegExp(
-                String.raw`^\s*${s}${a}schema-element\(${r}+\)\)?\s*$`,
+                String.raw`^\s*${c}${a}schema-element\(${r}+\)\)?\s*$`,
               ),
               0.25,
             ],
             [
               new RegExp(
-                String.raw`^\s*${s}${a}schema-attribute\(${r}+\)\)?\s*$`,
+                String.raw`^\s*${c}${a}schema-attribute\(${r}+\)\)?\s*$`,
               ),
               0.25,
             ],
@@ -3165,7 +3397,7 @@
               : function (t, e) {
                   t.default = e;
                 }),
-          s =
+          c =
             (this && this.__importStar) ||
             ((o = function (t) {
               return (
@@ -3185,24 +3417,24 @@
               if (t && t.__esModule) return t;
               var e = {};
               if (null != t)
-                for (var n = o(t), s = 0; s < n.length; s++)
-                  "default" !== n[s] && r(e, t, n[s]);
+                for (var n = o(t), c = 0; c < n.length; c++)
+                  "default" !== n[c] && r(e, t, n[c]);
               return (a(e, t), e);
             });
         (Object.defineProperty(e, "__esModule", { value: !0 }),
           (e.urlToDom = function (t, e) {
-            const n = t.inputURL ? (0, c.resolve)(t.inputURL.toString(), e) : e;
+            const n = t.inputURL ? (0, s.resolve)(t.inputURL.toString(), e) : e;
             return n.startsWith("file:")
-              ? l.parseXmlDocument(
+              ? m.parseXmlDocument(
                   (0, i.readFileSync)(
-                    (0, c.fileURLToPath)(new URL(n)),
+                    (0, s.fileURLToPath)(new URL(n)),
                   ).toString(),
                 )
               : void 0;
           }));
-        const c = n(16),
+        const s = n(16),
           i = n(896),
-          l = s(n(898));
+          m = c(n(898));
       },
       821(t, e, n) {
         "use strict";
@@ -3240,7 +3472,7 @@
               : function (t, e) {
                   t.default = e;
                 }),
-          s =
+          c =
             (this && this.__importStar) ||
             ((o = function (t) {
               return (
@@ -3260,8 +3492,8 @@
               if (t && t.__esModule) return t;
               var e = {};
               if (null != t)
-                for (var n = o(t), s = 0; s < n.length; s++)
-                  "default" !== n[s] && r(e, t, n[s]);
+                for (var n = o(t), c = 0; c < n.length; c++)
+                  "default" !== n[c] && r(e, t, n[c]);
               return (a(e, t), e);
             });
         (Object.defineProperty(e, "__esModule", { value: !0 }),
@@ -3274,14 +3506,15 @@
             e.KeyImpl =
               void 0),
           (e.visitNodes = f),
-          (e.mergeTemplateGenerators = N),
-          (e.processNode = v),
+          (e.dedupGenerator = N),
+          (e.mergeTemplateGenerators = v),
+          (e.processNode = b),
           (e.nextMatch = function (t, e) {
             const n = t.nextMatches;
             if (n) {
               const o = n.next();
               o.done ||
-                P(
+                F(
                   o.value,
                   Object.assign(Object.assign({}, t), { nextMatches: n }),
                   e.params,
@@ -3294,25 +3527,49 @@
               let o = n.next();
               for (; !o.done && 1 === o.value.importPrecedence; ) o = n.next();
               o.done ||
-                P(
+                F(
                   o.value,
                   Object.assign(Object.assign({}, t), { nextMatches: n }),
                   e.params,
                 );
             }
           }),
-          (e.sort = R),
-          (e.applyTemplates = D),
+          (e.sort = D),
+          (e.applyTemplates = function (t, e) {
+            const n = (0, p.mkResolver)(e.namespaces),
+              o = (0, s.evaluateXPathToNodes)(
+                e.select,
+                t.contextItem,
+                void 0,
+                A(t.variableScopes),
+                {
+                  currentContext: t,
+                  namespaceResolver: n,
+                  functionNameResolver: m.functionNameResolver,
+                },
+              );
+            let r = e.mode || "#default";
+            ("#current" === r && (r = t.mode),
+              X(D(t, o, e.sortKeyComponents, n), t, (t) => {
+                b(
+                  Object.assign(Object.assign({}, t), {
+                    mode: r,
+                    variableScopes: P(t.variableScopes),
+                  }),
+                  e.params,
+                  e.namespaces,
+                );
+              }));
+          }),
           (e.callTemplate = function (t, e) {
-            for (let n of t.templates)
-              if (void 0 !== n.name && e.name === n.name)
-                return P(n, t, e.params);
+            const n = t.namedTemplates.get(e.name);
+            if (void 0 !== n) return F(t.templates[n], t, e.params);
             throw new Error(`Cannot find a template named ${e.name}`);
           }),
           (e.functionX = function (t, e) {
             const n = t.params.map((t) => "item()"),
               o = t.params.map((t) => t.name);
-            (0, c.registerCustomXPathFunction)(
+            (0, s.registerCustomXPathFunction)(
               { namespaceURI: t.namespace, localName: t.name },
               n,
               t.as || "item()",
@@ -3320,7 +3577,7 @@
                 let r = new Map();
                 return (
                   o.forEach((t, e) => r.set(t, n[e])),
-                  V(
+                  J(
                     Object.assign(Object.assign({}, t), {
                       variableScopes: [r].concat(t.variableScopes),
                     }),
@@ -3333,24 +3590,24 @@
           (e.copy = function (t, e, n) {
             const o = t.contextItem;
             let r, a;
-            if (o.nodeType === m.NodeType.ELEMENT) {
+            if (o.nodeType === l.NodeType.ELEMENT) {
               const e = o;
               r = t.outputDocument.createElementNS(
                 e.namespaceURI,
                 e.prefix ? `${e.prefix}:${e.localName}` : e.localName,
               );
               for (let n of e.attributes)
-                if (n.namespaceURI === m.XMLNS_NSURI) {
+                if (n.namespaceURI === l.XMLNS_NSURI) {
                   const o = n.localName;
                   r.setAttributeNode(
                     t.outputDocument.importNode(
-                      e.getAttributeNodeNS(m.XMLNS_NSURI, o),
+                      e.getAttributeNodeNS(l.XMLNS_NSURI, o),
                     ),
                   );
                 }
             } else
               r =
-                o.nodeType === m.NodeType.DOCUMENT
+                o.nodeType === l.NodeType.DOCUMENT
                   ? void 0
                   : t.outputDocument.importNode(o);
             (r && (a = t.append(r)),
@@ -3362,115 +3619,119 @@
                 ));
           }),
           (e.copyOf = function (t, e, n) {
-            let o = (0, c.evaluateXPath)(
+            let o = (0, s.evaluateXPath)(
               e.select,
               t.contextItem,
               void 0,
               A(t.variableScopes),
-              c.evaluateXPath.ALL_RESULTS_TYPE,
+              s.evaluateXPath.ALL_RESULTS_TYPE,
               {
                 currentContext: t,
                 namespaceResolver: (0, p.mkResolver)(e.namespaces),
-                functionNameResolver: l.functionNameResolver,
+                functionNameResolver: m.functionNameResolver,
               },
             );
             for (let e of o) t.append(e);
           }),
-          (e.valueOf = F),
+          (e.valueOf = function (t, e, n) {
+            t.append(
+              q(t, e.select || n, (0, p.mkResolver)(e.namespaces), e.separator),
+            );
+          }),
           (e.message = function (t, e, n) {
-            const o = G(t, e.select || n, (0, p.mkResolver)(e.namespaces));
+            const o = q(t, e.select || n, (0, p.mkResolver)(e.namespaces));
             if ("yes" === e.terminate) throw new Error(o);
             console.log(o);
           }),
           (e.text = function (t, e, n) {
-            t.append(G(t, n, (0, p.mkResolver)(e.namespaces), [""]));
+            t.append(q(t, n, (0, p.mkResolver)(e.namespaces), [""]));
           }),
           (e.variable = function (t, e) {
-            U(t.variableScopes, e.name, J(t, e));
+            U(t.variableScopes, e.name, G(t, e));
           }),
           (e.param = function (t, e) {
-            U(t.variableScopes, e.name, t.stylesheetParams[e.name] || J(t, e));
+            U(t.variableScopes, e.name, t.stylesheetParams[e.name] || G(t, e));
           }),
-          (e.extendScope = M),
-          (e.wrapValue = $),
+          (e.extendScope = P),
+          (e.wrapValue = C),
           (e.setVariable = U),
           (e.mergeVariableScopes = A),
           (e.literalText = function (t, e) {
             t.append(e);
           }),
           (e.sequence = function (t, e) {
-            const n = (0, c.evaluateXPath)(
+            const n = (0, s.evaluateXPath)(
               e.select,
               t.contextItem,
               void 0,
               A(t.variableScopes),
-              c.evaluateXPath.ALL_RESULTS_TYPE,
+              s.evaluateXPath.ALL_RESULTS_TYPE,
               {
                 currentContext: t,
                 namespaceResolver: (0, p.mkResolver)(e.namespaces),
-                functionNameResolver: l.functionNameResolver,
+                functionNameResolver: m.functionNameResolver,
               },
             );
             t.append(n);
           }),
-          (e.buildNode = j),
-          (e.buildAttributeNode = k),
+          (e.buildNode = $),
+          (e.buildAttributeNode = j),
           (e.literalElement = function (t, e, n) {
-            let o = j(t, { name: e.name, namespace: e.namespace });
+            let o = $(t, { name: e.name, namespace: e.namespace });
             const r = (0, p.mkResolver)(e.namespaces);
             for (let n of e.attributes) {
-              const e = q(t, n.value, r),
-                a = k(t, { name: n.name, namespace: n.namespace, value: e });
+              const e = z(t, n.value, r),
+                a = j(t, { name: n.name, namespace: n.namespace, value: e });
               o.setAttributeNode(a);
             }
             const a = t.append(o);
             n(
               Object.assign(Object.assign({}, t), {
-                variableScopes: M(t.variableScopes),
+                variableScopes: P(t.variableScopes),
                 append: a || t.append,
               }),
             );
           }),
           (e.attribute = function (t, e, n) {
             const o = (0, p.mkResolver)(e.namespaces),
-              r = q(t, e.name, o),
-              [a, s] = (0, p.determineNamespace)(r, o, q(t, e.namespace, o)),
-              c = k(t, {
+              r = z(t, e.name, o),
+              [a, c] = (0, p.determineNamespace)(r, o, z(t, e.namespace, o)),
+              s = j(t, {
                 name: r,
                 namespace: a,
-                value: G(t, e.select || n, o, e.separator),
+                value: q(t, e.select || n, o, e.separator),
               });
-            t.append(c);
+            t.append(s);
           }),
           (e.processingInstruction = function (t, e, n) {
-            const o = q(t, e.name, (0, p.mkResolver)(e.namespaces)),
-              r = G(t, e.select || n, (0, p.mkResolver)(e.namespaces), [
+            const o = z(t, e.name, (0, p.mkResolver)(e.namespaces)),
+              r = q(t, e.select || n, (0, p.mkResolver)(e.namespaces), [
                 "",
               ]).trimStart();
             t.append(t.outputDocument.createProcessingInstruction(o, r));
           }),
           (e.comment = function (t, e, n) {
-            const o = G(t, e.select || n, (0, p.mkResolver)(e.namespaces), [
+            const o = q(t, e.select || n, (0, p.mkResolver)(e.namespaces), [
               "",
             ]);
             t.append(t.outputDocument.createComment(o));
           }),
           (e.namespace = function (t, e, n) {
             const o = (0, p.mkResolver)(e.namespaces),
-              r = q(t, e.name, o),
-              a = G(t, e.select || n, o, [""]),
-              s = k(t, {
+              r = z(t, e.name, o),
+              a = q(t, e.select || n, o, [""]),
+              c = j(t, {
                 name: `xmlns:${r}`,
-                namespace: m.XMLNS_NSURI,
+                namespace: l.XMLNS_NSURI,
                 value: a,
               });
-            t.append(s);
+            t.append(c);
           }),
           (e.element = function (t, e, n) {
             const o = (0, p.mkResolver)(e.namespaces);
-            let r = q(t, e.name, o),
-              a = q(t, e.namespace, o),
-              s = j(t, {
+            let r = z(t, e.name, o),
+              a = z(t, e.namespace, o),
+              c = $(t, {
                 name: r,
                 namespace: (0, p.determineNamespace)(
                   r,
@@ -3478,16 +3739,16 @@
                   a,
                 )[0],
               });
-            const c = t.append(s);
+            const s = t.append(c);
             n(
               Object.assign(Object.assign({}, t), {
-                variableScopes: M(t.variableScopes),
-                append: c || t.append,
+                variableScopes: P(t.variableScopes),
+                append: s || t.append,
               }),
             );
           }),
           (e.ifX = function (t, e, n) {
-            (0, c.evaluateXPathToBoolean)(
+            (0, s.evaluateXPathToBoolean)(
               e.test,
               t.contextItem,
               void 0,
@@ -3495,7 +3756,7 @@
               {
                 currentContext: t,
                 namespaceResolver: (0, p.mkResolver)(e.namespaces),
-                functionNameResolver: l.functionNameResolver,
+                functionNameResolver: m.functionNameResolver,
               },
             ) && n(t);
           }),
@@ -3503,14 +3764,14 @@
             for (let n of e) {
               if (!n.test) return n.apply(t);
               if (
-                (0, c.evaluateXPathToBoolean)(
+                (0, s.evaluateXPathToBoolean)(
                   n.test,
                   t.contextItem,
                   void 0,
                   A(t.variableScopes),
                   {
                     currentContext: t,
-                    functionNameResolver: l.functionNameResolver,
+                    functionNameResolver: m.functionNameResolver,
                   },
                 )
               )
@@ -3529,50 +3790,50 @@
                 outputDocument: o,
                 append: r,
                 mode: "#default",
-                variableScopes: M(t.variableScopes),
+                variableScopes: P(t.variableScopes),
               }),
             );
           }),
           (e.performSort = function (t, e) {
             const n = (0, p.mkResolver)(e.namespaces),
-              o = (0, c.evaluateXPath)(
+              o = (0, s.evaluateXPath)(
                 e.select,
                 t.contextItem,
                 void 0,
                 A(t.variableScopes),
-                c.evaluateXPath.ALL_RESULTS_TYPE,
+                s.evaluateXPath.ALL_RESULTS_TYPE,
                 {
                   currentContext: t,
                   namespaceResolver: n,
-                  functionNameResolver: l.functionNameResolver,
+                  functionNameResolver: m.functionNameResolver,
                 },
               );
             if (o && Symbol.iterator in Object(o)) {
-              const r = R(t, o, e.sortKeyComponents, n);
+              const r = D(t, o, e.sortKeyComponents, n);
               for (let e of r) t.append(e);
             }
           }),
           (e.forEach = function (t, e, n) {
             const o = (0, p.mkResolver)(e.namespaces);
-            let r = (0, c.evaluateXPath)(
+            let r = (0, s.evaluateXPath)(
               e.select,
               t.contextItem,
               void 0,
               A(t.variableScopes),
-              c.evaluateXPath.ALL_RESULTS_TYPE,
+              s.evaluateXPath.ALL_RESULTS_TYPE,
               {
                 currentContext: t,
                 namespaceResolver: o,
-                functionNameResolver: l.functionNameResolver,
+                functionNameResolver: m.functionNameResolver,
               },
             );
             r &&
               Symbol.iterator in Object(r) &&
-              ((r = R(t, r, e.sortKeyComponents, o)),
-              L(r, t, (t) => {
+              ((r = D(t, r, e.sortKeyComponents, o)),
+              X(r, t, (t) => {
                 n(
                   Object.assign(Object.assign({}, t), {
-                    variableScopes: M(t.variableScopes),
+                    variableScopes: P(t.variableScopes),
                   }),
                 );
               }));
@@ -3580,7 +3841,7 @@
           (e.forEachGroup = function (t, e, n) {
             const o = (0, p.mkResolver)(e.namespaces),
               r = A(t.variableScopes),
-              a = (0, c.evaluateXPathToNodes)(
+              a = (0, s.evaluateXPathToNodes)(
                 e.select,
                 t.contextItem,
                 void 0,
@@ -3588,7 +3849,7 @@
                 {
                   currentContext: t,
                   namespaceResolver: o,
-                  functionNameResolver: l.functionNameResolver,
+                  functionNameResolver: m.functionNameResolver,
                 },
               );
             if (a && Symbol.iterator in Object(a)) {
@@ -3598,8 +3859,8 @@
                     const r = A(t.variableScopes);
                     let a = [];
                     return (
-                      L(e, t, (t) => {
-                        const e = (0, c.evaluateXPathToString)(
+                      X(e, t, (t) => {
+                        const e = (0, s.evaluateXPathToString)(
                           n,
                           t.contextItem,
                           void 0,
@@ -3607,12 +3868,12 @@
                           {
                             currentContext: t,
                             namespaceResolver: o,
-                            functionNameResolver: l.functionNameResolver,
+                            functionNameResolver: m.functionNameResolver,
                           },
                         );
-                        let s = a.find((t) => t.key === e);
-                        (s || ((s = { key: e, nodes: [] }), a.push(s)),
-                          s.nodes.push(t.contextItem));
+                        let c = a.find((t) => t.key === e);
+                        (c || ((c = { key: e, nodes: [] }), a.push(c)),
+                          c.nodes.push(t.contextItem));
                       }),
                       a
                     );
@@ -3621,21 +3882,21 @@
                   ? (r = (function (t, e, n, o) {
                       const r = A(t.variableScopes);
                       let a = [],
-                        s = null,
+                        c = null,
                         i = [];
                       return (
-                        L(e, t, (t) => {
+                        X(e, t, (t) => {
                           const e = t.contextItem,
-                            m = (0, c.evaluateXPathToString)(n, e, void 0, r, {
+                            l = (0, s.evaluateXPathToString)(n, e, void 0, r, {
                               currentContext: t,
                               namespaceResolver: o,
-                              functionNameResolver: l.functionNameResolver,
+                              functionNameResolver: m.functionNameResolver,
                             });
-                          m !== s
-                            ? (Y(a, i, s), (s = m), (i = [e]))
+                          l !== c
+                            ? (k(a, i, c), (c = l), (i = [e]))
                             : i.push(e);
                         }),
-                        Y(a, i, s),
+                        k(a, i, c),
                         a
                       );
                     })(t, a, e.groupAdjacent, o))
@@ -3644,7 +3905,7 @@
                         let r = [],
                           a = [];
                         return (
-                          L(e, t, (t) => {
+                          X(e, t, (t) => {
                             const e = t.contextItem;
                             (a.push(e),
                               E(
@@ -3653,9 +3914,9 @@
                                 e,
                                 t.variableScopes,
                                 o,
-                              ) && (Y(r, a), (a = [])));
+                              ) && (k(r, a), (a = [])));
                           }),
-                          Y(r, a),
+                          k(r, a),
                           r
                         );
                       })(t, a, e.groupEndingWith, o))
@@ -3664,7 +3925,7 @@
                         let r = [],
                           a = [];
                         return (
-                          L(e, t, (t) => {
+                          X(e, t, (t) => {
                             const e = t.contextItem;
                             (E(
                               t.patternMatchCache,
@@ -3672,15 +3933,15 @@
                               e,
                               t.variableScopes,
                               o,
-                            ) && (Y(r, a), (a = [])),
+                            ) && (k(r, a), (a = [])),
                               a.push(e));
                           }),
-                          Y(r, a),
+                          k(r, a),
                           r
                         );
                       })(t, a, e.groupStartingWith, o)),
-                (r = R(t, r, e.sortKeyComponents, o)),
-                X(r, t, n));
+                (r = D(t, r, e.sortKeyComponents, o)),
+                R(r, t, n));
             }
           }),
           (e.number = function (t, e) {
@@ -3688,7 +3949,7 @@
               o = A(t.variableScopes);
             let r;
             (e.value
-              ? (r = (0, c.evaluateXPathToNumber)(
+              ? (r = (0, s.evaluateXPathToNumber)(
                   e.value,
                   t.contextItem,
                   void 0,
@@ -3696,7 +3957,7 @@
                   {
                     currentContext: t,
                     namespaceResolver: n,
-                    functionNameResolver: l.functionNameResolver,
+                    functionNameResolver: m.functionNameResolver,
                   },
                 ))
               : "single" === e.level &&
@@ -3713,69 +3974,69 @@
                 ),
               ));
           }),
-          (e.mkNodeAppender = z),
+          (e.mkNodeAppender = Y),
           (e.mkArrayAppender = B),
           (e.resultDocument = function (t, e, n) {
             const o = (0, p.mkResolver)(e.namespaces);
             function r(e) {
-              return q(t, e, o);
+              return z(t, e, o);
             }
             const a = r(e.format);
-            let s = (0, p.mkOutputDefinition)({
+            let c = (0, p.mkOutputDefinition)({
               omitXmlDeclaration: r(e.omitXmlDeclaration),
               doctypePublic: r(e.doctypePublic),
               doctypeSystem: r(e.doctypeSystem),
               standalone: r(e.standalone),
             });
-            Object.keys(s).forEach((t) => {
-              s[t] || delete s[t];
+            Object.keys(c).forEach((t) => {
+              c[t] || delete c[t];
             });
-            const c = Object.assign(
+            const s = Object.assign(
                 Object.assign({}, a ? t.outputDefinitions.get(a) : {}),
-                s,
+                c,
               ),
               i = r(e.href);
-            let l = null;
+            let m = null;
             if (
-              ((c.doctypePublic || c.doctypeSystem) &&
-                (l = t.outputDocument.implementation.createDocumentType(
+              ((s.doctypePublic || s.doctypeSystem) &&
+                (m = t.outputDocument.implementation.createDocumentType(
                   "out",
-                  c.doctypePublic || "",
-                  c.doctypeSystem || "",
+                  s.doctypePublic || "",
+                  s.doctypeSystem || "",
                 )),
               i)
             ) {
               const e = t.outputDocument.implementation.createDocument(
                 null,
                 null,
-                l,
+                m,
               );
               if (t.resultDocuments.has(i))
                 throw new Error(`XTDE1490: ${i} is a duplicate`);
               (t.resultDocuments.set(
                 i,
-                Object.assign(Object.assign({}, c), { document: e }),
+                Object.assign(Object.assign({}, s), { document: e }),
               ),
                 n(
                   Object.assign(Object.assign({}, t), {
                     outputDocument: e,
-                    append: z(e),
+                    append: Y(e),
                   }),
                 ));
             } else {
               if (t.outputDocument.documentElement) throw new Error("XTDE1490");
               let e = t.outputDocument;
-              (l &&
+              (m &&
                 ((e = t.outputDocument.implementation.createDocument(
                   null,
                   null,
-                  l,
+                  m,
                 )),
                 (t.outputDocument = e),
-                (t.append = z(e))),
+                (t.append = Y(e))),
                 t.resultDocuments.set(
                   "#default",
-                  Object.assign(Object.assign({}, c), { document: e }),
+                  Object.assign(Object.assign({}, s), { document: e }),
                 ),
                 n(t));
             }
@@ -3784,7 +4045,7 @@
             const n = RegExp("^[ \n\r\t]+$");
             let o = [];
             !(function t(r) {
-              if (r.nodeType === m.NodeType.TEXT)
+              if (r.nodeType === l.NodeType.TEXT)
                 n.test(r.textContent) &&
                   (function (t, e) {
                     let n = new Map();
@@ -3801,7 +4062,7 @@
             for (let t of o) t.remove();
             return t;
           }),
-          (e.evaluateAttributeValueTemplate = q),
+          (e.evaluateAttributeValueTemplate = z),
           (e.serialize = function (t) {
             const e = new i.XMLSerializer();
             if (!0 !== t.omitXmlDeclaration) {
@@ -3842,11 +4103,12 @@
             } catch (t) {
               return;
             }
-          }));
-        const c = n(594),
-          i = s(n(898)),
-          l = n(379),
-          m = n(712),
+          }),
+          (e.initialize = function (t, e) {}));
+        const s = n(594),
+          i = c(n(898)),
+          m = n(379),
+          l = n(712),
           p = n(777),
           u = n(845),
           d = n(324),
@@ -3854,14 +4116,14 @@
         function f(t, e) {
           if ((e(t), t.childNodes)) for (let n of t.childNodes) f(n, e);
         }
-        function w(t) {
+        function I(t) {
           return Array.isArray(t)
-            ? t.map((t) => w(t)).join("")
+            ? t.map((t) => I(t)).join("")
             : t.nodeType
               ? t.textContent
               : t.toString();
         }
-        function h(t, e, n, o) {
+        function w(t, e, n, o) {
           t.has(e) || t.set(e, new Map());
           const r = t.get(e);
           return (r.has(n) || r.set(n, o()), r.get(n));
@@ -3923,7 +4185,7 @@
                       (0, p.mkResolver)(this.namespaces),
                     )
                   ) {
-                    let t = (0, c.evaluateXPathToString)(this.use, e);
+                    let t = (0, s.evaluateXPathToString)(this.use, e);
                     (o.has(t) || o.set(t, []), o.set(t, o.get(t).concat(e)));
                   }
                 }),
@@ -3934,12 +4196,12 @@
               return (
                 this.cache.has(e) ||
                   this.cache.set(e, this.buildDocumentCache(t, e, n)),
-                this.cache.get(e).get(w(o))
+                this.cache.get(e).get(I(o))
               );
             }
           }));
-        const I = new RegExp(/^[a-z |-]+$/),
-          T = new RegExp(/^@[a-z]+$/),
+        const T = new RegExp(/^[a-z |-]+$/),
+          h = new RegExp(/^@[a-z]+$/),
           y = new RegExp(/text\(\)|node\(\)/),
           g = new RegExp(/@|attribute|node/);
         function E(t, e, n, o, r) {
@@ -3947,53 +4209,59 @@
             !n ||
             (function (t, e) {
               return (
-                (e.nodeType === m.NodeType.ATTRIBUTE && !g.exec(t)) ||
-                (e.nodeType === m.NodeType.TEXT && !y.exec(t)) ||
-                !(!I.exec(t) || e.nodeType === m.NodeType.ELEMENT) ||
-                !(!T.exec(t) || e.nodeType === m.NodeType.ATTRIBUTE)
+                (e.nodeType === l.NodeType.ATTRIBUTE && !g.exec(t)) ||
+                (e.nodeType === l.NodeType.TEXT && !y.exec(t)) ||
+                !(!T.exec(t) || e.nodeType === l.NodeType.ELEMENT) ||
+                !(!h.exec(t) || e.nodeType === l.NodeType.ATTRIBUTE)
               );
             })(e.xpath, n) ||
             (!(function (t, e) {
               return "text()|@*" === t
-                ? e.nodeType === m.NodeType.TEXT ||
-                    e.nodeType === m.NodeType.ATTRIBUTE
+                ? e.nodeType === l.NodeType.TEXT ||
+                    e.nodeType === l.NodeType.ATTRIBUTE
                 : "processing-instruction()|comment()" === t
-                  ? e.nodeType === m.NodeType.PROCESSING_INSTRUCTION ||
-                    e.nodeType === m.NodeType.COMMENT
+                  ? e.nodeType === l.NodeType.PROCESSING_INSTRUCTION ||
+                    e.nodeType === l.NodeType.COMMENT
                   : "*|/" === t
-                    ? e.nodeType === m.NodeType.ELEMENT ||
-                      e.nodeType === m.NodeType.DOCUMENT
+                    ? e.nodeType === l.NodeType.ELEMENT ||
+                      e.nodeType === l.NodeType.DOCUMENT
                     : "text()" === t
-                      ? e.nodeType === m.NodeType.TEXT
-                      : "/" === t && e.nodeType === m.NodeType.DOCUMENT;
+                      ? e.nodeType === l.NodeType.TEXT
+                      : "/" === t && e.nodeType === l.NodeType.DOCUMENT;
             })(e.xpath, n) &&
               void 0 ===
                 (function (t, e, n, o, r) {
                   let a = n;
                   for (; a; ) {
-                    const s = h(t, e.xpath, a, () =>
+                    const c = w(t, e.xpath, a, () =>
                       e.compiled
-                        ? (0, c.executeJavaScriptCompiledXPath)(e.compiled, a)
-                        : (0, c.evaluateXPathToNodes)(
+                        ? (0, s.executeJavaScriptCompiledXPath)(e.compiled, a)
+                        : (0, s.evaluateXPathToNodes)(
                             e.xpath,
                             a,
                             void 0,
                             A(o),
                             {
                               namespaceResolver: r,
-                              functionNameResolver: l.functionNameResolver,
+                              functionNameResolver: m.functionNameResolver,
                             },
                           ),
                     );
-                    if (-1 !== s.indexOf(n)) return s;
+                    if (-1 !== c.indexOf(n)) return c;
                     a =
                       a.parentNode ||
-                      (a.nodeType === m.NodeType.ATTRIBUTE && a.ownerElement);
+                      (a.nodeType === l.NodeType.ATTRIBUTE && a.ownerElement);
                   }
                 })(t, e, n, o, r))
           );
         }
-        function* N(t, e) {
+        function* N(t) {
+          let e = new Set(),
+            n = t.next();
+          for (; !n.done; )
+            (e.has(n.value) || (yield n.value, e.add(n.value)), (n = t.next()));
+        }
+        function* v(t, e) {
           let n = [t.next(), e.next()];
           for (; !n[0].done || !n[1].done; )
             n[0].done
@@ -4002,85 +4270,47 @@
                 ? (yield n[0].value, (n[0] = t.next()))
                 : (yield n[1].value, (n[1] = e.next()));
         }
-        function v(t, e, n) {
-          let o = (function* (t, e, n) {
-              if ("#default" === n)
-                for (let n of (0, p.sortSortable)(
-                  (0, d.findMatchingRules)(e, t),
-                ))
-                  yield n;
-            })(t.contextItem, t.ruleTree, t.mode),
-            r = (function* (t, e, n, o, r, a) {
-              for (let s of n)
-                s.match &&
-                  ("#all" === s.modes[0] || s.modes.includes(r)) &&
-                  E(t, s.match, e, o, (0, p.mkResolver)(a)) &&
-                  (yield s);
+        function b(t, e, n) {
+          let o = (function* (t, e, n, o) {
+              const r = (0, d.findMatchingRules)(e, t).map((t) => n[t]);
+              for (let t of (0, p.sortSortable)(r))
+                ("#all" === t.modes[0] || t.modes.includes(o)) && (yield t);
+            })(t.contextItem, t.ruleTree, t.templates, t.mode),
+            r = (function* (t, e, n, o, r, a, c) {
+              for (let [s, i] of n) {
+                const n = o[i];
+                s &&
+                  ("#all" === n.modes[0] || n.modes.includes(a)) &&
+                  E(t, s, e, r, (0, p.mkResolver)(c)) &&
+                  (yield n);
+              }
             })(
               t.patternMatchCache,
               t.contextItem,
-              t.templates.concat(
-                (function (t) {
-                  return [
-                    {
-                      match: { xpath: "processing-instruction()|comment()" },
-                      apply: (t) => {},
-                      allowedParams: [],
-                      modes: ["#all"],
-                      importPrecedence: Number.MAX_VALUE,
-                      declarationOrder: Number.MIN_VALUE,
-                    },
-                    {
-                      match: { xpath: "text()|@*" },
-                      apply: (e) => {
-                        F(e, { select: ".", namespaces: t }, () => {});
-                      },
-                      allowedParams: [],
-                      modes: ["#all"],
-                      importPrecedence: Number.MAX_VALUE,
-                      declarationOrder: Number.MIN_VALUE,
-                    },
-                    {
-                      match: { xpath: "*|/" },
-                      apply: (e) => {
-                        D(e, {
-                          select: "child::node()",
-                          params: [],
-                          mode: "#current",
-                          namespaces: t,
-                          sortKeyComponents: [],
-                        });
-                      },
-                      allowedParams: [],
-                      modes: ["#all"],
-                      importPrecedence: Number.MAX_VALUE,
-                      declarationOrder: Number.MIN_VALUE,
-                    },
-                  ];
-                })(n),
-              ),
+              t.nonRuleTemplateIndexes,
+              t.templates,
               t.variableScopes,
               t.mode,
               n,
             ),
-            a = N(o, r);
-          const s = a.next();
-          s.done ||
-            P(
-              s.value,
+            a = N(v(o, r));
+          const c = a.next();
+          c.done ||
+            F(
+              c.value,
               Object.assign(Object.assign({}, t), { nextMatches: a }),
               e,
             );
         }
-        function b(t, e, n, o) {
+        function S(t, e, n, o) {
           let r;
           return (
             (r =
               "number" === n.dataType
                 ? (function (t, e, n, o) {
-                    const r = S(e, t, (t) => {
+                    const r = L(e, t, (t) => {
                       let e;
-                      const r = G(t, n.sortKey, o);
+                      const r = q(t, n.sortKey, o);
                       return (
                         (e = Number(r)),
                         isNaN(e) && (e = Number.MIN_SAFE_INTEGER),
@@ -4092,22 +4322,22 @@
                       .map((t) => t[1]);
                   })(t, e, n, o)
                 : (function (t, e, n, o) {
-                    const r = S(e, t, (t) => G(t, n.sortKey, o)),
-                      a = n.lang && q(t, n.lang, o);
-                    let s = new Intl.Collator(a).compare;
+                    const r = L(e, t, (t) => q(t, n.sortKey, o)),
+                      a = n.lang && z(t, n.lang, o);
+                    let c = new Intl.Collator(a).compare;
                     return (0, p.zip)(r, e)
-                      .sort((t, e) => s(t[0], e[0]))
+                      .sort((t, e) => c(t[0], e[0]))
                       .map((t) => t[1]);
                   })(t, e, n, o)),
-            "descending" === q(t, n.order, o) && r.reverse(),
+            "descending" === z(t, n.order, o) && r.reverse(),
             r
           );
         }
-        function S(t, e, n) {
-          if (t.length > 0)
-            return (0, m.isNodeGroupArray)(t) ? X(t, e, n) : L(t, e, n);
-        }
         function L(t, e, n) {
+          if (t.length > 0)
+            return (0, l.isNodeGroupArray)(t) ? R(t, e, n) : X(t, e, n);
+        }
+        function X(t, e, n) {
           let o = 0;
           return t.map(
             (r) => (
@@ -4122,7 +4352,7 @@
             ),
           );
         }
-        function X(t, e, n) {
+        function R(t, e, n) {
           let o = 0;
           return t.map((t) => {
             o++;
@@ -4131,74 +4361,43 @@
               contextList: t.nodes,
               currentGroup: t,
               position: o,
-              variableScopes: M(e.variableScopes),
+              variableScopes: P(e.variableScopes),
             });
             return n(r);
           });
         }
-        function R(t, e, n, o) {
-          if (n) for (let r of [...n].reverse()) e = b(t, e, r, o);
+        function D(t, e, n, o) {
+          if (n) for (let r of [...n].reverse()) e = S(t, e, r, o);
           return e;
         }
         function O(t, e) {
           for (let n of e) if (n.name === t) return n;
         }
-        function P(t, e, n) {
-          let o = M(e.variableScopes);
+        function F(t, e, n) {
+          let o = P(e.variableScopes);
           for (let r of t.allowedParams) {
             let t = O(r.name, n);
-            void 0 !== t ? U(o, t.name, J(e, t)) : U(o, r.name, J(e, r));
+            void 0 !== t ? U(o, t.name, G(e, t)) : U(o, r.name, G(e, r));
           }
           return t.apply(
             Object.assign(Object.assign({}, e), { variableScopes: o }),
           );
         }
-        function D(t, e) {
-          const n = (0, p.mkResolver)(e.namespaces),
-            o = (0, c.evaluateXPathToNodes)(
-              e.select,
-              t.contextItem,
-              void 0,
-              A(t.variableScopes),
-              {
-                currentContext: t,
-                namespaceResolver: n,
-                functionNameResolver: l.functionNameResolver,
-              },
-            );
-          let r = e.mode || "#default";
-          ("#current" === r && (r = t.mode),
-            L(R(t, o, e.sortKeyComponents, n), t, (t) => {
-              v(
-                Object.assign(Object.assign({}, t), {
-                  mode: r,
-                  variableScopes: M(t.variableScopes),
-                }),
-                e.params,
-                e.namespaces,
-              );
-            }));
-        }
-        function F(t, e, n) {
-          t.append(
-            G(t, e.select || n, (0, p.mkResolver)(e.namespaces), e.separator),
-          );
-        }
-        function M(t) {
+        function P(t) {
           return t.concat([new Map()]);
         }
-        let _ = new Map();
-        function C(t) {
+        let M = new Map();
+        function _(t) {
           return (
-            _.has(t) || _.set(t, (0, c.createTypedValueFactory)(t)),
-            _.get(t)
+            M.has(t) || M.set(t, (0, s.createTypedValueFactory)(t)),
+            M.get(t)
           );
         }
-        function $(t, e) {
-          if (Array.isArray(t) && 0 === t.length) return C("item()*")([], null);
+        function C(t, e) {
+          if (Array.isArray(t) && 0 === t.length) return _("item()*")([], null);
           if (e)
             try {
-              return C(e)(t, null);
+              return _(e)(t, null);
             } catch (t) {}
           const n = Array.isArray(t),
             o = n ? t[0] : t;
@@ -4209,7 +4408,7 @@
               ? (r = "xs:string")
               : "number" == typeof o &&
                 (r = Number.isInteger(o) ? "xs:integer" : "xs:numeric"),
-            C(`${r}${a}`)(t, null)
+            _(`${r}${a}`)(t, null)
           );
         }
         function U(t, e, n) {
@@ -4220,7 +4419,7 @@
           for (let n of t) for (let [t, o] of n) e[t] = o;
           return e;
         }
-        function j(t, e) {
+        function $(t, e) {
           let n;
           return (
             (n =
@@ -4230,7 +4429,7 @@
             n
           );
         }
-        function k(t, e) {
+        function j(t, e) {
           let n;
           return (
             (n = e.namespace
@@ -4240,12 +4439,12 @@
             n
           );
         }
-        function Y(t, e, n) {
+        function k(t, e, n) {
           e.length > 0 &&
             (null === n && (n = `group-${t.length + 1}`),
             t.push({ key: n, nodes: e }));
         }
-        function z(t) {
+        function Y(t) {
           const e = t.ownerDocument || t;
           return function n(o) {
             if (o.length && o.values) {
@@ -4253,27 +4452,27 @@
               const e = o.length > 0 && !o[0].nodeType;
               for (let r of o) (t ? (t = !1) : e && n(" "), n(r));
             } else if ("string" == typeof o) {
-              if (t.nodeType !== m.NodeType.DOCUMENT)
-                if (t.lastChild && t.lastChild.nodeType === m.NodeType.TEXT)
+              if (t.nodeType !== l.NodeType.DOCUMENT)
+                if (t.lastChild && t.lastChild.nodeType === l.NodeType.TEXT)
                   t.lastChild.appendData(o);
                 else if ("" !== o) {
                   const n = e.createTextNode(o);
                   n && t.append(n);
                 }
-            } else if (o.nodeType === m.NodeType.ATTRIBUTE) {
+            } else if (o.nodeType === l.NodeType.ATTRIBUTE) {
               let n = e.importNode(o, !0);
               t.setAttributeNode(n);
             } else {
-              if (o.nodeType === m.NodeType.DOCUMENT) {
+              if (o.nodeType === l.NodeType.DOCUMENT) {
                 const t = o;
-                return (o = o.documentElement) ? (n(o), z(o)) : z(t);
+                return (o = o.documentElement) ? (n(o), Y(o)) : Y(t);
               }
-              if (o.nodeType === m.NodeType.DOCUMENT_FRAGMENT) n(o.childNodes);
-              else if (o.nodeType === m.NodeType.TEXT) n(o.data);
+              if (o.nodeType === l.NodeType.DOCUMENT_FRAGMENT) n(o.childNodes);
+              else if (o.nodeType === l.NodeType.TEXT) n(o.data);
               else {
                 if (o.nodeType) {
                   let n = e.importNode(o, !0);
-                  return (t.append(n), z(n));
+                  return (t.append(n), Y(n));
                 }
                 n(`${o}`);
               }
@@ -4285,19 +4484,19 @@
             if (
               (t.push(e),
               e.nodeType &&
-                (e.nodeType === m.NodeType.DOCUMENT ||
-                  e.nodeType === m.NodeType.ELEMENT))
+                (e.nodeType === l.NodeType.DOCUMENT ||
+                  e.nodeType === l.NodeType.ELEMENT))
             )
-              return z(e);
+              return Y(e);
           };
         }
-        function q(t, e, n) {
+        function z(t, e, n) {
           if (e)
             return e
               .map((e) =>
                 "string" == typeof e
                   ? e
-                  : (0, c.evaluateXPathToString)(
+                  : (0, s.evaluateXPathToString)(
                       e.xpath,
                       t.contextItem,
                       void 0,
@@ -4305,61 +4504,61 @@
                       {
                         currentContext: t,
                         namespaceResolver: n,
-                        functionNameResolver: l.functionNameResolver,
+                        functionNameResolver: m.functionNameResolver,
                       },
                     ),
               )
               .join("");
         }
-        function G(t, e, n, o) {
+        function q(t, e, n, o) {
           o || (o = "string" == typeof e ? [" "] : []);
-          const r = q(t, o, n);
+          const r = z(t, o, n);
           return "string" == typeof e
-            ? (0, c.evaluateXPath)(
+            ? (0, s.evaluateXPath)(
                 e,
                 t.contextItem,
                 void 0,
                 A(t.variableScopes),
-                c.evaluateXPath.STRINGS_TYPE,
+                s.evaluateXPath.STRINGS_TYPE,
                 {
                   currentContext: t,
                   namespaceResolver: n,
-                  functionNameResolver: l.functionNameResolver,
+                  functionNameResolver: m.functionNameResolver,
                 },
               ).join(r)
             : (function (t) {
                 let e = [];
                 return (
                   f(t, (t) => {
-                    t.nodeType === m.NodeType.TEXT &&
+                    t.nodeType === l.NodeType.TEXT &&
                       "" !== t.data &&
                       (e = e.concat(t.data));
                   }),
                   e
                 );
-              })(V(t, e)).join(r);
+              })(J(t, e)).join(r);
         }
-        function J(t, e) {
+        function G(t, e) {
           if ("string" == typeof e.content) {
             const n = e.as && e.as.match(/[\+\*]$/);
-            let o = (0, c.evaluateXPath)(
+            let o = (0, s.evaluateXPath)(
               e.content,
               t.contextItem,
               void 0,
               A(t.variableScopes),
-              c.evaluateXPath.ALL_RESULTS_TYPE,
+              s.evaluateXPath.ALL_RESULTS_TYPE,
               {
                 currentContext: t,
                 namespaceResolver: (0, p.mkResolver)(e.namespaces),
-                functionNameResolver: l.functionNameResolver,
+                functionNameResolver: m.functionNameResolver,
               },
             );
-            return (1 !== o.length || n || (o = o[0]), $(o, e.as));
+            return (1 !== o.length || n || (o = o[0]), C(o, e.as));
           }
           return null == e.content
             ? ""
             : e.as
-              ? $(
+              ? C(
                   (function (t, e) {
                     let n = [];
                     return (
@@ -4367,7 +4566,7 @@
                         Object.assign(Object.assign({}, t), {
                           append: B(n),
                           mode: "#default",
-                          variableScopes: M(t.variableScopes),
+                          variableScopes: P(t.variableScopes),
                         }),
                       ),
                       1 === n.length ? n[0] : n
@@ -4375,13 +4574,13 @@
                   })(t, e.content),
                   e.as,
                 )
-              : V(t, e.content);
+              : J(t, e.content);
         }
-        function V(t, e) {
+        function J(t, e) {
           return (function (t, e) {
             const n = t.outputDocument.createDocumentFragment();
             if (
-              (e(z(n)), 1 === n.childNodes.length && 1 === n.childElementCount)
+              (e(Y(n)), 1 === n.childNodes.length && 1 === n.childElementCount)
             ) {
               const e = t.outputDocument.implementation.createDocument(
                 null,
@@ -4397,12 +4596,12 @@
                 append: n,
                 outputDocument: t.outputDocument,
                 mode: "#default",
-                variableScopes: M(t.variableScopes),
+                variableScopes: P(t.variableScopes),
               }),
             );
           });
         }
-        (0, l.registerFunctions)();
+        (0, m.registerFunctions)();
       },
       594(t) {
         "use strict";
@@ -4427,6 +4626,6 @@
       if (void 0 !== r) return r.exports;
       var a = (e[o] = { exports: {} });
       return (t[o].call(a.exports, a, a.exports, n), a.exports);
-    })(26);
+    })(833);
   module.exports = n.transform;
 })();
