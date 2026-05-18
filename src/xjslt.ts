@@ -346,18 +346,20 @@ function* getTemplatesFromRules(
 function* getTemplates(
   patternMatchCache: PatternMatchCache,
   node: slimdom.Node,
+  nonRuleTemplates: Array<[Xpath, TemplateIndex]>,
   templates: Array<Template>,
   variableScopes: Array<VariableScope>,
   mode: string,
   namespaces: object,
 ): Generator<Template> {
-  for (let template of templates) {
+  for (let [match, templateIndex] of nonRuleTemplates) {
+    const template = templates[templateIndex];
     if (
-      template.match &&
+      match &&
       (template.modes[0] === "#all" || template.modes.includes(mode)) &&
       patternMatch(
         patternMatchCache,
-        template.match,
+        match,
         node,
         variableScopes,
         mkResolver(namespaces),
@@ -365,6 +367,18 @@ function* getTemplates(
     ) {
       yield template;
     }
+  }
+}
+
+export function* dedupGenerator(gen: Generator<Template>): Generator<Template> {
+  let seen = new Set<Template>();
+  let next = gen.next();
+  while (!next.done) {
+    if (!seen.has(next.value)) {
+      yield next.value;
+      seen.add(next.value);
+    }
+    next = gen.next();
   }
 }
 
@@ -395,50 +409,6 @@ export function* mergeTemplateGenerators(
   }
 }
 
-function mkBuiltInTemplates(namespaces: object): Array<Template> {
-  /* Pre-sorted in order of default priority */
-  return [
-    {
-      match: { xpath: "processing-instruction()|comment()" },
-      apply: (_context: DynamicContext) => {},
-      allowedParams: [],
-      modes: ["#all"],
-      importPrecedence: Number.MAX_VALUE,
-      declarationOrder: Number.MIN_VALUE,
-    },
-    {
-      match: { xpath: "text()|@*" },
-      apply: (context: DynamicContext) => {
-        valueOf(
-          context,
-          { select: ".", namespaces: namespaces },
-          () => undefined,
-        );
-      },
-      allowedParams: [],
-      modes: ["#all"],
-      importPrecedence: Number.MAX_VALUE,
-      declarationOrder: Number.MIN_VALUE,
-    },
-    {
-      match: { xpath: "*|/" },
-      apply: (context: DynamicContext) => {
-        applyTemplates(context, {
-          select: "child::node()",
-          params: [],
-          mode: "#current",
-          namespaces: namespaces,
-          sortKeyComponents: [],
-        });
-      },
-      allowedParams: [],
-      modes: ["#all"],
-      importPrecedence: Number.MAX_VALUE,
-      declarationOrder: Number.MIN_VALUE,
-    },
-  ];
-}
-
 export function processNode(
   context: DynamicContext,
   params: VariableLike[],
@@ -453,12 +423,15 @@ export function processNode(
   let nonRuleTemplates = getTemplates(
     context.patternMatchCache,
     context.contextItem,
-    context.nonRuleTemplates,
+    context.nonRuleTemplateIndexes,
+    context.templates,
     context.variableScopes,
     context.mode,
     namespaces,
   );
-  let templates = mergeTemplateGenerators(ruleTemplates, nonRuleTemplates);
+  let templates = dedupGenerator(
+    mergeTemplateGenerators(ruleTemplates, nonRuleTemplates),
+  );
   const next = templates.next();
   if (!next.done) {
     evaluateTemplate(
@@ -2032,11 +2005,7 @@ export function compileMatchFunction(matchFunction: string) {
   }
 }
 
-export function initialize(context: DynamicContext, namespaces: object) {
-  context.nonRuleTemplates = context.nonRuleTemplateIndexes
-    .map((i) => context.templates[i])
-    .concat(mkBuiltInTemplates(namespaces));
-}
+export function initialize(context: DynamicContext, namespaces: object) {}
 
 registerFunctions();
 

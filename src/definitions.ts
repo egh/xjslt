@@ -139,14 +139,13 @@ export interface VariableLike {
 export interface Sortable {
   importPrecedence: number;
   priority?: number;
-  [propName: string]: unknown;
   declarationOrder: number;
 }
 
 interface GenericTemplate extends Sortable {
   modes: string[];
-  match?: Xpath;
   allowedParams: Array<VariableLike>;
+  namespaces: object;
 }
 
 export interface Template extends GenericTemplate {
@@ -207,8 +206,8 @@ export interface DynamicContext {
   keys: Map<String, Key>;
   patternMatchCache: PatternMatchCache;
   ruleTree: RuleTreeNode<slimdom.Node, TemplateIndex>;
-  nonRuleTemplateIndexes: Array<TemplateIndex>;
-  nonRuleTemplates: Array<Template>;
+  nonRuleTemplateIndexes: Array<[Xpath, TemplateIndex]>;
+  nonRuleTemplates: Array<[Xpath, Template]>;
   namedTemplates: Map<string, TemplateIndex>;
   outputDefinitions: Map<string, OutputDefinition>;
   decimalFormats: Map<string, DecimalFormat>;
@@ -222,7 +221,7 @@ export interface DynamicContext {
 export interface CompileContext {
   declarationCounter: number;
   namedTemplates: Map<string, Array<TemplateIndex>>;
-  nonRuleTemplates: Array<TemplateIndex>;
+  nonRuleTemplates: Array<[Xpath, TemplateIndex]>;
   rules: Array<Rule<slimdom.Node, TemplateIndex>>;
   templates: Array<TemplateForCompilation>;
   whitespaceDeclarations: Array<Sortable>;
