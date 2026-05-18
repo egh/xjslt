@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Erik Hetzner
+ * Copyright (C) 2021-2026 Erik Hetzner
  *
  * This file is part of XJSLT.
  *
