@@ -1251,15 +1251,11 @@ function setupTemplate(
   }
   if (matchStr !== undefined) {
     for (const subMatch of matchStr.split("|").map((s) => s.trim())) {
-      const match = tryCompilePattern(subMatch, template.namespaces);
-      const features = xpathToFeatures(matchStr);
-      if (
-        features &&
-        template.modes.length === 1 &&
-        template.modes[0] === "#default"
-      ) {
+      const features: XMLFeature[] = xpathToFeatures(subMatch);
+      if (features) {
         context.rules.push({ result: index, features });
-      } else if (match) {
+      } else {
+        const match = tryCompilePattern(subMatch, template.namespaces);
         context.nonRuleTemplates.push([match, index]);
       }
     }

@@ -320,10 +320,9 @@ function* getTemplatesFromRules(
   templates: Array<Template>,
   mode: string,
 ): Generator<Template> {
-  if (mode === "#default") {
-    const found = findMatchingRules(ruleTree, node).map((i) => templates[i]);
-    for (let template of sortSortable(found)) {
-      // Guaranteed to match.
+  const found = findMatchingRules(ruleTree, node).map((i) => templates[i]);
+  for (let template of sortSortable(found)) {
+    if (template.modes[0] === "#all" || template.modes.includes(mode)) {
       yield template;
     }
   }
