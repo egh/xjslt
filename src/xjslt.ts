@@ -247,6 +247,7 @@ function patternMatchNodes(
   namespaceResolver: NamespaceResolver,
 ): slimdom.Node[] | undefined {
   let checkContext = node;
+  const variables = mergeVariableScopes(variableScopes);
   while (checkContext) {
     const matches = withCached(
       patternMatchCache,
@@ -262,7 +263,7 @@ function patternMatchNodes(
           undefined,
           /* TODO: Only top level variables are applicable here, so top
         level variables could be cached. */
-          mergeVariableScopes(variableScopes),
+          variables,
           { namespaceResolver, functionNameResolver },
         );
       },
@@ -1772,6 +1773,7 @@ export function evaluateAttributeValueTemplate(
   if (!avt) {
     return undefined;
   }
+  const variables = mergeVariableScopes(context.variableScopes);
   return avt
     .map((piece) => {
       if (typeof piece === "string") {
@@ -1781,7 +1783,7 @@ export function evaluateAttributeValueTemplate(
           piece.xpath,
           context.contextItem,
           undefined,
-          mergeVariableScopes(context.variableScopes),
+          variables,
           {
             currentContext: context,
             namespaceResolver: namespaceResolver,
@@ -1812,11 +1814,12 @@ function constructSimpleContent(
     namespaceResolver,
   );
   if (typeof generator === "string") {
+    const variables = mergeVariableScopes(context.variableScopes);
     return evaluateXPath(
       generator,
       context.contextItem,
       undefined,
-      mergeVariableScopes(context.variableScopes),
+      variables,
       evaluateXPath.STRINGS_TYPE,
       {
         currentContext: context,
