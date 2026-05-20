@@ -25,6 +25,7 @@
   "homepage": "https://github.com/egh/xjslt",
   "devDependencies": {
     "@types/jest": "*",
+    "@types/node": "^25.9.1",
     "jest": "*",
     "jest-simple-dot-reporter": "*",
     "prettier": "*",

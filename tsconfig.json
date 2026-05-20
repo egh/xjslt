@@ -1,16 +1,16 @@
 {
   "compilerOptions": {
+    "rootDir": "./src/",
     "outDir": "dist",
-    "baseUrl": ".",
-    "lib": ["es6", "es2017", "esnext.asynciterable"],
+    "lib": ["es2019", "esnext"],
     "target": "es2017",
     "module": "commonjs",
     "declaration": true,
     "strict": false,
     "allowJs": true,
-    "moduleResolution": "node",
     "sourceMap": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "types": ["node", "jest"]
   },
   "include": ["./src/**/*"],
   "exclude": ["./**/*.d.ts"]

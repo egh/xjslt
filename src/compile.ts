@@ -54,14 +54,14 @@ import { pathToFileURL } from "url";
 import * as path from "path";
 import { tmpdir } from "os";
 import { mkdtempSync } from "fs";
-import preprocessSimplified from "./preprocess/simplified";
-import preprocessInclude from "./preprocess/include";
-import preprocessImport from "./preprocess/import";
-import preprocessStripWhitespace1 from "./preprocess/stripWhitespace1";
-import preprocessStripWhitespace2 from "./preprocess/stripWhitespace2";
-import preprocessUseWhen from "./preprocess/use-when";
-import preprocessErrorAnalysis from "./preprocess/error-analysis";
-import preprocessAttributeSet from "./preprocess/attribute-set";
+import preprocessSimplified from "./preprocess/simplified.js";
+import preprocessInclude from "./preprocess/include.js";
+import preprocessImport from "./preprocess/import.js";
+import preprocessStripWhitespace1 from "./preprocess/stripWhitespace1.js";
+import preprocessStripWhitespace2 from "./preprocess/stripWhitespace2.js";
+import preprocessUseWhen from "./preprocess/use-when.js";
+import preprocessErrorAnalysis from "./preprocess/error-analysis.js";
+import preprocessAttributeSet from "./preprocess/attribute-set.js";
 import {
   CompileContext,
   XSLT1_NSURI,
