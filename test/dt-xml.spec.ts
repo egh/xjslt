@@ -144,6 +144,52 @@ describe("xpathToFeatures", () => {
     test("child predicate with wildcard parent", () => {
       expect(xpathToFeatures("*[foo]", noNs)).toEqual(undefined);
     });
+
+    test("processing-instruction() yields PI node type feature", () => {
+      expect(xpathToFeatures("processing-instruction()", noNs)).toEqual([
+        new NodeTypeFeature(selfNode, slimdom.Node.PROCESSING_INSTRUCTION_NODE),
+      ]);
+    });
+
+    test("processing-instruction('foo') yields PI node type and name features", () => {
+      expect(xpathToFeatures("processing-instruction('foo')", noNs)).toEqual([
+        new NodeTypeFeature(selfNode, slimdom.Node.PROCESSING_INSTRUCTION_NODE),
+        new NodeNameFeature(selfNode, "foo"),
+      ]);
+    });
+
+    test("comment() yields comment node type feature", () => {
+      expect(xpathToFeatures("comment()", noNs)).toEqual([
+        new NodeTypeFeature(selfNode, slimdom.Node.COMMENT_NODE),
+      ]);
+    });
+
+    test("text() yields text node type feature", () => {
+      expect(xpathToFeatures("text()", noNs)).toEqual([
+        new NodeTypeFeature(selfNode, slimdom.Node.TEXT_NODE),
+      ]);
+    });
+
+    test("@* yields attribute node type feature only", () => {
+      expect(xpathToFeatures("@*", noNs)).toEqual([
+        new NodeTypeFeature(selfNode, slimdom.Node.ATTRIBUTE_NODE),
+      ]);
+    });
+
+    test("@foo yields attribute node type and name features", () => {
+      expect(xpathToFeatures("@foo", noNs)).toEqual([
+        new NodeTypeFeature(selfNode, slimdom.Node.ATTRIBUTE_NODE),
+        new NodeNameFeature(selfNode, "foo"),
+      ]);
+    });
+
+    test("@ns:foo yields attribute node type, name, and namespace features", () => {
+      expect(xpathToFeatures("@ns:foo", withNs)).toEqual([
+        new NodeTypeFeature(selfNode, slimdom.Node.ATTRIBUTE_NODE),
+        new NodeNameFeature(selfNode, "foo"),
+        new NodeNamespaceFeature(selfNode, NS),
+      ]);
+    });
   });
 
   describe("unsupported patterns return undefined", () => {
@@ -177,20 +223,8 @@ describe("xpathToFeatures", () => {
       ).toBeUndefined();
     });
 
-    test("text() node test", () => {
-      expect(xpathToFeatures("text()", noNs)).toBeUndefined();
-    });
-
     test("node() node test", () => {
       expect(xpathToFeatures("node()", noNs)).toBeUndefined();
-    });
-
-    test("comment() node test", () => {
-      expect(xpathToFeatures("comment()", noNs)).toBeUndefined();
-    });
-
-    test("attribute axis @attr", () => {
-      expect(xpathToFeatures("@class", noNs)).toBeUndefined();
     });
 
     test("namespace prefix not in resolver", () => {

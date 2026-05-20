@@ -205,9 +205,11 @@ function extractFeaturesFromAst(
   const features: XMLFeature[] = [];
   try {
     visitXqx(ast, features, nsResolver, { level: 0 });
-    // Only works for elements right now
+    const hasNodeType = features.some((f) => f instanceof NodeTypeFeature);
     return [
-      new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE),
+      ...(hasNodeType
+        ? []
+        : [new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE)]),
       ...features,
     ];
   } catch (err: any) {
@@ -255,10 +257,13 @@ function visitXqx(
     visitXqx(steps[steps.length - 1], features, nsResolver, context);
   } else if (name === "stepExpr") {
     const axis = firstXqxChild(node, "xpathAxis")?.textContent;
-    if (axis !== "child")
+    if (axis !== "child" && axis !== "attribute")
       throw new ExtractFeatureError(`unsupported axis: ${axis}`);
     if (context.level > 0) {
       throw new ExtractFeatureError(`Too many child axes.`);
+    }
+    if (axis === "attribute") {
+      features.push(new NodeTypeFeature(selfNode, slimdom.Node.ATTRIBUTE_NODE));
     }
     for (const child of node.childNodes.slice(1)) {
       visitXqx(child, features, nsResolver, {
@@ -284,7 +289,18 @@ function visitXqx(
       if (!ns) throw new ExtractFeatureError(`unresolved ns prefix: ${ns}`);
       features.push(new NodeNamespaceFeature(selfNode, ns));
     }
-    // Basic wildcard, matches all elements
+  } else if (name === "piTest") {
+    features.push(
+      new NodeTypeFeature(selfNode, slimdom.Node.PROCESSING_INSTRUCTION_NODE),
+    );
+    const target = firstXqxChild(node, "piTarget");
+    if (target?.textContent) {
+      features.push(new NodeNameFeature(selfNode, target.textContent));
+    }
+  } else if (name === "commentTest") {
+    features.push(new NodeTypeFeature(selfNode, slimdom.Node.COMMENT_NODE));
+  } else if (name === "textTest") {
+    features.push(new NodeTypeFeature(selfNode, slimdom.Node.TEXT_NODE));
   } else if (name === "equalOp") {
     const firstOp = firstXqxChild(node, "firstOperand");
     const secondOp = firstXqxChild(node, "secondOperand");
