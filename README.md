@@ -1,20 +1,24 @@
-# XJSLT - An XSLT transpiler in TypeScript
+# XJSLT - An XSLT to JavaScript transpiler
 
-XJSLT is an [XSLT 2.0](https://www.w3.org/TR/xslt20/) transpiler (targeting JavaScript) written in TypeScript, depending on [fontoxpath](https://github.com/FontoXML/fontoxpath) for an XPath implementation.
+XJSLT is a substantially complete and performant [XSLT 2.0](https://www.w3.org/TR/xslt20/) to JavaScript transpiler. XJSLT implements most features of XSLT 2 (see below for a few exceptions) and passes much of the test suite. XJSLT is written in TypeScript and depends on [fontoxpath](https://github.com/FontoXML/fontoxpath) for an XPath implementation. Its speed is comparable with SaxonJS in our experiments.
 
 XJSLT works by compiling stylesheets to runnable JavaScript. These compiled stylesheets can be used immediately in the command line, or they can be save for later use in the command line. They can also be used programmatically either in the browser or in another JavaScript runtime.
 
-Tested with [node 20](https://nodejs.org/) and in Chrome and Firefox.
+XJSLT runs in javascript runtimes and on the browser. It has been tested with [node](https://nodejs.org/) and in Chrome and Firefox.
 
 # Getting started
 
 ## Installation:
 
-- `npm install && npm run build`
+```
+npm install && npm run build
+```
 
 ## Command line invocation:
 
-- `xjslt jats-html.xsl <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)`
+```
+xjslt jats-html.xsl <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)
+```
 
 # Compilation examples
 
@@ -22,44 +26,60 @@ XJSLT can compile XSLT stylesheets into executable JavaScript code, which can th
 
 ## In the browser
 
-- `xjslt compile --web jats-html.xsl examples/html/transform.js`
+```
+xjslt compile --web jats-html.xsl examples/html/transform.js
+```
+
 - Open `examples/html/example.html` (will load the generated `transform.js` file)
 
 ## For reuse in the command line
 
-- `xjslt compile jats-html.xsl`
-- `xjslt transform.js <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)`
+```
+xjslt compile jats-html.xsl
+```
+```
+xjslt transform.js <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)
+```
+
+# Examples of use in cloud functions
+
+XJSLT can be used to compile XSLT into JavaScript that can be used in, for example, cloud functions. Here are two examples of how it could be used in cloud functions to dynamically transform XML data into HTML.
 
 ## In a google cloud function
 
-- `xjslt compile --standalone jats-html.xsl examples/google-cloud/transform.js`
-- `cd examples/google-cloud`
-- `npm install`
-- `npx @google-cloud/functions-framework --target=transform`
+```
+xjslt compile --standalone jats-html.xsl examples/google-cloud/transform.js
+```
+```
+cd examples/google-cloud
+```
+```
+npm install
+```
+```
+npx @google-cloud/functions-framework --target=transform
+```
 - Visit http://localhost:8080/?url=https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml
 
 ## In a cloudflare edge function
 
-- `xjslt compile --standalone jats-html.xsl examples/cloudflare/src/transform.js`
-- `cd examples/cloudflare`
-- `npm install`
-- `npm run start`
+```
+xjslt compile --standalone jats-html.xsl examples/cloudflare/src/transform.js
+```
+```
+cd examples/cloudflare
+```
+```
+npm install
+```
+```
+npm run start
+```
 - Visit http://localhost:8787/?url=https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml
 
 # Supported features
 
-- `if`/`choose/when/otherwise` - conditional evaluation
-- `template`
-- `apply-templates`/`for-each` - recursive evaluation
-- `element`/`attribute`/`value-of` - dynamic elements, attributes, and text
-- literal text and xml element output
-- `variable`
-- namespaces
-- `sort`
-- `include`/`import`
-- `result-document`
-- `for-each-group`
-- 2596 passing tests in the XSLT test suite (https://github.com/w3c/xslt30-test) (2957 not passing)
+All core features of XSLT 2.0.  Roughly 50% of tests in the XSLT test suite (https://github.com/w3c/xslt30-test) pass - but many of these tests are for edge cases.
 
 # Incompletely supported features
 
@@ -71,24 +91,23 @@ XJSLT can compile XSLT stylesheets into executable JavaScript code, which can th
 
 - [ ] `analyze-string` (depends on https://github.com/bwrrp/xspattern.js/issues/9)
 - [ ] tunneled parameters
-- [ ] … (probably other things I’m not aware of or forgot)
 
 # Running tests
 
 The test suite includes both unit tests and a subset of the [W3C XSLT 3.0 test suite](https://github.com/w3c/xslt30-test). To run tests:
 
 1. Clone the W3C test suite into the project root:
-   ```
-   git clone --depth=1 https://github.com/w3c/xslt30-test.git
-   ```
+```
+git clone --depth=1 https://github.com/w3c/xslt30-test.git
+```
 2. Build (including preprocessors):
-   ```
-   npm run build-preprocessors
-   ```
+```
+npm run build-preprocessors
+```
 3. Run tests:
-   ```
-   npm test
-   ```
+```
+npm test
+```
 
 # Contributing
 
