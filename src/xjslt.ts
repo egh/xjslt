@@ -73,6 +73,9 @@ import {
 import { formatNumber } from "./numbering";
 import { findMatchingRules } from "./dt";
 import {
+  greatGrandParentNode,
+  grandParentNode,
+  parentNode,
   selfNode,
   NodeAttributeFeature,
   NodeNamespaceFeature,
@@ -2012,6 +2015,9 @@ export function initialize(context: DynamicContext, namespaces: object) {}
 registerFunctions();
 
 export {
+  parentNode,
+  grandParentNode,
+  greatGrandParentNode,
   selfNode,
   NodeAttributeFeature,
   NodeNamespaceFeature,

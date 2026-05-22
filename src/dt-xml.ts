@@ -32,6 +32,20 @@ export function selfNode(node: slimdom.Node): slimdom.Node {
   return node;
 }
 
+export function parentNode(node: slimdom.Node): slimdom.Node | undefined {
+  return node.parentNode || undefined;
+}
+
+export function grandParentNode(node: slimdom.Node): slimdom.Node | undefined {
+  return node.parentNode?.parentNode || undefined;
+}
+
+export function greatGrandParentNode(
+  node: slimdom.Node,
+): slimdom.Node | undefined {
+  return node.parentNode?.parentNode?.parentNode || undefined;
+}
+
 abstract class NodeFeature<T> extends Feature<slimdom.Node, T> {
   nodeExtractor: NodeExtractor;
   constructor(nodeExtractor: NodeExtractor, value: T) {
@@ -43,6 +57,12 @@ abstract class NodeFeature<T> extends Feature<slimdom.Node, T> {
       toEstree(this.nodeExtractor),
       toEstree(this.value),
     ]);
+  }
+  equals(other: NodeFeature<any>): boolean {
+    if (this.nodeExtractor !== other.nodeExtractor) {
+      return false;
+    }
+    return super.equals(other);
   }
 }
 
@@ -204,22 +224,11 @@ function extractFeaturesFromAst(
 ): XMLFeature[] | undefined {
   const features: XMLFeature[] = [];
   try {
-    visitXqx(ast, features, nsResolver, { level: 0 });
-    const hasNodeType = features.some((f) => f instanceof NodeTypeFeature);
-    return [
-      ...(hasNodeType
-        ? []
-        : [new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE)]),
-      ...features,
-    ];
+    visitXqx(ast, features, nsResolver);
+    return features;
   } catch (err: any) {
     return undefined;
   }
-}
-
-interface ExtractContext {
-  currentAxis?: "node" | "attribute" | "child";
-  level: number;
 }
 
 /**
@@ -230,92 +239,168 @@ function visitXqx(
   node: slimdom.Node,
   features: XMLFeature[],
   nsResolver: NamespaceResolver,
-  context: ExtractContext,
 ): void {
   if (!isXqxElement(node)) return;
   const name = node.localName;
-  if (
-    name === "module" ||
-    name === "mainModule" ||
-    name === "predicates" ||
-    name === "queryBody" ||
-    name === "andOp" ||
-    name === "firstOperand" ||
-    name === "secondOperand"
-  ) {
+  if (name === "module" || name === "mainModule" || name === "queryBody") {
     // Transparent structural nodes — recurse into all children
     for (const child of node.childNodes) {
-      visitXqx(child, features, nsResolver, context);
+      visitXqx(child, features, nsResolver);
     }
   } else if (name === "pathExpr") {
     const steps = xqxChildren(node, "stepExpr");
-    if (steps.length === 0) throw new ExtractFeatureError();
-    // Leading steps must each be the `//` abbreviation (descendant-or-self::node())
-    for (const step of steps.slice(0, -1)) {
-      if (!isDescendantOrSelfStep(step)) throw new ExtractFeatureError();
+    if (steps.length === 0) {
+      throw new ExtractFeatureError();
     }
-    visitXqx(steps[steps.length - 1], features, nsResolver, context);
-  } else if (name === "stepExpr") {
-    const axis = firstXqxChild(node, "xpathAxis")?.textContent;
-    if (axis !== "child" && axis !== "attribute")
-      throw new ExtractFeatureError(`unsupported axis: ${axis}`);
-    if (context.level > 0) {
-      throw new ExtractFeatureError(`Too many child axes.`);
+    if (isNamedXqxElement(node.firstChild, "rootExpr")) {
+      if (isDescendantOrSelfStep(steps[0])) {
+        steps.shift();
+      } else {
+        throw new ExtractFeatureError();
+      }
     }
-    if (axis === "attribute") {
-      features.push(new NodeTypeFeature(selfNode, slimdom.Node.ATTRIBUTE_NODE));
+    // The set of potential ancestor steps, reversed so its self, parent, grandparent, ...
+    const ancestorSteps = steps.reverse();
+    if (ancestorSteps.length == 0 || ancestorSteps.length > 4)
+      throw new ExtractFeatureError();
+    processStep(selfNode, ancestorSteps[0], features, nsResolver);
+    if (ancestorSteps[1]) {
+      processStep(parentNode, ancestorSteps[1], features, nsResolver);
     }
-    for (const child of node.childNodes.slice(1)) {
-      visitXqx(child, features, nsResolver, {
-        ...context,
-        level: context.level + 1,
-      });
+    if (ancestorSteps[2]) {
+      processStep(grandParentNode, ancestorSteps[2], features, nsResolver);
     }
-  } else if (name === "nameTest") {
-    const localName = node.textContent;
-    if (localName) features.push(new NodeNameFeature(selfNode, localName));
-    const prefix = node.getAttributeNS(XQX_NS, "prefix");
-    if (prefix) {
-      const ns = nsResolver?.(prefix);
-      if (!ns) throw new ExtractFeatureError(`unresolved ns prefix: ${ns}`);
-      features.push(new NodeNamespaceFeature(selfNode, ns));
+    if (ancestorSteps[3]) {
+      processStep(greatGrandParentNode, ancestorSteps[3], features, nsResolver);
     }
-    const uri = node.getAttributeNS(XQX_NS, "URI");
-    if (uri) features.push(new NodeNamespaceFeature(selfNode, uri));
-  } else if (name === "Wildcard") {
-    const ncName = firstXqxChild(node, "NCName");
-    if (ncName) {
-      const ns = nsResolver?.(ncName.textContent ?? "");
-      if (!ns) throw new ExtractFeatureError(`unresolved ns prefix: ${ns}`);
-      features.push(new NodeNamespaceFeature(selfNode, ns));
-    }
-  } else if (name === "piTest") {
-    features.push(
-      new NodeTypeFeature(selfNode, slimdom.Node.PROCESSING_INSTRUCTION_NODE),
-    );
-    const target = firstXqxChild(node, "piTarget");
-    if (target?.textContent) {
-      features.push(new NodeNameFeature(selfNode, target.textContent));
-    }
-  } else if (name === "commentTest") {
-    features.push(new NodeTypeFeature(selfNode, slimdom.Node.COMMENT_NODE));
-  } else if (name === "textTest") {
-    features.push(new NodeTypeFeature(selfNode, slimdom.Node.TEXT_NODE));
-  } else if (name === "equalOp") {
-    const firstOp = firstXqxChild(node, "firstOperand");
-    const secondOp = firstXqxChild(node, "secondOperand");
-    if (!firstOp || !secondOp) throw new ExtractFeatureError();
-    const feature =
-      extractEqualsOpPredicate(firstOp, secondOp) ||
-      extractEqualsOpPredicate(secondOp, firstOp);
-    if (!feature) throw new ExtractFeatureError();
-    features.push(feature);
   } else {
-    throw new ExtractFeatureError(); // unsupported XQX construct
+    throw new ExtractFeatureError();
+  }
+}
+
+function extractNamedNodeType(
+  nodeExtractor: NodeExtractor,
+  axis: string,
+  features: XMLFeature[],
+) {
+  if (axis === "attribute") {
+    features.push(
+      new NodeTypeFeature(nodeExtractor, slimdom.Node.ATTRIBUTE_NODE),
+    );
+  } else {
+    features.push(
+      new NodeTypeFeature(nodeExtractor, slimdom.Node.ELEMENT_NODE),
+    );
+  }
+}
+
+function processStep(
+  nodeExtractor: NodeExtractor,
+  step: slimdom.Element,
+  features: XMLFeature[],
+  nsResolver: NamespaceResolver,
+) {
+  const axis = firstXqxChild(step, "xpathAxis")?.textContent;
+  if (axis !== "child" && axis !== "attribute")
+    throw new ExtractFeatureError(`unsupported axis: ${axis}`);
+  for (const child of step.childNodes.slice(1)) {
+    if (!isXqxElement(child)) continue;
+    const name = child.localName;
+    if (name === "nameTest") {
+      extractNameFeatures(nodeExtractor, step, features, nsResolver);
+      extractNamedNodeType(nodeExtractor, axis, features);
+    } else if (name === "Wildcard") {
+      const ncName = firstXqxChild(child, "NCName");
+      if (ncName) {
+        const ns = nsResolver?.(ncName.textContent ?? "");
+        if (!ns) throw new ExtractFeatureError(`unresolved ns prefix: ${ns}`);
+        features.push(new NodeNamespaceFeature(nodeExtractor, ns));
+      }
+      extractNamedNodeType(nodeExtractor, axis, features);
+    } else if (name === "piTest") {
+      features.push(
+        new NodeTypeFeature(
+          nodeExtractor,
+          slimdom.Node.PROCESSING_INSTRUCTION_NODE,
+        ),
+      );
+      const target = firstXqxChild(child, "piTarget");
+      if (target?.textContent) {
+        features.push(new NodeNameFeature(nodeExtractor, target.textContent));
+      }
+    } else if (name === "commentTest") {
+      features.push(
+        new NodeTypeFeature(nodeExtractor, slimdom.Node.COMMENT_NODE),
+      );
+    } else if (name === "textTest") {
+      features.push(new NodeTypeFeature(nodeExtractor, slimdom.Node.TEXT_NODE));
+    } else if (name === "predicates") {
+      extractPredicates(nodeExtractor, child, features, nsResolver);
+    } else {
+      throw new ExtractFeatureError(); // unsupported XQX construct
+    }
+  }
+}
+
+function extractNameFeatures(
+  nodeExtractor: NodeExtractor,
+  step: slimdom.Element,
+  features: XMLFeature[],
+  nsResolver: NamespaceResolver,
+): void {
+  const nameTest = firstXqxChild(step, "nameTest");
+  if (!nameTest) throw new ExtractFeatureError();
+  const localName = nameTest.textContent;
+  if (localName) features.push(new NodeNameFeature(nodeExtractor, localName));
+  const prefix = nameTest.getAttributeNS(XQX_NS, "prefix");
+  if (prefix) {
+    const ns = nsResolver?.(prefix);
+    if (!ns) throw new ExtractFeatureError(`unresolved ns prefix: ${ns}`);
+    features.push(new NodeNamespaceFeature(nodeExtractor, ns));
+  }
+  const uri = nameTest.getAttributeNS(XQX_NS, "URI");
+  if (uri) features.push(new NodeNamespaceFeature(nodeExtractor, uri));
+}
+
+function extractPredicates(
+  nodeExtractor: NodeExtractor,
+  predicates: slimdom.Element,
+  features: XMLFeature[],
+  nsResolver: NamespaceResolver,
+) {
+  for (const child of predicates.childNodes) {
+    if (!isXqxElement(child)) throw new ExtractFeatureError();
+    const name = child.localName;
+    if (name === "equalOp") {
+      const firstOp = firstXqxChild(child, "firstOperand");
+      const secondOp = firstXqxChild(child, "secondOperand");
+      if (!firstOp || !secondOp) throw new ExtractFeatureError();
+      const feature =
+        extractEqualsOpPredicate(nodeExtractor, firstOp, secondOp) ||
+        extractEqualsOpPredicate(nodeExtractor, secondOp, firstOp);
+      if (!feature) throw new ExtractFeatureError();
+      features.push(feature);
+    } else if (name === "andOp") {
+      extractPredicates(
+        nodeExtractor,
+        firstXqxChild(child, "firstOperand"),
+        features,
+        nsResolver,
+      );
+      extractPredicates(
+        nodeExtractor,
+        firstXqxChild(child, "secondOperand"),
+        features,
+        nsResolver,
+      );
+    } else {
+      throw new ExtractFeatureError(); // unsupported XQX construct
+    }
   }
 }
 
 function extractEqualsOpPredicate(
+  nodeExtractor: NodeExtractor,
   firstOp: slimdom.Element,
   secondOp: slimdom.Element,
 ): XMLFeature | undefined {
@@ -333,17 +418,17 @@ function extractEqualsOpPredicate(
   if (attrStep) {
     const attrName = firstXqxChild(attrStep, "nameTest")?.textContent;
     if (!attrName) return undefined;
-    return new NodeAttributeFeature(selfNode, { name: attrName, value });
+    return new NodeAttributeFeature(nodeExtractor, { name: attrName, value });
   }
 
   // Case 2: . = 'value'  (context item expression)
   if (firstXqxChild(firstOp, "contextItemExpr")) {
-    return new NodeTextFeature(selfNode, value);
+    return new NodeTextFeature(nodeExtractor, value);
   }
 
   // Case 3: text() = 'value'  (child text node)
   if (findXqxDescendant(firstOp, "textTest")) {
-    return new NodeTextFeature(selfNode, value);
+    return new NodeTextFeature(nodeExtractor, value);
   }
 
   return undefined;
