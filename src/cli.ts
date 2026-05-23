@@ -23,7 +23,7 @@ import * as slimdom from "slimdom";
 import { Command, Option } from "commander";
 import { buildStylesheet, compileStylesheet } from "./compile";
 import { serialize } from "./xjslt";
-import { readFileSync, writeFileSync } from "fs";
+import { access, constants, readFile, writeFile } from "fs/promises";
 import { pathToFileURL } from "url";
 import { webpack } from "webpack";
 import * as url from "url";
@@ -31,7 +31,31 @@ import * as path from "path";
 import * as fs from "fs";
 import * as process from "process";
 
-function run(xslt: string, xmls: Array<string>, options: object) {
+async function processXml(xml: string, transform, options: object) {
+  const file = await readFile(xml);
+  const xmlDom = slimdom.parseXmlDocument(file.toString());
+  const outputDocument = new slimdom.Document();
+  const baseUrl = pathToFileURL(xml);
+  const results = transform(xmlDom, {
+    outputDocument: outputDocument,
+    inputURL: baseUrl,
+    stylesheetParams: options["param"],
+  });
+  for (const [uri, result] of results) {
+    const serialized = serialize(result);
+    if (uri !== "#default") {
+      const path = url.fileURLToPath(url.resolve(baseUrl.toString(), uri));
+      if (!path) {
+        throw new Error(`Can't write to ${uri}`);
+      }
+      await writeFile(path, serialized, { flag: "wx" });
+    } else {
+      process.stdout.write(serialized);
+    }
+  }
+}
+
+async function run(xslt: string, xmls: Array<string>, options: object) {
   let transform;
   if (xslt.endsWith(".xsl") || xslt.endsWith(".xslt")) {
     transform = buildStylesheet(xslt);
@@ -39,31 +63,7 @@ function run(xslt: string, xmls: Array<string>, options: object) {
     let tmp = require(path.resolve(xslt));
     transform = tmp.transform;
   }
-  for (let xml of xmls) {
-    const xmlDom = slimdom.parseXmlDocument(readFileSync(xml).toString());
-    const outputDocument = new slimdom.Document();
-    const baseUrl = pathToFileURL(xml);
-    const results = transform(xmlDom, {
-      outputDocument: outputDocument,
-      inputURL: baseUrl,
-      stylesheetParams: options["param"],
-    });
-    for (const [uri, result] of results) {
-      const serialized = serialize(result);
-      if (uri !== "#default") {
-        const path = url.fileURLToPath(url.resolve(baseUrl.toString(), uri));
-        if (!path) {
-          throw new Error(`Can't write to ${uri}`);
-        }
-        if (fs.existsSync(path)) {
-          throw new Error(`${path} exists!`);
-        }
-        fs.writeFileSync(path, serialized);
-      } else {
-        process.stdout.write(serialized);
-      }
-    }
-  }
+  await Promise.all(xmls.map((xml) => processXml(xmls[0], transform, options)));
 }
 
 function mkWebConfig(src, destinationAbs) {
@@ -122,9 +122,6 @@ function mkStandaloneConfig(src, destinationAbs) {
 
 async function compile(xslt: string, destination: string, options: object) {
   const destinationAbs = path.resolve(destination);
-  if (fs.existsSync(destinationAbs)) {
-    throw new Error(`${destinationAbs} exists!`);
-  }
   const src = compileStylesheet(xslt);
   try {
     if (options["web"] || options["standalone"]) {
@@ -141,7 +138,7 @@ async function compile(xslt: string, destination: string, options: object) {
         });
       await compiler.close;
     } else {
-      writeFileSync(destinationAbs, readFileSync(src));
+      await writeFile(destinationAbs, await readFile(src), { flag: "wx" });
     }
   } catch (err) {
     console.log(err);
