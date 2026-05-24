@@ -165,21 +165,6 @@ export class KeyImpl implements Key {
   }
 }
 
-function withCached<T>(
-  cache: Map<string, Map<slimdom.Node, T>>,
-  key: string,
-  node: slimdom.Node,
-  thunk: () => T,
-): T {
-  if (!cache.has(key)) {
-    cache.set(key, new Map());
-  }
-  const cacheForKey = cache.get(key);
-  if (!cacheForKey.has(node)) {
-    cacheForKey.set(node, thunk());
-  }
-  return cacheForKey.get(node);
-}
 
 const ELEMENT_ONLY_PATTERN = new RegExp(/^[a-z |-]+$/);
 const ATTR_ONLY_PATTERN = new RegExp(/^@[a-z]+$/);
@@ -249,28 +234,31 @@ function patternMatchNodes(
   variableScopes: Array<VariableScope>,
   namespaceResolver: NamespaceResolver,
 ): slimdom.Node[] | undefined {
+  let cacheForKey = patternMatchCache.get(match.xpath);
+  if (!cacheForKey) {
+    cacheForKey = new Map();
+    patternMatchCache.set(match.xpath, cacheForKey);
+  }
   let checkContext = node;
+  /* TODO: Only top level variables are applicable here, so top
+  level variables could be cached. */
   const variables = mergeVariableScopes(variableScopes);
   while (checkContext) {
-    const matches = withCached(
-      patternMatchCache,
-      match.xpath,
-      checkContext,
-      (): slimdom.Node[] => {
-        if (match.compiled) {
-          return executeJavaScriptCompiledXPath(match.compiled, checkContext);
-        }
-        return evaluateXPathToNodes(
+    let matches = cacheForKey.get(checkContext);
+    if (matches === undefined) {
+      if (match.compiled) {
+        matches = executeJavaScriptCompiledXPath(match.compiled, checkContext);
+      } else {
+        matches = evaluateXPathToNodes(
           match.xpath,
           checkContext,
           undefined,
-          /* TODO: Only top level variables are applicable here, so top
-        level variables could be cached. */
           variables,
           { namespaceResolver, functionNameResolver },
         );
-      },
-    );
+      }
+      cacheForKey.set(checkContext, matches);
+    }
     /* It counts as a match if the node we were testing against is in
        the resulting node set. */
     if (matches.indexOf(node) !== -1) {
