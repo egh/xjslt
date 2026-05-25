@@ -169,7 +169,7 @@ const simpleElements = new Map<string, SimpleElement>([
       name: "copyOf",
       arguments: new Map([["select", undefined]]),
       xpathArguments: new Set(["select"]),
-      hasChildren: true,
+      hasChildren: false,
     },
   ],
   ["document", { name: "document", arguments: new Map(), hasChildren: true }],

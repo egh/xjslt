@@ -738,7 +738,7 @@ export function functionX(
 
 export function copy(
   context: DynamicContext,
-  data: { namespaces: object },
+  _data: { namespaces: object },
   func: SequenceConstructor,
 ) {
   const node = context.contextItem;
@@ -785,7 +785,6 @@ export function copy(
 export function copyOf(
   context: DynamicContext,
   data: { select: string; namespaces: object },
-  func: SequenceConstructor,
 ) {
   let things = evaluateXPath(
     data.select,
@@ -1189,7 +1188,7 @@ export function choose(
 
 export function document(
   context: DynamicContext,
-  data: { namespaces: object },
+  _data: { namespaces: object },
   func: SequenceConstructor,
 ) {
   const doc = context.outputDocument.implementation.createDocument(
@@ -1998,7 +1997,7 @@ export function compileMatchFunction(matchFunction: string) {
   }
 }
 
-export function initialize(context: DynamicContext, namespaces: object) {}
+export function initialize(_context: DynamicContext, _namespaces: object) {}
 
 registerFunctions();
 
