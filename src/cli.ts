@@ -153,18 +153,17 @@ function paramCollect(value: string, previous: object) {
 async function main() {
   const program = new Command();
   Error.stackTraceLimit = 100;
-  program.version("0.0.1");
+  program.version("1.0.0");
   program
-    .arguments("<xslt> <xml...>")
+    .command("run")
+    .argument("<xslt>", "XSLT stylesheet or compiled js file")
+    .argument("<xml...>", "XML files to process")
     .addOption(
       new Option("-p, --param <name=value>", "set a parameter")
         .default({})
         .argParser(paramCollect),
     )
-    .description("Transform XML", {
-      xslt: "XSLT stylesheet or compiled js file",
-      xml: "XML files to process",
-    })
+    .description("Transform XML")
     .action(run);
   program
     .command("compile")
@@ -176,9 +175,7 @@ async function main() {
     .addOption(
       new Option("-s, --standalone", "build a standalone js file for nodejs"),
     )
-    .description("Compile an XSLT stylesheet to JavaScript", {
-      xslt: "XSLT stylesheet",
-    })
+    .description("Compile an XSLT stylesheet to JavaScript")
     .action(compile);
   await program.parseAsync(process.argv);
 }

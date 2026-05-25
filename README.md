@@ -17,7 +17,7 @@ npm install && npm run build
 ## Command line invocation:
 
 ```
-xjslt jats-html.xsl <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)
+xjslt run jats-html.xsl <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)
 ```
 
 # Compilation examples
@@ -38,7 +38,7 @@ xjslt compile --web jats-html.xsl examples/html/transform.js
 xjslt compile jats-html.xsl
 ```
 ```
-xjslt transform.js <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)
+xjslt run transform.js <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)
 ```
 
 # Examples of use in cloud functions
