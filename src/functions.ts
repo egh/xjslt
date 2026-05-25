@@ -148,7 +148,7 @@ function fnBaseUri({ currentContext }, node?: any) {
   for (const base of bases) {
     // Resolve URL relative to previous or just set it if there is an
     // issue.
-    result = URL.parse(base, result) || base;
+    result = new URL(result, base) || base;
   }
   return result;
 }
