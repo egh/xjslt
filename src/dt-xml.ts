@@ -224,7 +224,7 @@ function extractFeaturesFromAst(
 ): XMLFeature[] | undefined {
   const features: XMLFeature[] = [];
   try {
-    visitXqx(ast, features, nsResolver);
+    extractFromModule(ast, features, nsResolver);
     return features;
   } catch (err: any) {
     return undefined;
@@ -232,10 +232,10 @@ function extractFeaturesFromAst(
 }
 
 /**
- * Recursively walk an XQueryX AST node, accumulating Feature objects.
+ * Extract features from top level XQX mainModule.
  * throws ExtractFeatureError if unsupported xpath is found.
  */
-function visitXqx(
+function extractFromModule(
   node: slimdom.Node,
   features: XMLFeature[],
   nsResolver: NamespaceResolver,
@@ -245,19 +245,25 @@ function visitXqx(
   if (name === "module" || name === "mainModule" || name === "queryBody") {
     // Transparent structural nodes — recurse into all children
     for (const child of node.childNodes) {
-      visitXqx(child, features, nsResolver);
+      extractFromModule(child, features, nsResolver);
     }
   } else if (name === "pathExpr") {
     const steps = xqxChildren(node, "stepExpr");
-    if (steps.length === 0) {
-      throw new ExtractFeatureError();
-    }
     if (isNamedXqxElement(node.firstChild, "rootExpr")) {
-      if (isDescendantOrSelfStep(steps[0])) {
+      if (steps.length === 0) {
+        // It's just the root node, /
+        features.push(
+          new NodeTypeFeature(selfNode, slimdom.Node.DOCUMENT_NODE),
+        );
+        return;
+      } else if (isDescendantOrSelfStep(steps[0])) {
         steps.shift();
       } else {
         throw new ExtractFeatureError();
       }
+    }
+    if (steps.length === 0) {
+      throw new ExtractFeatureError();
     }
     // The set of potential ancestor steps, reversed so its self, parent, grandparent, ...
     const ancestorSteps = steps.reverse();

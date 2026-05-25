@@ -205,6 +205,12 @@ describe("xpathToFeatures", () => {
       ]);
     });
 
+    test("/", () => {
+      expectFeatures(xpathToFeatures("/", withNs), [
+        new NodeTypeFeature(selfNode, slimdom.Node.DOCUMENT_NODE),
+      ]);
+    });
+
     test("parent/child path", () => {
       expectFeatures(xpathToFeatures("div/span", noNs), [
         new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE),
