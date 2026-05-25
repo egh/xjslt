@@ -165,7 +165,6 @@ export class KeyImpl implements Key {
   }
 }
 
-
 const ELEMENT_ONLY_PATTERN = new RegExp(/^[a-z |-]+$/);
 const ATTR_ONLY_PATTERN = new RegExp(/^@[a-z]+$/);
 const TEXT_PATTERN = new RegExp(/text\(\)|node\(\)/);
@@ -173,7 +172,9 @@ const ATTR_PATTERN = new RegExp(/@|attribute|node/);
 const DOCUMENT_PATTERN = new RegExp(/(^\/$|document-node\(|node\()/);
 
 /* Fast check to see if a pattern will not match. Will return true if
-   it will never match, false if it might be a match.*/
+   it will never match, false if it might be a match. Decision tree
+   should have mostly eliminated the use of this, but it still speeds
+   things up. */
 function failFast(pattern: string, node: slimdom.Node) {
   /* This should work, but doesn't */
   // let bucket = getBucketForSelector(pattern);
@@ -200,29 +201,6 @@ function failFast(pattern: string, node: slimdom.Node) {
     !(node.nodeType === NodeType.ATTRIBUTE)
   ) {
     return true;
-  }
-  return false;
-}
-
-/* Fast check for success */
-function fastSuccess(pattern: string, node: slimdom.Node) {
-  if (pattern === "text()|@*") {
-    return (
-      node.nodeType === NodeType.TEXT || node.nodeType === NodeType.ATTRIBUTE
-    );
-  } else if (pattern === "processing-instruction()|comment()") {
-    return (
-      node.nodeType === NodeType.PROCESSING_INSTRUCTION ||
-      node.nodeType === NodeType.COMMENT
-    );
-  } else if (pattern === "*|/") {
-    return (
-      node.nodeType === NodeType.ELEMENT || node.nodeType === NodeType.DOCUMENT
-    );
-  } else if (pattern === "text()") {
-    return node.nodeType === NodeType.TEXT;
-  } else if (pattern === "/") {
-    return node.nodeType === NodeType.DOCUMENT;
   }
   return false;
 }
@@ -280,23 +258,19 @@ function patternMatch(
   variableScopes: Array<VariableScope>,
   namespaceResolver: NamespaceResolver,
 ): boolean {
-  /* Using ancestors as the potential contexts */
-  if (node && !failFast(match.xpath, node)) {
-    if (fastSuccess(match.xpath, node)) {
-      return true;
-    } else {
-      return (
-        patternMatchNodes(
-          patternMatchCache,
-          match,
-          node,
-          variableScopes,
-          namespaceResolver,
-        ) !== undefined
-      );
-    }
+  if (node && failFast(match.xpath, node)) {
+    return false;
+  } else {
+    return (
+      patternMatchNodes(
+        patternMatchCache,
+        match,
+        node,
+        variableScopes,
+        namespaceResolver,
+      ) !== undefined
+    );
   }
-  return false;
 }
 
 /**
