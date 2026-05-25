@@ -57,11 +57,11 @@ async function processXml(xml: string, transform, options: object) {
 
 async function run(xslt: string, xmls: Array<string>, options: object) {
   let transform;
-  if (xslt.endsWith(".xsl") || xslt.endsWith(".xslt")) {
-    transform = buildStylesheet(xslt);
-  } else {
+  if (xslt.endsWith(".js")) {
     let tmp = require(path.resolve(xslt));
     transform = tmp.transform;
+  } else {
+    transform = buildStylesheet(xslt);
   }
   await Promise.all(xmls.map((xml) => processXml(xmls[0], transform, options)));
 }
