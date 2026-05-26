@@ -458,19 +458,20 @@ function sortHelper<T extends slimdom.Node | NodeGroup>(
   sort: SortKeyComponent,
   namespaceResolver: NamespaceResolver,
 ): T[] {
-  let sorted: T[];
-  if (sort.dataType === "number") {
-    sorted = sortHelperNumeric(context, things, sort, namespaceResolver);
-  } else {
-    sorted = sortHelperText(context, things, sort, namespaceResolver);
-  }
-  if (
+  const descending =
     evaluateAttributeValueTemplate(context, sort.order, namespaceResolver) ===
-    "descending"
-  ) {
-    sorted.reverse();
+    "descending";
+  if (sort.dataType === "number") {
+    return sortHelperNumeric(
+      context,
+      things,
+      sort,
+      namespaceResolver,
+      descending,
+    );
+  } else {
+    return sortHelperText(context, things, sort, namespaceResolver, descending);
   }
-  return sorted;
 }
 
 function iterateNodesOrNodeGroups<T extends slimdom.Node | NodeGroup, U>(
@@ -524,6 +525,7 @@ function sortHelperNumeric<T extends slimdom.Node | NodeGroup>(
   things: T[],
   sort: SortKeyComponent,
   namespaceResolver: NamespaceResolver,
+  descending: boolean,
 ): T[] {
   const keys = iterateNodesOrNodeGroups(things, context, (context) => {
     let key: number;
@@ -539,8 +541,10 @@ function sortHelperNumeric<T extends slimdom.Node | NodeGroup>(
     }
     return key;
   });
+  const asc = (a: [number, T], b: [number, T]) => a[0] - b[0];
+  const desc = (a: [number, T], b: [number, T]) => b[0] - a[0];
   return zip(keys, things)
-    .sort((a, b) => a[0] - b[0])
+    .sort(descending ? desc : asc)
     .map((t) => t[1]);
 }
 
@@ -549,6 +553,7 @@ function sortHelperText<T extends slimdom.Node | NodeGroup>(
   things: T[],
   sort: SortKeyComponent,
   namespaceResolver: NamespaceResolver,
+  descending: boolean,
 ): T[] {
   const keys = iterateNodesOrNodeGroups(things, context, (context) => {
     return constructSimpleContent(context, sort.sortKey, namespaceResolver);
@@ -557,8 +562,10 @@ function sortHelperText<T extends slimdom.Node | NodeGroup>(
     sort.lang &&
     evaluateAttributeValueTemplate(context, sort.lang, namespaceResolver);
   let collator = new Intl.Collator(lang).compare;
+  const asc = (a: [string, T], b: [string, T]) => collator(a[0], b[0]);
+  const desc = (a: [string, T], b: [string, T]) => collator(b[0], a[0]);
   return zip(keys, things)
-    .sort((a, b) => collator(a[0], b[0]))
+    .sort(descending ? desc : asc)
     .map((t) => t[1]);
 }
 
