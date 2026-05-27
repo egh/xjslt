@@ -11,13 +11,24 @@ XJSLT runs in javascript runtimes and on the browser. It has been tested with [n
 ## Installation:
 
 ```
-npm install && npm run build
+npm install -g xjslt
+```
+
+Or use 
+
+```
+npx xjslt …
+```
+or from source:
+
+```
+git clone https://github.com/egh/xjslt.git && cd xjslt
 ```
 
 ## Command line invocation:
 
 ```
-xjslt run jats-html.xsl <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)
+xjslt run <(curl -s https://raw.githubusercontent.com/egh/xjslt/refs/heads/main/jats-html.xsl) <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)
 ```
 
 # Compilation examples
@@ -26,6 +37,8 @@ XJSLT can compile XSLT stylesheets into executable JavaScript code, which can th
 
 ## In the browser
 
+For the following commands you will want to have the source checked out.
+
 ```
 xjslt compile --web jats-html.xsl examples/html/transform.js
 ```
@@ -33,6 +46,8 @@ xjslt compile --web jats-html.xsl examples/html/transform.js
 - Open `examples/html/example.html` (will load the generated `transform.js` file)
 
 ## For reuse in the command line
+
+Pre-compiling a `.js` file will speed up transformation.
 
 ```
 xjslt compile jats-html.xsl
