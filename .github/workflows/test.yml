@@ -27,8 +27,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Compile preprocessors
-        run: npm run build-preprocessors
-
       - name: Run tests
         run: npm test
