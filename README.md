@@ -14,11 +14,12 @@ XJSLT runs in javascript runtimes and on the browser. It has been tested with [n
 npm install -g xjslt
 ```
 
-Or use 
+Or use
 
 ```
 npx xjslt …
 ```
+
 or from source:
 
 ```
@@ -52,6 +53,7 @@ Pre-compiling a `.js` file will speed up transformation.
 ```
 xjslt compile jats-html.xsl
 ```
+
 ```
 xjslt run transform.js <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)
 ```
@@ -65,15 +67,19 @@ XJSLT can be used to compile XSLT into JavaScript that can be used in, for examp
 ```
 xjslt compile --standalone jats-html.xsl examples/google-cloud/transform.js
 ```
+
 ```
 cd examples/google-cloud
 ```
+
 ```
 npm install
 ```
+
 ```
 npx @google-cloud/functions-framework --target=transform
 ```
+
 - Visit http://localhost:8080/?url=https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml
 
 ## In a cloudflare edge function
@@ -81,20 +87,24 @@ npx @google-cloud/functions-framework --target=transform
 ```
 xjslt compile --standalone jats-html.xsl examples/cloudflare/src/transform.js
 ```
+
 ```
 cd examples/cloudflare
 ```
+
 ```
 npm install
 ```
+
 ```
 npm run start
 ```
+
 - Visit http://localhost:8787/?url=https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml
 
 # Supported features
 
-All core features of XSLT 2.0.  Roughly 50% of tests in the XSLT test suite (https://github.com/w3c/xslt30-test) pass - but many of these tests are for edge cases.
+All core features of XSLT 2.0. Roughly 50% of tests in the XSLT test suite (https://github.com/w3c/xslt30-test) pass - but many of these tests are for edge cases.
 
 # Incompletely supported features
 
@@ -111,11 +121,12 @@ All core features of XSLT 2.0.  Roughly 50% of tests in the XSLT test suite (htt
 
 The test suite includes both unit tests and a subset of the [W3C XSLT 3.0 test suite](https://github.com/w3c/xslt30-test). To run tests, ensure dependencies are installed:
 
-
 ```
 npm install
 ```
+
 and then run:
+
 ```
 npm test
 ```
