@@ -109,17 +109,13 @@ All core features of XSLT 2.0.  Roughly 50% of tests in the XSLT test suite (htt
 
 # Running tests
 
-The test suite includes both unit tests and a subset of the [W3C XSLT 3.0 test suite](https://github.com/w3c/xslt30-test). To run tests:
+The test suite includes both unit tests and a subset of the [W3C XSLT 3.0 test suite](https://github.com/w3c/xslt30-test). To run tests, ensure dependencies are installed:
 
-1. Clone the W3C test suite into the project root:
+
 ```
-git clone --depth=1 https://github.com/w3c/xslt30-test.git
+npm install
 ```
-2. Build (including preprocessors):
-```
-npm run build-preprocessors
-```
-3. Run tests:
+and then run:
 ```
 npm test
 ```
