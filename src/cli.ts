@@ -23,47 +23,46 @@ import * as slimdom from "slimdom";
 import { Command, Option } from "commander";
 import { buildStylesheet, compileStylesheet } from "./compile";
 import { serialize } from "./xjslt";
-import { readFileSync, writeFileSync } from "fs";
+import { readFile, writeFile } from "fs/promises";
 import { pathToFileURL } from "url";
 import { webpack } from "webpack";
 import * as url from "url";
 import * as path from "path";
-import * as fs from "fs";
 import * as process from "process";
+
+async function processXml(xml: string, transform, options: object) {
+  const file = await readFile(xml);
+  const xmlDom = slimdom.parseXmlDocument(file.toString());
+  const outputDocument = new slimdom.Document();
+  const baseUrl = pathToFileURL(xml);
+  const results = transform(xmlDom, {
+    outputDocument: outputDocument,
+    inputURL: baseUrl,
+    stylesheetParams: options["param"],
+  });
+  for (const [uri, result] of results) {
+    const serialized = serialize(result);
+    if (uri !== "#default") {
+      const path = url.fileURLToPath(url.resolve(baseUrl.toString(), uri));
+      if (!path) {
+        throw new Error(`Can't write to ${uri}`);
+      }
+      await writeFile(path, serialized, { flag: "wx" });
+    } else {
+      process.stdout.write(serialized);
+    }
+  }
+}
 
 async function run(xslt: string, xmls: Array<string>, options: object) {
   let transform;
-  if (xslt.endsWith(".xsl") || xslt.endsWith(".xslt")) {
-    transform = await buildStylesheet(xslt);
-  } else {
+  if (xslt.endsWith(".js")) {
     let tmp = require(path.resolve(xslt));
     transform = tmp.transform;
+  } else {
+    transform = await buildStylesheet(xslt);
   }
-  for (let xml of xmls) {
-    const xmlDom = slimdom.parseXmlDocument(readFileSync(xml).toString());
-    const outputDocument = new slimdom.Document();
-    const baseUrl = pathToFileURL(xml);
-    const results = transform(xmlDom, {
-      outputDocument: outputDocument,
-      inputURL: baseUrl,
-      stylesheetParams: options["param"],
-    });
-    for (const [uri, result] of results) {
-      const serialized = serialize(result);
-      if (uri !== "#default") {
-        const path = url.fileURLToPath(url.resolve(baseUrl.toString(), uri));
-        if (!path) {
-          throw new Error(`Can't write to ${uri}`);
-        }
-        if (fs.existsSync(path)) {
-          throw new Error(`${path} exists!`);
-        }
-        fs.writeFileSync(path, serialized);
-      } else {
-        process.stdout.write(serialized);
-      }
-    }
-  }
+  await Promise.all(xmls.map((xml) => processXml(xmls[0], transform, options)));
 }
 
 function mkWebConfig(src, destinationAbs) {
@@ -122,9 +121,6 @@ function mkStandaloneConfig(src, destinationAbs) {
 
 async function compile(xslt: string, destination: string, options: object) {
   const destinationAbs = path.resolve(destination);
-  if (fs.existsSync(destinationAbs)) {
-    throw new Error(`${destinationAbs} exists!`);
-  }
   const src = await compileStylesheet(xslt);
   try {
     if (options["web"] || options["standalone"]) {
@@ -141,7 +137,7 @@ async function compile(xslt: string, destination: string, options: object) {
         });
       await compiler.close;
     } else {
-      writeFileSync(destinationAbs, readFileSync(src));
+      await writeFile(destinationAbs, await readFile(src), { flag: "wx" });
     }
   } catch (err) {
     console.log(err);
@@ -156,18 +152,17 @@ function paramCollect(value: string, previous: object) {
 async function main() {
   const program = new Command();
   Error.stackTraceLimit = 100;
-  program.version("0.0.1");
+  program.version("1.0.0");
   program
-    .arguments("<xslt> <xml...>")
+    .command("run")
+    .argument("<xslt>", "XSLT stylesheet or compiled js file")
+    .argument("<xml...>", "XML files to process")
     .addOption(
       new Option("-p, --param <name=value>", "set a parameter")
         .default({})
         .argParser(paramCollect),
     )
-    .description("Transform XML", {
-      xslt: "XSLT stylesheet or compiled js file",
-      xml: "XML files to process",
-    })
+    .description("Transform XML")
     .action(run);
   program
     .command("compile")
@@ -179,9 +174,7 @@ async function main() {
     .addOption(
       new Option("-s, --standalone", "build a standalone js file for nodejs"),
     )
-    .description("Compile an XSLT stylesheet to JavaScript", {
-      xslt: "XSLT stylesheet",
-    })
+    .description("Compile an XSLT stylesheet to JavaScript")
     .action(compile);
   await program.parseAsync(process.argv);
 }

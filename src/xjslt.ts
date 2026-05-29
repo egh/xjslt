@@ -73,6 +73,9 @@ import {
 import { formatNumber } from "./numbering";
 import { findMatchingRules } from "./dt";
 import {
+  greatGrandParentNode,
+  grandParentNode,
+  parentNode,
   selfNode,
   NodeAttributeFeature,
   NodeNamespaceFeature,
@@ -162,22 +165,6 @@ export class KeyImpl implements Key {
   }
 }
 
-function withCached<T>(
-  cache: Map<string, Map<slimdom.Node, T>>,
-  key: string,
-  node: slimdom.Node,
-  thunk: () => T,
-): T {
-  if (!cache.has(key)) {
-    cache.set(key, new Map());
-  }
-  const cacheForKey = cache.get(key);
-  if (!cacheForKey.has(node)) {
-    cacheForKey.set(node, thunk());
-  }
-  return cacheForKey.get(node);
-}
-
 const ELEMENT_ONLY_PATTERN = new RegExp(/^[a-z |-]+$/);
 const ATTR_ONLY_PATTERN = new RegExp(/^@[a-z]+$/);
 const TEXT_PATTERN = new RegExp(/text\(\)|node\(\)/);
@@ -185,7 +172,9 @@ const ATTR_PATTERN = new RegExp(/@|attribute|node/);
 const DOCUMENT_PATTERN = new RegExp(/(^\/$|document-node\(|node\()/);
 
 /* Fast check to see if a pattern will not match. Will return true if
-   it will never match, false if it might be a match.*/
+   it will never match, false if it might be a match. Decision tree
+   should have mostly eliminated the use of this, but it still speeds
+   things up. */
 function failFast(pattern: string, node: slimdom.Node) {
   /* This should work, but doesn't */
   // let bucket = getBucketForSelector(pattern);
@@ -216,29 +205,6 @@ function failFast(pattern: string, node: slimdom.Node) {
   return false;
 }
 
-/* Fast check for success */
-function fastSuccess(pattern: string, node: slimdom.Node) {
-  if (pattern === "text()|@*") {
-    return (
-      node.nodeType === NodeType.TEXT || node.nodeType === NodeType.ATTRIBUTE
-    );
-  } else if (pattern === "processing-instruction()|comment()") {
-    return (
-      node.nodeType === NodeType.PROCESSING_INSTRUCTION ||
-      node.nodeType === NodeType.COMMENT
-    );
-  } else if (pattern === "*|/") {
-    return (
-      node.nodeType === NodeType.ELEMENT || node.nodeType === NodeType.DOCUMENT
-    );
-  } else if (pattern === "text()") {
-    return node.nodeType === NodeType.TEXT;
-  } else if (pattern === "/") {
-    return node.nodeType === NodeType.DOCUMENT;
-  }
-  return false;
-}
-
 function patternMatchNodes(
   patternMatchCache: PatternMatchCache,
   match: Xpath,
@@ -246,27 +212,31 @@ function patternMatchNodes(
   variableScopes: Array<VariableScope>,
   namespaceResolver: NamespaceResolver,
 ): slimdom.Node[] | undefined {
+  let cacheForKey = patternMatchCache.get(match.xpath);
+  if (!cacheForKey) {
+    cacheForKey = new Map();
+    patternMatchCache.set(match.xpath, cacheForKey);
+  }
   let checkContext = node;
+  /* TODO: Only top level variables are applicable here, so top
+  level variables could be cached. */
+  const variables = mergeVariableScopes(variableScopes);
   while (checkContext) {
-    const matches = withCached(
-      patternMatchCache,
-      match.xpath,
-      checkContext,
-      (): slimdom.Node[] => {
-        if (match.compiled) {
-          return executeJavaScriptCompiledXPath(match.compiled, checkContext);
-        }
-        return evaluateXPathToNodes(
+    let matches = cacheForKey.get(checkContext);
+    if (matches === undefined) {
+      if (match.compiled) {
+        matches = executeJavaScriptCompiledXPath(match.compiled, checkContext);
+      } else {
+        matches = evaluateXPathToNodes(
           match.xpath,
           checkContext,
           undefined,
-          /* TODO: Only top level variables are applicable here, so top
-        level variables could be cached. */
-          mergeVariableScopes(variableScopes),
+          variables,
           { namespaceResolver, functionNameResolver },
         );
-      },
-    );
+      }
+      cacheForKey.set(checkContext, matches);
+    }
     /* It counts as a match if the node we were testing against is in
        the resulting node set. */
     if (matches.indexOf(node) !== -1) {
@@ -288,23 +258,19 @@ function patternMatch(
   variableScopes: Array<VariableScope>,
   namespaceResolver: NamespaceResolver,
 ): boolean {
-  /* Using ancestors as the potential contexts */
-  if (node && !failFast(match.xpath, node)) {
-    if (fastSuccess(match.xpath, node)) {
-      return true;
-    } else {
-      return (
-        patternMatchNodes(
-          patternMatchCache,
-          match,
-          node,
-          variableScopes,
-          namespaceResolver,
-        ) !== undefined
-      );
-    }
+  if (node && failFast(match.xpath, node)) {
+    return false;
+  } else {
+    return (
+      patternMatchNodes(
+        patternMatchCache,
+        match,
+        node,
+        variableScopes,
+        namespaceResolver,
+      ) !== undefined
+    );
   }
-  return false;
 }
 
 /**
@@ -492,19 +458,20 @@ function sortHelper<T extends slimdom.Node | NodeGroup>(
   sort: SortKeyComponent,
   namespaceResolver: NamespaceResolver,
 ): T[] {
-  let sorted: T[];
-  if (sort.dataType === "number") {
-    sorted = sortHelperNumeric(context, things, sort, namespaceResolver);
-  } else {
-    sorted = sortHelperText(context, things, sort, namespaceResolver);
-  }
-  if (
+  const descending =
     evaluateAttributeValueTemplate(context, sort.order, namespaceResolver) ===
-    "descending"
-  ) {
-    sorted.reverse();
+    "descending";
+  if (sort.dataType === "number") {
+    return sortHelperNumeric(
+      context,
+      things,
+      sort,
+      namespaceResolver,
+      descending,
+    );
+  } else {
+    return sortHelperText(context, things, sort, namespaceResolver, descending);
   }
-  return sorted;
 }
 
 function iterateNodesOrNodeGroups<T extends slimdom.Node | NodeGroup, U>(
@@ -558,6 +525,7 @@ function sortHelperNumeric<T extends slimdom.Node | NodeGroup>(
   things: T[],
   sort: SortKeyComponent,
   namespaceResolver: NamespaceResolver,
+  descending: boolean,
 ): T[] {
   const keys = iterateNodesOrNodeGroups(things, context, (context) => {
     let key: number;
@@ -573,8 +541,10 @@ function sortHelperNumeric<T extends slimdom.Node | NodeGroup>(
     }
     return key;
   });
+  const asc = (a: [number, T], b: [number, T]) => a[0] - b[0];
+  const desc = (a: [number, T], b: [number, T]) => b[0] - a[0];
   return zip(keys, things)
-    .sort((a, b) => a[0] - b[0])
+    .sort(descending ? desc : asc)
     .map((t) => t[1]);
 }
 
@@ -583,6 +553,7 @@ function sortHelperText<T extends slimdom.Node | NodeGroup>(
   things: T[],
   sort: SortKeyComponent,
   namespaceResolver: NamespaceResolver,
+  descending: boolean,
 ): T[] {
   const keys = iterateNodesOrNodeGroups(things, context, (context) => {
     return constructSimpleContent(context, sort.sortKey, namespaceResolver);
@@ -591,8 +562,10 @@ function sortHelperText<T extends slimdom.Node | NodeGroup>(
     sort.lang &&
     evaluateAttributeValueTemplate(context, sort.lang, namespaceResolver);
   let collator = new Intl.Collator(lang).compare;
+  const asc = (a: [string, T], b: [string, T]) => collator(a[0], b[0]);
+  const desc = (a: [string, T], b: [string, T]) => collator(b[0], a[0]);
   return zip(keys, things)
-    .sort((a, b) => collator(a[0], b[0]))
+    .sort(descending ? desc : asc)
     .map((t) => t[1]);
 }
 
@@ -746,7 +719,7 @@ export function functionX(
 
 export function copy(
   context: DynamicContext,
-  data: { namespaces: object },
+  _data: { namespaces: object },
   func: SequenceConstructor,
 ) {
   const node = context.contextItem;
@@ -793,7 +766,6 @@ export function copy(
 export function copyOf(
   context: DynamicContext,
   data: { select: string; namespaces: object },
-  func: SequenceConstructor,
 ) {
   let things = evaluateXPath(
     data.select,
@@ -1202,7 +1174,7 @@ export function choose(
 
 export function document(
   context: DynamicContext,
-  data: { namespaces: object },
+  _data: { namespaces: object },
   func: SequenceConstructor,
 ) {
   const doc = context.outputDocument.implementation.createDocument(
@@ -1777,6 +1749,7 @@ export function evaluateAttributeValueTemplate(
   if (!avt) {
     return undefined;
   }
+  const variables = mergeVariableScopes(context.variableScopes);
   return avt
     .map((piece) => {
       if (typeof piece === "string") {
@@ -1786,7 +1759,7 @@ export function evaluateAttributeValueTemplate(
           piece.xpath,
           context.contextItem,
           undefined,
-          mergeVariableScopes(context.variableScopes),
+          variables,
           {
             currentContext: context,
             namespaceResolver: namespaceResolver,
@@ -1817,11 +1790,12 @@ function constructSimpleContent(
     namespaceResolver,
   );
   if (typeof generator === "string") {
+    const variables = mergeVariableScopes(context.variableScopes);
     return evaluateXPath(
       generator,
       context.contextItem,
       undefined,
-      mergeVariableScopes(context.variableScopes),
+      variables,
       evaluateXPath.STRINGS_TYPE,
       {
         currentContext: context,
@@ -2009,11 +1983,14 @@ export function compileMatchFunction(matchFunction: string) {
   }
 }
 
-export function initialize(context: DynamicContext, namespaces: object) {}
+export function initialize(_context: DynamicContext, _namespaces: object) {}
 
 registerFunctions();
 
 export {
+  parentNode,
+  grandParentNode,
+  greatGrandParentNode,
   selfNode,
   NodeAttributeFeature,
   NodeNamespaceFeature,

@@ -27,6 +27,7 @@ import {
   DEFAULT_DECIMAL_FORMAT,
   DynamicContext,
   XJSLT_NSURI,
+  XSLT1_NSURI,
 } from "./definitions";
 import { formatNumberWithPicture } from "./numbering";
 import { urlToDom } from "./util";
@@ -104,6 +105,44 @@ function fnEvaluate({ currentContext }, xpath: string) {
   }
 }
 
+const AVAILABLE_XSLT_ELEMENTS = new Set([
+  "apply-imports",
+  "apply-templates",
+  "attribute",
+  "call-template",
+  "choose",
+  "comment",
+  "copy",
+  "copy-of",
+  "document",
+  "element",
+  "for-each",
+  "for-each-group",
+  "if",
+  "message",
+  "namespace",
+  "next-match",
+  "number",
+  "perform-sort",
+  "processing-instruction",
+  "result-document",
+  "sequence",
+  "sort",
+  "text",
+  "value-of",
+  "variable",
+]);
+
+function fnElementAvailable(_, name: string) {
+  /* We can't properly look up the namespace here, we don't have
+     access to the namespaces. Work around for now. */
+  const [prefix, localName] = name.split(":");
+  if (!prefix || !localName) {
+    return false;
+  }
+  return AVAILABLE_XSLT_ELEMENTS.has(localName);
+}
+
 function fnSystemProperty(_, property: string) {
   if (property.split(":")[1] === "version") {
     return "2.0";
@@ -148,7 +187,7 @@ function fnBaseUri({ currentContext }, node?: any) {
   for (const base of bases) {
     // Resolve URL relative to previous or just set it if there is an
     // issue.
-    result = URL.parse(base, result) || base;
+    result = new URL(base, result) || base;
   }
   return result;
 }
@@ -182,6 +221,7 @@ const FUNCTION_OVERRIDES = [
   "current-grouping-key",
   "current-output-uri",
   "doc",
+  "element-available",
   "format-number",
   "key",
   "lastx",
@@ -304,6 +344,13 @@ export function registerFunctions() {
     ["xs:string?", "xs:string"],
     "xs:string",
     fnNormalizeUnicode as (context: any, value: string, form: string) => string,
+  );
+
+  registerCustomXPathFunction(
+    { namespaceURI: XJSLT_NSURI, localName: "element-available" },
+    ["xs:string"],
+    "xs:boolean",
+    fnElementAvailable as (context: any, name: string) => boolean,
   );
 
   registerCustomXPathFunction(
