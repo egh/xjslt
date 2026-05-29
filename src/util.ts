@@ -18,7 +18,6 @@
  * <https://www.gnu.org/licenses/>.
  */
 
-import { resolve } from "url";
 import { DynamicContext } from "./definitions";
 
 export function urlToDom(context: DynamicContext, url: string) {
@@ -26,7 +25,7 @@ export function urlToDom(context: DynamicContext, url: string) {
     return undefined;
   }
   const absoluteURL = context.inputURL
-    ? resolve(context.inputURL.toString(), url)
+    ? new URL(url, context.inputURL.toString()).toString()
     : url;
   return context.readDocument(absoluteURL);
 }
