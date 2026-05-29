@@ -11,13 +11,25 @@ XJSLT runs in javascript runtimes and on the browser. It has been tested with [n
 ## Installation:
 
 ```
-npm install && npm run build
+npm install -g xjslt
+```
+
+Or use
+
+```
+npx xjslt …
+```
+
+or from source:
+
+```
+git clone https://github.com/egh/xjslt.git && cd xjslt
 ```
 
 ## Command line invocation:
 
 ```
-xjslt run jats-html.xsl <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)
+xjslt run <(curl -s https://raw.githubusercontent.com/egh/xjslt/refs/heads/main/jats-html.xsl) <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)
 ```
 
 # Compilation examples
@@ -25,6 +37,8 @@ xjslt run jats-html.xsl <(curl -s https://jats.nlm.nih.gov/publishing/tag-librar
 XJSLT can compile XSLT stylesheets into executable JavaScript code, which can then be deployed to various platforms that support JavaScript, including the browser, NodeJS, and potentially other JavaScript runtimes. The following are some examples of how to do this for the browser, google cloud functions, and cloudflare edge functions. Note that this compiled `.js` may need to be recompiled if the xjslt version changes.
 
 ## In the browser
+
+For the following commands you will want to have the source checked out.
 
 ```
 xjslt compile --web jats-html.xsl examples/html/transform.js
@@ -34,9 +48,12 @@ xjslt compile --web jats-html.xsl examples/html/transform.js
 
 ## For reuse in the command line
 
+Pre-compiling a `.js` file will speed up transformation.
+
 ```
 xjslt compile jats-html.xsl
 ```
+
 ```
 xjslt run transform.js <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)
 ```
@@ -50,15 +67,19 @@ XJSLT can be used to compile XSLT into JavaScript that can be used in, for examp
 ```
 xjslt compile --standalone jats-html.xsl examples/google-cloud/transform.js
 ```
+
 ```
 cd examples/google-cloud
 ```
+
 ```
 npm install
 ```
+
 ```
 npx @google-cloud/functions-framework --target=transform
 ```
+
 - Visit http://localhost:8080/?url=https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml
 
 ## In a cloudflare edge function
@@ -66,20 +87,24 @@ npx @google-cloud/functions-framework --target=transform
 ```
 xjslt compile --standalone jats-html.xsl examples/cloudflare/src/transform.js
 ```
+
 ```
 cd examples/cloudflare
 ```
+
 ```
 npm install
 ```
+
 ```
 npm run start
 ```
+
 - Visit http://localhost:8787/?url=https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml
 
 # Supported features
 
-All core features of XSLT 2.0.  Roughly 50% of tests in the XSLT test suite (https://github.com/w3c/xslt30-test) pass - but many of these tests are for edge cases.
+All core features of XSLT 2.0. Roughly 50% of tests in the XSLT test suite (https://github.com/w3c/xslt30-test) pass - but many of these tests are for edge cases.
 
 # Incompletely supported features
 
@@ -94,17 +119,14 @@ All core features of XSLT 2.0.  Roughly 50% of tests in the XSLT test suite (htt
 
 # Running tests
 
-The test suite includes both unit tests and a subset of the [W3C XSLT 3.0 test suite](https://github.com/w3c/xslt30-test). To run tests:
+The test suite includes both unit tests and a subset of the [W3C XSLT 3.0 test suite](https://github.com/w3c/xslt30-test). To run tests, ensure dependencies are installed:
 
-1. Clone the W3C test suite into the project root:
 ```
-git clone --depth=1 https://github.com/w3c/xslt30-test.git
+npm install
 ```
-2. Build (including preprocessors):
-```
-npm run build-preprocessors
-```
-3. Run tests:
+
+and then run:
+
 ```
 npm test
 ```
