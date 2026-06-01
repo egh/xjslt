@@ -51,6 +51,7 @@ import {
   evaluateXPathToNodes,
 } from "fontoxpath";
 import { readFileSync, writeFileSync, symlinkSync } from "fs";
+import { readFile, symlink, writeFile } from "fs/promises";
 import { pathToFileURL, fileURLToPath } from "url";
 import * as path from "path";
 import { tmpdir } from "os";
@@ -1514,7 +1515,7 @@ async function preprocess(
 /**
  * Compile an XSLT stylesheet document into a callable transform function.
  *
- * Unlike `buildStylesheet`, this API accepts an already-parsed document and
+ * Unlike `compileToFile`, this API accepts an already-parsed document and
  * executes the compiled JavaScript in-memory — no temporary files or symlinks
  * are created.
  *
@@ -1570,7 +1571,12 @@ function mkFsReadDocument(): (uri: string) => slimdom.Document {
   };
 }
 
-export async function compileStylesheet(xsltPath: string) {
+async function readAndParseXml(path: string): Promise<slimdom.Document> {
+  const str = (await readFile(path)).toString();
+  return slimdom.parseXmlDocument(str);
+}
+
+export async function compileToFile(xsltPath: string) {
   let slimdom_path = require.resolve("slimdom").split(path.sep);
   let root_dir = path.join(
     "/",
@@ -1589,11 +1595,11 @@ export async function compileStylesheet(xsltPath: string) {
   var tempfile = path.join(tempdir, "transform.js");
   const xsltURL = pathToFileURL(xsltPath);
   const xsltDoc = await preprocess(
-    slimdom.parseXmlDocument(readFileSync(xsltPath).toString()),
+    await readAndParseXml(xsltPath),
     xsltURL,
     mkFsReadDocument(),
   );
-  writeFileSync(
+  await writeFile(
     tempfile,
     generate(compileStylesheetNode(xsltDoc.documentElement)),
   );
@@ -1605,11 +1611,8 @@ export async function compileStylesheet(xsltPath: string) {
  * Build a stylesheet. Returns a function that will take an input DOM
  * document and return an output DOM document.
  */
-export async function buildStylesheet(
+export async function compileFromPath(
   xsltPath: string,
 ): Promise<StylesheetTransform> {
-  const tempfile = await compileStylesheet(xsltPath);
-  let transform = require(tempfile);
-  // console.log(readFileSync(tempfile).toString());
-  return transform.transform;
+  return await compile(await readAndParseXml(xsltPath), mkFsReadDocument());
 }

@@ -19,7 +19,7 @@
  */
 
 import { log } from "console";
-import { compile } from "../src/compile";
+import { compileFromPath } from "../src/compile";
 import * as slimdom from "slimdom";
 import * as path from "path";
 import {
@@ -334,7 +334,7 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
                 rootDir,
                 evaluateXPathToNodes("./*", resultNode)[0],
                 async () => {
-                  const transform = await buildStylesheet(stylesheetFile);
+                  const transform = await compileFromPath(stylesheetFile);
                   return transform(environment || new slimdom.Document(), {
                     inputURL: inputURL,
                     initialMode: initialMode,

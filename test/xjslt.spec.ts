@@ -32,7 +32,7 @@ import {
   dedupGenerator,
 } from "../src/xjslt";
 import {
-  buildStylesheet,
+  compileFromPath,
   compile,
   compileAvtRaw,
   compileSequenceConstructorNode,
@@ -91,7 +91,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 ${body}
 </xsl:stylesheet>`,
   );
-  const transform = await buildStylesheet(tempfile);
+  const transform = await compileFromPath(tempfile);
   unlinkSync(tempfile);
   return transform;
 }
@@ -343,7 +343,7 @@ test("compileTemplateNode", () => {
 });
 
 test("compileStylesheetNode", async () => {
-  const transform = await buildStylesheet(`${__dirname}/simple2.xslt`);
+  const transform = await compileFromPath(`${__dirname}/simple2.xslt`);
   expect(
     slimdom.serializeToWellFormedString(
       transform(
