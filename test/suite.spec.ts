@@ -19,7 +19,7 @@
  */
 
 import { log } from "console";
-import { compileFromPath } from "../src/compile";
+import { compileFromPathSync } from "../src/compile";
 import * as slimdom from "slimdom";
 import * as path from "path";
 import {
@@ -163,26 +163,22 @@ function checkAssertXml(rootDir: string, node: any, transformed: any) {
   );
 }
 
-async function checkResult(
-  rootDir,
-  node,
-  thunk: () => Promise<Map<string, OutputResult>>,
-) {
+function checkResult(rootDir, node, thunk: () => Map<string, OutputResult>) {
   if (node.localName == "all-of") {
-    return async () => {
+    return () => {
       for (let childNode of evaluateXPathToNodes("./*", node)) {
-        const fn = await checkResult(rootDir, childNode, thunk);
-        await fn();
+        const fn = checkResult(rootDir, childNode, thunk);
+        fn();
       }
     };
   } else if (node.localName === "any-of") {
-    return async () => {
-      let lastFn: (() => Promise<void>) | undefined;
+    return () => {
+      let lastFn: () => void | undefined;
       for (let childNode of evaluateXPathToNodes("./*", node)) {
         /* hack to work with any of these results */
-        const fn = await checkResult(rootDir, childNode, thunk);
+        const fn = checkResult(rootDir, childNode, thunk);
         try {
-          await fn();
+          fn();
           // If success, we are good.
           return;
         } catch (err) {
@@ -191,39 +187,39 @@ async function checkResult(
           lastFn = fn;
         }
       }
-      if (lastFn) await lastFn();
+      if (lastFn) lastFn();
     };
   } else if (node.localName === "assert-xml") {
-    return async () => {
-      const tmp = await thunk();
+    return () => {
+      const tmp = thunk();
       const dom = tmp.get("#default").document;
       checkAssertXml(rootDir, node, dom);
     };
   } else if (node.localName === "assert") {
-    return async () => {
+    return () => {
       const assert = evaluateXPathToString(".", node);
-      const tmp = await thunk();
+      const tmp = thunk();
       expect(
         evaluateXPathToBoolean(assert, tmp.get("#default").document),
       ).toBeTruthy();
     };
   } else if (node.localName === "assert-count") {
-    return async () => {
+    return () => {
       const count = evaluateXPathToNumber(".", node);
-      const tmp = await thunk();
+      const tmp = thunk();
       expect(
         evaluateXPathToNumber("count(.)", tmp.get("#default").document),
       ).toEqual(count);
     };
   } else if (node.localName === "serialization-matches") {
-    return async () => {
-      const tmp = await thunk();
+    return () => {
+      const tmp = thunk();
       expect(serialize(tmp.get("#default") as OutputResult)).toXSMatch(
         evaluateXPathToString(".", node),
       );
     };
   } else if (node.localName === "error") {
-    return async () => {
+    return () => {
       expect(thunk).toThrow(evaluateXPathToString("@code", node));
     };
   } else if (node.localName === "assert-result-document") {
@@ -231,29 +227,27 @@ async function checkResult(
     const newResults = new Map<string, OutputResult>([
       [
         "#default",
-        (await thunk()).get(
-          evaluateXPathToString("@uri", node),
-        ) as OutputResult,
+        thunk().get(evaluateXPathToString("@uri", node)) as OutputResult,
       ],
     ]);
-    return async () => {
-      await checkResult(
+    return () => {
+      checkResult(
         rootDir,
         evaluateXPathToNodes("./*", node)[0],
-        async () => newResults,
+        () => newResults,
       );
     };
   } else if (node.localName === "assert-string-value") {
     // TODO: not sure what this is?
-    return async () => {};
+    return () => {};
   } else if (node.localName === "assert-serialization") {
     // TODO: depends on non-xml output?
-    return async () => {};
+    return () => {};
   } else if (node.localName === "assert-message") {
     // TODO: depends on messages
-    return async () => {};
+    return () => {};
   } else {
-    return async () => {
+    return () => {
       // TODO support assert-result-document, assert-string-value, error
       expect(node.localName).toEqual("");
     };
@@ -325,23 +319,21 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
           if (filepath) {
             inputURL = pathToFileURL(filepath).toString();
           }
-          const tester = async () => {
+          const tester = () => {
             expect(
               evaluateXPathToBoolean("count(./*) = 1 ", resultNode),
             ).toBeTruthy();
-            await (
-              await checkResult(
-                rootDir,
-                evaluateXPathToNodes("./*", resultNode)[0],
-                async () => {
-                  const transform = await compileFromPath(stylesheetFile);
-                  return transform(environment || new slimdom.Document(), {
-                    inputURL: inputURL,
-                    initialMode: initialMode,
-                    stylesheetParams: stylesheetParams,
-                  });
-                },
-              )
+            checkResult(
+              rootDir,
+              evaluateXPathToNodes("./*", resultNode)[0],
+              () => {
+                const transform = compileFromPathSync(stylesheetFile);
+                return transform(environment || new slimdom.Document(), {
+                  inputURL: inputURL,
+                  initialMode: initialMode,
+                  stylesheetParams: stylesheetParams,
+                });
+              },
             )();
           };
 

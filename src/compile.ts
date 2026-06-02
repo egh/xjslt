@@ -1456,11 +1456,11 @@ function compileAvt(avt: string | null) {
   }
 }
 
-async function preprocess(
+function preprocess(
   doc: slimdom.Document,
   inputURL?: URL,
   readDocument?: (uri: string) => slimdom.Document,
-): Promise<slimdom.Document> {
+): slimdom.Document {
   if (
     !evaluateXPathToBoolean(
       "/xsl:stylesheet|/xsl:transform",
@@ -1549,11 +1549,11 @@ async function preprocess(
  * console.log(serialize(output)); // <result>Hello</result>
  * ```
  */
-export async function compile(
+export function compile(
   xslt: slimdom.Document,
   readDocument?: (uri: string) => slimdom.Document,
-): Promise<StylesheetTransform> {
-  const xsltDoc = await preprocess(xslt, undefined, readDocument);
+): StylesheetTransform {
+  const xsltDoc = preprocess(xslt, undefined, readDocument);
   const code = generate(compileStylesheetNode(xsltDoc.documentElement, true));
   const m: { exports: { transform?: StylesheetTransform } } = { exports: {} };
   new Function("xjslt", "module", code)(xjslt, m);
@@ -1573,6 +1573,11 @@ function mkFsReadDocument(): (uri: string) => slimdom.Document {
 
 async function readAndParseXml(path: string): Promise<slimdom.Document> {
   const str = (await readFile(path)).toString();
+  return slimdom.parseXmlDocument(str);
+}
+
+function readAndParseXmlSync(path: string): slimdom.Document {
+  const str = readFileSync(path).toString();
   return slimdom.parseXmlDocument(str);
 }
 
@@ -1614,5 +1619,9 @@ export async function compileToFile(xsltPath: string) {
 export async function compileFromPath(
   xsltPath: string,
 ): Promise<StylesheetTransform> {
-  return await compile(await readAndParseXml(xsltPath), mkFsReadDocument());
+  return compile(await readAndParseXml(xsltPath), mkFsReadDocument());
+}
+
+export function compileFromPathSync(xsltPath: string): StylesheetTransform {
+  return compile(readAndParseXmlSync(xsltPath), mkFsReadDocument());
 }
