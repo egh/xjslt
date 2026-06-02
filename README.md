@@ -115,7 +115,7 @@ import { compile } from "xjslt/compile";
 
 const stylesheetPath = "jats-html.xsl";
 const xslt = slimdom.parseXmlDocument(readFileSync(stylesheetPath, "utf-8"));
-const transform = await compile(xslt);
+const transform = compile(xslt);
 
 // Transform an XML document
 const input = slimdom.parseXmlDocument(readFileSync("article.xml", "utf-8"));
@@ -148,12 +148,6 @@ The test suite includes both unit tests and a subset of the [W3C XSLT 3.0 test s
 
 ```
 npm install
-```
-
-Build (including preprocessors):
-
-```
-npm run build
 ```
 
 and then run tests:
