@@ -1,4 +1,5 @@
 export default {
+  coveragePathIgnorePatterns: ["src/preprocess"],
   preset: "ts-jest",
   testEnvironment: "node",
   reporters: [["jest-simple-dot-reporter", { color: true }]],
