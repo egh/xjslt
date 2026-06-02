@@ -6,12 +6,7 @@
       "request": "launch",
       "name": "Debug Jest Currently select test name",
       "program": "${workspaceFolder}/node_modules/.bin/jest",
-      "args": [
-        "--runInBand",
-        "--no-coverage",
-        "-t",
-        "${selectedText}"
-      ],
+      "args": ["--runInBand", "--no-coverage", "-t", "${selectedText}"],
       "console": "integratedTerminal",
       "sourceMaps": true
     },
@@ -20,10 +15,7 @@
       "request": "launch",
       "name": "Debug Jest Tests",
       "program": "${workspaceFolder}/node_modules/.bin/jest",
-      "args": [
-        "--runInBand",
-        "--no-coverage"
-      ],
+      "args": ["--runInBand", "--no-coverage"],
       "console": "integratedTerminal",
       "sourceMaps": true
     },
@@ -32,11 +24,7 @@
       "request": "launch",
       "name": "Debug Jest Current File",
       "program": "${workspaceFolder}/node_modules/.bin/jest",
-      "args": [
-        "--runInBand",
-        "--no-coverage",
-        "${fileBasenameNoExtension}"
-      ],
+      "args": ["--runInBand", "--no-coverage", "${fileBasenameNoExtension}"],
       "console": "integratedTerminal",
       "sourceMaps": true
     }

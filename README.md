@@ -37,6 +37,7 @@ xjslt compile --web jats-html.xsl examples/html/transform.js
 ```
 xjslt compile jats-html.xsl
 ```
+
 ```
 xjslt run transform.js <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)
 ```
@@ -50,15 +51,19 @@ XJSLT can be used to compile XSLT into JavaScript that can be used in, for examp
 ```
 xjslt compile --standalone jats-html.xsl examples/google-cloud/transform.js
 ```
+
 ```
 cd examples/google-cloud
 ```
+
 ```
 npm install
 ```
+
 ```
 npx @google-cloud/functions-framework --target=transform
 ```
+
 - Visit http://localhost:8080/?url=https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml
 
 ## In a cloudflare edge function
@@ -66,15 +71,19 @@ npx @google-cloud/functions-framework --target=transform
 ```
 xjslt compile --standalone jats-html.xsl examples/cloudflare/src/transform.js
 ```
+
 ```
 cd examples/cloudflare
 ```
+
 ```
 npm install
 ```
+
 ```
 npm run start
 ```
+
 - Visit http://localhost:8787/?url=https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml
 
 ## Programmatic API (Node.js)
@@ -104,7 +113,7 @@ console.log(xml);
 
 # Supported features
 
-All core features of XSLT 2.0.  Roughly 50% of tests in the XSLT test suite (https://github.com/w3c/xslt30-test) pass - but many of these tests are for edge cases.
+All core features of XSLT 2.0. Roughly 50% of tests in the XSLT test suite (https://github.com/w3c/xslt30-test) pass - but many of these tests are for edge cases.
 
 # Incompletely supported features
 
@@ -122,14 +131,19 @@ All core features of XSLT 2.0.  Roughly 50% of tests in the XSLT test suite (htt
 The test suite includes both unit tests and a subset of the [W3C XSLT 3.0 test suite](https://github.com/w3c/xslt30-test). To run tests:
 
 1. Clone the W3C test suite into the project root:
+
 ```
 git clone --depth=1 https://github.com/w3c/xslt30-test.git
 ```
+
 2. Build (including preprocessors):
+
 ```
 npm run build-preprocessors
 ```
+
 3. Run tests:
+
 ```
 npm test
 ```

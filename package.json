@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsc && chmod +x dist/cli.js",
     "prebuild-preprocessors": "npm run build && rm src/preprocess/*js",
-    "build-preprocessors": "bash -c \"for n in src/preprocess/*xsl ; do npm exec -- xjslt compile --standalone \\$n \\${n/xsl/js} ; done\"", 
+    "build-preprocessors": "bash -c \"for n in src/preprocess/*xsl ; do npm exec -- xjslt compile --standalone \\$n \\${n/xsl/js} ; done\"",
     "postbuild-preprocessors": "prettier -w src/preprocess/ && npm run build",
     "pretest": "if [ -d xslt30-test ] ; then cd xslt30-test && git pull && cd .. ; else git clone --depth 1 https://github.com/w3c/xslt30-test/ ; fi",
     "test": "jest --coverage --verbose",
