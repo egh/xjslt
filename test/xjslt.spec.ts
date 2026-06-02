@@ -52,7 +52,8 @@ import { evaluateXPathToString, evaluateXPathToNodes } from "fontoxpath";
 import { generate } from "astring";
 import { Parser } from "acorn";
 import { tmpdir } from "os";
-import { readFileSync, writeFileSync, unlinkSync } from "fs";
+import { readFileSync } from "fs";
+import { readFile, writeFile, unlink } from "fs/promises";
 import { expect } from "@jest/globals";
 import { toBeEquivalentDom } from "./matchers";
 import { OutputDefinition } from "../src/definitions";
@@ -80,7 +81,7 @@ ${template}
 
 async function makeTransform(body: string) {
   const tempfile = path.join(tmpdir(), "temp.xsl");
-  writeFileSync(
+  await writeFile(
     tempfile,
     `<xsl:stylesheet
 version="1.0"
@@ -92,7 +93,7 @@ ${body}
 </xsl:stylesheet>`,
   );
   const transform = await compileFromPath(tempfile);
-  unlinkSync(tempfile);
+  await unlink(tempfile);
   return transform;
 }
 
@@ -348,27 +349,27 @@ test("compileStylesheetNode", async () => {
     slimdom.serializeToWellFormedString(
       transform(
         slimdom.parseXmlDocument(
-          readFileSync(`${__dirname}/simple.xml`, "utf-8"),
+          await readFile(`${__dirname}/simple.xml`, "utf-8"),
         ),
       ).get("#default").document,
     ),
-  ).toEqual(readFileSync(`${__dirname}/simple2.out`, "utf-8"));
+  ).toEqual(await readFile(`${__dirname}/simple2.out`, "utf-8"));
 });
 
 test("compile", async () => {
   const xslt = slimdom.parseXmlDocument(
-    readFileSync(`${__dirname}/simple2.xslt`, "utf-8"),
+    await readFile(`${__dirname}/simple2.xslt`, "utf-8"),
   );
   const transform = await compile(xslt);
   expect(
     slimdom.serializeToWellFormedString(
       transform(
         slimdom.parseXmlDocument(
-          readFileSync(`${__dirname}/simple.xml`, "utf-8"),
+          await readFile(`${__dirname}/simple.xml`, "utf-8"),
         ),
       ).get("#default").document,
     ),
-  ).toEqual(readFileSync(`${__dirname}/simple2.out`, "utf-8"));
+  ).toEqual(await readFile(`${__dirname}/simple2.out`, "utf-8"));
 });
 
 test("compile with readDocument for xsl:include", async () => {
@@ -500,9 +501,7 @@ test("elementNode", async () => {
     "//Author",
     "<xsl:element name='test-{local-name()}'>Hi!</xsl:element>",
   );
-  const results = transform(document).get(
-    "#default",
-  ).document;
+  const results = transform(document).get("#default").document;
   expect(evaluateXPathToString("/root/test-Author[1]/text()", results)).toEqual(
     "Hi!",
   );
@@ -513,9 +512,7 @@ test("attributeNode", async () => {
     "//Author",
     "<test><xsl:attribute name='test-{local-name()}'><xsl:value-of select='text()'/></xsl:attribute></test>",
   );
-  const results = transform(document).get(
-    "#default",
-  ).document;
+  const results = transform(document).get("#default").document;
   expect(evaluateXPathToString("/root/test[1]/@test-Author", results)).toEqual(
     "Mr. Foo",
   );
@@ -526,9 +523,7 @@ test("literalElementAttributeEvaluation", async () => {
     "//Author",
     "<test name='test-{local-name()}'><xsl:value-of select='text()'/></test>",
   );
-  const results = transform(document).get(
-    "#default",
-  ).document;
+  const results = transform(document).get("#default").document;
   expect(
     evaluateXPathToString("/root/test[@name='test-Author'][1]", results),
   ).toEqual("Mr. Foo");
@@ -539,9 +534,7 @@ test("variableShadowing", async () => {
     "//Author",
     "<test><xsl:variable name='test' select='text()'/><xsl:value-of select='$test'/></test>",
   );
-  const results = transform(document).get(
-    "#default",
-  ).document;
+  const results = transform(document).get("#default").document;
   expect(evaluateXPathToString("/root/test[1]/text()", results)).toEqual(
     "Mr. Foo",
   );
