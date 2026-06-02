@@ -213,7 +213,7 @@ export interface DynamicContext {
   variableScopes: Array<VariableScope>;
   nextMatches?: Generator<Template>;
   inputURL: URL;
-  readDocument?: (uri: string) => slimdom.Document;
+  readDocument: (uri: string) => slimdom.Document;
   currentGroup?: NodeGroup;
   keys: Map<String, Key>;
   patternMatchCache: PatternMatchCache;

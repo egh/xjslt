@@ -21,9 +21,6 @@
 import { DynamicContext } from "./definitions";
 
 export function urlToDom(context: DynamicContext, url: string) {
-  if (!context.readDocument) {
-    return undefined;
-  }
   const absoluteURL = context.inputURL
     ? new URL(url, context.inputURL.toString()).toString()
     : url;

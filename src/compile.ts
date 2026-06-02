@@ -1458,8 +1458,8 @@ function compileAvt(avt: string | null) {
 
 function preprocess(
   doc: slimdom.Document,
-  inputURL?: URL,
-  readDocument?: (uri: string) => slimdom.Document,
+  inputURL: URL,
+  readDocument: (uri: string) => slimdom.Document,
 ): slimdom.Document {
   if (
     !evaluateXPathToBoolean(
@@ -1485,11 +1485,6 @@ function preprocess(
       },
     )
   ) {
-    if (!inputURL && !readDocument) {
-      throw new Error(
-        "The transform contains xsl:include or xsl:import but no readDocument callback was provided. Pass a readDocument callback to compile() to resolve imports without the filesystem.",
-      );
-    }
     doc = preprocessInclude(doc, {
       inputURL: inputURL,
       readDocument: readDocument,
@@ -1552,8 +1547,9 @@ function preprocess(
 export function compile(
   xslt: slimdom.Document,
   readDocument?: (uri: string) => slimdom.Document,
+  inputURL?: URL,
 ): StylesheetTransform {
-  const xsltDoc = preprocess(xslt, undefined, readDocument);
+  const xsltDoc = preprocess(xslt, inputURL, readDocument);
   const code = generate(compileStylesheetNode(xsltDoc.documentElement, true));
   const m: { exports: { transform?: StylesheetTransform } } = { exports: {} };
   new Function("xjslt", "module", code)(xjslt, m);
@@ -1567,7 +1563,7 @@ function mkFsReadDocument(): (uri: string) => slimdom.Document {
         readFileSync(fileURLToPath(new URL(uri))).toString(),
       );
     }
-    return undefined;
+    throw new Error(`FODC0005: document ${uri} not found`);
   };
 }
 
@@ -1619,9 +1615,17 @@ export async function compileToFile(xsltPath: string) {
 export async function compileFromPath(
   xsltPath: string,
 ): Promise<StylesheetTransform> {
-  return compile(await readAndParseXml(xsltPath), mkFsReadDocument());
+  return compile(
+    await readAndParseXml(xsltPath),
+    mkFsReadDocument(),
+    pathToFileURL(xsltPath),
+  );
 }
 
 export function compileFromPathSync(xsltPath: string): StylesheetTransform {
-  return compile(readAndParseXmlSync(xsltPath), mkFsReadDocument());
+  return compile(
+    readAndParseXmlSync(xsltPath),
+    mkFsReadDocument(),
+    pathToFileURL(xsltPath),
+  );
 }
