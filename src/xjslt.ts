@@ -128,6 +128,7 @@ export class KeyImpl implements Key {
     variableScopes: VariableScope[],
   ): Map<any, any> {
     let docCache = new Map();
+    const variables = mergeVariableScopes(variableScopes);
     visitNodes(document, (node: slimdom.Node) => {
       if (typeof this.use === "string") {
         if (
@@ -135,7 +136,7 @@ export class KeyImpl implements Key {
             patternMatchCache,
             { xpath: this.match },
             node,
-            variableScopes,
+            variables,
             mkResolver(this.namespaces),
           )
         ) {
@@ -209,7 +210,7 @@ function patternMatchNodes(
   patternMatchCache: PatternMatchCache,
   match: Xpath,
   node: slimdom.Node,
-  variableScopes: Array<VariableScope>,
+  variables: object,
   namespaceResolver: NamespaceResolver,
 ): slimdom.Node[] | undefined {
   let cacheForKey = patternMatchCache.get(match.xpath);
@@ -218,9 +219,6 @@ function patternMatchNodes(
     patternMatchCache.set(match.xpath, cacheForKey);
   }
   let checkContext = node;
-  /* TODO: Only top level variables are applicable here, so top
-  level variables could be cached. */
-  const variables = mergeVariableScopes(variableScopes);
   while (checkContext) {
     let matches = cacheForKey.get(checkContext);
     if (matches === undefined) {
@@ -255,7 +253,7 @@ function patternMatch(
   patternMatchCache: PatternMatchCache,
   match: Xpath,
   node: slimdom.Node,
-  variableScopes: Array<VariableScope>,
+  variables: object,
   namespaceResolver: NamespaceResolver,
 ): boolean {
   if (node && failFast(match.xpath, node)) {
@@ -266,7 +264,7 @@ function patternMatch(
         patternMatchCache,
         match,
         node,
-        variableScopes,
+        variables,
         namespaceResolver,
       ) !== undefined
     );
@@ -317,6 +315,7 @@ function* getTemplates(
   mode: string,
   namespaces: object,
 ): Generator<Template> {
+  const variables = mergeVariableScopes(variableScopes);
   for (let [match, templateIndex] of nonRuleTemplates) {
     const template = templates[templateIndex];
     if (
@@ -326,7 +325,7 @@ function* getTemplates(
         patternMatchCache,
         match,
         node,
-        variableScopes,
+        variables,
         mkResolver(namespaces),
       )
     ) {
@@ -1351,7 +1350,7 @@ function groupStartingWith(
       context.patternMatchCache,
       pattern,
       node,
-      context.variableScopes,
+      mergeVariableScopes(context.variableScopes),
       namespaceResolver,
     );
 
@@ -1385,7 +1384,7 @@ function groupEndingWith(
       context.patternMatchCache,
       pattern,
       node,
-      context.variableScopes,
+      mergeVariableScopes(context.variableScopes),
       namespaceResolver,
     );
 
