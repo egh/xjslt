@@ -30,7 +30,10 @@
     "COPYING.LESSER"
   ],
   "main": "./dist/xjslt.js",
-  "exports": "./dist/xjslt.js",
+  "exports": {
+    ".": "./dist/xjslt.js",
+    "./compile": "./dist/compile.js"
+  },
   "types": "./dist/xjslt.d.ts",
   "bin": {
     "xjslt": "./dist/cli.js"

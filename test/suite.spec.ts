@@ -19,7 +19,7 @@
  */
 
 import { log } from "console";
-import { buildStylesheet } from "../src/compile";
+import { compileFromPathSync } from "../src/compile";
 import * as slimdom from "slimdom";
 import * as path from "path";
 import {
@@ -167,44 +167,54 @@ function checkResult(rootDir, node, thunk: () => Map<string, OutputResult>) {
   if (node.localName == "all-of") {
     return () => {
       for (let childNode of evaluateXPathToNodes("./*", node)) {
-        checkResult(rootDir, childNode, thunk)();
+        const fn = checkResult(rootDir, childNode, thunk);
+        fn();
       }
     };
   } else if (node.localName === "any-of") {
     return () => {
-      let lastCheck;
+      let lastFn: () => void | undefined;
       for (let childNode of evaluateXPathToNodes("./*", node)) {
         /* hack to work with any of these results */
+        const fn = checkResult(rootDir, childNode, thunk);
         try {
-          lastCheck = checkResult(rootDir, childNode, thunk);
-          lastCheck();
+          fn();
+          // If success, we are good.
           return;
-        } catch (err) {}
+        } catch (err) {
+          // If errored, keep track of lastFn that errored so that we
+          // can throw the error below.
+          lastFn = fn;
+        }
       }
-      lastCheck();
+      if (lastFn) lastFn();
     };
   } else if (node.localName === "assert-xml") {
     return () => {
-      const dom = thunk().get("#default").document;
+      const tmp = thunk();
+      const dom = tmp.get("#default").document;
       checkAssertXml(rootDir, node, dom);
     };
   } else if (node.localName === "assert") {
     return () => {
       const assert = evaluateXPathToString(".", node);
+      const tmp = thunk();
       expect(
-        evaluateXPathToBoolean(assert, thunk().get("#default").document),
+        evaluateXPathToBoolean(assert, tmp.get("#default").document),
       ).toBeTruthy();
     };
   } else if (node.localName === "assert-count") {
     return () => {
       const count = evaluateXPathToNumber(".", node);
+      const tmp = thunk();
       expect(
-        evaluateXPathToNumber("count(.)", thunk().get("#default").document),
+        evaluateXPathToNumber("count(.)", tmp.get("#default").document),
       ).toEqual(count);
     };
   } else if (node.localName === "serialization-matches") {
     return () => {
-      expect(serialize(thunk().get("#default") as OutputResult)).toXSMatch(
+      const tmp = thunk();
+      expect(serialize(tmp.get("#default") as OutputResult)).toXSMatch(
         evaluateXPathToString(".", node),
       );
     };
@@ -317,7 +327,7 @@ for (let testSet of evaluateXPath("catalog/test-set/@file", testSetDom)) {
               rootDir,
               evaluateXPathToNodes("./*", resultNode)[0],
               () => {
-                const transform = buildStylesheet(stylesheetFile);
+                const transform = compileFromPathSync(stylesheetFile);
                 return transform(environment || new slimdom.Document(), {
                   inputURL: inputURL,
                   initialMode: initialMode,

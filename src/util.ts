@@ -18,24 +18,11 @@
  * <https://www.gnu.org/licenses/>.
  */
 
-import { fileURLToPath, resolve } from "url";
-import { readFileSync } from "fs";
 import { DynamicContext } from "./definitions";
-import * as slimdom from "slimdom";
 
 export function urlToDom(context: DynamicContext, url: string) {
   const absoluteURL = context.inputURL
-    ? resolve(context.inputURL.toString(), url)
+    ? new URL(url, context.inputURL.toString()).toString()
     : url;
-
-  if (absoluteURL.startsWith("file:")) {
-    return slimdom.parseXmlDocument(
-      readFileSync(fileURLToPath(new URL(absoluteURL))).toString(),
-    );
-  } else {
-    /** How to do async with fontoxpath? */
-    // const response = await fetch(absoluteURL);
-    // return slimdom.parseXmlDocument(response.body.toString());
-    return undefined;
-  }
+  return context.readDocument(absoluteURL);
 }

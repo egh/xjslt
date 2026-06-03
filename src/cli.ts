@@ -21,14 +21,13 @@
 
 import * as slimdom from "slimdom";
 import { Command, Option } from "commander";
-import { buildStylesheet, compileStylesheet } from "./compile";
+import { compileFromPath, compileToFile } from "./compile";
 import { serialize } from "./xjslt";
-import { access, constants, readFile, writeFile } from "fs/promises";
+import { readFile, writeFile } from "fs/promises";
 import { pathToFileURL } from "url";
 import { webpack } from "webpack";
 import * as url from "url";
 import * as path from "path";
-import * as fs from "fs";
 import * as process from "process";
 
 async function processXml(xml: string, transform, options: object) {
@@ -61,7 +60,7 @@ async function run(xslt: string, xmls: Array<string>, options: object) {
     let tmp = require(path.resolve(xslt));
     transform = tmp.transform;
   } else {
-    transform = buildStylesheet(xslt);
+    transform = await compileFromPath(xslt);
   }
   await Promise.all(xmls.map((xml) => processXml(xmls[0], transform, options)));
 }
@@ -122,7 +121,7 @@ function mkStandaloneConfig(src, destinationAbs) {
 
 async function compile(xslt: string, destination: string, options: object) {
   const destinationAbs = path.resolve(destination);
-  const src = compileStylesheet(xslt);
+  const src = await compileToFile(xslt);
   try {
     if (options["web"] || options["standalone"]) {
       const compiler = webpack(

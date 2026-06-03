@@ -102,6 +102,31 @@ npm run start
 
 - Visit http://localhost:8787/?url=https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml
 
+## Programmatic API (Node.js)
+
+Use `compile` from `xjslt/compile` to build a transform function directly in
+Node.js without writing any files to disk. The stylesheet is passed as a parsed
+document, and the returned function can be called immediately.
+
+```ts
+import * as slimdom from "slimdom";
+import { readFileSync } from "fs";
+import { compile } from "xjslt/compile";
+
+const stylesheetPath = "jats-html.xsl";
+const xslt = slimdom.parseXmlDocument(readFileSync(stylesheetPath, "utf-8"));
+const transform = compile(xslt);
+
+// Transform an XML document
+const input = slimdom.parseXmlDocument(readFileSync("article.xml", "utf-8"));
+const results = transform(input);
+const resultDocument = results.get("#default");
+
+const xml = slimdom.serializeToWellFormedString(resultDocument);
+
+console.log(xml);
+```
+
 # Supported features
 
 All core features of XSLT 2.0. Roughly 50% of tests in the XSLT test suite (https://github.com/w3c/xslt30-test) pass - but many of these tests are for edge cases.
@@ -125,7 +150,7 @@ The test suite includes both unit tests and a subset of the [W3C XSLT 3.0 test s
 npm install
 ```
 
-and then run:
+and then run tests:
 
 ```
 npm test

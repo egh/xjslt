@@ -166,6 +166,7 @@ export interface TransformParams {
   outputDocument?: slimdom.Document;
   outputNode?: slimdom.Node;
   inputURL?: string;
+  readDocument?: (uri: string) => slimdom.Document;
   initialMode?: string;
   stylesheetParams?: object;
 }
@@ -191,6 +192,16 @@ export type OutputResult = OutputDefinition & {
   document: slimdom.Document;
 };
 
+export interface TransformResultMap extends Map<string, OutputResult> {
+  get(key: "#default"): OutputResult;
+  get(key: string): OutputResult | undefined;
+}
+
+export type StylesheetTransform = (
+  document: slimdom.Document,
+  params?: TransformParams,
+) => TransformResultMap;
+
 export type Appender = (content: any) => Appender | undefined;
 
 export interface DynamicContext {
@@ -202,6 +213,7 @@ export interface DynamicContext {
   variableScopes: Array<VariableScope>;
   nextMatches?: Generator<Template>;
   inputURL: URL;
+  readDocument: (uri: string) => slimdom.Document;
   currentGroup?: NodeGroup;
   keys: Map<String, Key>;
   patternMatchCache: PatternMatchCache;
