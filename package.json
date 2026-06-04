@@ -51,8 +51,10 @@
     "jest-simple-dot-reporter": "*",
     "prettier": "*",
     "ts-jest": "*",
+    "ts-loader": "^9.6.0",
     "ts-node": "*",
-    "typescript": "*"
+    "typescript": "*",
+    "webpack-cli": "*"
   },
   "dependencies": {
     "@types/estree": "^1.0.8",

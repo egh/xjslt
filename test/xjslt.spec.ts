@@ -32,13 +32,13 @@ import {
   dedupGenerator,
 } from "../src/xjslt";
 import {
-  compileFromPath,
   compile,
   compileAvtRaw,
   compileSequenceConstructorNode,
   compileTopLevelNode,
   getNodeNS,
 } from "../src/compile";
+import { compileFromPath } from "../src/compilex";
 import {
   DynamicContext,
   Template,

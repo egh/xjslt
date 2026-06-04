@@ -21,7 +21,7 @@
 
 import * as slimdom from "slimdom";
 import { Command, Option } from "commander";
-import { compileFromPath, compileToFile } from "./compile";
+import { compileFromPath, compileToFile } from "./compilex";
 import { serialize } from "./xjslt";
 import { readFile, writeFile } from "fs/promises";
 import { pathToFileURL } from "url";

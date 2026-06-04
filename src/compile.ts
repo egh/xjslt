@@ -50,12 +50,6 @@ import {
   evaluateXPathToBoolean,
   evaluateXPathToNodes,
 } from "fontoxpath";
-import { readFileSync, writeFileSync, symlinkSync } from "fs";
-import { readFile, symlink, writeFile } from "fs/promises";
-import { pathToFileURL, fileURLToPath } from "url";
-import * as path from "path";
-import { tmpdir } from "os";
-import { mkdtempSync } from "fs";
 import preprocessSimplified from "./preprocess/simplified";
 import preprocessInclude from "./preprocess/include";
 import preprocessImport from "./preprocess/import";
@@ -74,7 +68,6 @@ import {
   DecimalFormat,
   DEFAULT_DECIMAL_FORMAT,
   xpathstring,
-  Rule,
   TemplateForCompilation,
   TemplateIndex,
   StylesheetTransform,
@@ -1456,7 +1449,7 @@ function compileAvt(avt: string | null) {
   }
 }
 
-function preprocess(
+export function preprocess(
   doc: slimdom.Document,
   inputURL: URL,
   readDocument: (uri: string) => slimdom.Document,
@@ -1554,78 +1547,4 @@ export function compile(
   const m: { exports: { transform?: StylesheetTransform } } = { exports: {} };
   new Function("xjslt", "module", code)(xjslt, m);
   return m.exports.transform;
-}
-
-function mkFsReadDocument(): (uri: string) => slimdom.Document {
-  return (uri: string) => {
-    if (uri.startsWith("file:")) {
-      return slimdom.parseXmlDocument(
-        readFileSync(fileURLToPath(new URL(uri))).toString(),
-      );
-    }
-    throw new Error(`FODC0005: document ${uri} not found`);
-  };
-}
-
-async function readAndParseXml(path: string): Promise<slimdom.Document> {
-  const str = (await readFile(path)).toString();
-  return slimdom.parseXmlDocument(str);
-}
-
-function readAndParseXmlSync(path: string): slimdom.Document {
-  const str = readFileSync(path).toString();
-  return slimdom.parseXmlDocument(str);
-}
-
-export async function compileToFile(xsltPath: string) {
-  let slimdom_path = require.resolve("slimdom").split(path.sep);
-  let root_dir = path.join(
-    "/",
-    ...slimdom_path.slice(0, slimdom_path.indexOf("node_modules")),
-  );
-  var tempdir = mkdtempSync(path.join(tmpdir(), "xjslt-"));
-  symlinkSync(
-    path.join(root_dir, "node_modules"),
-    path.join(tempdir, "node_modules"),
-  );
-  symlinkSync(
-    path.join(root_dir, "package.json"),
-    path.join(tempdir, "package.json"),
-  );
-  symlinkSync(path.join(root_dir, "dist"), path.join(tempdir, "dist"));
-  var tempfile = path.join(tempdir, "transform.js");
-  const xsltURL = pathToFileURL(xsltPath);
-  const xsltDoc = await preprocess(
-    await readAndParseXml(xsltPath),
-    xsltURL,
-    mkFsReadDocument(),
-  );
-  await writeFile(
-    tempfile,
-    generate(compileStylesheetNode(xsltDoc.documentElement)),
-  );
-  return tempfile;
-  //  rmSync(tempdir, { recursive: true });
-}
-
-/**
- * Build a stylesheet. Returns a function that will take an input DOM
- * document and return an output DOM document.
- */
-export async function compileFromPath(
-  xsltPath: string,
-): Promise<StylesheetTransform> {
-  return compile(
-    await readAndParseXml(xsltPath),
-    mkFsReadDocument(),
-    pathToFileURL(xsltPath),
-  );
-}
-
-export function compileFromPathSync(xsltPath: string): StylesheetTransform {
-  return compile(
-    readAndParseXmlSync(xsltPath),
-    mkFsReadDocument(),
-    pathToFileURL(xsltPath),
-  );
 }
