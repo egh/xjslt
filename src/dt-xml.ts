@@ -50,6 +50,13 @@ export function* greatGrandParentNode(
   if (ggparent) yield ggparent;
 }
 
+export function* greatGreatGrandParentNode(
+  node: slimdom.Node,
+): Generator<slimdom.Node> {
+  const gggparent = node.parentNode?.parentNode?.parentNode?.parentNode;
+  if (gggparent) yield gggparent;
+}
+
 export function* ancestorNodes(node: slimdom.Node): Generator<slimdom.Node> {
   let ancestor = node.parentNode;
   while (ancestor) {
@@ -305,6 +312,7 @@ function extractFromModule(
       parentNode,
       grandParentNode,
       greatGrandParentNode,
+      greatGreatGrandParentNode,
     ];
     let extractorIndex = 0;
     let nextIsAncestor = false;

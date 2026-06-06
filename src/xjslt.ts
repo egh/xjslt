@@ -75,6 +75,7 @@ import { findMatchingRules } from "./dt";
 import {
   ancestorNodes,
   greatGrandParentNode,
+  greatGreatGrandParentNode,
   grandParentNode,
   parentNode,
   selfNode,
@@ -1992,6 +1993,7 @@ export {
   parentNode,
   grandParentNode,
   greatGrandParentNode,
+  greatGreatGrandParentNode,
   selfNode,
   NodeAttributeFeature,
   NodeNamespaceFeature,
