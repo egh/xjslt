@@ -50,6 +50,14 @@ export function* greatGrandParentNode(
   if (ggparent) yield ggparent;
 }
 
+export function* ancestorNodes(node: slimdom.Node): Generator<slimdom.Node> {
+  let ancestor = node.parentNode;
+  while (ancestor) {
+    yield ancestor;
+    ancestor = ancestor.parentNode;
+  }
+}
+
 abstract class NodeFeature<T> extends Feature<slimdom.Node, T> {
   nodeExtractor: NodeExtractor;
   constructor(nodeExtractor: NodeExtractor, value: T) {
@@ -291,17 +299,25 @@ function extractFromModule(
     }
     // The set of potential ancestor steps, reversed so its self, parent, grandparent, ...
     const ancestorSteps = steps.reverse();
-    if (ancestorSteps.length == 0 || ancestorSteps.length > 4)
-      throw new ExtractFeatureError();
-    processStep(selfNode, ancestorSteps[0], features, nsResolver);
-    if (ancestorSteps[1]) {
-      processStep(parentNode, ancestorSteps[1], features, nsResolver);
-    }
-    if (ancestorSteps[2]) {
-      processStep(grandParentNode, ancestorSteps[2], features, nsResolver);
-    }
-    if (ancestorSteps[3]) {
-      processStep(greatGrandParentNode, ancestorSteps[3], features, nsResolver);
+    if (ancestorSteps.length == 0) throw new ExtractFeatureError();
+    const fixedExtractors: NodeExtractor[] = [
+      selfNode,
+      parentNode,
+      grandParentNode,
+      greatGrandParentNode,
+    ];
+    let extractorIndex = 0;
+    let nextIsAncestor = false;
+    for (const step of ancestorSteps) {
+      if (isDescendantOrSelfStep(step)) {
+        nextIsAncestor = true;
+        continue;
+      }
+      const extractor = nextIsAncestor
+        ? ancestorNodes
+        : fixedExtractors[extractorIndex++];
+      if (!extractor) throw new ExtractFeatureError();
+      processStep(extractor, step, features, nsResolver);
     }
   } else {
     throw new ExtractFeatureError();

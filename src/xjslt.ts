@@ -73,6 +73,7 @@ import {
 import { formatNumber } from "./numbering";
 import { findMatchingRules } from "./dt";
 import {
+  ancestorNodes,
   greatGrandParentNode,
   grandParentNode,
   parentNode,
@@ -1987,6 +1988,7 @@ export function initialize(_context: DynamicContext, _namespaces: object) {}
 registerFunctions();
 
 export {
+  ancestorNodes,
   parentNode,
   grandParentNode,
   greatGrandParentNode,
