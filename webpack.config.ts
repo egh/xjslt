@@ -20,9 +20,6 @@ const config: webpack.Configuration = {
   resolve: {
     extensions: [".web.ts", ".web.js", ".ts", ".js"],
   },
-optimization: {
-    minimize: false,
-  },
   output: {
     library: {
       name: "xjslt",
