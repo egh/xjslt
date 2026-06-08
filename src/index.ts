@@ -1,3 +1,3 @@
-import { compile } from "./compilex";
+import { compile } from "./compile";
 
 export { compile };

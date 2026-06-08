@@ -1,4 +1,4 @@
-import { compile } from "../src/compilex";
+import { compile } from "../src/compile";
 import * as slimdom from "slimdom";
 import { evaluateXPathToNodes } from "fontoxpath";
 

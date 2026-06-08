@@ -18,7 +18,7 @@
  * <https://www.gnu.org/licenses/>.
  */
 
-import { parseNumberFormat } from "../src/compile";
+import { parseNumberFormat } from "../src/compileGeneric";
 import {
   groupNumeric,
   formatNumber,

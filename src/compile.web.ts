@@ -1,7 +1,7 @@
 import { generate } from "astring";
 import * as slimdom from "slimdom";
 import * as xjslt from "./xjslt";
-import { preprocess, compileStylesheetNode } from "./compile";
+import { preprocess, compileStylesheetNode } from "./compileGeneric";
 import { StylesheetTransform } from "./definitions";
 
 function readDocumentDefault(uri: string): slimdom.Document {

@@ -36,8 +36,8 @@ import {
   compileSequenceConstructorNode,
   compileTopLevelNode,
   getNodeNS,
-} from "../src/compile";
-import { compile, compileFromPath } from "../src/compilex";
+} from "../src/compileGeneric";
+import { compile, compileFromPath } from "../src/compile";
 import {
   DynamicContext,
   Template,

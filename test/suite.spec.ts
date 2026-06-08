@@ -19,7 +19,7 @@
  */
 
 import { log } from "console";
-import { compileFromPathSync } from "../src/compilex";
+import { compileFromPathSync } from "../src/compile";
 import * as slimdom from "slimdom";
 import * as path from "path";
 import {
