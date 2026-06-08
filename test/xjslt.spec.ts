@@ -384,12 +384,16 @@ test("compile with readDocument for xsl:include", async () => {
       </xsl:template>
     </xsl:stylesheet>`);
 
-  const readDocument = async (uri: string) => {
-    if (uri === "included.xsl") return included;
+  const readDocument = (uri: string) => {
+    if (uri === "http://example.org/included.xsl") return included;
     throw new Error(`Unexpected URI: ${uri}`);
   };
 
-  const transform = compile(xslt, new URL("http://example.org"));
+  const transform = rawCompile(
+    xslt,
+    readDocument,
+    new URL("http://example.org"),
+  );
   const result = slimdom.serializeToWellFormedString(
     transform(slimdom.parseXmlDocument("<root><item>hello</item></root>")).get(
       "#default",
@@ -415,7 +419,7 @@ test("compile with readDocument for xsl:import", async () => {
     </xsl:stylesheet>`);
 
   const readDocument = (uri: string) => {
-    if (uri === "base.xsl") return imported;
+    if (uri === "http://example.org/base.xsl") return imported;
     throw new Error(`Unexpected URI: ${uri}`);
   };
 
@@ -449,7 +453,11 @@ test("compile with readDocument for runtime doc()", async () => {
     throw new Error(`Unexpected URI: ${uri}`);
   };
 
-  const transform = rawCompile(xslt, readDocument);
+  const transform = rawCompile(
+    xslt,
+    readDocument,
+    new URL("http://example.org"),
+  );
   const result = slimdom.serializeToWellFormedString(
     transform(slimdom.parseXmlDocument("<root/>"), { readDocument }).get(
       "#default",
