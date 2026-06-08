@@ -7,7 +7,6 @@ function readDocument(uri: string): slimdom.Document {
   // This should be async, but fontoxpath can't handle async custom
   // functions, and this is used by those, so it has to be synchronous
   // for now.
-  console.log(uri);
   const xhr = new XMLHttpRequest();
   xhr.open("GET", uri, false);
   xhr.send(null); // blocks
