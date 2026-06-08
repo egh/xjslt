@@ -6,7 +6,6 @@ export default {
       displayName: "node",
       preset: "ts-jest",
       testEnvironment: "node",
-      //      testPathIgnorePatterns: ["examples"],
     },
     {
       displayName: "jsdom",

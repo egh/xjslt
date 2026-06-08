@@ -1530,17 +1530,17 @@ export function preprocess(
  *   </xsl:stylesheet>
  * `);
  *
- * const transform = await compile(xslt);
+ * const transform = compile(xslt);
  *
  * const input = slimdom.parseXmlDocument("<doc><title>Hello</title></doc>");
  * const output = transform(input).get("#default");
  * console.log(serialize(output)); // <result>Hello</result>
  * ```
  */
-export function compile(
+export function rawCompile(
   xslt: slimdom.Document,
-  readDocument?: (uri: string) => slimdom.Document,
-  inputURL?: URL,
+  readDocument: (uri: string) => slimdom.Document,
+  inputURL: URL,
 ): StylesheetTransform {
   const xsltDoc = preprocess(xslt, inputURL, readDocument);
   const code = generate(compileStylesheetNode(xsltDoc.documentElement, true));

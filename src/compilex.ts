@@ -65,7 +65,7 @@ import {
   mkResolver,
   sortSortable,
 } from "./shared";
-import { compile, compileStylesheetNode, preprocess } from "./compile";
+import { rawCompile, compileStylesheetNode, preprocess } from "./compile";
 
 async function readAndParseXml(path: string): Promise<slimdom.Document> {
   const str = (await readFile(path)).toString();
@@ -84,17 +84,17 @@ function readAndParseXmlSync(path: string): slimdom.Document {
 export async function compileFromPath(
   xsltPath: string,
 ): Promise<StylesheetTransform> {
-  return compile(
+  return rawCompile(
     await readAndParseXml(xsltPath),
-    mkFsReadDocument(),
+    readDocument,
     pathToFileURL(xsltPath),
   );
 }
 
 export function compileFromPathSync(xsltPath: string): StylesheetTransform {
-  return compile(
+  return rawCompile(
     readAndParseXmlSync(xsltPath),
-    mkFsReadDocument(),
+    readDocument,
     pathToFileURL(xsltPath),
   );
 }
@@ -120,7 +120,7 @@ export async function compileToFile(xsltPath: string) {
   const xsltDoc = await preprocess(
     await readAndParseXml(xsltPath),
     xsltURL,
-    mkFsReadDocument(),
+    readDocument,
   );
   await writeFile(
     tempfile,
@@ -130,13 +130,18 @@ export async function compileToFile(xsltPath: string) {
   //  rmSync(tempdir, { recursive: true });
 }
 
-function mkFsReadDocument(): (uri: string) => slimdom.Document {
-  return (uri: string) => {
-    if (uri.startsWith("file:")) {
-      return slimdom.parseXmlDocument(
-        readFileSync(fileURLToPath(new URL(uri))).toString(),
-      );
-    }
-    throw new Error(`FODC0005: document ${uri} not found`);
-  };
+function readDocument(uri: string): slimdom.Document {
+  if (uri.startsWith("file:")) {
+    return slimdom.parseXmlDocument(
+      readFileSync(fileURLToPath(new URL(uri))).toString(),
+    );
+  }
+  throw new Error(`FODC0005: document ${uri} not found`);
+}
+
+export function compile(
+  xslt: slimdom.Document,
+  inputURL: URL,
+): StylesheetTransform {
+  return rawCompile(xslt, readDocument, inputURL);
 }

@@ -20,11 +20,13 @@ const config: webpack.Configuration = {
   resolve: {
     extensions: [".web.ts", ".web.js", ".ts", ".js"],
   },
+optimization: {
+    minimize: false,
+  },
   output: {
     library: {
       name: "xjslt",
-      type: "umd",
-      export: "xjslt.compile",
+      type: "window",
     },
     filename: "xjslt-web.js",
     path: path.resolve(__dirname, "dist"),
