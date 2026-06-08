@@ -417,11 +417,7 @@ export function nextMatch(
     const next = nextMatches.next();
     if (!next.done) {
       context.nextMatches = nextMatches;
-      evaluateTemplate(
-        next.value,
-        context,
-        data.params,
-      );
+      evaluateTemplate(next.value, context, data.params);
     }
   }
 }
@@ -443,11 +439,7 @@ export function applyImports(
     }
     if (!next.done) {
       context.nextMatches = nextMatches;
-      evaluateTemplate(
-        next.value,
-        context,
-        data.params,
-      );
+      evaluateTemplate(next.value, context, data.params);
     }
   }
 }
@@ -658,13 +650,9 @@ export function applyTemplates(
     data.sortKeyComponents,
     namespaceResolver,
   );
-  iterateNodes(sorted, {...context, mode }, (context) => {
+  iterateNodes(sorted, { ...context, mode }, (context) => {
     context.variableScopes = extendScope(context.variableScopes);
-    processNode(
-      context,
-      data.params,
-      data.namespaces,
-    );
+    processNode(context, data.params, data.namespaces);
     context.variableScopes.pop();
   });
 }
