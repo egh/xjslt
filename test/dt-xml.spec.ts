@@ -19,6 +19,7 @@
  */
 
 import {
+  ancestorNodes,
   greatGrandParentNode,
   grandParentNode,
   parentNode,
@@ -31,7 +32,6 @@ import {
   NodeTypeFeature,
 } from "../src/dt-xml";
 
-import type { Rule, RuleTreeNode } from "../src/definitions";
 import { buildRuleTree, findMatchingRules } from "../src/dt";
 import * as slimdom from "slimdom";
 import { generate } from "astring";
@@ -226,6 +226,15 @@ describe("xpathToFeatures", () => {
         new NodeNameFeature(selfNode, "span"),
         new NodeTypeFeature(parentNode, slimdom.Node.ELEMENT_NODE),
         new NodeNameFeature(parentNode, "div"),
+      ]);
+    });
+
+    test("ancestor//child path", () => {
+      expectFeatures(xpathToFeatures("div//span", noNs), [
+        new NodeTypeFeature(selfNode, slimdom.Node.ELEMENT_NODE),
+        new NodeNameFeature(selfNode, "span"),
+        new NodeTypeFeature(ancestorNodes, slimdom.Node.ELEMENT_NODE),
+        new NodeNameFeature(ancestorNodes, "div"),
       ]);
     });
 

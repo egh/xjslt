@@ -26,24 +26,43 @@ import * as slimdom from "slimdom";
 
 const XQX_NS = "http://www.w3.org/2005/XQueryX";
 
-type NodeExtractor = (node: slimdom.Node) => slimdom.Node | undefined;
+type NodeExtractor = (node: slimdom.Node) => Generator<slimdom.Node>;
 
-export function selfNode(node: slimdom.Node): slimdom.Node {
-  return node;
+export function* selfNode(node: slimdom.Node): Generator<slimdom.Node> {
+  yield node;
 }
 
-export function parentNode(node: slimdom.Node): slimdom.Node | undefined {
-  return node.parentNode || undefined;
+export function* parentNode(node: slimdom.Node): Generator<slimdom.Node> {
+  if (node.parentNode) {
+    yield node.parentNode;
+  }
 }
 
-export function grandParentNode(node: slimdom.Node): slimdom.Node | undefined {
-  return node.parentNode?.parentNode || undefined;
+export function* grandParentNode(node: slimdom.Node): Generator<slimdom.Node> {
+  const grandparent = node.parentNode?.parentNode;
+  if (grandparent) yield grandparent;
 }
 
-export function greatGrandParentNode(
+export function* greatGrandParentNode(
   node: slimdom.Node,
-): slimdom.Node | undefined {
-  return node.parentNode?.parentNode?.parentNode || undefined;
+): Generator<slimdom.Node> {
+  const ggparent = node.parentNode?.parentNode?.parentNode;
+  if (ggparent) yield ggparent;
+}
+
+export function* greatGreatGrandParentNode(
+  node: slimdom.Node,
+): Generator<slimdom.Node> {
+  const gggparent = node.parentNode?.parentNode?.parentNode?.parentNode;
+  if (gggparent) yield gggparent;
+}
+
+export function* ancestorNodes(node: slimdom.Node): Generator<slimdom.Node> {
+  let ancestor = node.parentNode;
+  while (ancestor) {
+    yield ancestor;
+    ancestor = ancestor.parentNode;
+  }
 }
 
 abstract class NodeFeature<T> extends Feature<slimdom.Node, T> {
@@ -66,31 +85,53 @@ abstract class NodeFeature<T> extends Feature<slimdom.Node, T> {
   }
 }
 
+function exists(
+  iter: Iterable<slimdom.Node>,
+  test: (node: slimdom.Node) => boolean,
+) {
+  for (const target of iter) {
+    if (test(target)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export class NodeNamespaceFeature extends NodeFeature<string | null> {
   matches(node: slimdom.Node): boolean {
-    if (this.nodeExtractor(node)?.nodeType !== slimdom.Node.ELEMENT_NODE) {
-      return false;
-    } else {
-      return (node as slimdom.Element).namespaceURI === this.value;
-    }
+    return exists(
+      this.nodeExtractor(node),
+      (target: slimdom.Node) =>
+        target.nodeType == slimdom.Node.ELEMENT_NODE &&
+        (target as slimdom.Element).namespaceURI === this.value,
+    );
   }
 }
 
 export class NodeTypeFeature extends NodeFeature<number | null> {
   matches(node: slimdom.Node): boolean {
-    return this.nodeExtractor(node)?.nodeType === this.value;
+    return exists(
+      this.nodeExtractor(node),
+      (target: slimdom.Node) => target.nodeType === this.value,
+    );
   }
 }
 
 export class NodeNameFeature extends NodeFeature<string> {
   matches(node: slimdom.Node): boolean {
-    return this.nodeExtractor(node)?.nodeName === this.value;
+    return exists(
+      this.nodeExtractor(node),
+      (target: slimdom.Node) => target.nodeName === this.value,
+    );
   }
 }
 
 export class NodeTextFeature extends NodeFeature<string | null> {
   matches(node: slimdom.Node): boolean {
-    return this.nodeExtractor(node)?.textContent === this.value;
+    return exists(
+      this.nodeExtractor(node),
+      (target: slimdom.Node) => target.textContent === this.value,
+    );
   }
 }
 
@@ -99,15 +140,13 @@ export class NodeAttributeFeature extends NodeFeature<{
   value: string;
 }> {
   matches(node: slimdom.Node): boolean {
-    const realNode = this.nodeExtractor(node);
-    if (realNode.nodeType !== slimdom.Node.ELEMENT_NODE) {
-      return false;
-    } else {
-      return (
-        (realNode as slimdom.Element).getAttribute(this.value.name) ===
-        this.value.value
-      );
-    }
+    return exists(
+      this.nodeExtractor(node),
+      (target: slimdom.Node) =>
+        target.nodeType == slimdom.Node.ELEMENT_NODE &&
+        (target as slimdom.Element).getAttribute(this.value.name) ===
+          this.value.value,
+    );
   }
 }
 
@@ -267,17 +306,26 @@ function extractFromModule(
     }
     // The set of potential ancestor steps, reversed so its self, parent, grandparent, ...
     const ancestorSteps = steps.reverse();
-    if (ancestorSteps.length == 0 || ancestorSteps.length > 4)
-      throw new ExtractFeatureError();
-    processStep(selfNode, ancestorSteps[0], features, nsResolver);
-    if (ancestorSteps[1]) {
-      processStep(parentNode, ancestorSteps[1], features, nsResolver);
-    }
-    if (ancestorSteps[2]) {
-      processStep(grandParentNode, ancestorSteps[2], features, nsResolver);
-    }
-    if (ancestorSteps[3]) {
-      processStep(greatGrandParentNode, ancestorSteps[3], features, nsResolver);
+    if (ancestorSteps.length == 0) throw new ExtractFeatureError();
+    const fixedExtractors: NodeExtractor[] = [
+      selfNode,
+      parentNode,
+      grandParentNode,
+      greatGrandParentNode,
+      greatGreatGrandParentNode,
+    ];
+    let extractorIndex = 0;
+    let nextIsAncestor = false;
+    for (const step of ancestorSteps) {
+      if (isDescendantOrSelfStep(step)) {
+        nextIsAncestor = true;
+        continue;
+      }
+      const extractor = nextIsAncestor
+        ? ancestorNodes
+        : fixedExtractors[extractorIndex++];
+      if (!extractor) throw new ExtractFeatureError();
+      processStep(extractor, step, features, nsResolver);
     }
   } else {
     throw new ExtractFeatureError();

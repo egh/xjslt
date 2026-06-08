@@ -73,7 +73,9 @@ import {
 import { formatNumber } from "./numbering";
 import { findMatchingRules } from "./dt";
 import {
+  ancestorNodes,
   greatGrandParentNode,
+  greatGreatGrandParentNode,
   grandParentNode,
   parentNode,
   selfNode,
@@ -397,12 +399,9 @@ export function processNode(
     mergeTemplateGenerators(ruleTemplates, nonRuleTemplates),
   );
   const next = templates.next();
+  context.nextMatches = templates;
   if (!next.done) {
-    evaluateTemplate(
-      next.value,
-      { ...context, nextMatches: templates },
-      params,
-    );
+    evaluateTemplate(next.value, context, params);
   }
 }
 
@@ -417,9 +416,10 @@ export function nextMatch(
   if (nextMatches) {
     const next = nextMatches.next();
     if (!next.done) {
+      context.nextMatches = nextMatches;
       evaluateTemplate(
         next.value,
-        { ...context, nextMatches: nextMatches },
+        context,
         data.params,
       );
     }
@@ -442,9 +442,10 @@ export function applyImports(
       next = nextMatches.next();
     }
     if (!next.done) {
+      context.nextMatches = nextMatches;
       evaluateTemplate(
         next.value,
-        { ...context, nextMatches: nextMatches },
+        context,
         data.params,
       );
     }
@@ -493,9 +494,12 @@ function iterateNodes<T>(
   func: SequenceConstructorWithReturn<T>,
 ): T[] {
   let position = 0;
+  const tmpContext = { ...context, contextList };
   return contextList.map((contextItem) => {
     position++;
-    return func({ ...context, contextItem, contextList, position });
+    tmpContext.contextItem = contextItem;
+    tmpContext.position = position;
+    return func(tmpContext);
   });
 }
 
@@ -654,16 +658,14 @@ export function applyTemplates(
     data.sortKeyComponents,
     namespaceResolver,
   );
-  iterateNodes(sorted, context, (context) => {
+  iterateNodes(sorted, {...context, mode }, (context) => {
+    context.variableScopes = extendScope(context.variableScopes);
     processNode(
-      {
-        ...context,
-        mode: mode,
-        variableScopes: extendScope(context.variableScopes),
-      },
+      context,
       data.params,
       data.namespaces,
     );
+    context.variableScopes.pop();
   });
 }
 
@@ -1247,10 +1249,9 @@ export function forEach(
       namespaceResolver,
     );
     iterateNodes(nodeList, context, (context) => {
-      func({
-        ...context,
-        variableScopes: extendScope(context.variableScopes),
-      });
+      context.variableScopes = extendScope(context.variableScopes);
+      func(context);
+      context.variableScopes.pop();
     });
   }
 }
@@ -1987,9 +1988,11 @@ export function initialize(_context: DynamicContext, _namespaces: object) {}
 registerFunctions();
 
 export {
+  ancestorNodes,
   parentNode,
   grandParentNode,
   greatGrandParentNode,
+  greatGreatGrandParentNode,
   selfNode,
   NodeAttributeFeature,
   NodeNamespaceFeature,
