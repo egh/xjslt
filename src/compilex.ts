@@ -65,7 +65,7 @@ import {
   mkResolver,
   sortSortable,
 } from "./shared";
-import { rawCompile, compileStylesheetNode, preprocess } from "./compile";
+import { compileStylesheetNode, preprocess } from "./compile";
 
 async function readAndParseXml(path: string): Promise<slimdom.Document> {
   const str = (await readFile(path)).toString();
@@ -84,19 +84,11 @@ function readAndParseXmlSync(path: string): slimdom.Document {
 export async function compileFromPath(
   xsltPath: string,
 ): Promise<StylesheetTransform> {
-  return rawCompile(
-    await readAndParseXml(xsltPath),
-    readDocument,
-    pathToFileURL(xsltPath),
-  );
+  return compile(await readAndParseXml(xsltPath), pathToFileURL(xsltPath));
 }
 
 export function compileFromPathSync(xsltPath: string): StylesheetTransform {
-  return rawCompile(
-    readAndParseXmlSync(xsltPath),
-    readDocument,
-    pathToFileURL(xsltPath),
-  );
+  return compile(readAndParseXmlSync(xsltPath), pathToFileURL(xsltPath));
 }
 
 export async function compileToFile(xsltPath: string) {
@@ -120,7 +112,7 @@ export async function compileToFile(xsltPath: string) {
   const xsltDoc = await preprocess(
     await readAndParseXml(xsltPath),
     xsltURL,
-    readDocument,
+    readDocumentDefault,
   );
   await writeFile(
     tempfile,
@@ -130,7 +122,7 @@ export async function compileToFile(xsltPath: string) {
   //  rmSync(tempdir, { recursive: true });
 }
 
-function readDocument(uri: string): slimdom.Document {
+function readDocumentDefault(uri: string): slimdom.Document {
   if (uri.startsWith("file:")) {
     return slimdom.parseXmlDocument(
       readFileSync(fileURLToPath(new URL(uri))).toString(),
@@ -139,9 +131,52 @@ function readDocument(uri: string): slimdom.Document {
   throw new Error(`FODC0005: document ${uri} not found`);
 }
 
+/**
+ * Compile an XSLT stylesheet document into a callable transform function.
+ *
+ * @param xslt - The XSLT stylesheet as a parsed slimdom Document.
+ * @param inputURL The input URL, use to resolve relative URLs.
+ * @param readDocument - Optional callback to override default. Receives the resolved
+ *   URI (absolute when a base is known, otherwise the raw href) and must
+ *   return a parsed slimdom Document. Also used at runtime for `doc()` calls.
+ *
+ * @returns A transform function with the signature
+ *   `(document, params?) => Map<string, OutputResult>`.
+ *   The `"#default"` key holds the primary output document.
+ *
+ * @example
+ * ```ts
+ * import * as slimdom from "slimdom";
+ * import { compile } from "xjslt/compilex";
+ * import { serialize } from "xjslt";
+ *
+ * const xslt = slimdom.parseXmlDocument(`
+ *   <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+ *     <xsl:template match="/">
+ *       <result><xsl:value-of select="/doc/title"/></result>
+ *     </xsl:template>
+ *   </xsl:stylesheet>
+ * `);
+ *
+ * const transform = compile(xslt, new URL("http://example.org/");
+ *
+ * const input = slimdom.parseXmlDocument("<doc><title>Hello</title></doc>");
+ * const output = transform(input).get("#default");
+ * console.log(serialize(output)); // <result>Hello</result>
+ * ```
+ */
 export function compile(
   xslt: slimdom.Document,
   inputURL: URL,
+  readDocument?: (uri: string) => slimdom.Document,
 ): StylesheetTransform {
-  return rawCompile(xslt, readDocument, inputURL);
+  const xsltDoc = preprocess(
+    xslt,
+    inputURL,
+    readDocument || readDocumentDefault,
+  );
+  const code = generate(compileStylesheetNode(xsltDoc.documentElement, true));
+  const m: { exports: { transform?: StylesheetTransform } } = { exports: {} };
+  new Function("xjslt", "module", code)(xjslt, m);
+  return m.exports.transform;
 }

@@ -36,7 +36,6 @@ import {
   compileSequenceConstructorNode,
   compileTopLevelNode,
   getNodeNS,
-  rawCompile,
 } from "../src/compile";
 import { compile, compileFromPath } from "../src/compilex";
 import {
@@ -389,11 +388,7 @@ test("compile with readDocument for xsl:include", async () => {
     throw new Error(`Unexpected URI: ${uri}`);
   };
 
-  const transform = rawCompile(
-    xslt,
-    readDocument,
-    new URL("http://example.org"),
-  );
+  const transform = compile(xslt, new URL("http://example.org"), readDocument);
   const result = slimdom.serializeToWellFormedString(
     transform(slimdom.parseXmlDocument("<root><item>hello</item></root>")).get(
       "#default",
@@ -423,11 +418,7 @@ test("compile with readDocument for xsl:import", async () => {
     throw new Error(`Unexpected URI: ${uri}`);
   };
 
-  const transform = rawCompile(
-    xslt,
-    readDocument,
-    new URL("http://example.org"),
-  );
+  const transform = compile(xslt, new URL("http://example.org"), readDocument);
   const result = slimdom.serializeToWellFormedString(
     transform(slimdom.parseXmlDocument("<root><item>world</item></root>")).get(
       "#default",
@@ -453,11 +444,7 @@ test("compile with readDocument for runtime doc()", async () => {
     throw new Error(`Unexpected URI: ${uri}`);
   };
 
-  const transform = rawCompile(
-    xslt,
-    readDocument,
-    new URL("http://example.org"),
-  );
+  const transform = compile(xslt, new URL("http://example.org"), readDocument);
   const result = slimdom.serializeToWellFormedString(
     transform(slimdom.parseXmlDocument("<root/>"), { readDocument }).get(
       "#default",

@@ -1,9 +1,10 @@
+import { generate } from "astring";
 import * as slimdom from "slimdom";
-
-import { rawCompile } from "./compile";
+import * as xjslt from "./xjslt";
+import { preprocess, compileStylesheetNode } from "./compile";
 import { StylesheetTransform } from "./definitions";
 
-function readDocument(uri: string): slimdom.Document {
+function readDocumentDefault(uri: string): slimdom.Document {
   // This should be async, but fontoxpath can't handle async custom
   // functions, and this is used by those, so it has to be synchronous
   // for now.
@@ -16,6 +17,15 @@ function readDocument(uri: string): slimdom.Document {
 export function compile(
   xslt: slimdom.Document,
   inputURL: URL,
+  readDocument?: (uri: string) => slimdom.Document,
 ): StylesheetTransform {
-  return rawCompile(xslt, readDocument, inputURL);
+  const xsltDoc = preprocess(
+    xslt,
+    inputURL,
+    readDocument || readDocumentDefault,
+  );
+  const code = generate(compileStylesheetNode(xsltDoc.documentElement, true));
+  const m: { exports: { transform?: StylesheetTransform } } = { exports: {} };
+  new Function("xjslt", "module", code)(xjslt, m);
+  return m.exports.transform;
 }
