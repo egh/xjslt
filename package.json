@@ -48,6 +48,7 @@
   "devDependencies": {
     "@types/jest": "*",
     "jest": "*",
+    "jest-environment-jsdom": "^30.4.1",
     "jest-simple-dot-reporter": "*",
     "prettier": "*",
     "ts-jest": "*",
@@ -65,5 +66,8 @@
     "fontoxpath": "^3.34.0",
     "slimdom": "^4.3.5",
     "webpack": "^5.107.0"
+  },
+  "allowScripts": {
+    "jest-environment-jsdom@30.4.1": true
   }
 }

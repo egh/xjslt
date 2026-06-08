@@ -53,7 +53,7 @@ import { generate } from "astring";
 import { Parser } from "acorn";
 import { tmpdir } from "os";
 import { readFileSync } from "fs";
-import { readFile, writeFile, unlink } from "fs/promises";
+import { readFile } from "fs/promises";
 import { expect } from "@jest/globals";
 import { toBeEquivalentDom } from "./matchers";
 import { OutputDefinition } from "../src/definitions";
@@ -80,21 +80,16 @@ ${template}
 }
 
 async function makeTransform(body: string) {
-  const tempfile = path.join(tmpdir(), "temp.xsl");
-  await writeFile(
-    tempfile,
-    `<xsl:stylesheet
+  return await compile(
+    slimdom.parseXmlDocument(`<xsl:stylesheet
 version="1.0"
 xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <xsl:template match="/">
 <root><xsl:apply-templates/></root>
 </xsl:template>
 ${body}
-</xsl:stylesheet>`,
+</xsl:stylesheet>`),
   );
-  const transform = await compileFromPath(tempfile);
-  await unlink(tempfile);
-  return transform;
 }
 
 test("slimdon", () => {
