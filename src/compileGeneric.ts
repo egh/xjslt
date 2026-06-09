@@ -38,6 +38,7 @@ import {
 import {
   Expression,
   ExpressionStatement,
+  FunctionDeclaration,
   ObjectExpression,
   Program,
   Statement,
@@ -1021,10 +1022,9 @@ function buildNamedTemplates(
   return toEstree(retval);
 }
 
-export function compileStylesheetNode(
+export function compileStylesheetNodeFunction(
   node: slimdom.Element,
-  injectDeps = false,
-): Program {
+): FunctionDeclaration {
   let context: CompileContext = {
     declarationCounter: 0,
     namedTemplates: new Map(),
@@ -1034,147 +1034,145 @@ export function compileStylesheetNode(
     whitespaceDeclarations: [],
   };
   setupBuiltinTemplates(context, getNodeNS(node));
+  return mkFun(
+    mkIdentifier("transform"),
+    [mkIdentifier("document"), mkIdentifier("params")],
+    mkBlock([
+      {
+        type: "ExpressionStatement",
+        expression: {
+          type: "AssignmentExpression",
+          operator: "=",
+          left: mkIdentifier("params"),
+          right: {
+            type: "CallExpression",
+            callee: mkMember("xjslt", "setParamDefaults"),
+            arguments: [mkIdentifier("document"), mkIdentifier("params")],
+            optional: false,
+          },
+        },
+      },
+      mkLet(mkIdentifier("resultDocuments"), mkNew(mkIdentifier("Map"), [])),
+      mkCall(mkMember("resultDocuments", "set"), [
+        mkLiteral("#default"),
+        toEstree({ document: mkMember("params", "outputDocument") }),
+      ]),
+      mkLet(mkIdentifier("keys"), mkNew(mkIdentifier("Map"), [])),
+      mkLet(mkIdentifier("outputDefinitions"), mkNew(mkIdentifier("Map"), [])),
+      mkLet(mkIdentifier("decimalFormats"), mkNew(mkIdentifier("Map"), [])),
+      /* First compile the keys */
+      ...compileNodeArray(
+        evaluateXPathToNodes("./xsl:key", node, undefined, undefined, {
+          namespaceResolver: buildInResolver,
+        }),
+        context,
+        compileTopLevelNode,
+      ),
+      /* Then the functions */
+      ...compileNodeArray(
+        evaluateXPathToNodes("./xsl:function", node, undefined, undefined, {
+          namespaceResolver: buildInResolver,
+        }),
+        context,
+        compileTopLevelNode,
+      ),
+      /* Then the output definitions */
+      ...compileNodeArray(
+        evaluateXPathToNodes("./xsl:output", node, undefined, undefined, {
+          namespaceResolver: buildInResolver,
+        }),
+        context,
+        compileTopLevelNode,
+      ),
+      /* Then the decimal formats */
+      ...compileNodeArray(
+        evaluateXPathToNodes(
+          "./xsl:decimal-format",
+          node,
+          undefined,
+          undefined,
+          { namespaceResolver: buildInResolver },
+        ),
+        context,
+        compileTopLevelNode,
+      ),
+      /* Then compile the templates */
+      ...compileNodeArray(
+        evaluateXPathToNodes("./xsl:template", node, undefined, undefined, {
+          namespaceResolver: buildInResolver,
+        }),
+        context,
+        compileTopLevelNode,
+      ),
+      mkLet(
+        mkIdentifier("context"),
+        toEstree({
+          outputDocument: mkMember("params", "outputDocument"),
+          append: {
+            type: "CallExpression",
+            callee: mkMember("xjslt", "mkNodeAppender"),
+            arguments: [mkMember("params", "outputNode")],
+            optional: false,
+          },
+          resultDocuments: mkIdentifier("resultDocuments"),
+          contextItem: mkIdentifier("document"),
+          contextList: mkArray([mkIdentifier("document")]),
+          position: mkLiteral(1),
+          mode: mkMember("params", "initialMode"),
+          templates: context.templates,
+          nonRuleTemplateIndexes: context.nonRuleTemplates.sort((a, b) =>
+            compareSortable(context.templates[a[1]], context.templates[b[1]]),
+          ),
+          namedTemplates: buildNamedTemplates(context.namedTemplates),
+          variableScopes: [mkNew(mkIdentifier("Map"), [])],
+          inputURL: mkMember("params", "inputURL"),
+          ruleTree: toEstree(buildRuleTree(context.rules)),
+          readDocument: mkMember("params", "readDocument"),
+          keys: mkIdentifier("keys"),
+          outputDefinitions: mkIdentifier("outputDefinitions"),
+          decimalFormats: mkIdentifier("decimalFormats"),
+          patternMatchCache: mkNew(mkIdentifier("Map"), []),
+          stylesheetParams: mkMember("params", "stylesheetParams"),
+        }),
+      ),
+      mkCallWithContext(mkMember("xjslt", "initialize"), [
+        toEstree(getNodeNS(node)),
+      ]),
+      /* Then everything else */
+      ...compileNodeArray(
+        evaluateXPathToNodes(
+          "./xsl:*[local-name()!='template' and local-name()!='key' and local-name()!='function' and local-name()!='output' and local-name()!='decimal-format']",
+          node,
+          undefined,
+          undefined,
+          { namespaceResolver: buildInResolver },
+        ),
+        context,
+        compileTopLevelNode,
+      ),
+      mkCall(mkMember("xjslt", "stripSpace"), [
+        mkIdentifier("document"),
+        toEstree(sortSortable(context.whitespaceDeclarations)),
+      ]),
+      mkCallWithContext(mkMember("xjslt", "processNode"), [
+        toEstree([]),
+        toEstree(getNodeNS(node)),
+      ]),
+      mkReturn(mkIdentifier("resultDocuments")),
+    ]),
+  );
+}
+
+export function compileStylesheetNode(
+  node: slimdom.Element,
+  injectDeps = false,
+): Program {
   return {
     type: "Program",
     sourceType: "module",
     body: [
       ...(injectDeps ? [] : mkImportsNode()),
-      mkFun(
-        mkIdentifier("transform"),
-        [mkIdentifier("document"), mkIdentifier("params")],
-        mkBlock([
-          {
-            type: "ExpressionStatement",
-            expression: {
-              type: "AssignmentExpression",
-              operator: "=",
-              left: mkIdentifier("params"),
-              right: {
-                type: "CallExpression",
-                callee: mkMember("xjslt", "setParamDefaults"),
-                arguments: [mkIdentifier("document"), mkIdentifier("params")],
-                optional: false,
-              },
-            },
-          },
-          mkLet(
-            mkIdentifier("resultDocuments"),
-            mkNew(mkIdentifier("Map"), []),
-          ),
-          mkCall(mkMember("resultDocuments", "set"), [
-            mkLiteral("#default"),
-            toEstree({ document: mkMember("params", "outputDocument") }),
-          ]),
-          mkLet(mkIdentifier("keys"), mkNew(mkIdentifier("Map"), [])),
-          mkLet(
-            mkIdentifier("outputDefinitions"),
-            mkNew(mkIdentifier("Map"), []),
-          ),
-          mkLet(mkIdentifier("decimalFormats"), mkNew(mkIdentifier("Map"), [])),
-          /* First compile the keys */
-          ...compileNodeArray(
-            evaluateXPathToNodes("./xsl:key", node, undefined, undefined, {
-              namespaceResolver: buildInResolver,
-            }),
-            context,
-            compileTopLevelNode,
-          ),
-          /* Then the functions */
-          ...compileNodeArray(
-            evaluateXPathToNodes("./xsl:function", node, undefined, undefined, {
-              namespaceResolver: buildInResolver,
-            }),
-            context,
-            compileTopLevelNode,
-          ),
-          /* Then the output definitions */
-          ...compileNodeArray(
-            evaluateXPathToNodes("./xsl:output", node, undefined, undefined, {
-              namespaceResolver: buildInResolver,
-            }),
-            context,
-            compileTopLevelNode,
-          ),
-          /* Then the decimal formats */
-          ...compileNodeArray(
-            evaluateXPathToNodes(
-              "./xsl:decimal-format",
-              node,
-              undefined,
-              undefined,
-              { namespaceResolver: buildInResolver },
-            ),
-            context,
-            compileTopLevelNode,
-          ),
-          /* Then compile the templates */
-          ...compileNodeArray(
-            evaluateXPathToNodes("./xsl:template", node, undefined, undefined, {
-              namespaceResolver: buildInResolver,
-            }),
-            context,
-            compileTopLevelNode,
-          ),
-          mkLet(
-            mkIdentifier("context"),
-            toEstree({
-              outputDocument: mkMember("params", "outputDocument"),
-              append: {
-                type: "CallExpression",
-                callee: mkMember("xjslt", "mkNodeAppender"),
-                arguments: [mkMember("params", "outputNode")],
-                optional: false,
-              },
-              resultDocuments: mkIdentifier("resultDocuments"),
-              contextItem: mkIdentifier("document"),
-              contextList: mkArray([mkIdentifier("document")]),
-              position: mkLiteral(1),
-              mode: mkMember("params", "initialMode"),
-              templates: context.templates,
-              nonRuleTemplateIndexes: context.nonRuleTemplates.sort((a, b) =>
-                compareSortable(
-                  context.templates[a[1]],
-                  context.templates[b[1]],
-                ),
-              ),
-              namedTemplates: buildNamedTemplates(context.namedTemplates),
-              variableScopes: [mkNew(mkIdentifier("Map"), [])],
-              inputURL: mkMember("params", "inputURL"),
-              ruleTree: toEstree(buildRuleTree(context.rules)),
-              readDocument: mkMember("params", "readDocument"),
-              keys: mkIdentifier("keys"),
-              outputDefinitions: mkIdentifier("outputDefinitions"),
-              decimalFormats: mkIdentifier("decimalFormats"),
-              patternMatchCache: mkNew(mkIdentifier("Map"), []),
-              stylesheetParams: mkMember("params", "stylesheetParams"),
-            }),
-          ),
-          mkCallWithContext(mkMember("xjslt", "initialize"), [
-            toEstree(getNodeNS(node)),
-          ]),
-          /* Then everything else */
-          ...compileNodeArray(
-            evaluateXPathToNodes(
-              "./xsl:*[local-name()!='template' and local-name()!='key' and local-name()!='function' and local-name()!='output' and local-name()!='decimal-format']",
-              node,
-              undefined,
-              undefined,
-              { namespaceResolver: buildInResolver },
-            ),
-            context,
-            compileTopLevelNode,
-          ),
-          mkCall(mkMember("xjslt", "stripSpace"), [
-            mkIdentifier("document"),
-            toEstree(sortSortable(context.whitespaceDeclarations)),
-          ]),
-          mkCallWithContext(mkMember("xjslt", "processNode"), [
-            toEstree([]),
-            toEstree(getNodeNS(node)),
-          ]),
-          mkReturn(mkIdentifier("resultDocuments")),
-        ]),
-      ),
+      compileStylesheetNodeFunction(node),
       {
         type: "ExpressionStatement",
         expression: {
@@ -1183,21 +1181,6 @@ export function compileStylesheetNode(
           left: {
             type: "MemberExpression",
             object: mkMember("module", "exports"),
-            property: mkIdentifier("transform"),
-            computed: false,
-            optional: false,
-          },
-          right: mkIdentifier("transform"),
-        },
-      },
-      {
-        type: "ExpressionStatement",
-        expression: {
-          type: "AssignmentExpression",
-          operator: "=",
-          left: {
-            type: "MemberExpression",
-            object: mkIdentifier("global"),
             property: mkIdentifier("transform"),
             computed: false,
             optional: false,

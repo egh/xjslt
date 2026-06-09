@@ -20,6 +20,11 @@ const config: webpack.Configuration = {
   resolve: {
     extensions: [".web.ts", ".web.js", ".ts", ".js"],
   },
+  // TODO: We should be able to turn this off, but it breaks
+  // compilation right now.
+  optimization: {
+    minimize: false,
+  },
   output: {
     library: {
       name: "xjslt",

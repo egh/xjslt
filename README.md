@@ -127,6 +127,22 @@ const xml = slimdom.serializeToWellFormedString(resultDocument);
 console.log(xml);
 ```
 
+# Dynamic (not precompiled) use
+
+xjslt can be used dynamically as well - that is, not precompiled. While precompiling the stylesheet is faster, this may be helpful in some circumstances.
+
+## In the browser
+
+```
+npm exec webpack && cp dist/xjslt-web.js examples/html/
+```
+
+Open `examples/html/dynamic.html` in your browser.
+
+## In node
+
+(To be documented.)
+
 # Supported features
 
 All core features of XSLT 2.0. Roughly 50% of tests in the XSLT test suite (https://github.com/w3c/xslt30-test) pass - but many of these tests are for edge cases.
