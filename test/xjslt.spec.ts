@@ -32,13 +32,12 @@ import {
   dedupGenerator,
 } from "../src/xjslt";
 import {
-  compileFromPath,
-  compile,
   compileAvtRaw,
   compileSequenceConstructorNode,
   compileTopLevelNode,
   getNodeNS,
-} from "../src/compile";
+} from "../src/compileGeneric";
+import { compile, compileFromPath } from "../src/compile";
 import {
   DynamicContext,
   Template,
@@ -53,7 +52,7 @@ import { generate } from "astring";
 import { Parser } from "acorn";
 import { tmpdir } from "os";
 import { readFileSync } from "fs";
-import { readFile, writeFile, unlink } from "fs/promises";
+import { readFile } from "fs/promises";
 import { expect } from "@jest/globals";
 import { toBeEquivalentDom } from "./matchers";
 import { OutputDefinition } from "../src/definitions";
@@ -80,21 +79,17 @@ ${template}
 }
 
 async function makeTransform(body: string) {
-  const tempfile = path.join(tmpdir(), "temp.xsl");
-  await writeFile(
-    tempfile,
-    `<xsl:stylesheet
+  return compile(
+    slimdom.parseXmlDocument(`<xsl:stylesheet
 version="1.0"
 xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <xsl:template match="/">
 <root><xsl:apply-templates/></root>
 </xsl:template>
 ${body}
-</xsl:stylesheet>`,
+</xsl:stylesheet>`),
+    new URL("http://example.org"),
   );
-  const transform = await compileFromPath(tempfile);
-  await unlink(tempfile);
-  return transform;
 }
 
 test("slimdon", () => {
@@ -360,7 +355,7 @@ test("compile", async () => {
   const xslt = slimdom.parseXmlDocument(
     await readFile(`${__dirname}/simple2.xslt`, "utf-8"),
   );
-  const transform = await compile(xslt);
+  const transform = compile(xslt, new URL("http://example.org"));
   expect(
     slimdom.serializeToWellFormedString(
       transform(
@@ -389,11 +384,11 @@ test("compile with readDocument for xsl:include", async () => {
     </xsl:stylesheet>`);
 
   const readDocument = (uri: string) => {
-    if (uri === "included.xsl") return included;
+    if (uri === "http://example.org/included.xsl") return included;
     throw new Error(`Unexpected URI: ${uri}`);
   };
 
-  const transform = await compile(xslt, readDocument);
+  const transform = compile(xslt, new URL("http://example.org"), readDocument);
   const result = slimdom.serializeToWellFormedString(
     transform(slimdom.parseXmlDocument("<root><item>hello</item></root>")).get(
       "#default",
@@ -419,11 +414,11 @@ test("compile with readDocument for xsl:import", async () => {
     </xsl:stylesheet>`);
 
   const readDocument = (uri: string) => {
-    if (uri === "base.xsl") return imported;
+    if (uri === "http://example.org/base.xsl") return imported;
     throw new Error(`Unexpected URI: ${uri}`);
   };
 
-  const transform = await compile(xslt, readDocument);
+  const transform = compile(xslt, new URL("http://example.org"), readDocument);
   const result = slimdom.serializeToWellFormedString(
     transform(slimdom.parseXmlDocument("<root><item>world</item></root>")).get(
       "#default",
@@ -449,7 +444,7 @@ test("compile with readDocument for runtime doc()", async () => {
     throw new Error(`Unexpected URI: ${uri}`);
   };
 
-  const transform = await compile(xslt, readDocument);
+  const transform = compile(xslt, new URL("http://example.org"), readDocument);
   const result = slimdom.serializeToWellFormedString(
     transform(slimdom.parseXmlDocument("<root/>"), { readDocument }).get(
       "#default",

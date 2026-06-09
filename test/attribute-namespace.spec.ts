@@ -14,7 +14,7 @@ test("xsl:attribute unprefixed name gets no namespace even with default namespac
         </xsl:element>
       </xsl:template>
     </xsl:stylesheet>`);
-  const transform = await compile(xslt);
+  const transform = compile(xslt, new URL("http://example.org"));
   const result = transform(slimdom.parseXmlDocument("<root/>")).get(
     "#default",
   ).document;

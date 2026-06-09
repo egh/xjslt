@@ -30,14 +30,16 @@ import {
   XSLT1_NSURI,
 } from "./definitions";
 import { formatNumberWithPicture } from "./numbering";
-import { urlToDom } from "./util";
 
 function fnCurrent({ currentContext }) {
   return currentContext.contextItem;
 }
 
 function fnDoc({ currentContext }, url: string) {
-  return urlToDom(currentContext, url);
+  const absoluteURL = currentContext.inputURL
+    ? new URL(url, currentContext.inputURL.toString()).toString()
+    : url;
+  return currentContext.readDocument(absoluteURL);
 }
 
 function fnCurrentGroupingKey({ currentContext }) {
@@ -264,7 +266,7 @@ export function registerFunctions() {
     { namespaceURI: XJSLT_NSURI, localName: "doc" },
     ["xs:string"],
     "document-node()",
-    fnDoc as (context: any, url: string) => any,
+    fnDoc as (context: any, url: string) => Promise<any>,
   );
 
   registerCustomXPathFunction(

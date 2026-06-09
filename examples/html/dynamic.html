@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="stylesheet" content="https://raw.githubusercontent.com/egh/xjslt/refs/heads/main/jats-html.xsl"/>
+    <meta name="input" content="https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml"/>
+    <script src="xjslt-web.js"></script>
+    <script>
+     async function fetchAndParse(url) {
+       let response = await fetch(url);
+       if (!response.ok) {
+         throw new Error(`Response status: ${response.status}`);
+       }
+       return new DOMParser().parseFromString(
+         await response.text(),
+         "application/xml",
+       );
+     }
+     async function update() {
+       const xsltUrl = document.querySelector('meta[name="stylesheet"]').content;
+       const inputUrl = document.querySelector('meta[name="input"]').content;
+       console.log("compiling");
+       const transform = xjslt.compile(await fetchAndParse(xsltUrl), new URL(xsltUrl));
+       console.log("compiled");
+       const input = await fetchAndParse(inputUrl);
+       console.log("fetching input");
+       transform(input, {
+         outputDocument: document,
+         outputNode: document.querySelector("body"),
+       });
+       console.log("done");
+     }
+     update();
+    </script>
+  </head>
+  <body>
+  </body>
+</html>

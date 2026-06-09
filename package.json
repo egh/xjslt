@@ -2,6 +2,7 @@
   "name": "xjslt",
   "version": "1.0.0",
   "description": "xslt 2 transpiler to javascript",
+  "type": "module",
   "keywords": [
     "xslt",
     "xslt2",
@@ -48,11 +49,14 @@
   "devDependencies": {
     "@types/jest": "*",
     "jest": "*",
+    "jest-environment-jsdom": "^30.4.1",
     "jest-simple-dot-reporter": "*",
     "prettier": "*",
     "ts-jest": "*",
+    "ts-loader": "^9.6.0",
     "ts-node": "*",
-    "typescript": "*"
+    "typescript": "*",
+    "webpack-cli": "*"
   },
   "dependencies": {
     "@types/estree": "^1.0.8",
@@ -63,5 +67,8 @@
     "fontoxpath": "^3.34.0",
     "slimdom": "^4.3.5",
     "webpack": "^5.107.0"
+  },
+  "allowScripts": {
+    "jest-environment-jsdom@30.4.1": true
   }
 }

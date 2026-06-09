@@ -1,7 +1,16 @@
 export default {
   coveragePathIgnorePatterns: ["src/preprocess"],
-  preset: "ts-jest",
-  testEnvironment: "node",
   reporters: [["jest-simple-dot-reporter", { color: true }]],
-  testPathIgnorePatterns: ["examples"],
+  projects: [
+    {
+      displayName: "node",
+      preset: "ts-jest",
+      testEnvironment: "node",
+    },
+    {
+      displayName: "jsdom",
+      preset: "ts-jest",
+      testEnvironment: "jsdom",
+    },
+  ],
 };
