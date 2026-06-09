@@ -1,6 +1,6 @@
 # XJSLT - An XSLT to JavaScript transpiler
 
-XJSLT is a substantially complete and performant [XSLT 2.0](https://www.w3.org/TR/xslt20/) to JavaScript transpiler. XJSLT implements most features of XSLT 2 (see below for a few exceptions) and passes much of the test suite. XJSLT is written in TypeScript and depends on [fontoxpath](https://github.com/FontoXML/fontoxpath) for an XPath implementation. XJSLT runs faster than SaxonJS in our experiments.
+XJSLT is a substantially complete and performant [XSLT 2.0](https://www.w3.org/TR/xslt20/) to JavaScript transpiler. XJSLT implements most features of XSLT 2 (see below for a few exceptions) and passes much of the test suite. XJSLT is written in TypeScript and depends on [fontoxpath](https://github.com/FontoXML/fontoxpath) for an XPath implementation.
 
 XJSLT works by compiling stylesheets to runnable JavaScript. These compiled stylesheets can be used immediately in the command line, or they can be save for later use in the command line. They can also be used programmatically either in the browser or in another JavaScript runtime.
 
@@ -127,11 +127,7 @@ const xml = slimdom.serializeToWellFormedString(resultDocument);
 console.log(xml);
 ```
 
-# Dynamic (not precompiled) use
-
-xjslt can be used dynamically as well - that is, not precompiled. While precompiling the stylesheet is faster, this may be helpful in some circumstances.
-
-## In the browser
+## Programmatic API (browser)
 
 ```
 npm exec webpack && cp dist/xjslt-web.js examples/html/
