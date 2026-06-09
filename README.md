@@ -29,7 +29,7 @@ git clone https://github.com/egh/xjslt.git && cd xjslt
 ## Command line invocation:
 
 ```
-xjslt run <(curl -s https://raw.githubusercontent.com/egh/xjslt/refs/heads/main/jats-html.xsl) <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)
+npm exec -- xjslt run examples/jats-html.xsl examples/bmj_sample.xml
 ```
 
 # Compilation examples
@@ -41,7 +41,7 @@ XJSLT can compile XSLT stylesheets into executable JavaScript code, which can th
 For the following commands you will want to have the source checked out.
 
 ```
-xjslt compile --web jats-html.xsl examples/html/transform.js
+npm exec -- xjslt compile --web examples/jats-html.xsl examples/html/transform.js
 ```
 
 - Open `examples/html/example.html` (will load the generated `transform.js` file)
@@ -51,11 +51,11 @@ xjslt compile --web jats-html.xsl examples/html/transform.js
 Pre-compiling a `.js` file will speed up transformation.
 
 ```
-xjslt compile jats-html.xsl
+npm exec -- xjslt compile examples/jats-html.xsl
 ```
 
 ```
-xjslt run transform.js <(curl -s https://jats.nlm.nih.gov/publishing/tag-library/1.1/FullArticleSamples/bmj_sample.xml)
+npm exec -- xjslt run transform.js examples/bmj_sample.xml
 ```
 
 # Examples of use in cloud functions
@@ -65,7 +65,7 @@ XJSLT can be used to compile XSLT into JavaScript that can be used in, for examp
 ## In a google cloud function
 
 ```
-xjslt compile --standalone jats-html.xsl examples/google-cloud/transform.js
+npm exec -- xjslt compile --standalone examples/jats-html.xsl examples/google-cloud/transform.js
 ```
 
 ```
@@ -85,7 +85,7 @@ npx @google-cloud/functions-framework --target=transform
 ## In a cloudflare edge function
 
 ```
-xjslt compile --standalone jats-html.xsl examples/cloudflare/src/transform.js
+npm exec -- xjslt compile --standalone examples/jats-html.xsl examples/cloudflare/src/transform.js
 ```
 
 ```
@@ -174,4 +174,4 @@ npm test
 
 # Contributing
 
-- Some functionality, including import and include, is implemented in terms of preprocessors: xslt stylesheets that are applied to the xslt stylesheet itself before it is compiled. If you make changes that impact these preprocessors, you will need to run `npm run build-preprocessors` to recompile them.
+Some functionality, including import and include, is implemented in terms of preprocessors: xslt stylesheets that are applied to the xslt stylesheet itself before it is compiled. If you make changes that impact these preprocessors, you will need to run `npm run build-preprocessors` to recompile them.
