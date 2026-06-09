@@ -152,7 +152,7 @@ function paramCollect(value: string, previous: object) {
 async function main() {
   const program = new Command();
   Error.stackTraceLimit = 100;
-  program.version("1.0.0");
+  program.version("1.1.0");
   program
     .command("run")
     .argument("<xslt>", "XSLT stylesheet or compiled js file")
