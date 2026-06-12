@@ -1,6 +1,6 @@
 {
   "name": "xjslt",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "xslt 2 transpiler to javascript",
   "keywords": [
     "xslt",

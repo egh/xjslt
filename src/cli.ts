@@ -22,6 +22,7 @@
 import * as slimdom from "slimdom";
 import { Command, Option } from "commander";
 import { compileFromPath, compileToFile } from "./compile";
+import { VERSION } from "./definitions";
 import { serialize } from "./xjslt";
 import { readFile, writeFile } from "fs/promises";
 import { pathToFileURL } from "url";
@@ -152,7 +153,7 @@ function paramCollect(value: string, previous: object) {
 async function main() {
   const program = new Command();
   Error.stackTraceLimit = 100;
-  program.version("1.1.0");
+  program.version(VERSION);
   program
     .command("run")
     .argument("<xslt>", "XSLT stylesheet or compiled js file")

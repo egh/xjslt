@@ -3,6 +3,8 @@ import { CompiledXPathFunction } from "fontoxpath";
 import * as slimdom from "slimdom";
 import { mkNew, toEstree, mkMember } from "./estree-util";
 
+export const VERSION = "1.1.1";
+
 const NC = String.raw`[^,:\(\)\*\[\]/]`; // Pretty much anything is a NCName
 const PATTERN_AXIS = String.raw`(child::|attribute::|@)?`;
 const DOC_NODE_OPT = String.raw`(document-node\()?`;
