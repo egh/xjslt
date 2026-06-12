@@ -1,14 +1,7 @@
 import { ArrowFunctionExpression } from "estree";
 import { CompiledXPathFunction } from "fontoxpath";
 import * as slimdom from "slimdom";
-import {
-  mkArray,
-  mkIdentifier,
-  mkLiteral,
-  mkNew,
-  toEstree,
-  mkMember,
-} from "./estree-util";
+import { mkNew, toEstree, mkMember } from "./estree-util";
 
 const NC = String.raw`[^,:\(\)\*\[\]/]`; // Pretty much anything is a NCName
 const PATTERN_AXIS = String.raw`(child::|attribute::|@)?`;
