@@ -26,6 +26,7 @@ import {
 import {
   DEFAULT_DECIMAL_FORMAT,
   DynamicContext,
+  VERSION,
   XJSLT_NSURI,
   XSLT1_NSURI,
 } from "./definitions";
@@ -155,7 +156,7 @@ function fnSystemProperty(_, property: string) {
   } else if (property.split(":")[1] === "product-name") {
     return "xjslt";
   } else if (property.split(":")[1] === "product-version") {
-    return "0.1";
+    return VERSION;
   } else if (property.split(":")[1] === "supports-backwards-compatibility") {
     return "no";
   } else if (property.split(":")[1] === "is-schema-aware") {
