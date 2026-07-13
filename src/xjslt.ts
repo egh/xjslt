@@ -179,11 +179,6 @@ const DOCUMENT_PATTERN = new RegExp(/(^\/$|document-node\(|node\()/);
    should have mostly eliminated the use of this, but it still speeds
    things up. */
 function failFast(pattern: string, node: slimdom.Node) {
-  /* This should work, but doesn't */
-  // let bucket = getBucketForSelector(pattern);
-  // if (bucket && !getBucketsForNode(node).includes(bucket)) {
-  //   return true;
-  // }
   if (node.nodeType === NodeType.ATTRIBUTE && !ATTR_PATTERN.exec(pattern)) {
     return true;
   }
