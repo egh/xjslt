@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 
 const config: webpack.Configuration = {
   entry: "./src/index.ts",
-  "mode": "production",
+  mode: "production",
   module: {
     rules: [
       {
