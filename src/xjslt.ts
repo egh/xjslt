@@ -1923,8 +1923,8 @@ function extractText(document: slimdom.Node): string[] {
 
 /**
  * Apply the unnamed output definition (xsl:output without a name) to
- * the default result document, unless xsl:result-document already set
- * one.
+ * the implicit result document before processing templates. An explicit
+ * xsl:result-document replaces this entry with its selected definition.
  */
 export function applyDefaultOutputDefinition(
   resultDocuments: Map<string, OutputResult>,

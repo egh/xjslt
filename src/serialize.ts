@@ -31,6 +31,11 @@ export type OutputMethod = "xml" | "html" | "xhtml" | "text";
 
 const XHTML_NSURI = "http://www.w3.org/1999/xhtml";
 const XML_NSURI = "http://www.w3.org/XML/1998/namespace";
+const HTML5_ELEMENT_NAMESPACES = new Set([
+  XHTML_NSURI,
+  "http://www.w3.org/2000/svg",
+  "http://www.w3.org/1998/Math/MathML",
+]);
 
 /* https://html.spec.whatwg.org/multipage/syntax.html#void-elements
    plus the empty elements of HTML 4. */
@@ -230,6 +235,23 @@ function isHtmlElement(element: slimdom.Element): boolean {
   return element.namespaceURI === null || element.namespaceURI === XHTML_NSURI;
 }
 
+function isContentTypeMeta(node: slimdom.Node): boolean {
+  if (node.nodeType !== NodeType.ELEMENT) {
+    return false;
+  }
+  const element = node as slimdom.Element;
+  return (
+    isHtmlElement(element) &&
+    element.localName.toLowerCase() === "meta" &&
+    Array.from(element.attributes).some(
+      (attribute) =>
+        !attribute.namespaceURI &&
+        attribute.localName.toLowerCase() === "http-equiv" &&
+        attribute.value.trim().toLowerCase() === "content-type",
+    )
+  );
+}
+
 function serializeNode(
   node: slimdom.Node,
   out: string[],
@@ -240,7 +262,14 @@ function serializeNode(
 ) {
   switch (node.nodeType) {
     case NodeType.ELEMENT:
-      serializeElement(node as slimdom.Element, out, method, scope, result);
+      serializeElement(
+        node as slimdom.Element,
+        out,
+        method,
+        scope,
+        rawText,
+        result,
+      );
       break;
     case NodeType.TEXT: {
       const data = (node as slimdom.Text).data;
@@ -283,13 +312,17 @@ function serializeElement(
   out: string[],
   method: "html" | "xhtml",
   parentScope: Map<string, string | null>,
+  rawText: boolean,
   result: OutputResult,
 ) {
   const scope = new Map(parentScope);
   const isHtml = isHtmlElement(element);
   const name = element.localName.toLowerCase();
   const attributes = Array.from(element.attributes);
-  out.push(`<${element.tagName}`);
+  const normalizePrefix =
+    method === "html" && HTML5_ELEMENT_NAMESPACES.has(element.namespaceURI);
+  const tagName = normalizePrefix ? element.localName : element.tagName;
+  out.push(`<${tagName}`);
 
   /* Explicit namespace declarations first, so that they are in scope
      for the element and attribute names. */
@@ -297,13 +330,24 @@ function serializeElement(
     if (attribute.namespaceURI === XMLNS_NSURI) {
       const prefix = attribute.prefix === "xmlns" ? attribute.localName : "";
       const uri = attribute.value || null;
+      if (
+        normalizePrefix &&
+        ((prefix === "" && uri !== element.namespaceURI) ||
+          (element.prefix &&
+            prefix === element.prefix &&
+            !attributes.some(
+              (a) => a.namespaceURI !== XMLNS_NSURI && a.prefix === prefix,
+            )))
+      ) {
+        continue;
+      }
       if (scope.get(prefix) !== uri) {
         scope.set(prefix, uri);
         out.push(namespaceDeclaration(prefix, uri));
       }
     }
   }
-  const elementPrefix = element.prefix || "";
+  const elementPrefix = normalizePrefix ? "" : element.prefix || "";
   if ((scope.get(elementPrefix) ?? null) !== element.namespaceURI) {
     scope.set(elementPrefix, element.namespaceURI);
     out.push(namespaceDeclaration(elementPrefix, element.namespaceURI));
@@ -315,7 +359,9 @@ function serializeElement(
     }
     let attributeName = attribute.name;
     const uri = attribute.namespaceURI;
-    if (uri && uri !== XML_NSURI) {
+    if (uri === XML_NSURI) {
+      attributeName = `xml:${attribute.localName}`;
+    } else if (uri) {
       let prefix = attribute.prefix;
       if (!prefix || scope.get(prefix) !== uri) {
         /* Reuse an in-scope prefix for this namespace, or declare one. */
@@ -352,7 +398,7 @@ function serializeElement(
       out.push(` ${attributeName}`);
     } else {
       out.push(
-        ` ${attributeName}="${escapeAttribute(attribute.value, method)}"`,
+        ` ${attributeName}="${rawText ? attribute.value : escapeAttribute(attribute.value, method)}"`,
       );
     }
   }
@@ -381,17 +427,27 @@ function serializeElement(
   }
   out.push(">");
 
-  if (isHtml && name === "head" && result.includeContentType !== false) {
+  const insertContentType =
+    isHtml && name === "head" && result.includeContentType !== false;
+  if (insertContentType) {
+    const metaNamespace =
+      method === "xhtml" && scope.get("") !== element.namespaceURI
+        ? namespaceDeclaration("", element.namespaceURI)
+        : "";
     out.push(
-      `<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"${
+      `<meta${metaNamespace} http-equiv="Content-Type" content="text/html; charset=UTF-8"${
         method === "html" ? ">" : " />"
       }`,
     );
   }
 
-  const rawText = method === "html" && isHtml && RAW_TEXT_ELEMENTS.has(name);
+  const childRawText =
+    rawText || (method === "html" && isHtml && RAW_TEXT_ELEMENTS.has(name));
   for (const child of children) {
-    serializeNode(child, out, method, scope, rawText, result);
+    if (insertContentType && isContentTypeMeta(child)) {
+      continue;
+    }
+    serializeNode(child, out, method, scope, childRawText, result);
   }
-  out.push(`</${element.tagName}>`);
+  out.push(`</${tagName}>`);
 }

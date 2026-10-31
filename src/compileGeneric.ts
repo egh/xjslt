@@ -1163,13 +1163,13 @@ export function compileStylesheetNodeFunction(
         mkIdentifier("document"),
         toEstree(sortSortable(context.whitespaceDeclarations)),
       ]),
-      mkCallWithContext(mkMember("xjslt", "processNode"), [
-        toEstree([]),
-        toEstree(getNodeNS(node)),
-      ]),
       mkCall(mkMember("xjslt", "applyDefaultOutputDefinition"), [
         mkIdentifier("resultDocuments"),
         mkIdentifier("outputDefinitions"),
+      ]),
+      mkCallWithContext(mkMember("xjslt", "processNode"), [
+        toEstree([]),
+        toEstree(getNodeNS(node)),
       ]),
       mkReturn(mkIdentifier("resultDocuments")),
     ]),
