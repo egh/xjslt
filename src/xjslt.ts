@@ -66,11 +66,17 @@ import {
   compareSortable,
   determineNamespace,
   mkOutputDefinition,
+  expandQName,
   mkResolver,
   sortSortable,
   zip,
 } from "./shared";
 import { formatNumber } from "./numbering";
+import {
+  effectiveOutputMethod,
+  serializeHtml,
+  serializeText,
+} from "./serialize";
 import { findMatchingRules } from "./dt";
 import {
   ancestorNodes,
@@ -1589,10 +1595,12 @@ export function resultDocument(
     format?: AttributeValueTemplate;
     href?: AttributeValueTemplate;
     namespaces: object;
+    method?: AttributeValueTemplate;
     omitXmlDeclaration?: AttributeValueTemplate;
     doctypePublic?: AttributeValueTemplate;
     doctypeSystem?: AttributeValueTemplate;
     standalone?: AttributeValueTemplate;
+    includeContentType?: AttributeValueTemplate;
   },
   func: SequenceConstructor,
 ) {
@@ -1601,19 +1609,25 @@ export function resultDocument(
     return evaluateAttributeValueTemplate(context, avt, resolver);
   }
   const format = evalAvt(data.format);
-  let overrideDefinition = mkOutputDefinition({
+  /* Options on xsl:result-document override those of the output
+     definition it refers to (the unnamed one if no format is given). */
+  const overrideDefinition = mkOutputDefinition({
+    method: evalAvt(data.method),
     omitXmlDeclaration: evalAvt(data.omitXmlDeclaration),
     doctypePublic: evalAvt(data.doctypePublic),
     doctypeSystem: evalAvt(data.doctypeSystem),
     standalone: evalAvt(data.standalone),
+    includeContentType: evalAvt(data.includeContentType),
   });
-  Object.keys(overrideDefinition).forEach((key) => {
-    if (!overrideDefinition[key]) {
-      delete overrideDefinition[key];
+  let formatName = "#default";
+  if (format) {
+    formatName = expandQName(format, resolver);
+    if (!context.outputDefinitions.has(formatName)) {
+      throw new Error(`XTDE1460: no output definition named ${format}`);
     }
-  });
+  }
   const od: OutputDefinition = {
-    ...(format ? context.outputDefinitions.get(format) : {}),
+    ...context.outputDefinitions.get(formatName),
     ...overrideDefinition,
   };
   const href = evalAvt(data.href);
@@ -1907,7 +1921,29 @@ function extractText(document: slimdom.Node): string[] {
   return strs;
 }
 
+/**
+ * Apply the unnamed output definition (xsl:output without a name) to
+ * the default result document, unless xsl:result-document already set
+ * one.
+ */
+export function applyDefaultOutputDefinition(
+  resultDocuments: Map<string, OutputResult>,
+  outputDefinitions: Map<string, OutputDefinition>,
+) {
+  const definition = outputDefinitions.get("#default");
+  const result = resultDocuments.get("#default");
+  if (definition && result) {
+    resultDocuments.set("#default", { ...definition, ...result });
+  }
+}
+
 export function serialize(result: OutputResult): string {
+  const method = effectiveOutputMethod(result);
+  if (method === "text") {
+    return serializeText(result);
+  } else if (method === "html" || method === "xhtml") {
+    return serializeHtml(result, method);
+  }
   const serializer = new slimdom.XMLSerializer();
   if (result.omitXmlDeclaration !== true) {
     let params: Map<string, string | undefined> = new Map([

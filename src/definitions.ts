@@ -97,10 +97,12 @@ export const DEFAULT_PRIORITIES = new Map<RegExp, number>([
 ]);
 
 export interface OutputDefinition {
-  omitXmlDeclaration: boolean;
+  method?: string;
+  omitXmlDeclaration?: boolean;
   doctypeSystem?: string;
   doctypePublic?: string;
   standalone?: boolean | undefined;
+  includeContentType?: boolean;
 }
 
 export interface NumberFormat {
