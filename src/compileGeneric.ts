@@ -78,6 +78,7 @@ import {
   computeDefaultPriority,
   isAlphanumeric,
   mkOutputDefinition,
+  expandQName,
   mkResolver,
   sortSortable,
 } from "./shared";
@@ -529,10 +530,12 @@ function compileResultDocument(node: slimdom.Element, context: CompileContext) {
   const args = {
     format: compileAvt(node.getAttribute("format")),
     href: compileAvt(node.getAttribute("href")),
+    method: compileAvt(node.getAttribute("method")),
     omitXmlDeclaration: compileAvt(node.getAttribute("omit-xml-declaration")),
     doctypeSystem: compileAvt(node.getAttribute("doctype-system")),
     doctypePublic: compileAvt(node.getAttribute("doctype-public")),
     standalone: compileAvt(node.getAttribute("standalone")),
+    includeContentType: compileAvt(node.getAttribute("include-content-type")),
     namespaces: getNodeNS(node),
   };
   return compileFuncallWithChildren(
@@ -766,23 +769,28 @@ export function compileTopLevelNode(
 }
 
 export function compileOutputNode(node: slimdom.Element) {
-  const name = node.getAttribute("name") || "#default";
+  const name = node.getAttribute("name")
+    ? expandQName(node.getAttribute("name"), mkResolver(getNodeNS(node)))
+    : "#default";
   const outputDefinition: OutputDefinition = mkOutputDefinition({
+    method: node.getAttribute("method") || undefined,
     omitXmlDeclaration: node.getAttribute("omit-xml-declaration") || undefined,
     doctypeSystem: node.getAttribute("doctype-system") || undefined,
     doctypePublic: node.getAttribute("doctype-public") || undefined,
     standalone: node.getAttribute("standalone") || undefined,
+    includeContentType: node.getAttribute("include-content-type") || undefined,
   });
   let tmp = {};
   for (const key in outputDefinition) {
     tmp[key] = outputDefinition[key];
   }
-  if (!name) {
-    mkCall(mkMember("outputDefinitions", "set"), [
+  if (name === "#default") {
+    /* Unnamed declarations are merged; later ones override earlier ones. */
+    return mkCall(mkMember("outputDefinitions", "set"), [
+      mkLiteral("#default"),
       {
         type: "ObjectExpression",
         properties: [
-          { type: "SpreadElement", argument: toEstree(tmp) },
           {
             type: "SpreadElement",
             argument: {
@@ -792,6 +800,7 @@ export function compileOutputNode(node: slimdom.Element) {
               optional: false,
             },
           },
+          { type: "SpreadElement", argument: toEstree(tmp) },
         ],
       },
     ]);
@@ -1153,6 +1162,10 @@ export function compileStylesheetNodeFunction(
       mkCall(mkMember("xjslt", "stripSpace"), [
         mkIdentifier("document"),
         toEstree(sortSortable(context.whitespaceDeclarations)),
+      ]),
+      mkCall(mkMember("xjslt", "applyDefaultOutputDefinition"), [
+        mkIdentifier("resultDocuments"),
+        mkIdentifier("outputDefinitions"),
       ]),
       mkCallWithContext(mkMember("xjslt", "processNode"), [
         toEstree([]),

@@ -146,7 +146,7 @@ All core features of XSLT 2.0. Roughly 50% of tests in the XSLT test suite (http
 # Incompletely supported features
 
 - `function` basically working, with better typing TBD
-- `output` not all options supported
+- `output` supports `method` (`xml`, `html`, `xhtml`, `text`), `omit-xml-declaration`, `standalone`, `doctype-public`, `doctype-system` and `include-content-type`; other options (`indent`, `encoding`, `cdata-section-elements`, ...) are not yet supported
 - `number` basic support, not all options supported
 
 # TODO (not yet implemented)

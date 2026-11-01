@@ -25,19 +25,36 @@ export function isAlphanumeric(char: string): boolean {
   return /^[\p{Nd}\p{Nl}\p{No}\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}]$/u.test(char);
 }
 
-/* Make an output definition from strings. */
+/* Make an output definition from strings. Only the options that were
+   actually specified are set, so that definitions can be layered. */
 export function mkOutputDefinition(data: {
+  method?: string;
   omitXmlDeclaration?: string;
   doctypePublic?: string;
   doctypeSystem?: string;
   standalone?: string;
+  includeContentType?: string;
 }): OutputDefinition {
-  return {
-    omitXmlDeclaration: parseYesNo(data.omitXmlDeclaration),
-    standalone: parseYesNoOmit(data.standalone),
-    doctypeSystem: data.doctypeSystem,
-    doctypePublic: data.doctypePublic,
-  };
+  const definition: OutputDefinition = {};
+  if (data.method) {
+    definition.method = data.method;
+  }
+  if (data.omitXmlDeclaration) {
+    definition.omitXmlDeclaration = parseYesNo(data.omitXmlDeclaration);
+  }
+  if (data.standalone) {
+    definition.standalone = parseYesNoOmit(data.standalone);
+  }
+  if (data.doctypeSystem) {
+    definition.doctypeSystem = data.doctypeSystem;
+  }
+  if (data.doctypePublic) {
+    definition.doctypePublic = data.doctypePublic;
+  }
+  if (data.includeContentType) {
+    definition.includeContentType = parseYesNo(data.includeContentType);
+  }
+  return definition;
 }
 
 export function mkResolver(namespaces: object) {
@@ -68,6 +85,17 @@ export function determineNamespace(
   }
   namespace = nsResolver(prefix);
   return [namespace, name];
+}
+
+/* Expand a lexical QName to a key that can be compared across
+   modules: Q{namespace}local for prefixed names, the name itself
+   otherwise. Used for output definition names. */
+export function expandQName(name: string, nsResolver: NamespaceResolver) {
+  if (!name.includes(":")) {
+    return name;
+  }
+  const [namespace, localName] = determineNamespace(name, nsResolver);
+  return namespace ? `Q{${namespace}}${localName}` : name;
 }
 
 const NC = String.raw`[^,:\(\)\*\[\]/]`; // Pretty much anything is a NCName
